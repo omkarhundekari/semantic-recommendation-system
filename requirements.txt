@@ -1,0 +1,7 @@
+sentence-transformers
+faiss-cpu
+numpy
+pandas
+streamlit
+fastapi
+uvicorn

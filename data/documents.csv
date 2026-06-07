@@ -1,0 +1,9 @@
+id,title,category,content
+1,Graph Neural Networks for Recommendation Systems,Recommendation Systems,Graph neural networks can model users items and their relationships as graphs for personalized recommendation.
+2,Transformer Models for Natural Language Processing,NLP,Transformers use attention mechanisms to understand context in text and power modern language models.
+3,Vector Databases for Semantic Search,Vector Search,Vector databases store embeddings and allow fast similarity search across large collections of text images or products.
+4,Collaborative Filtering in Recommendation Engines,Recommendation Systems,Collaborative filtering recommends items based on user behavior patterns and similarities between users or items.
+5,Retrieval Augmented Generation for Question Answering,RAG,Retrieval augmented generation combines search with language models to answer questions using external knowledge.
+6,Hybrid Search in Modern AI Systems,Search,Hybrid search combines keyword search and semantic search to improve retrieval accuracy.
+7,Explainable AI for Recommendation Systems,Explainability,Explainable recommendation systems help users understand why a particular item was suggested.
+8,FAISS for Large Scale Similarity Search,Vector Search,FAISS is used for efficient nearest neighbor search over high dimensional embedding vectors.
