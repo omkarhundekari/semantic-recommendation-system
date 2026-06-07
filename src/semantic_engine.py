@@ -9,6 +9,9 @@ class SemanticEngine:
     def create_embeddings(self, documents):
         return self.model.encode(documents, convert_to_tensor=True)
 
+    def create_query_embedding(self, query):
+        return self.model.encode([query], convert_to_tensor=True)
+
     def search(self, query, documents, document_embeddings):
         query_embedding = self.model.encode(
             query,
