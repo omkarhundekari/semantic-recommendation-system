@@ -90,8 +90,9 @@ if st.button("Search"):
         st.session_state.search_results = []
 
     else:
-        faiss_scores, faiss_indices = cached_engine.search(
+        faiss_scores, faiss_indices = cached_engine.search_by_categories(
             query=query,
+            selected_categories=selected_categories,
             top_k=top_k
         )
 

@@ -72,12 +72,41 @@ class PersistentCache:
             query_embedding = query_embedding.cpu().numpy()
 
         query_embedding = query_embedding.astype("float32")
-
         faiss.normalize_L2(query_embedding)
 
-        scores, indices = self.faiss_index.search(
-            query_embedding,
-            top_k
-        )
+        scores, indices = self.faiss_index.search(query_embedding, top_k)
 
         return scores[0], indices[0]
+
+    def search_by_categories(self, query, selected_categories, top_k=5):
+        query_embedding = self.engine.create_query_embedding(query)
+
+        if hasattr(query_embedding, "cpu"):
+            query_embedding = query_embedding.cpu().numpy()
+
+        query_embedding = query_embedding.astype("float32")
+        faiss.normalize_L2(query_embedding)
+
+        selected_indices = self.df[
+            self.df["category"].isin(selected_categories)
+        ].index.tolist()
+
+        if not selected_indices:
+            return [], []
+
+        selected_embeddings = self.document_embeddings[selected_indices]
+
+        temp_index = faiss.IndexFlatIP(selected_embeddings.shape[1])
+        temp_index.add(selected_embeddings)
+
+        scores, local_indices = temp_index.search(
+            query_embedding,
+            min(top_k, len(selected_indices))
+        )
+
+        global_indices = [
+            selected_indices[int(local_index)]
+            for local_index in local_indices[0]
+        ]
+
+        return scores[0], global_indices
