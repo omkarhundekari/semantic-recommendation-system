@@ -23,3 +23,21 @@ def get_query_suggestions(query, titles, limit=5):
         )
 
     return suggestions
+
+
+def get_best_query_correction(query, titles, minimum_score=60):
+    suggestions = get_query_suggestions(
+        query=query,
+        titles=titles,
+        limit=1
+    )
+
+    if not suggestions:
+        return query
+
+    best_suggestion = suggestions[0]
+
+    if best_suggestion["score"] >= minimum_score:
+        return best_suggestion["suggestion"]
+
+    return query

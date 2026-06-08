@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from fuzzy_search import get_query_suggestions
+from fuzzy_search import get_query_suggestions, get_best_query_correction
 from reranker import CrossEncoderReranker
 from explainability import explain_recommendation
 from hybrid_search import calculate_keyword_score, calculate_hybrid_score
@@ -105,13 +105,22 @@ use_reranker = st.checkbox("Use CrossEncoder reranking", value=True)
 if st.button("Search"):
     log_query(query)
 
+    corrected_query = get_best_query_correction(
+        query=query,
+        titles=cached_engine.df["title"].tolist(),
+        minimum_score=60
+    )
+
+    if corrected_query != query:
+        st.info(f"Searching instead for: {corrected_query}")
+
     if filtered_df.empty:
         st.warning("Please select at least one category.")
         st.session_state.search_results = []
 
     else:
         faiss_scores, faiss_indices = cached_engine.search_by_categories(
-            query=query,
+            query=corrected_query,
             selected_categories=selected_categories,
             top_k=20
         )
@@ -130,7 +139,7 @@ if st.button("Search"):
             semantic_score = float(faiss_scores[position])
 
             keyword_score = calculate_keyword_score(
-                query,
+                corrected_query,
                 cached_engine.documents[index]
             )
 
@@ -161,7 +170,7 @@ if st.button("Search"):
 
         if use_reranker:
             ranked_results = reranker.rerank(
-                query=query,
+                query=corrected_query,
                 documents=ranked_results
             )
 
