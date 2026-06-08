@@ -10,6 +10,7 @@ from embedding_visualization import create_embedding_map
 from interactive_visualization import create_interactive_embedding_plot
 from ui_helpers import display_result
 from analytics import log_query, log_feedback
+from analytics_dashboard import show_analytics_dashboard
 
 
 st.set_page_config(
@@ -22,7 +23,7 @@ st.title("Semantic Recommendation and Retrieval System")
 st.write(
     "Search documents using embeddings, FAISS vector search, keyword matching, "
     "hybrid ranking, explainability, related recommendations, interactive visualization, "
-    "and user feedback."
+    "user feedback, and analytics."
 )
 
 df = pd.read_csv("data/documents.csv")
@@ -73,6 +74,10 @@ top_k = st.slider(
 
 show_related = st.checkbox("Show related documents", value=True)
 show_embedding_map = st.checkbox("Show embedding map", value=True)
+show_analytics = st.checkbox("Show analytics dashboard", value=False)
+
+if show_analytics:
+    show_analytics_dashboard()
 
 if st.button("Search"):
     log_query(query)
