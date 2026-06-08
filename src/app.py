@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 
-
+from reranker import CrossEncoderReranker
 from explainability import explain_recommendation
 from hybrid_search import calculate_keyword_score, calculate_hybrid_score
 from related_documents import RelatedDocuments
@@ -34,6 +34,13 @@ def load_cached_engine():
     return PersistentCache()
 
 cached_engine = load_cached_engine()
+
+
+@st.cache_resource
+def load_reranker():
+    return CrossEncoderReranker()
+
+reranker = load_reranker()
 
 if "search_results" not in st.session_state:
     st.session_state.search_results = []
@@ -81,6 +88,7 @@ top_k = st.slider(
 
 show_related = st.checkbox("Show related documents", value=True)
 show_embedding_map = st.checkbox("Show embedding map", value=True)
+use_reranker = st.checkbox("Use CrossEncoder reranking", value=True)
 
 if st.button("Search"):
     log_query(query)
@@ -93,7 +101,7 @@ if st.button("Search"):
         faiss_scores, faiss_indices = cached_engine.search_by_categories(
             query=query,
             selected_categories=selected_categories,
-            top_k=top_k
+            top_k=20
         )
 
         if show_embedding_map:
@@ -133,11 +141,19 @@ if st.button("Search"):
                 }
             )
 
-        st.session_state.search_results = sorted(
+        ranked_results = sorted(
             ranked_results,
             key=lambda result: result["hybrid_score"],
             reverse=True
         )
+
+        if use_reranker:
+            ranked_results = reranker.rerank(
+                query=query,
+                documents=ranked_results
+            )
+
+        st.session_state.search_results = ranked_results[:top_k]
 
 if show_embedding_map and st.session_state.embedding_map_df is not None:
     st.subheader("Interactive Embedding Map")
