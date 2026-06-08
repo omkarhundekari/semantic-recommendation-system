@@ -1,8 +1,8 @@
 import pandas as pd
 import streamlit as st
 
-from semantic_engine import SemanticEngine
-from faiss_index import FaissIndex
+
+
 from explainability import explain_recommendation
 from hybrid_search import calculate_keyword_score, calculate_hybrid_score
 from related_documents import RelatedDocuments
@@ -10,6 +10,7 @@ from embedding_visualization import create_embedding_map
 from interactive_visualization import create_interactive_embedding_plot
 from ui_helpers import display_result
 from analytics import log_query, log_feedback
+from persistent_cache import PersistentCache
 
 
 st.set_page_config(
@@ -25,7 +26,14 @@ st.write(
     "and user feedback."
 )
 
-df = pd.read_csv("data/documents.csv")
+df = pd.read_csv("data/large_documents.csv")
+
+
+@st.cache_resource
+def load_cached_engine():
+    return PersistentCache()
+
+cached_engine = load_cached_engine()
 
 if "search_results" not in st.session_state:
     st.session_state.search_results = []
@@ -55,9 +63,9 @@ keyword_weight = 1.0 - semantic_weight
 st.sidebar.write(f"Keyword weight: {keyword_weight:.1f}")
 
 filtered_df = df[df["category"].isin(selected_categories)]
-filtered_documents = filtered_df["content"].tolist()
 
-engine = SemanticEngine()
+
+
 
 query = st.text_input(
     "Enter your search query",
@@ -82,23 +90,15 @@ if st.button("Search"):
         st.session_state.search_results = []
 
     else:
-        document_embeddings = engine.create_embeddings(filtered_documents)
-        query_embedding = engine.create_query_embedding(query)
-
-        embedding_dimension = document_embeddings.shape[1]
-
-        faiss_index = FaissIndex(embedding_dimension)
-        faiss_index.build(document_embeddings)
-
-        faiss_scores, faiss_indices = faiss_index.search(
-            query_embedding,
+        faiss_scores, faiss_indices = cached_engine.search(
+            query=query,
             top_k=top_k
         )
 
         if show_embedding_map:
             st.session_state.embedding_map_df = create_embedding_map(
-                document_embeddings,
-                filtered_df
+                cached_engine.document_embeddings,
+                cached_engine.df
             )
 
         ranked_results = []
@@ -110,7 +110,7 @@ if st.button("Search"):
 
             keyword_score = calculate_keyword_score(
                 query,
-                filtered_documents[index]
+                cached_engine.documents[index]
             )
 
             hybrid_score = calculate_hybrid_score(
@@ -123,9 +123,9 @@ if st.button("Search"):
             ranked_results.append(
                 {
                     "index": index,
-                    "title": filtered_df.iloc[index]["title"],
-                    "category": filtered_df.iloc[index]["category"],
-                    "content": filtered_df.iloc[index]["content"],
+                    "title": cached_engine.df.iloc[index]["title"],
+                    "category": cached_engine.df.iloc[index]["category"],
+                    "content": cached_engine.df.iloc[index]["content"],
                     "semantic_score": semantic_score,
                     "keyword_score": keyword_score,
                     "hybrid_score": hybrid_score
@@ -146,7 +146,7 @@ if show_embedding_map and st.session_state.embedding_map_df is not None:
 if st.session_state.search_results:
     st.subheader("Search Results")
 
-    related_engine = RelatedDocuments(filtered_df)
+    related_engine = RelatedDocuments(cached_engine.df)
 
     for rank, result in enumerate(st.session_state.search_results, start=1):
         title = result["title"]
