@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-
+from fuzzy_search import get_query_suggestions
 from reranker import CrossEncoderReranker
 from explainability import explain_recommendation
 from hybrid_search import calculate_keyword_score, calculate_hybrid_score
@@ -78,6 +78,18 @@ query = st.text_input(
     "Enter your search query",
     "How do recommendation systems use graphs?"
 )
+
+suggestions = get_query_suggestions(
+    query=query,
+    titles=cached_engine.df["title"].tolist(),
+    limit=5
+)
+
+if suggestions:
+    with st.expander("Query suggestions"):
+        for item in suggestions:
+            st.write(f"{item['suggestion']} — score: {item['score']:.2f}")
+
 
 top_k = st.slider(
     "Number of results",
