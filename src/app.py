@@ -2,7 +2,6 @@ import pandas as pd
 import streamlit as st
 
 from fuzzy_search import get_query_suggestions, get_best_query_correction
-from reranker import CrossEncoderReranker
 from explainability import explain_recommendation
 from hybrid_search import calculate_keyword_score, calculate_hybrid_score
 from related_documents import RelatedDocuments
@@ -10,7 +9,7 @@ from embedding_visualization import create_embedding_map
 from interactive_visualization import create_interactive_embedding_plot
 from ui_helpers import display_result
 from analytics import log_query, log_feedback
-from persistent_cache import PersistentCache
+from rrf_fusion import reciprocal_rank_fusion
 
 
 st.set_page_config(
@@ -19,28 +18,37 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("Semantic Recommendation and Retrieval System")
-st.write(
-    "Search documents using embeddings, FAISS vector search, keyword matching, "
-    "hybrid ranking, explainability, related recommendations, interactive visualization, "
-    "and user feedback."
-)
 
-df = pd.read_csv("data/large_documents.csv")
+@st.cache_data
+def load_documents():
+    return pd.read_csv("data/large_documents.csv")
 
 
 @st.cache_resource
 def load_cached_engine():
+    from persistent_cache import PersistentCache
     return PersistentCache()
 
-cached_engine = load_cached_engine()
+
+@st.cache_resource
+def load_bm25(documents_tuple):
+    from bm25_retriever import BM25Retriever
+    return BM25Retriever(list(documents_tuple))
 
 
 @st.cache_resource
 def load_reranker():
+    from reranker import CrossEncoderReranker
     return CrossEncoderReranker()
 
-reranker = load_reranker()
+
+st.title("Semantic Recommendation and Retrieval System")
+st.write(
+    "Search documents using FAISS, BM25, RRF fusion, CrossEncoder reranking, "
+    "explainability, related recommendations, and feedback."
+)
+
+df = load_documents()
 
 if "search_results" not in st.session_state:
     st.session_state.search_results = []
@@ -71,25 +79,22 @@ st.sidebar.write(f"Keyword weight: {keyword_weight:.1f}")
 
 filtered_df = df[df["category"].isin(selected_categories)]
 
-
-
-
 query = st.text_input(
     "Enter your search query",
     "How do recommendation systems use graphs?"
 )
 
-suggestions = get_query_suggestions(
-    query=query,
-    titles=cached_engine.df["title"].tolist(),
-    limit=5
-)
+if query.strip():
+    suggestions = get_query_suggestions(
+        query=query,
+        titles=df["title"].tolist(),
+        limit=5
+    )
 
-if suggestions:
-    with st.expander("Query suggestions"):
-        for item in suggestions:
-            st.write(f"{item['suggestion']} — score: {item['score']:.2f}")
-
+    if suggestions:
+        with st.expander("Query suggestions"):
+            for item in suggestions:
+                st.write(f"{item['suggestion']} — score: {item['score']:.2f}")
 
 top_k = st.slider(
     "Number of results",
@@ -100,14 +105,15 @@ top_k = st.slider(
 
 show_related = st.checkbox("Show related documents", value=True)
 show_embedding_map = st.checkbox("Show embedding map", value=True)
-use_reranker = st.checkbox("Use CrossEncoder reranking", value=True)
+use_rrf = st.checkbox("Use RRF fusion", value=True)
+use_reranker = st.checkbox("Use CrossEncoder reranking", value=False)
 
 if st.button("Search"):
     log_query(query)
 
     corrected_query = get_best_query_correction(
         query=query,
-        titles=cached_engine.df["title"].tolist(),
+        titles=df["title"].tolist(),
         minimum_score=60
     )
 
@@ -119,24 +125,78 @@ if st.button("Search"):
         st.session_state.search_results = []
 
     else:
-        faiss_scores, faiss_indices = cached_engine.search_by_categories(
-            query=corrected_query,
-            selected_categories=selected_categories,
-            top_k=20
-        )
+        with st.spinner("Loading persistent FAISS cache..."):
+            cached_engine = load_cached_engine()
+
+        with st.spinner("Running FAISS retrieval..."):
+            faiss_scores, faiss_indices = cached_engine.search_by_categories(
+                query=corrected_query,
+                selected_categories=selected_categories,
+                top_k=20
+            )
+
+        faiss_ranked = [
+            {
+                "index": int(index),
+                "score": float(score)
+            }
+            for score, index in zip(faiss_scores, faiss_indices)
+        ]
+
+        if use_rrf:
+            with st.spinner("Running BM25 + RRF fusion..."):
+                bm25_retriever = load_bm25(tuple(cached_engine.documents))
+
+                bm25_ranked_all = bm25_retriever.search(
+                    query=corrected_query,
+                    top_k=100
+                )
+
+                selected_category_set = set(selected_categories)
+
+                bm25_ranked = [
+                    item
+                    for item in bm25_ranked_all
+                    if df.iloc[item["index"]]["category"] in selected_category_set
+                ][:20]
+
+                fused_results = reciprocal_rank_fusion(
+                    rank_lists=[faiss_ranked, bm25_ranked],
+                    k=60
+                )
+
+                candidate_indices = [
+                    result["index"]
+                    for result in fused_results[:20]
+                ]
+
+        else:
+            candidate_indices = [
+                result["index"]
+                for result in faiss_ranked
+            ]
 
         if show_embedding_map:
+            selected_indices = filtered_df.index.tolist()
+
+            filtered_embeddings = cached_engine.document_embeddings[selected_indices]
+
             st.session_state.embedding_map_df = create_embedding_map(
-                cached_engine.document_embeddings,
-                cached_engine.df
+                filtered_embeddings,
+                filtered_df
             )
 
         ranked_results = []
 
-        for position, index in enumerate(faiss_indices):
+        for index in candidate_indices:
             index = int(index)
 
-            semantic_score = float(faiss_scores[position])
+            semantic_score = 0.0
+
+            for item in faiss_ranked:
+                if item["index"] == index:
+                    semantic_score = item["score"]
+                    break
 
             keyword_score = calculate_keyword_score(
                 corrected_query,
@@ -153,9 +213,9 @@ if st.button("Search"):
             ranked_results.append(
                 {
                     "index": index,
-                    "title": cached_engine.df.iloc[index]["title"],
-                    "category": cached_engine.df.iloc[index]["category"],
-                    "content": cached_engine.df.iloc[index]["content"],
+                    "title": df.iloc[index]["title"],
+                    "category": df.iloc[index]["category"],
+                    "content": df.iloc[index]["content"],
                     "semantic_score": semantic_score,
                     "keyword_score": keyword_score,
                     "hybrid_score": hybrid_score
@@ -169,10 +229,13 @@ if st.button("Search"):
         )
 
         if use_reranker:
-            ranked_results = reranker.rerank(
-                query=corrected_query,
-                documents=ranked_results
-            )
+            with st.spinner("Running CrossEncoder reranking..."):
+                reranker = load_reranker()
+
+                ranked_results = reranker.rerank(
+                    query=corrected_query,
+                    documents=ranked_results
+                )
 
         st.session_state.search_results = ranked_results[:top_k]
 
@@ -184,7 +247,7 @@ if show_embedding_map and st.session_state.embedding_map_df is not None:
 if st.session_state.search_results:
     st.subheader("Search Results")
 
-    related_engine = RelatedDocuments(cached_engine.df)
+    related_engine = RelatedDocuments(df)
 
     for rank, result in enumerate(st.session_state.search_results, start=1):
         title = result["title"]

@@ -18,7 +18,7 @@ class PersistentCache:
     def __init__(self, csv_path="data/large_documents.csv"):
         self.df = pd.read_csv(csv_path)
         self.documents = self.df["content"].tolist()
-        self.engine = SemanticEngine()
+        self.engine = None
 
         if (
             os.path.exists(EMBEDDINGS_PATH)
@@ -37,6 +37,8 @@ class PersistentCache:
 
         else:
             print("Generating embeddings...")
+
+            self._load_engine()
 
             embeddings = self.engine.create_embeddings(self.documents)
 
@@ -65,7 +67,13 @@ class PersistentCache:
 
             print("Cache saved successfully.")
 
-    def search(self, query, top_k=5):
+    def _load_engine(self):
+        if self.engine is None:
+            self.engine = SemanticEngine()
+
+    def _create_query_embedding(self, query):
+        self._load_engine()
+
         query_embedding = self.engine.create_query_embedding(query)
 
         if hasattr(query_embedding, "cpu"):
@@ -74,18 +82,20 @@ class PersistentCache:
         query_embedding = query_embedding.astype("float32")
         faiss.normalize_L2(query_embedding)
 
-        scores, indices = self.faiss_index.search(query_embedding, top_k)
+        return query_embedding
+
+    def search(self, query, top_k=5):
+        query_embedding = self._create_query_embedding(query)
+
+        scores, indices = self.faiss_index.search(
+            query_embedding,
+            top_k
+        )
 
         return scores[0], indices[0]
 
     def search_by_categories(self, query, selected_categories, top_k=5):
-        query_embedding = self.engine.create_query_embedding(query)
-
-        if hasattr(query_embedding, "cpu"):
-            query_embedding = query_embedding.cpu().numpy()
-
-        query_embedding = query_embedding.astype("float32")
-        faiss.normalize_L2(query_embedding)
+        query_embedding = self._create_query_embedding(query)
 
         selected_indices = self.df[
             self.df["category"].isin(selected_categories)
