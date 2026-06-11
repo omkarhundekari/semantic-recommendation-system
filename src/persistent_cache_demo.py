@@ -2,7 +2,7 @@ from persistent_cache import PersistentCache
 
 cache = PersistentCache()
 
-query = "graph neural networks for recommendation systems"
+query = "retrieval augmented generation for question answering"
 
 scores, indices = cache.search(
     query=query,

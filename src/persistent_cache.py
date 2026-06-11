@@ -15,7 +15,7 @@ METADATA_PATH = "cache/metadata.pkl"
 
 class PersistentCache:
 
-    def __init__(self, csv_path="data/large_documents.csv"):
+    def __init__(self, csv_path="data/research_corpus.csv"):
         self.df = pd.read_csv(csv_path)
         self.documents = self.df["content"].tolist()
         self.engine = None

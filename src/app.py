@@ -21,7 +21,7 @@ st.set_page_config(
 
 @st.cache_data
 def load_documents():
-    return pd.read_csv("data/large_documents.csv")
+    return pd.read_csv("data/research_corpus.csv")
 
 
 @st.cache_resource
