@@ -1,60 +1,96 @@
+import sys
 import pandas as pd
 
 from semantic_engine import SemanticEngine
 from explainability import explain_recommendation
 
 
-df = pd.read_csv("data/documents.csv")
+# Load the real arXiv research corpus
+df = pd.read_csv("data/research_corpus.csv")
 
-documents = df["content"].tolist()
+print(f"Loaded {len(df)} research papers")
 
+# Prepare searchable paper content
+documents = df["content"].fillna("").tolist()
+
+# Initialize semantic engine
 engine = SemanticEngine()
 
+# Create embeddings for all papers
 document_embeddings = engine.create_embeddings(documents)
 
-selected_title = "Graph Neural Networks for Recommendation Systems"
+# Accept selected paper title from command line
+if len(sys.argv) > 1:
+    selected_title = " ".join(sys.argv[1:])
+else:
+    selected_title = "Graph Neural Networks in Recommender Systems: A Survey"
 
+# Try exact title match first
 matching_rows = df[df["title"].str.lower() == selected_title.lower()]
 
+# If exact title is not found, use semantic search to find the closest paper title/content
 if matching_rows.empty:
-    print("Document not found.")
-else:
-    selected_index = matching_rows.index[0]
-    selected_content = df.iloc[selected_index]["content"]
-    selected_category = df.iloc[selected_index]["category"]
+    print("\nExact paper title not found.")
+    print("Searching for the closest matching paper...\n")
 
-    top_results, similarity_scores = engine.search(
-        selected_content,
+    candidate_results, candidate_scores = engine.search(
+        selected_title,
         documents,
         document_embeddings
     )
 
-    print(f"\nSelected Document:")
-    print(selected_title)
+    selected_index = int(candidate_results[0])
+    selected_title = df.iloc[selected_index]["title"]
+else:
+    selected_index = matching_rows.index[0]
 
-    print("\nRecommended Similar Documents:\n")
+selected_content = df.iloc[selected_index]["content"]
+selected_category = df.iloc[selected_index]["category"]
 
-    display_rank = 1
+# Recommend papers similar to the selected paper content
+top_results, similarity_scores = engine.search(
+    selected_content,
+    documents,
+    document_embeddings
+)
 
-    for index in top_results:
-        index = int(index)
+print("\nSelected Paper:")
+print(selected_title)
+print(f"Category: {selected_category}")
 
-        if index == selected_index:
-            continue
+print("\nRecommended Similar Papers:\n")
 
-        score = similarity_scores[index].item()
-        recommended_category = df.iloc[index]["category"]
+display_rank = 1
 
-        explanation = explain_recommendation(
-            selected_category,
-            recommended_category,
-            score
-        )
+for index in top_results:
+    index = int(index)
 
-        print(f"{display_rank}. {df.iloc[index]['title']}")
-        print(f"Category: {recommended_category}")
-        print(f"Similarity Score: {score:.4f}")
-        print(f"Explanation: {explanation}")
-        print()
+    # Skip the selected paper itself
+    if index == selected_index:
+        continue
 
-        display_rank += 1
+    score = similarity_scores[index].item()
+    recommended_title = df.iloc[index].get("title", "Untitled Paper")
+    recommended_category = df.iloc[index].get("category", "Unknown Category")
+    recommended_url = df.iloc[index].get("url", "")
+
+    explanation = explain_recommendation(
+        selected_category,
+        recommended_category,
+        score
+    )
+
+    print(f"{display_rank}. {recommended_title}")
+    print(f"Category: {recommended_category}")
+    print(f"Similarity Score: {score:.4f}")
+    print(f"Explanation: {explanation}")
+
+    if isinstance(recommended_url, str) and recommended_url.strip():
+        print(f"URL: {recommended_url}")
+
+    print()
+
+    display_rank += 1
+
+    if display_rank > 10:
+        break
