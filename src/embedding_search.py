@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 
 from semantic_engine import SemanticEngine
@@ -16,7 +17,10 @@ print("Columns:", df.columns.tolist())
 documents = df["content"].fillna("").tolist()
 
 # User query
-query = "How do recommendation systems use graphs?"
+if len(sys.argv) > 1:
+    query = " ".join(sys.argv[1:])
+else:
+    query = "How do recommendation systems use graphs?"
 
 # Initialize the semantic search engine
 engine = SemanticEngine()
