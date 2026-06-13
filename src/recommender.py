@@ -77,7 +77,9 @@ for index in top_results:
     explanation = explain_recommendation(
         selected_category,
         recommended_category,
-        score
+        score,
+        selected_title,
+        recommended_title
     )
 
     print(f"{display_rank}. {recommended_title}")
