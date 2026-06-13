@@ -1,40 +1,45 @@
+import os
 import sys
+import faiss
 import pandas as pd
 
 from semantic_engine import SemanticEngine
-from faiss_index import FaissIndex
 
+
+index_path = "indexes/research_papers.index"
+
+if not os.path.exists(index_path):
+    print("FAISS index not found. Run: python src/build_faiss_index.py")
+    sys.exit(1)
 
 df = pd.read_csv("data/research_corpus.csv")
-documents = df["content"].fillna("").tolist()
 
 query = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "retrieval augmented generation for question answering"
 
 engine = SemanticEngine()
-
-document_embeddings = engine.create_embeddings(documents)
-
-embedding_dimension = document_embeddings.shape[1]
-faiss_index = FaissIndex(embedding_dimension)
-faiss_index.build(document_embeddings)
+index = faiss.read_index(index_path)
 
 query_embedding = engine.create_embeddings([query])
-scores, indices = faiss_index.search(query_embedding, top_k=10)
+query_embedding = query_embedding.cpu().numpy().astype("float32")
+faiss.normalize_L2(query_embedding)
+
+scores, indices = index.search(query_embedding, 10)
 
 print(f"\nLoaded {len(df)} research papers")
+print(f"Loaded FAISS index from {index_path}")
 
 print("\nUser Query:")
 print(query)
 
 print("\nTop FAISS Search Results:\n")
 
-for rank, index in enumerate(indices, start=1):
-    index = int(index)
-    score = float(scores[rank - 1])
+for rank, index_value in enumerate(indices[0], start=1):
+    index_value = int(index_value)
+    score = float(scores[0][rank - 1])
 
-    title = df.iloc[index].get("title", "Untitled Paper")
-    category = df.iloc[index].get("category", "Unknown Category")
-    url = df.iloc[index].get("url", "")
+    title = df.iloc[index_value].get("title", "Untitled Paper")
+    category = df.iloc[index_value].get("category", "Unknown Category")
+    url = df.iloc[index_value].get("url", "")
 
     print(f"{rank}. {title}")
     print(f"Category: {category}")
