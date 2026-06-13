@@ -3,11 +3,17 @@ import pandas as pd
 from semantic_engine import SemanticEngine
 
 
-# Load the dataset from CSV
-df = pd.read_csv("data/documents.csv")
+# Load the real arXiv research corpus
+df = pd.read_csv("data/research_corpus.csv")
 
-# Extract the content column as a list
-documents = df["content"].tolist()
+# Safety check: show dataset info
+print(f"Loaded {len(df)} research papers")
+print("Columns:", df.columns.tolist())
+
+# Extract searchable text
+# This assumes your real corpus has a 'content' column.
+# If your column name is different, we will adjust after checking.
+documents = df["content"].fillna("").tolist()
 
 # User query
 query = "How do recommendation systems use graphs?"
@@ -30,12 +36,19 @@ print(query)
 
 print("\nTop Search Results:\n")
 
-for rank, index in enumerate(top_results, start=1):
+for rank, index in enumerate(top_results[:10], start=1):
     index = int(index)
-
     score = similarity_scores[index].item()
 
-    print(f"{rank}. {df.iloc[index]['title']}")
-    print(f"Category: {df.iloc[index]['category']}")
+    title = df.iloc[index].get("title", "Untitled Paper")
+    category = df.iloc[index].get("category", "Unknown Category")
+    abstract = df.iloc[index].get("abstract", "")
+
+    print(f"{rank}. {title}")
+    print(f"Category: {category}")
     print(f"Similarity Score: {score:.4f}")
+
+    if isinstance(abstract, str) and abstract.strip():
+        print(f"Abstract Preview: {abstract[:250]}...")
+
     print()
