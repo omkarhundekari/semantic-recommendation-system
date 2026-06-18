@@ -6,7 +6,9 @@ from project_intelligence import (
     build_mvp_from_blueprint,
     build_advanced_features_from_blueprint,
     build_tech_stack_from_blueprint,
-    build_target_roles_from_blueprint
+    build_target_roles_from_blueprint,
+    augment_mvp_with_implementation_signals,
+    augment_tech_stack_with_implementation_technologies
 )
 
 
@@ -43,17 +45,36 @@ def generate_project_ideas(
         evidence_category = evidence_item.get("category", "general")
         source_type = evidence_item.get("source_type", "unknown")
 
+        implementation_signals = split_csv_values(
+            evidence_item.get("architecture_signals", "")
+        )
+        implementation_technologies = split_csv_values(
+            evidence_item.get("technology_signals", "")
+        )
+
         project_title = blueprint.get("project_title", "Untitled Project Idea")
         mvp_scope = build_mvp_from_blueprint(blueprint)
         advanced_extensions = build_advanced_features_from_blueprint(blueprint)
         tech_stack = build_tech_stack_from_blueprint(blueprint)
         target_roles = build_target_roles_from_blueprint(blueprint)
 
+        if source_type == "github_repository":
+            mvp_scope = augment_mvp_with_implementation_signals(
+                mvp_scope,
+                implementation_signals
+            )
+            tech_stack = augment_tech_stack_with_implementation_technologies(
+                tech_stack,
+                implementation_technologies
+            )
+
         motivation = create_evidence_motivation(
             evidence_title=evidence_title,
             evidence_content=evidence_content,
             source_type=source_type,
-            blueprint=blueprint
+            blueprint=blueprint,
+            implementation_signals=implementation_signals,
+            implementation_technologies=implementation_technologies
         )
 
         resume_bullets = create_resume_bullets(
@@ -68,6 +89,9 @@ def generate_project_ideas(
             "evidence_title": evidence_title,
             "evidence_source_type": source_type,
             "research_category": evidence_category,
+            "implementation_signals": implementation_signals,
+            "implementation_technologies": implementation_technologies,
+            "github_selection_reason": evidence_item.get("selection_reason", ""),
             "detected_domain": detected_domain,
             "detected_intent": detected_intent,
             "idea_angle": blueprint.get("idea_angle", ""),
@@ -89,7 +113,9 @@ def create_evidence_motivation(
     evidence_title: str,
     evidence_content: str,
     source_type: str,
-    blueprint: Dict
+    blueprint: Dict,
+    implementation_signals: List[str],
+    implementation_technologies: List[str]
 ) -> str:
     clean_content = evidence_content[:320].replace("\n", " ") if evidence_content else ""
     project_title = blueprint.get("project_title", "this project")
@@ -103,6 +129,33 @@ def create_evidence_motivation(
             f"{opportunity}. The generated project '{project_title}' applies that direction as: "
             f"{idea_angle}"
         )
+
+    if source_type == "github_repository":
+        signal_text = ", ".join(
+            signal.replace("_", " ")
+            for signal in implementation_signals[:5]
+        )
+
+        technology_text = ", ".join(
+            implementation_technologies[:6]
+        )
+
+        parts = [
+            f"This idea uses '{evidence_title}' as a real implementation reference.",
+            f"It informs a buildable direction for {opportunity}."
+        ]
+
+        if signal_text:
+            parts.append(
+                f"README-derived implementation signals include: {signal_text}."
+            )
+
+        if technology_text:
+            parts.append(
+                f"Relevant technology signals include: {technology_text}."
+            )
+
+        return " ".join(parts)
 
     if source_type == "research_paper":
         if clean_content:
@@ -139,6 +192,18 @@ def create_resume_bullets(
         f"Implemented core workflows using {stack_text}, with emphasis on evidence grounding, project planning, and explainable recommendations.",
         f"Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as {role_text}.",
         "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+    ]
+
+
+
+def split_csv_values(value) -> List[str]:
+    if not value:
+        return []
+
+    return [
+        item.strip()
+        for item in str(value).split(",")
+        if item.strip()
     ]
 
 

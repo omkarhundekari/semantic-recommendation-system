@@ -518,6 +518,133 @@ def build_mvp_from_blueprint(blueprint: Dict) -> List[str]:
     return base
 
 
+
+def augment_mvp_with_implementation_signals(
+    mvp_scope: List[str],
+    implementation_signals: List[str]
+) -> List[str]:
+    """
+    Adds a small number of evidence-informed MVP steps when a project idea
+    is grounded by an enriched GitHub implementation reference.
+    """
+    signal_steps = {
+        "document_ingestion": (
+            "Add a document-ingestion pipeline that validates files and "
+            "prepares structured records for downstream processing."
+        ),
+        "retrieval_and_search": (
+            "Implement semantic retrieval with ranked results and clear "
+            "evidence links for each response or recommendation."
+        ),
+        "vector_database": (
+            "Store embeddings in a lightweight vector index and support "
+            "similarity-based retrieval."
+        ),
+        "knowledge_graph": (
+            "Model important entities and relationships so users can inspect "
+            "connections behind the recommendation."
+        ),
+        "api_service_layer": (
+            "Expose the core workflow through validated API endpoints with "
+            "structured request and response models."
+        ),
+        "web_dashboard": (
+            "Add an interactive dashboard for filters, metrics, and drill-down "
+            "views of the generated findings."
+        ),
+        "evaluation_and_monitoring": (
+            "Capture evaluation metrics and monitoring signals so users can "
+            "compare quality, reliability, or risk across runs."
+        ),
+        "experiment_tracking": (
+            "Record experiment configurations, metrics, and model versions "
+            "for reproducible comparisons."
+        ),
+        "deployment_and_containers": (
+            "Containerize the prototype so the workflow runs consistently "
+            "across local development and deployment environments."
+        ),
+        "cloud_and_serverless": (
+            "Add a cloud-oriented integration layer for resource, service, "
+            "or serverless workload inputs."
+        ),
+        "fraud_and_risk_modeling": (
+            "Include risk scoring, anomaly flags, and explanation fields for "
+            "each suspicious transaction or decision."
+        ),
+        "clinical_nlp": (
+            "Use de-identified healthcare-style text or records and clearly "
+            "separate model output from safety and limitation notes."
+        ),
+        "computer_vision": (
+            "Process sample images or video frames and show detections with "
+            "confidence scores and review-friendly output."
+        ),
+    }
+
+    augmented_scope = list(mvp_scope)
+
+    for signal in implementation_signals:
+        step = signal_steps.get(signal)
+
+        if step and step not in augmented_scope:
+            augmented_scope.append(step)
+
+        # Preserve an achievable MVP. Advanced work stays in extensions.
+        if len(augmented_scope) >= len(mvp_scope) + 2:
+            break
+
+    return augmented_scope
+
+
+def augment_tech_stack_with_implementation_technologies(
+    tech_stack: List[str],
+    implementation_technologies: List[str]
+) -> List[str]:
+    """
+    Keeps the domain-based stack, but gives concrete technologies observed
+    in a trusted implementation reference priority in the final list.
+    """
+    reference_technologies = []
+
+    for technology in implementation_technologies:
+        technology = str(technology).strip()
+
+        if technology and technology not in reference_technologies:
+            reference_technologies.append(technology)
+
+    if not reference_technologies:
+        return tech_stack[:12]
+
+    generic_equivalents = {
+        "AWS": {"AWS Concepts"},
+        "OpenCV": {"OpenCV Concepts"},
+    }
+
+    filtered_stack = []
+
+    for technology in tech_stack:
+        is_generic_duplicate = any(
+            technology in generic_names
+            and concrete_name in reference_technologies
+            for concrete_name, generic_names in generic_equivalents.items()
+        )
+
+        if technology in reference_technologies or is_generic_duplicate:
+            continue
+
+        if technology not in filtered_stack:
+            filtered_stack.append(technology)
+
+    max_reference_items = min(len(reference_technologies), 3)
+    max_base_items = 12 - max_reference_items
+
+    return (
+        filtered_stack[:max_base_items]
+        + reference_technologies[:max_reference_items]
+    )[:12]
+
+
 def build_advanced_features_from_blueprint(blueprint: Dict) -> List[str]:
     domain = normalize_domain(blueprint.get("detected_domain", "general"))
 

@@ -8,6 +8,7 @@ from semantic_engine import SemanticEngine
 
 
 GITHUB_CORPUS_PATH = "data/github_project_corpus.csv"
+GITHUB_DETAILS_PATH = "data/github_repository_details.csv"
 MIN_SIMILARITY_SCORE = 0.12
 
 NON_IMPLEMENTATION_TERMS = [
@@ -47,6 +48,7 @@ github_df = None
 github_documents = None
 github_engine = None
 github_embeddings = None
+github_details_by_title = None
 
 
 DOMAIN_CATEGORY_MAP = {
@@ -72,6 +74,36 @@ DOMAIN_CATEGORY_MAP = {
 }
 
 
+
+def load_github_repository_details() -> Dict[str, Dict]:
+    """
+    Loads optional README-derived implementation signals.
+
+    The main GitHub corpus still works even if this local enrichment file
+    does not exist yet.
+    """
+    if not os.path.exists(GITHUB_DETAILS_PATH):
+        return {}
+
+    try:
+        details_df = pd.read_csv(GITHUB_DETAILS_PATH).fillna("")
+    except Exception:
+        return {}
+
+    if "title" not in details_df.columns:
+        return {}
+
+    details_by_title = {}
+
+    for _, row in details_df.iterrows():
+        title = str(row.get("title", "")).strip()
+
+        if title:
+            details_by_title[title] = row.to_dict()
+
+    return details_by_title
+
+
 def load_github_corpus() -> None:
     """
     Loads the saved GitHub repository corpus once and creates embeddings
@@ -81,6 +113,7 @@ def load_github_corpus() -> None:
     global github_documents
     global github_engine
     global github_embeddings
+    global github_details_by_title
 
     if github_df is not None:
         return
@@ -92,6 +125,7 @@ def load_github_corpus() -> None:
         )
 
     github_df = pd.read_csv(GITHUB_CORPUS_PATH).fillna("")
+    github_details_by_title = load_github_repository_details()
 
     required_columns = {
         "title",
@@ -156,11 +190,20 @@ def calculate_quality_score(item: Dict) -> float:
 
     quality_score = semantic_score
 
-    # Popularity is a small supporting signal, not the main ranking factor.
+    # Popularity is a supporting signal, not the main ranking factor.
     quality_score += min(np.log10(max(stars, 1)) * 0.02, 0.08)
 
     if any(term in combined_text for term in IMPLEMENTATION_SIGNAL_TERMS):
         quality_score += 0.04
+
+    # Approved repositories were manually reviewed and enriched from README content.
+    # Prefer them when they are semantically relevant.
+    if item.get("trust_level") == "approved_implementation_reference":
+        quality_score += 0.18
+
+    # README-enriched repositories provide stronger downstream implementation signals.
+    if item.get("readme_status") == "success":
+        quality_score += 0.05
 
     # Missing language metadata is a mild warning, not a rejection.
     if language in {"", "nan", "unknown"}:
@@ -233,8 +276,11 @@ def search_github_project_corpus(
         except (TypeError, ValueError):
             stars = 0
 
+        repository_title = str(row["title"])
+        details = github_details_by_title.get(repository_title, {})
+
         candidates.append({
-            "title": row["title"],
+            "title": repository_title,
             "abstract": row["content"],
             "content": row["content"],
             "category": row["category"],
@@ -249,6 +295,12 @@ def search_github_project_corpus(
             "stars": stars,
             "language": row.get("language", ""),
             "updated_at": row.get("updated_at", ""),
+            "readme_status": details.get("readme_status", ""),
+            "readme_excerpt": details.get("readme_excerpt", ""),
+            "architecture_signals": details.get("architecture_signals", ""),
+            "technology_signals": details.get("technology_signals", ""),
+            "selection_reason": details.get("selection_reason", ""),
+            "trust_level": details.get("trust_level", ""),
             "score": float(score)
         })
 
