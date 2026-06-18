@@ -7,20 +7,8 @@ from semantic_engine import SemanticEngine
 # Load the real arXiv research corpus
 df = pd.read_csv("data/research_corpus.csv")
 
-# Safety check: show dataset info
-print(f"Loaded {len(df)} research papers")
-print("Columns:", df.columns.tolist())
-
 # Extract searchable text
-# This assumes your real corpus has a 'content' column.
-# If your column name is different, we will adjust after checking.
 documents = df["content"].fillna("").tolist()
-
-# User query
-if len(sys.argv) > 1:
-    query = " ".join(sys.argv[1:])
-else:
-    query = "How do recommendation systems use graphs?"
 
 # Initialize the semantic search engine
 engine = SemanticEngine()
@@ -28,31 +16,68 @@ engine = SemanticEngine()
 # Convert documents into embeddings
 document_embeddings = engine.create_embeddings(documents)
 
-# Search for the most similar documents
-top_results, similarity_scores = engine.search(
-    query,
-    documents,
-    document_embeddings
-)
 
-print("\nUser Query:")
-print(query)
+def search_papers(query, top_k=5):
+    """
+    Search research papers using semantic similarity and return structured results.
+    This function is used by the project idea generator.
+    """
 
-print("\nTop Search Results:\n")
+    top_results, similarity_scores = engine.search(
+        query,
+        documents,
+        document_embeddings
+    )
 
-for rank, index in enumerate(top_results[:10], start=1):
-    index = int(index)
-    score = similarity_scores[index].item()
+    results = []
 
-    title = df.iloc[index].get("title", "Untitled Paper")
-    category = df.iloc[index].get("category", "Unknown Category")
-    abstract = df.iloc[index].get("abstract", "")
+    for index in top_results[:top_k]:
+        index = int(index)
+        score = similarity_scores[index].item()
 
-    print(f"{rank}. {title}")
-    print(f"Category: {category}")
-    print(f"Similarity Score: {score:.4f}")
+        paper = df.iloc[index]
 
-    if isinstance(abstract, str) and abstract.strip():
-        print(f"Abstract Preview: {abstract[:250]}...")
+        results.append({
+            "title": paper.get("title", "Untitled Paper"),
+            "abstract": paper.get("content", ""),
+            "content": paper.get("content", ""),
+            "category": paper.get("category", "Unknown Category"),
+            "authors": paper.get("authors", ""),
+            "published": paper.get("published", ""),
+            "url": paper.get("url", ""),
+            "source": paper.get("source", ""),
+            "score": float(score)
+        })
 
-    print()
+    return results
+
+
+if __name__ == "__main__":
+    # Safety check: show dataset info only when running this file directly
+    print(f"Loaded {len(df)} research papers")
+    print("Columns:", df.columns.tolist())
+
+    # User query
+    if len(sys.argv) > 1:
+        query = " ".join(sys.argv[1:])
+    else:
+        query = "How do recommendation systems use graphs?"
+
+    results = search_papers(query, top_k=10)
+
+    print("\nUser Query:")
+    print(query)
+
+    print("\nTop Search Results:\n")
+
+    for rank, result in enumerate(results, start=1):
+        print(f"{rank}. {result['title']}")
+        print(f"Category: {result['category']}")
+        print(f"Similarity Score: {result['score']:.4f}")
+
+        abstract = result.get("abstract", "")
+
+        if isinstance(abstract, str) and abstract.strip():
+            print(f"Abstract Preview: {abstract[:250]}...")
+
+        print()

@@ -1,5 +1,20 @@
+# Python environment and cache
 venv/
 __pycache__/
 *.pyc
+
+# Operating system files
 .DS_Store
-.envindexes/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Generated local artifacts
+indexes/
+outputs/
+
+# Live GitHub ingestion artifacts
+data/github_ingestion_state.json
+data/github_project_corpus.csv
