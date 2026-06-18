@@ -430,6 +430,52 @@ def render_project_ideas(data):
             st.markdown("#### Research / Evidence Motivation")
             st.write(idea.get("research_motivation", "Not available"))
 
+            if idea.get("evidence_source_type") == "github_repository":
+                st.markdown("#### Implementation Reference")
+
+                repository_name = idea.get(
+                    "evidence_title",
+                    "GitHub implementation reference"
+                )
+                repository_url = idea.get("evidence_url", "")
+
+                if repository_url:
+                    st.markdown(
+                        f"**Repository:** [{repository_name}]({repository_url})"
+                    )
+                else:
+                    st.markdown(f"**Repository:** {repository_name}")
+
+                selection_reason = idea.get("github_selection_reason", "")
+                if selection_reason:
+                    st.markdown("**Why this reference was selected**")
+                    st.write(selection_reason)
+
+                implementation_signals = idea.get("implementation_signals", [])
+                implementation_technologies = idea.get(
+                    "implementation_technologies",
+                    []
+                )
+
+                if implementation_signals:
+                    st.markdown("**README-derived implementation signals**")
+                    render_list(
+                        [
+                            signal.replace("_", " ").title()
+                            for signal in implementation_signals
+                        ]
+                    )
+
+                if implementation_technologies:
+                    st.markdown("**Technologies observed in the reference**")
+                    render_list(implementation_technologies)
+
+                if implementation_signals or implementation_technologies:
+                    st.caption(
+                        "These repository signals were used as implementation "
+                        "hints for the MVP scope and suggested technology stack."
+                    )
+
             tab1, tab2, tab3, tab4, tab5 = st.tabs(
                 [
                     "MVP Scope",

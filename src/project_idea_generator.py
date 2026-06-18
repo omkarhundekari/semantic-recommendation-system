@@ -87,6 +87,7 @@ def generate_project_ideas(
             "project_title": project_title,
             "based_on_paper": evidence_title,
             "evidence_title": evidence_title,
+            "evidence_url": evidence_item.get("url", ""),
             "evidence_source_type": source_type,
             "research_category": evidence_category,
             "implementation_signals": implementation_signals,
