@@ -1,5 +1,7 @@
 from typing import Dict, List
 
+from evidence_intelligence import build_evidence_intelligence
+
 
 DOMAIN_ALIASES = {
     "security": "cybersecurity",
@@ -228,25 +230,58 @@ def build_project_intelligence(
     domain = normalize_domain(detected_domain)
     combined_text = build_combined_text(evidence_items, user_query)
 
+    evidence_profile = build_evidence_intelligence(
+        evidence_items=evidence_items,
+        user_query=user_query,
+        detected_domain=domain,
+    )
+
     themes = extract_project_themes(combined_text, domain)
     skills = extract_technical_skills(combined_text, domain)
     opportunities = identify_project_opportunities(combined_text, domain)
+
+    implementation_components = evidence_profile[
+        "implementation_signals"
+    ]["architecture_components"]
+
+    for component in implementation_components[:3]:
+        readable_component = component.replace("_", " ").title()
+
+        if readable_component not in themes:
+            themes.append(readable_component)
+
+    domain_technologies = evidence_profile[
+        "implementation_signals"
+    ]["domain_relevant_technologies"]
+
+    for technology in domain_technologies:
+        if technology not in skills:
+            skills.append(technology)
+
+    evidence_opportunity = evidence_profile[
+        "project_opportunity"
+    ]["project_opportunity"]
+
+    if evidence_opportunity and evidence_opportunity not in opportunities:
+        opportunities.insert(0, evidence_opportunity)
 
     blueprints = generate_diverse_project_ideas(
         evidence_items=evidence_items,
         user_query=user_query,
         detected_domain=domain,
-        themes=themes,
-        skills=skills,
+        themes=themes[:8],
+        skills=skills[:12],
         opportunities=opportunities,
+        evidence_profile=evidence_profile,
         max_ideas=max_ideas
     )
 
     return {
         "detected_domain": domain,
-        "themes": themes,
-        "skills": skills,
-        "opportunities": opportunities,
+        "themes": themes[:8],
+        "skills": skills[:12],
+        "opportunities": opportunities[:6],
+        "evidence_profile": evidence_profile,
         "idea_blueprints": blueprints
     }
 
@@ -323,6 +358,7 @@ def generate_diverse_project_ideas(
     themes: List[str],
     skills: List[str],
     opportunities: List[str],
+    evidence_profile: Dict,
     max_ideas: int = 3
 ) -> List[Dict]:
     domain = normalize_domain(detected_domain)
@@ -346,11 +382,95 @@ def generate_diverse_project_ideas(
             themes=themes,
             skills=skills,
             opportunities=opportunities,
+            evidence_profile=evidence_profile,
             index=index
         )
         blueprints.append(blueprint)
 
     return blueprints
+
+
+
+def build_blueprint_evidence_focus(
+    evidence_profile: Dict,
+    index: int
+) -> Dict[str, str]:
+    opportunity = evidence_profile["project_opportunity"]
+    research_signals = evidence_profile["research_signals"]
+    implementation_signals = evidence_profile["implementation_signals"]
+    pattern_signals = evidence_profile["project_pattern_signals"]
+
+    architecture = implementation_signals["architecture_components"]
+    limitations = research_signals["limitations"]
+    workflow_clues = pattern_signals["workflow_clues"]
+
+    if index == 0:
+        return {
+            "focus_type": "buildable_gap",
+            "focus_statement": opportunity["buildable_gap"],
+            "evidence_driven_angle": opportunity["project_opportunity"],
+        }
+
+    if index == 1 and architecture:
+        readable_components = ", ".join(
+            component.replace("_", " ")
+            for component in architecture[:3]
+        )
+
+        return {
+            "focus_type": "implementation_architecture",
+            "focus_statement": (
+                "Use the retrieved implementation evidence to shape a smaller, "
+                "buildable architecture around: "
+                f"{readable_components}."
+            ),
+            "evidence_driven_angle": (
+                "Turn the strongest observed implementation components into "
+                "a focused student-scale prototype."
+            ),
+        }
+
+    if limitations:
+        readable_limitations = ", ".join(
+            limitation.replace("_", " ")
+            for limitation in limitations[:3]
+        )
+
+        return {
+            "focus_type": "research_or_reliability_gap",
+            "focus_statement": (
+                "Address evidence-related concerns around: "
+                f"{readable_limitations}."
+            ),
+            "evidence_driven_angle": (
+                "Build a project that makes these quality or reliability "
+                "concerns visible and actionable."
+            ),
+        }
+
+    if workflow_clues:
+        readable_workflow = ", ".join(workflow_clues[:3])
+
+        return {
+            "focus_type": "workflow_extension",
+            "focus_statement": (
+                "Extend the practical workflow suggested by project-pattern "
+                f"evidence: {readable_workflow}."
+            ),
+            "evidence_driven_angle": (
+                "Convert the retrieved workflow clues into a differentiated "
+                "portfolio-quality extension."
+            ),
+        }
+
+    return {
+        "focus_type": "evidence_extension",
+        "focus_statement": opportunity["evidence_summary"],
+        "evidence_driven_angle": (
+            "Use the available evidence to create a practical extension "
+            "beyond the base project workflow."
+        ),
+    }
 
 
 def build_idea_blueprint(
@@ -361,6 +481,7 @@ def build_idea_blueprint(
     themes: List[str],
     skills: List[str],
     opportunities: List[str],
+    evidence_profile: Dict,
     index: int
 ) -> Dict:
     evidence_title = evidence_item.get("title", "")
@@ -373,6 +494,11 @@ def build_idea_blueprint(
         base_skills=skills
     )
 
+    evidence_focus = build_blueprint_evidence_focus(
+        evidence_profile=evidence_profile,
+        index=index
+    )
+
     return {
         "project_title": title,
         "idea_angle": angle,
@@ -381,7 +507,28 @@ def build_idea_blueprint(
         "skills": refined_skills,
         "evidence_title": evidence_title,
         "evidence_category": evidence_category,
-        "detected_domain": detected_domain
+        "detected_domain": detected_domain,
+        "evidence_focus_type": evidence_focus["focus_type"],
+        "evidence_focus_statement": evidence_focus["focus_statement"],
+        "evidence_driven_angle": evidence_focus["evidence_driven_angle"],
+        "evidence_buildable_gap": evidence_profile[
+            "project_opportunity"
+        ]["buildable_gap"],
+        "evidence_project_opportunity": evidence_profile[
+            "project_opportunity"
+        ]["project_opportunity"],
+        "evidence_summary": evidence_profile[
+            "project_opportunity"
+        ]["evidence_summary"],
+        "evidence_confidence": evidence_profile[
+            "evidence_confidence"
+        ],
+        "domain_relevant_technologies": evidence_profile[
+            "implementation_signals"
+        ]["domain_relevant_technologies"],
+        "source_contributions": evidence_profile[
+            "implementation_signals"
+        ]["source_contributions"]
     }
 
 

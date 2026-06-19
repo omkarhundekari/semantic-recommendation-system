@@ -12,6 +12,55 @@ from project_intelligence import (
 )
 
 
+def select_evidence_for_focus(
+    evidence_items: List[Dict],
+    focus_type: str,
+    fallback_index: int
+) -> Dict:
+    """
+    Selects an evidence item whose source type matches the role of the
+    generated project idea.
+    """
+    if not evidence_items:
+        return {}
+
+    preferred_sources = {
+        "buildable_gap": [
+            "project_pattern",
+            "github_repository",
+            "research_paper",
+        ],
+        "implementation_architecture": [
+            "github_repository",
+            "project_pattern",
+            "research_paper",
+        ],
+        "research_or_reliability_gap": [
+            "research_paper",
+            "github_repository",
+            "project_pattern",
+        ],
+        "workflow_extension": [
+            "project_pattern",
+            "github_repository",
+            "research_paper",
+        ],
+    }
+
+    source_order = preferred_sources.get(
+        focus_type,
+        ["project_pattern", "github_repository", "research_paper"],
+    )
+
+    for source_type in source_order:
+        for item in evidence_items:
+            if item.get("source_type") == source_type:
+                return item
+
+    return evidence_items[fallback_index % len(evidence_items)]
+
+
+
 def generate_project_ideas(
     search_results: List[Dict],
     user_query: str,
@@ -35,7 +84,11 @@ def generate_project_ideas(
     ideas = []
 
     for index, blueprint in enumerate(blueprints[:max_ideas]):
-        evidence_item = search_results[index % len(search_results)]
+        evidence_item = select_evidence_for_focus(
+            evidence_items=search_results,
+            focus_type=blueprint.get("evidence_focus_type", ""),
+            fallback_index=index,
+        )
 
         evidence_title = evidence_item.get("title", "Untitled Evidence Item")
         evidence_content = evidence_item.get(
@@ -68,6 +121,12 @@ def generate_project_ideas(
                 implementation_technologies
             )
 
+        mvp_scope, advanced_extensions = apply_evidence_focus_to_roadmap(
+            mvp_scope=mvp_scope,
+            advanced_extensions=advanced_extensions,
+            blueprint=blueprint
+        )
+
         motivation = create_evidence_motivation(
             evidence_title=evidence_title,
             evidence_content=evidence_content,
@@ -97,6 +156,36 @@ def generate_project_ideas(
             "detected_intent": detected_intent,
             "idea_angle": blueprint.get("idea_angle", ""),
             "opportunity_area": blueprint.get("opportunity", ""),
+            "evidence_focus_type": blueprint.get("evidence_focus_type", ""),
+            "evidence_focus_statement": blueprint.get(
+                "evidence_focus_statement",
+                ""
+            ),
+            "evidence_driven_angle": blueprint.get(
+                "evidence_driven_angle",
+                ""
+            ),
+            "evidence_buildable_gap": blueprint.get(
+                "evidence_buildable_gap",
+                ""
+            ),
+            "evidence_project_opportunity": blueprint.get(
+                "evidence_project_opportunity",
+                ""
+            ),
+            "evidence_summary": blueprint.get("evidence_summary", ""),
+            "evidence_confidence": blueprint.get(
+                "evidence_confidence",
+                {}
+            ),
+            "domain_relevant_technologies": blueprint.get(
+                "domain_relevant_technologies",
+                []
+            ),
+            "source_contributions": blueprint.get(
+                "source_contributions",
+                []
+            ),
             "extracted_themes": blueprint.get("themes", []),
             "extracted_skills": blueprint.get("skills", []),
             "research_motivation": motivation,
@@ -108,6 +197,57 @@ def generate_project_ideas(
         })
 
     return ideas
+
+
+def apply_evidence_focus_to_roadmap(
+    mvp_scope: List[str],
+    advanced_extensions: List[str],
+    blueprint: Dict
+) -> tuple:
+    """
+    Adds one evidence-specific roadmap decision so each generated idea is
+    meaningfully shaped by its distinct evidence focus.
+    """
+    focus_type = blueprint.get("evidence_focus_type", "")
+    focus_statement = blueprint.get("evidence_focus_statement", "")
+    updated_mvp = list(mvp_scope)
+    updated_extensions = list(advanced_extensions)
+
+    if focus_type == "buildable_gap":
+        step = (
+            "Define a measurable success metric that proves the project "
+            "reduces the specific user problem identified in the evidence."
+        )
+        if step not in updated_mvp:
+            updated_mvp.append(step)
+
+    elif focus_type == "implementation_architecture":
+        step = (
+            "Document the core architecture boundaries and trace how data "
+            "moves between the major implementation components."
+        )
+        if step not in updated_mvp:
+            updated_mvp.append(step)
+
+    elif focus_type == "research_or_reliability_gap":
+        step = (
+            "Add reliability checks, warning states, and evidence-based "
+            "quality indicators for risky or low-confidence outputs."
+        )
+        if step not in updated_mvp:
+            updated_mvp.append(step)
+
+    elif focus_type == "workflow_extension":
+        extension = (
+            "Add a differentiated workflow extension based on the retrieved "
+            "project-pattern evidence: "
+            + focus_statement
+        )
+        if extension not in updated_extensions:
+            updated_extensions.append(extension)
+
+    return updated_mvp, updated_extensions
+
 
 
 def create_evidence_motivation(
