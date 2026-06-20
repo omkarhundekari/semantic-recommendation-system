@@ -1,5 +1,6 @@
 import re
-from typing import Dict, List
+from difflib import SequenceMatcher, get_close_matches
+from typing import Dict, List, Tuple
 
 
 DOMAIN_KEYWORDS = {
@@ -256,6 +257,112 @@ DOMAIN_KEYWORDS = {
 }
 
 
+def build_typo_correction_anchors() -> List[str]:
+    """
+    Builds the correction vocabulary from all supported single-word technical
+    keywords, then adds common framework and platform aliases.
+    """
+    anchors = set()
+
+    for keywords in DOMAIN_KEYWORDS.values():
+        for keyword in keywords:
+            normalized = keyword.lower().strip()
+
+            if (
+                " " not in normalized
+                and len(normalized) >= 3
+                and re.fullmatch(r"[a-z0-9+#./-]+", normalized)
+            ):
+                anchors.add(normalized)
+
+    anchors.update({
+        "react",
+        "nextjs",
+        "fastapi",
+        "postgres",
+        "postgresql",
+        "javascript",
+        "typescript",
+        "docker",
+        "kubernetes",
+        "terraform",
+        "cloud",
+        "serverless",
+        "cybersecurity",
+        "fintech",
+        "healthcare",
+        "blockchain",
+        "frontend",
+        "backend",
+        "database",
+        "developer",
+        "monitoring",
+        "deployment",
+        "recommendation",
+    })
+
+    return sorted(anchors)
+
+
+TYPO_CORRECTION_ANCHORS = build_typo_correction_anchors()
+
+
+
+def correct_query_typos(query: str) -> Tuple[str, List[Dict[str, str]]]:
+    """
+    Corrects only high-confidence misspellings of known technical topic words.
+    This avoids guessing broadly from arbitrary user text.
+    """
+    cleaned_query = clean_query(query).lower()
+
+    if not cleaned_query:
+        return cleaned_query, []
+
+    corrected_tokens = []
+    corrections = []
+
+    for token in cleaned_query.split():
+        normalized_token = re.sub(r"[^a-z0-9+#./-]", "", token)
+
+        if (
+            len(normalized_token) < 4
+            or normalized_token in TYPO_CORRECTION_ANCHORS
+        ):
+            corrected_tokens.append(token)
+            continue
+
+        matches = get_close_matches(
+            normalized_token,
+            TYPO_CORRECTION_ANCHORS,
+            n=1,
+            cutoff=0.80
+        )
+
+        if matches:
+            corrected_token = matches[0]
+            similarity = SequenceMatcher(
+                None,
+                normalized_token,
+                corrected_token
+            ).ratio()
+
+            confidence = "high" if similarity >= 0.88 else "medium"
+
+            corrections.append({
+                "original": token,
+                "corrected": corrected_token,
+                "confidence": confidence,
+                "similarity": round(similarity, 2),
+            })
+
+            corrected_tokens.append(corrected_token)
+        else:
+            corrected_tokens.append(token)
+
+    return " ".join(corrected_tokens), corrections
+
+
+
 PROJECT_INTENT_KEYWORDS = [
     "project",
     "projects",
@@ -298,7 +405,7 @@ def clean_query(query: str) -> str:
 
 
 def detect_domain(query: str) -> str:
-    cleaned_query = clean_query(query).lower()
+    cleaned_query, _ = correct_query_typos(query)
 
     if not cleaned_query:
         return "general"
@@ -326,7 +433,7 @@ def detect_domain(query: str) -> str:
 
 
 def detect_intent(query: str) -> str:
-    cleaned_query = clean_query(query).lower()
+    cleaned_query, _ = correct_query_typos(query)
 
     has_project_intent = any(
         keyword in cleaned_query
@@ -393,7 +500,7 @@ def get_generic_fallback_expansion(domain: str, intent: str) -> str:
 
 
 def expand_query(user_query: str) -> str:
-    cleaned_query = clean_query(user_query)
+    cleaned_query, _ = correct_query_typos(user_query)
     domain = detect_domain(cleaned_query)
     intent = detect_intent(cleaned_query)
 
@@ -416,13 +523,25 @@ def expand_query(user_query: str) -> str:
 
 def get_query_metadata(user_query: str) -> Dict:
     cleaned_query = clean_query(user_query)
-    detected_domain = detect_domain(cleaned_query)
-    detected_intent = detect_intent(cleaned_query)
-    expanded_query = expand_query(cleaned_query)
+    corrected_query, corrections = correct_query_typos(cleaned_query)
+
+    detected_domain = detect_domain(corrected_query)
+    detected_intent = detect_intent(corrected_query)
+    expanded_query = expand_query(corrected_query)
+
+    medium_confidence_corrections = [
+        correction
+        for correction in corrections
+        if correction.get("confidence") == "medium"
+    ]
 
     return {
         "original_query": user_query,
         "cleaned_query": cleaned_query,
+        "corrected_query": corrected_query,
+        "query_corrections": corrections,
+        "medium_confidence_corrections": medium_confidence_corrections,
+        "query_requires_confirmation": bool(medium_confidence_corrections),
         "expanded_query": expanded_query,
         "detected_domain": detected_domain,
         "detected_intent": detected_intent

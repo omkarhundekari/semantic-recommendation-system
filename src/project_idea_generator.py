@@ -272,31 +272,12 @@ def create_evidence_motivation(
         )
 
     if source_type == "github_repository":
-        signal_text = ", ".join(
-            signal.replace("_", " ")
-            for signal in implementation_signals[:5]
+        return (
+            f"This idea uses '{evidence_title}' as a real implementation reference. "
+            f"It informs a buildable direction for {opportunity}. "
+            f"See the implementation-reference section below for the specific "
+            f"architecture and technology signals."
         )
-
-        technology_text = ", ".join(
-            implementation_technologies[:6]
-        )
-
-        parts = [
-            f"This idea uses '{evidence_title}' as a real implementation reference.",
-            f"It informs a buildable direction for {opportunity}."
-        ]
-
-        if signal_text:
-            parts.append(
-                f"README-derived implementation signals include: {signal_text}."
-            )
-
-        if technology_text:
-            parts.append(
-                f"Relevant technology signals include: {technology_text}."
-            )
-
-        return " ".join(parts)
 
     if source_type == "research_paper":
         if clean_content:

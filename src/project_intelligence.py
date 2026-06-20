@@ -632,9 +632,51 @@ def infer_domain_from_query(query: str) -> str:
     return "general"
 
 
+
+IDEA_MVP_TEMPLATES = {
+    "frontend architecture intelligence platform": [
+        "Accept a GitHub repository URL or local project folder as the analysis input.",
+        "Parse the frontend source tree and identify components, routes, shared utilities, and major dependencies.",
+        "Build a component and dependency map that highlights oversized, duplicated, or tightly coupled modules.",
+        "Apply transparent architecture rules and generate prioritized refactoring recommendations.",
+        "Show an interactive dashboard with architecture findings, evidence links, and recommended next actions.",
+        "Export a concise architecture-health report for the repository.",
+    ],
+    "design system quality dashboard": [
+        "Accept a frontend repository or component library as the analysis input.",
+        "Scan components for repeated colors, spacing values, typography styles, and inconsistent UI patterns.",
+        "Compare component usage against a configurable set of design tokens and accessibility rules.",
+        "Calculate a consistency score with clear violations and affected files or components.",
+        "Show a dashboard for design-system coverage, accessibility findings, and prioritized cleanup tasks.",
+    ],
+    "frontend performance optimization assistant": [
+        "Accept a deployed URL or sample Lighthouse/Web Vitals report as the analysis input.",
+        "Ingest performance metrics such as LCP, CLS, INP, bundle size, and unused JavaScript signals.",
+        "Map weak metrics to likely causes such as image weight, render blocking, large bundles, or slow routes.",
+        "Rank performance fixes by estimated user impact and implementation effort.",
+        "Show before-and-after performance reports with recommended optimization actions.",
+        "Track performance results across multiple analysis runs.",
+    ],
+}
+
+
+def get_idea_specific_mvp(title: str) -> List[str]:
+    normalized_title = str(title).strip().lower()
+
+    for idea_key, steps in IDEA_MVP_TEMPLATES.items():
+        if idea_key in normalized_title:
+            return list(steps)
+
+    return []
+
+
 def build_mvp_from_blueprint(blueprint: Dict) -> List[str]:
     title = blueprint.get("project_title", "Project")
     domain = normalize_domain(blueprint.get("detected_domain", "general"))
+
+    idea_specific_mvp = get_idea_specific_mvp(title)
+    if idea_specific_mvp:
+        return idea_specific_mvp
 
     base = [
         f"Create the core workflow for {title}.",

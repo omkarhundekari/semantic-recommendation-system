@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from source_router import retrieve_evidence
+from query_expander import get_query_metadata
 from project_idea_generator import generate_project_ideas
 from feasibility_scorer import score_project_feasibility
 from export_project_ideas import export_project_ideas_to_json
@@ -18,8 +19,56 @@ st.set_page_config(
 )
 
 
-def build_project_pipeline(query, top_k=3):
-    evidence_payload = retrieve_evidence(query, top_k=top_k)
+def build_project_pipeline(query, top_k=6):
+    query_metadata = get_query_metadata(query)
+    corrected_query = query_metadata.get("corrected_query", query)
+
+    if query_metadata.get("query_requires_confirmation"):
+        return {
+            "query": query,
+            "corrected_query": corrected_query,
+            "query_corrections": query_metadata.get("query_corrections", []),
+            "query_status": "needs_correction_confirmation",
+            "confirmation_message": (
+                f"Did you mean: {corrected_query}?"
+            ),
+            "project_ideas": [],
+            "retrieved_papers": [],
+            "research_results": [],
+            "project_results": [],
+            "total_project_ideas": 0,
+            "output_path": "",
+            "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+    if query_metadata.get("detected_domain") == "general":
+        return {
+            "query": query,
+            "corrected_query": corrected_query,
+            "query_corrections": query_metadata.get("query_corrections", []),
+            "query_status": "needs_clarification",
+            "clarification_message": (
+                "I could not confidently identify a supported technical topic "
+                "from this query yet."
+            ),
+            "suggested_topics": [
+                "RAG project ideas",
+                "React portfolio projects",
+                "Cloud cost optimization projects",
+                "MLOps project ideas",
+                "Cybersecurity automation projects",
+                "Healthcare AI project ideas",
+            ],
+            "project_ideas": [],
+            "retrieved_papers": [],
+            "research_results": [],
+            "project_results": [],
+            "total_project_ideas": 0,
+            "output_path": "",
+            "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+    evidence_payload = retrieve_evidence(corrected_query, top_k=top_k)
 
     retrieved_evidence = evidence_payload["merged_results"]
     project_ideas = generate_project_ideas(retrieved_evidence, query)
@@ -35,6 +84,9 @@ def build_project_pipeline(query, top_k=3):
 
     return {
         "query": query,
+        "corrected_query": corrected_query,
+        "query_corrections": query_metadata.get("query_corrections", []),
+        "query_status": "ready",
         "expanded_query": evidence_payload["expanded_query"],
         "detected_domain": evidence_payload["detected_domain"],
         "detected_intent": evidence_payload["detected_intent"],
@@ -110,15 +162,16 @@ def render_header():
 def render_sidebar():
     st.sidebar.header("Controls")
 
-    top_k = st.sidebar.slider(
-        "Evidence items to retrieve",
-        min_value=3,
-        max_value=10,
-        value=3,
-        step=1
-    )
-
     load_latest = st.sidebar.button("Load Latest Saved Output")
+
+    developer_view = st.sidebar.checkbox(
+        "Developer / Evidence View",
+        value=False,
+        help=(
+            "Show retrieval details, query routing, and analytics used to "
+            "inspect the recommendation pipeline."
+        )
+    )
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Test queries")
@@ -133,7 +186,7 @@ def render_sidebar():
         """
     )
 
-    return top_k, load_latest
+    return load_latest, developer_view
 
 
 def render_search_box():
@@ -151,25 +204,29 @@ def render_search_box():
 
 def render_summary_metrics(data):
     project_ideas = data.get("project_ideas", [])
-    feasibility_scores = []
+    total_ideas = len(project_ideas)
 
+    profile_counts = {}
     for idea in project_ideas:
         feasibility = idea.get("feasibility_analysis", {})
-        score = feasibility.get("feasibility_score")
+        profile = feasibility.get("build_profile", {})
+        scope = profile.get("scope", "Unknown")
+        profile_counts[scope] = profile_counts.get(scope, 0) + 1
 
-        if isinstance(score, (int, float)):
-            feasibility_scores.append(score)
+    profile_order = ["Small", "Moderate", "Ambitious", "Unknown"]
+    profile_summary = " · ".join(
+        f"{count} {scope}"
+        for scope in profile_order
+        for count in [profile_counts.get(scope, 0)]
+        if count
+    ) or "Not available"
 
-    total_ideas = len(project_ideas)
-    average_score = round(sum(feasibility_scores) / len(feasibility_scores), 1) if feasibility_scores else 0
-    top_score = round(max(feasibility_scores), 1) if feasibility_scores else 0
+    route = str(data.get("selected_route", "unknown")).replace("_", " ").title()
 
-    col1, col2, col3, col4 = st.columns(4)
-
-    col1.metric("Generated Ideas", total_ideas)
-    col2.metric("Average Feasibility", f"{average_score}/10")
-    col3.metric("Top Score", f"{top_score}/10")
-    col4.metric("Evidence Route", data.get("selected_route", "unknown"))
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Project Directions", total_ideas)
+    col2.metric("Evidence Route", route)
+    col3.metric("Build Profiles", profile_summary)
 
 
 def render_query_understanding(data):
@@ -409,20 +466,54 @@ def render_project_ideas(data):
 
             col1, col2, col3 = st.columns(3)
 
+            build_profile = feasibility.get("build_profile", {})
+
             col1.metric(
-                "Feasibility",
-                f"{feasibility.get('feasibility_score', 'N/A')}/10"
+                "Scope",
+                build_profile.get(
+                    "scope",
+                    feasibility.get("complexity", "Unknown")
+                )
             )
 
             col2.metric(
-                "Complexity",
-                feasibility.get("complexity", "Unknown")
+                "Estimated Effort",
+                build_profile.get(
+                    "estimated_effort",
+                    feasibility.get("estimated_build_time", "Unknown")
+                )
             )
 
             col3.metric(
-                "Build Time",
-                feasibility.get("estimated_build_time", "Unknown")
+                "Career Signal",
+                feasibility.get("skill_signal", "Unknown")
             )
+
+            profile_reason = build_profile.get("reason", "")
+            if profile_reason:
+                st.caption(profile_reason)
+
+            st.markdown("#### Why This Is Buildable")
+
+            evidence_focus = idea.get("evidence_focus_statement", "")
+            evidence_gap = idea.get("evidence_buildable_gap", "")
+            evidence_confidence = idea.get("evidence_confidence", {})
+            confidence_level = evidence_confidence.get("level", "unknown")
+            confidence_reason = evidence_confidence.get("reason", "")
+
+            if evidence_focus:
+                st.markdown("**Evidence focus**")
+                st.write(evidence_focus)
+
+            if evidence_gap and evidence_gap.strip() != evidence_focus.strip():
+                st.markdown("**Buildable gap**")
+                st.write(evidence_gap)
+
+            if confidence_reason:
+                st.caption(
+                    f"Evidence confidence: {confidence_level.replace('_', ' ').title()} "
+                    f"— {confidence_reason}"
+                )
 
             st.markdown("#### Based on Evidence")
             st.write(idea.get("based_on_paper", "Not available"))
@@ -533,7 +624,7 @@ def render_output_path(data):
 def main():
     render_header()
 
-    top_k, load_latest = render_sidebar()
+    load_latest, developer_view = render_sidebar()
     query, generate_button = render_search_box()
 
     if "pipeline_output" not in st.session_state:
@@ -553,19 +644,73 @@ def main():
         else:
             with st.spinner("Retrieving evidence and generating project ideas..."):
                 st.session_state.pipeline_output = build_project_pipeline(
-                    query.strip(),
-                    top_k=top_k
+                    query.strip()
                 )
 
     data = st.session_state.pipeline_output
 
     if data:
+        if data.get("query_status") == "needs_correction_confirmation":
+            st.warning(
+                data.get(
+                    "confirmation_message",
+                    "Please confirm the corrected query."
+                )
+            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button(
+                    "Yes, use corrected query",
+                    type="primary",
+                    key="confirm_corrected_query"
+                ):
+                    st.session_state.pipeline_output = build_project_pipeline(
+                        data.get("corrected_query", "")
+                    )
+                    st.rerun()
+
+            with col2:
+                if st.button(
+                    "No, I will edit my query",
+                    key="reject_corrected_query"
+                ):
+                    st.session_state.pipeline_output = None
+                    st.info(
+                        "Edit the search text above and try again."
+                    )
+
+            return
+
+        if data.get("query_status") == "needs_clarification":
+            st.warning(data.get("clarification_message", "Please refine your query."))
+
+            st.markdown("### Try one of these supported directions")
+            for topic in data.get("suggested_topics", []):
+                st.markdown(f"- {topic}")
+            return
+
+        corrections = data.get("query_corrections", [])
+        if corrections:
+            corrected_query = data.get("corrected_query", "")
+            st.info(f"Using corrected query: **{corrected_query}**")
+
         render_summary_metrics(data)
-        render_query_understanding(data)
-        render_retrieved_papers(data)
-        render_charts(data)
         render_project_ideas(data)
         render_output_path(data)
+
+        if developer_view:
+            st.markdown("---")
+            st.header("Developer / Evidence View")
+            st.caption(
+                "These diagnostics explain how the recommendation was retrieved "
+                "and generated. They are not part of the main student workflow."
+            )
+
+            render_query_understanding(data)
+            render_retrieved_papers(data)
+            render_charts(data)
     else:
         st.info(
             "Enter a query to generate research-backed and project-grounded ideas."

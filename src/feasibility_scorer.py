@@ -249,6 +249,95 @@ DEMO_CLARITY_TERMS = [
 ]
 
 
+
+def build_project_profile(project_idea: Dict) -> Dict[str, str]:
+    """
+    Produces an explainable scope and effort estimate from the actual MVP,
+    rather than relying only on a domain-level default.
+    """
+    title = str(project_idea.get("project_title", "")).lower()
+    mvp_scope = project_idea.get("mvp_scope", [])
+    advanced_extensions = project_idea.get("advanced_extensions", [])
+    tech_stack = project_idea.get("suggested_tech_stack", [])
+
+    mvp_text = " ".join(
+        str(step) for step in mvp_scope
+    ).lower()
+
+    assessment_text = f"{title} {mvp_text}".lower()
+
+    ambition_points = 0
+    reasons = []
+
+    if len(mvp_scope) >= 7:
+        ambition_points += 1
+        reasons.append("a larger MVP workflow")
+
+    elif len(mvp_scope) >= 6:
+        ambition_points += 1
+        reasons.append("multiple MVP workflow stages")
+
+    architecture_terms = [
+        "source tree",
+        "dependency map",
+        "tightly coupled",
+        "refactoring recommendations",
+        "architecture-health report",
+    ]
+
+    if any(term in assessment_text for term in architecture_terms):
+        ambition_points += 2
+        reasons.append("component and dependency analysis")
+
+    performance_terms = [
+        "lighthouse", "web vitals", "bundle size",
+        "performance metrics", "before-and-after"
+    ]
+
+    if any(term in assessment_text for term in performance_terms):
+        ambition_points += 2
+        reasons.append("performance measurement and diagnosis")
+
+    quality_terms = [
+        "accessibility", "design tokens",
+        "consistency score", "component library"
+    ]
+
+    if any(term in assessment_text for term in quality_terms):
+        ambition_points += 2
+        reasons.append("design-quality and accessibility evaluation")
+
+    if ambition_points >= 3:
+        return {
+            "scope": "Ambitious",
+            "estimated_effort": "8–12 days",
+            "reason": (
+                "This project includes "
+                + ", ".join(reasons[:3])
+                + ". Start with one narrow analysis workflow before adding extensions."
+            )
+        }
+
+    if ambition_points >= 2:
+        return {
+            "scope": "Moderate",
+            "estimated_effort": "5–8 days",
+            "reason": (
+                "This project involves "
+                + ", ".join(reasons[:3])
+                + ". It is manageable as a focused MVP with constrained inputs."
+            )
+        }
+
+    return {
+        "scope": "Small",
+        "estimated_effort": "3–5 days",
+        "reason": (
+            "This idea has a limited initial workflow and can be built as a focused prototype."
+        )
+    }
+
+
 def score_project_feasibility(project_idea: Dict) -> Dict:
     domain = normalize_domain(project_idea.get("detected_domain", "general"))
     profile = DOMAIN_PROFILES.get(domain, DOMAIN_PROFILES["general"])
@@ -272,13 +361,15 @@ def score_project_feasibility(project_idea: Dict) -> Dict:
     build_time = estimate_build_time(domain, complexity)
     skill_signal = estimate_skill_signal(score, complexity, text)
     why = explain_score(project_idea, score, complexity, build_time, skill_signal)
+    build_profile = build_project_profile(project_idea)
 
     return {
         "feasibility_score": score,
         "complexity": complexity,
         "estimated_build_time": build_time,
         "skill_signal": skill_signal,
-        "why_worth_building": why
+        "why_worth_building": why,
+        "build_profile": build_profile
     }
 
 
