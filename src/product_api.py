@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from feasibility_scorer import score_project_feasibility
 from project_idea_generator import generate_project_ideas
+from plan_verifier import verify_project_ideas
 from query_expander import get_query_metadata
 from schemas.product_models import (
     EvidenceReference,
@@ -13,6 +14,7 @@ from schemas.product_models import (
     ProjectIntelligenceRequest,
     ProjectIntelligenceResponse,
     RoadmapStage,
+    VerificationResult,
 )
 from source_router import retrieve_evidence
 
@@ -215,8 +217,25 @@ def generate_project_intelligence(
         constraints=request.constraints.model_dump(),
     )
 
+    verification_results = verify_project_ideas(
+        ideas,
+        request.constraints.model_dump(),
+    )
+
+    base_pipeline.append(
+        PipelineStep(
+            name="plan_verification",
+            status="completed",
+            detail=(
+                "Checked role alignment, preferred stack, timeline, evidence, "
+                "specific MVP language, and direction diversity."
+            ),
+        )
+    )
+
     directions = []
     for index, idea in enumerate(ideas, start=1):
+        verification = verification_results[index - 1]
         feasibility = score_project_feasibility(idea)
         idea["feasibility_analysis"] = feasibility
         profile = feasibility.get("build_profile", {})
@@ -246,6 +265,7 @@ def generate_project_intelligence(
                 evidence=build_evidence(idea),
                 roadmap=build_roadmap(idea),
                 risks=build_risks(idea),
+                verification=VerificationResult(**verification),
             )
         )
 
@@ -253,7 +273,10 @@ def generate_project_intelligence(
         PipelineStep(
             name="response_validation",
             status="completed",
-            detail=f"Validated {len(directions)} structured project directions.",
+            detail=(
+                f"Serialized {len(directions)} project directions with "
+                "structured verification results."
+            ),
         )
     )
 

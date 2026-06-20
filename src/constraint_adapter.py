@@ -161,8 +161,11 @@ def apply_constraints_to_idea(
         )
 
     if skill_level:
+        skill_text = str(skill_level).strip()
+        article = "an" if skill_text[:1].lower() in "aeiou" else "a"
+
         summary_parts.append(
-            f"Assumes a {skill_level} starting level."
+            f"Assumes {article} {skill_text} starting level."
         )
 
     updated["constraint_summary"] = " ".join(summary_parts)

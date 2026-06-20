@@ -39,6 +39,14 @@ class RoadmapStage(BaseModel):
     tasks: List[str] = Field(default_factory=list)
 
 
+class VerificationResult(BaseModel):
+    status: str
+    score: int
+    max_score: int
+    checks: dict = Field(default_factory=dict)
+    warnings: List[str] = Field(default_factory=list)
+
+
 class ProjectDirection(BaseModel):
     id: str
     title: str
@@ -54,6 +62,7 @@ class ProjectDirection(BaseModel):
     evidence: List[EvidenceReference] = Field(default_factory=list)
     roadmap: List[RoadmapStage] = Field(default_factory=list)
     risks: List[str] = Field(default_factory=list)
+    verification: VerificationResult
 
 
 class PipelineStep(BaseModel):
