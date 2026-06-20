@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from feasibility_scorer import score_project_feasibility
 from project_idea_generator import generate_project_ideas
 from plan_verifier import verify_project_ideas
+from plan_repair import repair_project_plan
 from query_expander import get_query_metadata
 from schemas.product_models import (
     EvidenceReference,
@@ -217,10 +218,31 @@ def generate_project_intelligence(
         constraints=request.constraints.model_dump(),
     )
 
+    constraints = request.constraints.model_dump()
+
+    # Score first so verification and repair can evaluate the actual effort estimate.
+    for idea in ideas:
+        idea["feasibility_analysis"] = score_project_feasibility(idea)
+
     verification_results = verify_project_ideas(
         ideas,
-        request.constraints.model_dump(),
+        constraints,
     )
+
+    repaired_ideas = []
+    repairs_by_index = []
+    final_verification_results = []
+
+    for idea, verification in zip(ideas, verification_results):
+        repaired_idea, repairs, final_verification = repair_project_plan(
+            idea,
+            constraints,
+        )
+        repaired_ideas.append(repaired_idea)
+        repairs_by_index.append(repairs)
+        final_verification_results.append(final_verification)
+
+    ideas = repaired_ideas
 
     base_pipeline.append(
         PipelineStep(
@@ -233,10 +255,33 @@ def generate_project_intelligence(
         )
     )
 
+    base_pipeline.append(
+        PipelineStep(
+            name="plan_repair",
+            status="completed",
+            detail=(
+                "Applied safe deterministic repairs where possible and kept "
+                "unresolved warnings visible."
+            ),
+        )
+    )
+
     directions = []
     for index, idea in enumerate(ideas, start=1):
-        verification = verification_results[index - 1]
-        feasibility = score_project_feasibility(idea)
+        verification = final_verification_results[index - 1]
+        repairs = repairs_by_index[index - 1]
+        rescored_feasibility = score_project_feasibility(idea)
+        repaired_feasibility = idea.get("feasibility_analysis", {})
+        repaired_profile = repaired_feasibility.get("build_profile", {})
+
+        if repaired_profile.get("scope") == "Focused":
+            feasibility = {
+                **rescored_feasibility,
+                "build_profile": repaired_profile,
+            }
+        else:
+            feasibility = rescored_feasibility
+
         idea["feasibility_analysis"] = feasibility
         profile = feasibility.get("build_profile", {})
 
@@ -266,6 +311,7 @@ def generate_project_intelligence(
                 roadmap=build_roadmap(idea),
                 risks=build_risks(idea),
                 verification=VerificationResult(**verification),
+                repairs_applied=repairs,
             )
         )
 

@@ -63,6 +63,7 @@ class ProjectDirection(BaseModel):
     roadmap: List[RoadmapStage] = Field(default_factory=list)
     risks: List[str] = Field(default_factory=list)
     verification: VerificationResult
+    repairs_applied: List[str] = Field(default_factory=list)
 
 
 class PipelineStep(BaseModel):
