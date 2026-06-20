@@ -200,8 +200,9 @@ def generate_project_intelligence(
                 name="project_planning_baseline",
                 status="completed",
                 detail=(
-                    "Generated structured directions using the current deterministic "
-                    "planning layer. This node will be upgraded to LLM synthesis."
+                    "Generated deterministic directions and applied target-role, "
+                    "timeline, skill-level, and preferred-stack constraints. "
+                    "This node will later be upgraded to LLM synthesis."
                 ),
             ),
         ]
@@ -211,6 +212,7 @@ def generate_project_intelligence(
         evidence_items,
         corrected_query,
         max_ideas=3,
+        constraints=request.constraints.model_dump(),
     )
 
     directions = []
@@ -227,10 +229,15 @@ def generate_project_intelligence(
                 scope=profile.get("scope", "Unknown"),
                 estimated_effort=profile.get("estimated_effort", "Unknown"),
                 career_signal=feasibility.get("skill_signal", "Unknown"),
-                why_it_fits=(
-                    idea.get("evidence_focus_statement")
-                    or idea.get("research_motivation")
-                    or "Grounded in the selected technical evidence."
+                why_it_fits=" ".join(
+                    part
+                    for part in [
+                        idea.get("constraint_summary", ""),
+                        idea.get("evidence_focus_statement")
+                        or idea.get("research_motivation")
+                        or "Grounded in the selected technical evidence.",
+                    ]
+                    if part
                 ),
                 mvp_steps=idea.get("mvp_scope", []),
                 advanced_extensions=idea.get("advanced_extensions", []),

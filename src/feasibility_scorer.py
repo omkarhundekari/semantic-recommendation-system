@@ -307,6 +307,24 @@ def build_project_profile(project_idea: Dict) -> Dict[str, str]:
         ambition_points += 2
         reasons.append("design-quality and accessibility evaluation")
 
+    ml_engineering_terms = [
+        "baseline model",
+        "classification dataset",
+        "precision",
+        "recall",
+        "f1 score",
+        "calibration",
+        "error-slice",
+        "prediction drift",
+        "feature distributions",
+        "feature contributions",
+        "out-of-distribution",
+    ]
+
+    if any(term in assessment_text for term in ml_engineering_terms):
+        ambition_points += 2
+        reasons.append("ML evaluation, monitoring, or explainability work")
+
     if ambition_points >= 3:
         return {
             "scope": "Ambitious",

@@ -1,6 +1,7 @@
 from typing import Dict, List
 
 from query_expander import get_query_metadata
+from constraint_adapter import apply_constraints_to_idea
 from project_intelligence import (
     build_project_intelligence,
     build_mvp_from_blueprint,
@@ -64,7 +65,8 @@ def select_evidence_for_focus(
 def generate_project_ideas(
     search_results: List[Dict],
     user_query: str,
-    max_ideas: int = 3
+    max_ideas: int = 3,
+    constraints: Dict = None
 ) -> List[Dict]:
     if not search_results:
         return []
@@ -196,7 +198,10 @@ def generate_project_ideas(
             "target_roles": target_roles
         })
 
-    return ideas
+    return [
+        apply_constraints_to_idea(idea, constraints or {})
+        for idea in ideas
+    ]
 
 
 def apply_evidence_focus_to_roadmap(
