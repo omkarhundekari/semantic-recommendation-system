@@ -406,9 +406,34 @@ def clean_query(query: str) -> str:
 
 def detect_domain(query: str) -> str:
     cleaned_query, _ = correct_query_typos(query)
+    cleaned_query = cleaned_query.lower()
 
     if not cleaned_query:
         return "general"
+
+    tokens = set(re.findall(r"[a-z0-9]+", cleaned_query))
+
+    ai_ml_phrases = [
+        "ai/ml",
+        "machine learning",
+        "ml engineer",
+        "machine learning engineer",
+        "model training",
+        "classification",
+        "regression",
+        "scikit-learn",
+        "tensorflow",
+        "pytorch",
+        "neural network",
+        "deep learning",
+    ]
+
+    if (
+        "ai" in tokens
+        or "ml" in tokens
+        or any(phrase in cleaned_query for phrase in ai_ml_phrases)
+    ):
+        return "ai_ml"
 
     best_domain = "general"
     best_score = 0
@@ -419,17 +444,18 @@ def detect_domain(query: str) -> str:
         for keyword in keywords:
             keyword = keyword.lower()
 
-            if keyword in cleaned_query:
-                if " " in keyword or "-" in keyword:
+            if " " in keyword or "-" in keyword or "/" in keyword:
+                if keyword in cleaned_query:
                     score += 3
-                else:
-                    score += 1
+            elif keyword in tokens:
+                score += 1
 
         if score > best_score:
             best_score = score
             best_domain = domain
 
     return best_domain
+
 
 
 def detect_intent(query: str) -> str:
@@ -541,7 +567,10 @@ def get_query_metadata(user_query: str) -> Dict:
         "corrected_query": corrected_query,
         "query_corrections": corrections,
         "medium_confidence_corrections": medium_confidence_corrections,
-        "query_requires_confirmation": bool(medium_confidence_corrections),
+        "query_requires_confirmation": (
+            bool(medium_confidence_corrections)
+            and len(cleaned_query.split()) <= 6
+        ),
         "expanded_query": expanded_query,
         "detected_domain": detected_domain,
         "detected_intent": detected_intent

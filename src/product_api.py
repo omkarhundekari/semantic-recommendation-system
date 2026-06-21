@@ -4,9 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from feasibility_scorer import score_project_feasibility
-from project_idea_generator import generate_project_ideas
-from plan_verifier import verify_project_ideas
 from plan_repair import repair_project_plan
+from plan_verifier import verify_project_ideas
+from portfolio_ladder import apply_portfolio_ladder
+from project_idea_generator import generate_project_ideas
 from query_expander import get_query_metadata
 from schemas.product_models import (
     EvidenceReference,
@@ -60,7 +61,7 @@ def build_roadmap(idea: Dict) -> List[RoadmapStage]:
             id="mvp",
             title="Build the MVP",
             purpose="Implement the smallest complete version of the idea.",
-            tasks=mvp_steps[:6],
+            tasks=mvp_steps[:10],
         ),
         RoadmapStage(
             id="validate",
@@ -93,6 +94,7 @@ def build_roadmap(idea: Dict) -> List[RoadmapStage]:
 
 def build_evidence(idea: Dict) -> List[EvidenceReference]:
     title = idea.get("evidence_title")
+
     if not title:
         return []
 
@@ -107,21 +109,21 @@ def build_evidence(idea: Dict) -> List[EvidenceReference]:
 
 
 def build_risks(idea: Dict) -> List[str]:
-    scope = (
-        idea.get("feasibility_analysis", {})
-        .get("build_profile", {})
-        .get("scope", "Moderate")
-    )
+    profile = idea.get("feasibility_analysis", {}).get("build_profile", {})
+    difficulty = profile.get("difficulty", "")
 
     risks = [
         "Keep the first version constrained to a small, reproducible input set.",
         "Validate outputs before making claims about real-world usefulness.",
     ]
 
-    if scope == "Ambitious":
+    if difficulty == "Hard":
         risks.insert(
             0,
-            "Reduce scope by implementing one analysis path before adding integrations or advanced automation.",
+            (
+                "Reduce scope by implementing one narrow workflow before adding "
+                "integrations, automation, or deployment polish."
+            ),
         )
 
     return risks
@@ -147,7 +149,7 @@ def generate_project_intelligence(
     metadata = get_query_metadata(query)
     corrected_query = metadata.get("corrected_query", query)
 
-    base_pipeline = [
+    pipeline = [
         PipelineStep(
             name="query_understanding",
             status="completed",
@@ -164,7 +166,7 @@ def generate_project_intelligence(
             detected_domain=metadata.get("detected_domain"),
             detected_intent=metadata.get("detected_intent"),
             clarification_message=f"Did you mean: {corrected_query}?",
-            pipeline=base_pipeline,
+            pipeline=pipeline,
         )
 
     if metadata.get("detected_domain") == "general":
@@ -186,13 +188,13 @@ def generate_project_intelligence(
                 "Cybersecurity automation project",
                 "Healthcare AI project with Python",
             ],
-            pipeline=base_pipeline,
+            pipeline=pipeline,
         )
 
     evidence_payload = retrieve_evidence(corrected_query, top_k=6)
     evidence_items = evidence_payload["merged_results"]
 
-    base_pipeline.extend(
+    pipeline.extend(
         [
             PipelineStep(
                 name="evidence_retrieval",
@@ -211,88 +213,112 @@ def generate_project_intelligence(
         ]
     )
 
+    constraints = request.constraints.model_dump()
+
     ideas = generate_project_ideas(
         evidence_items,
         corrected_query,
         max_ideas=3,
-        constraints=request.constraints.model_dump(),
+        constraints=constraints,
     )
 
-    constraints = request.constraints.model_dump()
-
-    # Score first so verification and repair can evaluate the actual effort estimate.
+    # Score initial ideas before repair logic evaluates feasibility.
     for idea in ideas:
         idea["feasibility_analysis"] = score_project_feasibility(idea)
 
-    verification_results = verify_project_ideas(
+    initial_verification_results = verify_project_ideas(
         ideas,
         constraints,
     )
 
     repaired_ideas = []
     repairs_by_index = []
-    final_verification_results = []
 
-    for idea, verification in zip(ideas, verification_results):
-        repaired_idea, repairs, final_verification = repair_project_plan(
+    for idea, verification in zip(ideas, initial_verification_results):
+        repaired_idea, repairs, _ = repair_project_plan(
             idea,
             constraints,
         )
+
         repaired_ideas.append(repaired_idea)
         repairs_by_index.append(repairs)
-        final_verification_results.append(final_verification)
 
-    ideas = repaired_ideas
+    # Apply Easy / Medium / Hard after repairs.
+    # This keeps the final MVP scopes genuinely different.
+    ideas = apply_portfolio_ladder(repaired_ideas)
 
-    base_pipeline.append(
-        PipelineStep(
-            name="plan_verification",
-            status="completed",
-            detail=(
-                "Checked role alignment, preferred stack, timeline, evidence, "
-                "specific MVP language, and direction diversity."
-            ),
+    # Re-score the final plans while preserving the ladder profile.
+    for idea in ideas:
+        ladder_profile = (
+            idea.get("feasibility_analysis", {})
+            .get("build_profile", {})
         )
+
+        rescored_feasibility = score_project_feasibility(idea)
+        rescored_feasibility["build_profile"] = ladder_profile
+
+        idea["feasibility_analysis"] = rescored_feasibility
+
+    final_verification_results = verify_project_ideas(
+        ideas,
+        constraints,
     )
 
-    base_pipeline.append(
-        PipelineStep(
-            name="plan_repair",
-            status="completed",
-            detail=(
-                "Applied safe deterministic repairs where possible and kept "
-                "unresolved warnings visible."
+    pipeline.extend(
+        [
+            PipelineStep(
+                name="plan_verification",
+                status="completed",
+                detail=(
+                    "Checked role alignment, preferred stack, timeline, evidence, "
+                    "specific MVP language, and direction diversity."
+                ),
             ),
-        )
+            PipelineStep(
+                name="plan_repair",
+                status="completed",
+                detail=(
+                    "Applied safe deterministic repairs before creating the final "
+                    "Easy, Medium, and Hard portfolio ladder."
+                ),
+            ),
+        ]
     )
 
     directions = []
+
     for index, idea in enumerate(ideas, start=1):
         verification = final_verification_results[index - 1]
         repairs = repairs_by_index[index - 1]
-        rescored_feasibility = score_project_feasibility(idea)
-        repaired_feasibility = idea.get("feasibility_analysis", {})
-        repaired_profile = repaired_feasibility.get("build_profile", {})
 
-        if repaired_profile.get("scope") == "Focused":
-            feasibility = {
-                **rescored_feasibility,
-                "build_profile": repaired_profile,
-            }
-        else:
-            feasibility = rescored_feasibility
-
-        idea["feasibility_analysis"] = feasibility
+        feasibility = idea.get("feasibility_analysis", {})
         profile = feasibility.get("build_profile", {})
 
         directions.append(
             ProjectDirection(
                 id=f"direction-{index}",
-                title=idea.get("project_title", f"Project Direction {index}"),
+                title=idea.get(
+                    "project_title",
+                    f"Project Direction {index}",
+                ),
                 summary=idea.get("idea_angle", ""),
                 scope=profile.get("scope", "Unknown"),
-                estimated_effort=profile.get("estimated_effort", "Unknown"),
-                career_signal=feasibility.get("skill_signal", "Unknown"),
+                estimated_effort=profile.get(
+                    "estimated_effort",
+                    "Unknown",
+                ),
+                portfolio_tier=profile.get(
+                    "tier",
+                    "Portfolio Build",
+                ),
+                difficulty=profile.get(
+                    "difficulty",
+                    "Medium",
+                ),
+                career_signal=feasibility.get(
+                    "skill_signal",
+                    "Unknown",
+                ),
                 why_it_fits=" ".join(
                     part
                     for part in [
@@ -304,7 +330,10 @@ def generate_project_intelligence(
                     if part
                 ),
                 mvp_steps=idea.get("mvp_scope", []),
-                advanced_extensions=idea.get("advanced_extensions", []),
+                advanced_extensions=idea.get(
+                    "advanced_extensions",
+                    [],
+                ),
                 tech_stack=idea.get("suggested_tech_stack", []),
                 target_roles=idea.get("target_roles", []),
                 evidence=build_evidence(idea),
@@ -315,7 +344,7 @@ def generate_project_intelligence(
             )
         )
 
-    base_pipeline.append(
+    pipeline.append(
         PipelineStep(
             name="response_validation",
             status="completed",
@@ -335,10 +364,16 @@ def generate_project_intelligence(
         detected_intent=evidence_payload.get("detected_intent"),
         evidence_route=evidence_payload.get("selected_route"),
         source_counts={
-            "research_papers": len(evidence_payload.get("research_results", [])),
-            "project_patterns": len(evidence_payload.get("project_results", [])),
-            "github_repositories": len(evidence_payload.get("github_results", [])),
+            "research_papers": len(
+                evidence_payload.get("research_results", [])
+            ),
+            "project_patterns": len(
+                evidence_payload.get("project_results", [])
+            ),
+            "github_repositories": len(
+                evidence_payload.get("github_results", [])
+            ),
         },
         directions=directions,
-        pipeline=base_pipeline,
+        pipeline=pipeline,
     )

@@ -6,11 +6,11 @@ from pydantic import BaseModel, Field
 class UserConstraints(BaseModel):
     skill_level: Optional[str] = Field(
         default=None,
-        description="Examples: beginner, intermediate, advanced."
+        description="Examples: beginner, intermediate, advanced.",
     )
     time_available: Optional[str] = Field(
         default=None,
-        description="Examples: weekend, 1 week, 3 weeks, 1 month."
+        description="Examples: weekend, 1 week, 3 weeks, 1 month.",
     )
     target_roles: List[str] = Field(default_factory=list)
     preferred_stack: List[str] = Field(default_factory=list)
@@ -20,7 +20,7 @@ class ProjectIntelligenceRequest(BaseModel):
     goal: str = Field(
         min_length=3,
         max_length=1200,
-        description="Natural-language project goal or career objective."
+        description="Natural-language project goal or career objective.",
     )
     constraints: UserConstraints = Field(default_factory=UserConstraints)
 
@@ -53,6 +53,8 @@ class ProjectDirection(BaseModel):
     summary: str
     scope: str
     estimated_effort: str
+    portfolio_tier: str
+    difficulty: str
     career_signal: str
     why_it_fits: str
     mvp_steps: List[str] = Field(default_factory=list)
