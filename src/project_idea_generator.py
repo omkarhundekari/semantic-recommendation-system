@@ -66,19 +66,30 @@ def generate_project_ideas(
     search_results: List[Dict],
     user_query: str,
     max_ideas: int = 3,
-    constraints: Dict = None
+    constraints: Dict = None,
+    detected_domain: str = None,
 ) -> List[Dict]:
     if not search_results:
         return []
 
     query_metadata = get_query_metadata(user_query)
-    detected_domain = query_metadata.get("detected_domain", "general")
-    detected_intent = query_metadata.get("detected_intent", "general")
+
+    fallback_domain = query_metadata.get(
+        "detected_domain",
+        "general",
+    )
+
+    planning_domain = detected_domain or fallback_domain
+
+    detected_intent = query_metadata.get(
+        "detected_intent",
+        "general",
+    )
 
     intelligence = build_project_intelligence(
         evidence_items=search_results,
         user_query=user_query,
-        detected_domain=detected_domain,
+        detected_domain=planning_domain,
         max_ideas=max_ideas
     )
 
@@ -154,7 +165,7 @@ def generate_project_ideas(
             "implementation_signals": implementation_signals,
             "implementation_technologies": implementation_technologies,
             "github_selection_reason": evidence_item.get("selection_reason", ""),
-            "detected_domain": detected_domain,
+            "detected_domain": planning_domain,
             "detected_intent": detected_intent,
             "idea_angle": blueprint.get("idea_angle", ""),
             "opportunity_area": blueprint.get("opportunity", ""),

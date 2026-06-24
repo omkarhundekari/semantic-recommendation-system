@@ -9,6 +9,7 @@ from plan_verifier import verify_project_ideas
 from portfolio_ladder import apply_portfolio_ladder
 from project_idea_generator import generate_project_ideas
 from query_expander import get_query_metadata
+from query_understanding import understand_query
 from schemas.product_models import (
     EvidenceReference,
     PipelineStep,
@@ -27,7 +28,7 @@ app = FastAPI(
         "Evidence-grounded project planning API that converts user goals into "
         "buildable project directions and structured execution roadmaps."
     ),
-    version="2.0.0",
+    version="2.1.0",
 )
 
 app.add_middleware(
@@ -53,7 +54,10 @@ def build_roadmap(idea: Dict) -> List[RoadmapStage]:
             purpose="Turn the recommendation into a narrow, measurable problem.",
             tasks=[
                 idea.get("evidence_buildable_gap")
-                or "Write a one-sentence problem statement and define one success metric.",
+                or (
+                    "Write a one-sentence problem statement and define "
+                    "one success metric."
+                ),
                 "Choose a constrained input source and a realistic first user.",
             ],
         ),
@@ -82,11 +86,17 @@ def build_roadmap(idea: Dict) -> List[RoadmapStage]:
         RoadmapStage(
             id="package",
             title="Package for portfolio",
-            purpose="Make the project easy for recruiters and interviewers to understand.",
+            purpose=(
+                "Make the project easy for recruiters and interviewers "
+                "to understand."
+            ),
             tasks=[
                 "Add an architecture diagram and setup instructions to the README.",
                 "Record a short demo and include realistic screenshots or GIFs.",
-                "Write one resume bullet explaining the technical impact and system design.",
+                (
+                    "Write one resume bullet explaining the technical impact "
+                    "and system design."
+                ),
             ],
         ),
     ]
@@ -109,7 +119,10 @@ def build_evidence(idea: Dict) -> List[EvidenceReference]:
 
 
 def build_risks(idea: Dict) -> List[str]:
-    profile = idea.get("feasibility_analysis", {}).get("build_profile", {})
+    profile = idea.get("feasibility_analysis", {}).get(
+        "build_profile",
+        {},
+    )
     difficulty = profile.get("difficulty", "")
 
     risks = [
@@ -121,12 +134,41 @@ def build_risks(idea: Dict) -> List[str]:
         risks.insert(
             0,
             (
-                "Reduce scope by implementing one narrow workflow before adding "
-                "integrations, automation, or deployment polish."
+                "Reduce scope by implementing one narrow workflow before "
+                "adding integrations, automation, or deployment polish."
             ),
         )
 
     return risks
+
+
+def build_inference_options(candidate_families: List[Dict]) -> List[str]:
+    labels = {
+        "ai_ml": "AI / ML",
+        "software_engineering": "Full-stack / Software Engineering",
+        "cloud_platform": "Cloud / Platform",
+        "cybersecurity": "Cybersecurity",
+        "blockchain": "Blockchain",
+        "fintech": "FinTech",
+        "education_tech": "Education Technology",
+    }
+
+    options = []
+
+    for candidate in candidate_families[:3]:
+        family = candidate.get("family", "")
+        label = labels.get(
+            family,
+            family.replace("_", " ").title(),
+        )
+
+        if label and label not in options:
+            options.append(label)
+
+    if "Help me choose" not in options:
+        options.append("Help me choose")
+
+    return options
 
 
 @app.get("/health")
@@ -134,7 +176,7 @@ def health() -> Dict:
     return {
         "status": "healthy",
         "service": "research-to-prototype-intelligence-api",
-        "version": "2.0.0",
+        "version": "2.1.0",
     }
 
 
@@ -146,83 +188,215 @@ def generate_project_intelligence(
     request: ProjectIntelligenceRequest,
 ) -> ProjectIntelligenceResponse:
     query = request.goal.strip()
-    metadata = get_query_metadata(query)
-    corrected_query = metadata.get("corrected_query", query)
+    constraints = request.constraints.model_dump()
+    selected_direction = (
+        request.selected_direction.strip()
+        if request.selected_direction
+        else None
+    )
+
+    correction_metadata = get_query_metadata(query)
+    corrected_query = correction_metadata.get(
+        "corrected_query",
+        query,
+    )
 
     pipeline = [
         PipelineStep(
-            name="query_understanding",
+            name="query_correction",
             status="completed",
-            detail="Parsed query intent and supported technical domain.",
+            detail=(
+                "Checked the goal for high-confidence spelling and "
+                "query normalization issues."
+            ),
         ),
     ]
 
-    if metadata.get("query_requires_confirmation"):
+    if correction_metadata.get("query_requires_confirmation"):
         return ProjectIntelligenceResponse(
             status="needs_correction_confirmation",
             query=query,
             corrected_query=corrected_query,
             goal_summary=query,
-            detected_domain=metadata.get("detected_domain"),
-            detected_intent=metadata.get("detected_intent"),
+            detected_domain=correction_metadata.get("detected_domain"),
+            detected_intent=correction_metadata.get("detected_intent"),
+            clarification_required=True,
             clarification_message=f"Did you mean: {corrected_query}?",
             pipeline=pipeline,
         )
 
-    if metadata.get("detected_domain") == "general":
+    understanding = understand_query(
+        goal=corrected_query,
+        constraints=constraints,
+    )
+
+    pipeline.append(
+        PipelineStep(
+            name="query_understanding",
+            status="completed",
+            detail=(
+                "Extracted explicit role, time, skill, stack, project intent, "
+                "and possible technical-direction signals."
+            ),
+        )
+    )
+
+    if (
+        understanding["requires_clarification_before_retrieval"]
+        and not selected_direction
+    ):
+        pipeline.append(
+            PipelineStep(
+                name="clarification_gate",
+                status="completed",
+                detail=(
+                    "Skipped retrieval because the goal did not include enough "
+                    "technical direction for a trustworthy recommendation."
+                ),
+            )
+        )
+
         return ProjectIntelligenceResponse(
             status="needs_clarification",
             query=query,
             corrected_query=corrected_query,
-            goal_summary=query,
+            goal_summary=corrected_query,
             detected_domain="general",
-            detected_intent=metadata.get("detected_intent"),
-            clarification_message=(
-                "I could not confidently identify a supported technical topic yet. "
-                "Add a domain, desired role, time limit, or preferred technology."
-            ),
+            detected_intent=correction_metadata.get("detected_intent"),
+            clarification_required=True,
+            clarification_message=understanding[
+                "clarification_question"
+            ],
+            clarification_options=understanding[
+                "clarification_options"
+            ],
             suggested_topics=[
                 "AI project for an ML engineer role in 3 weeks",
                 "React portfolio project for frontend roles",
                 "Cloud cost optimization project",
                 "Cybersecurity automation project",
-                "Healthcare AI project with Python",
+                "Help me choose based on my current skills",
             ],
             pipeline=pipeline,
         )
 
-    evidence_payload = retrieve_evidence(corrected_query, top_k=6)
+    evidence_payload = retrieve_evidence(
+        corrected_query,
+        top_k=6,
+        intent_hints=understanding["direction_hints"],
+        selected_direction=selected_direction,
+    )
+
+    inference = evidence_payload["inference"]
     evidence_items = evidence_payload["merged_results"]
 
     pipeline.extend(
         [
             PipelineStep(
-                name="evidence_retrieval",
-                status="completed",
-                detail=f"Retrieved {len(evidence_items)} evidence items.",
-            ),
-            PipelineStep(
-                name="project_planning_baseline",
+                name="broad_evidence_retrieval",
                 status="completed",
                 detail=(
-                    "Generated deterministic directions and applied target-role, "
-                    "timeline, skill-level, and preferred-stack constraints. "
-                    "This node will later be upgraded to LLM synthesis."
+                    "Retrieved broad evidence from research papers, project "
+                    "patterns, and GitHub implementation references."
+                ),
+            ),
+            PipelineStep(
+                name="evidence_domain_inference",
+                status="completed",
+                detail=(
+                    "Inferred the technical family and focus from evidence, "
+                    "then used that focus for a second retrieval pass."
+                ),
+            ),
+            PipelineStep(
+                name="focused_evidence_retrieval",
+                status="completed",
+                detail=(
+                    f"Selected {len(evidence_items)} focused evidence items "
+                    f"for {inference.get('inferred_focus', 'the inferred focus')}."
                 ),
             ),
         ]
     )
 
-    constraints = request.constraints.model_dump()
+    if inference.get("requires_clarification"):
+        candidate_families = inference.get(
+            "candidate_families",
+            [],
+        )
+
+        pipeline.append(
+            PipelineStep(
+                name="clarification_gate",
+                status="completed",
+                detail=(
+                    "Evidence was too mixed to choose one technical direction "
+                    "without asking the user a focused question."
+                ),
+            )
+        )
+
+        return ProjectIntelligenceResponse(
+            status="needs_clarification",
+            query=query,
+            corrected_query=corrected_query,
+            goal_summary=corrected_query,
+            detected_domain=inference.get("inferred_focus"),
+            detected_intent=correction_metadata.get("detected_intent"),
+            evidence_route=evidence_payload.get("selected_route"),
+            source_counts={
+                "research_papers": len(
+                    evidence_payload.get("research_results", [])
+                ),
+                "project_patterns": len(
+                    evidence_payload.get("project_results", [])
+                ),
+                "github_repositories": len(
+                    evidence_payload.get("github_results", [])
+                ),
+            },
+            clarification_required=True,
+            clarification_message=(
+                "Your goal could reasonably lead in more than one direction. "
+                "Which type of work would you like the project to showcase?"
+            ),
+            clarification_options=build_inference_options(
+                candidate_families
+            ),
+            inferred_domain_family=inference.get(
+                "inferred_domain_family"
+            ),
+            family_confidence=inference.get("family_confidence"),
+            inferred_focus=inference.get("inferred_focus"),
+            focus_confidence=inference.get("focus_confidence"),
+            candidate_families=candidate_families,
+            candidate_focuses=inference.get(
+                "candidate_focuses",
+                [],
+            ),
+            pipeline=pipeline,
+        )
+
+    pipeline.append(
+        PipelineStep(
+            name="project_planning_baseline",
+            status="completed",
+            detail=(
+                "Generated deterministic directions and applied target-role, "
+                "timeline, skill-level, and preferred-stack constraints. "
+                "This node will later be upgraded to LLM synthesis."
+            ),
+        )
+    )
 
     ideas = generate_project_ideas(
         evidence_items,
         corrected_query,
         max_ideas=3,
         constraints=constraints,
+        detected_domain=inference.get("inferred_focus"),
     )
 
-    # Score initial ideas before repair logic evaluates feasibility.
     for idea in ideas:
         idea["feasibility_analysis"] = score_project_feasibility(idea)
 
@@ -234,7 +408,10 @@ def generate_project_intelligence(
     repaired_ideas = []
     repairs_by_index = []
 
-    for idea, verification in zip(ideas, initial_verification_results):
+    for idea, verification in zip(
+        ideas,
+        initial_verification_results,
+    ):
         repaired_idea, repairs, _ = repair_project_plan(
             idea,
             constraints,
@@ -243,11 +420,8 @@ def generate_project_intelligence(
         repaired_ideas.append(repaired_idea)
         repairs_by_index.append(repairs)
 
-    # Apply Easy / Medium / Hard after repairs.
-    # This keeps the final MVP scopes genuinely different.
     ideas = apply_portfolio_ladder(repaired_ideas)
 
-    # Re-score the final plans while preserving the ladder profile.
     for idea in ideas:
         ladder_profile = (
             idea.get("feasibility_analysis", {})
@@ -256,7 +430,6 @@ def generate_project_intelligence(
 
         rescored_feasibility = score_project_feasibility(idea)
         rescored_feasibility["build_profile"] = ladder_profile
-
         idea["feasibility_analysis"] = rescored_feasibility
 
     final_verification_results = verify_project_ideas(
@@ -278,8 +451,8 @@ def generate_project_intelligence(
                 name="plan_repair",
                 status="completed",
                 detail=(
-                    "Applied safe deterministic repairs before creating the final "
-                    "Easy, Medium, and Hard portfolio ladder."
+                    "Applied safe deterministic repairs before creating the "
+                    "final Easy, Medium, and Hard portfolio ladder."
                 ),
             ),
         ]
@@ -334,7 +507,10 @@ def generate_project_intelligence(
                     "advanced_extensions",
                     [],
                 ),
-                tech_stack=idea.get("suggested_tech_stack", []),
+                tech_stack=idea.get(
+                    "suggested_tech_stack",
+                    [],
+                ),
                 target_roles=idea.get("target_roles", []),
                 evidence=build_evidence(idea),
                 roadmap=build_roadmap(idea),
@@ -359,9 +535,9 @@ def generate_project_intelligence(
         status="ready",
         query=query,
         corrected_query=corrected_query,
-        goal_summary=query,
-        detected_domain=evidence_payload.get("detected_domain"),
-        detected_intent=evidence_payload.get("detected_intent"),
+        goal_summary=corrected_query,
+        detected_domain=inference.get("inferred_focus"),
+        detected_intent=correction_metadata.get("detected_intent"),
         evidence_route=evidence_payload.get("selected_route"),
         source_counts={
             "research_papers": len(
@@ -374,6 +550,21 @@ def generate_project_intelligence(
                 evidence_payload.get("github_results", [])
             ),
         },
+        clarification_required=False,
+        inferred_domain_family=inference.get(
+            "inferred_domain_family"
+        ),
+        family_confidence=inference.get("family_confidence"),
+        inferred_focus=inference.get("inferred_focus"),
+        focus_confidence=inference.get("focus_confidence"),
+        candidate_families=inference.get(
+            "candidate_families",
+            [],
+        ),
+        candidate_focuses=inference.get(
+            "candidate_focuses",
+            [],
+        ),
         directions=directions,
         pipeline=pipeline,
     )

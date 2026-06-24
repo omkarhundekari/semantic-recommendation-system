@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -22,6 +22,14 @@ class ProjectIntelligenceRequest(BaseModel):
         max_length=1200,
         description="Natural-language project goal or career objective.",
     )
+    selected_direction: Optional[str] = Field(
+        default=None,
+        max_length=120,
+        description=(
+            "Optional user-confirmed direction chosen during clarification. "
+            "This is separate from the user's raw goal."
+        ),
+    )
     constraints: UserConstraints = Field(default_factory=UserConstraints)
 
 
@@ -43,7 +51,7 @@ class VerificationResult(BaseModel):
     status: str
     score: int
     max_score: int
-    checks: dict = Field(default_factory=dict)
+    checks: Dict[str, Any] = Field(default_factory=dict)
     warnings: List[str] = Field(default_factory=list)
 
 
@@ -79,11 +87,23 @@ class ProjectIntelligenceResponse(BaseModel):
     query: str
     corrected_query: Optional[str] = None
     goal_summary: str
+
     detected_domain: Optional[str] = None
     detected_intent: Optional[str] = None
     evidence_route: Optional[str] = None
-    source_counts: dict = Field(default_factory=dict)
+    source_counts: Dict[str, int] = Field(default_factory=dict)
+
+    clarification_required: bool = False
     clarification_message: Optional[str] = None
+    clarification_options: List[str] = Field(default_factory=list)
     suggested_topics: List[str] = Field(default_factory=list)
+
+    inferred_domain_family: Optional[str] = None
+    family_confidence: Optional[float] = None
+    inferred_focus: Optional[str] = None
+    focus_confidence: Optional[float] = None
+    candidate_families: List[Dict[str, Any]] = Field(default_factory=list)
+    candidate_focuses: List[Dict[str, Any]] = Field(default_factory=list)
+
     directions: List[ProjectDirection] = Field(default_factory=list)
     pipeline: List[PipelineStep] = Field(default_factory=list)

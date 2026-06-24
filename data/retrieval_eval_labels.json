@@ -1,0 +1,72 @@
+{
+  "labels": {
+    "cyber_01": {
+      "Private Information Disclosure from Web Searches. (The case of Google Web History)": 0,
+      "Graph-based Anomaly Detection and Description: A Survey": 1,
+      "Anomaly Detection in Large Labeled Multi-Graph Databases": 1,
+      "In-Context Autonomous Network Incident Response: An End-to-End Large Language Model Agent Approach": 1,
+      "On the User Behavior Leakage from Recommender System Exposure": 0,
+      "AI Agents with Decentralized Identifiers and Verifiable Credentials": 0,
+      "From CRUD to Autonomous Agents: Formal Validation and Zero-Trust Security for Semantic Gateways in AI-Native Enterprise Systems": 0,
+      "Detecting Contextual Network Anomalies with Graph Neural Networks": 1,
+      "Semantic-based Detection of Segment Outliers and Unusual Events for Wireless Sensor Networks": 0,
+      "Attacks on Third-Party APIs of Large Language Models": 0,
+      "LogQA: Question Answering in Unstructured Logs": 1,
+      "Optimization Approach for Detecting the Critical Data on a Database": 0,
+      "Finding Syntactic Representations in Neural Stacks": 0,
+      "Graph or Relational Databases: A Speed Comparison for Process Mining Algorithm": 0,
+      "GlassDB: An Efficient Verifiable Ledger Database System Through Transparency": 0,
+      "Scaling Behavior of Machine Translation with Large Language Models under Prompt Injection Attacks": 0,
+      "Optimizing Traversing and Retrieval Speed of Large Breached Databases": 0,
+      "Unmasking Covert Intrusions: Detection of Fault-Masking Cyberattacks on Differential Protection Systems": 1
+    },
+    "ml_01": {
+      "Rag Performance Prediction for Question Answering": 2,
+      "Generation-Augmented Retrieval for Open-domain Question Answering": 2,
+      "Context-augmented Retrieval: A Novel Framework for Fast Information Retrieval based Response Generation using Large Language Model": 2,
+      "PersianRAG: A Retrieval-Augmented Generation System for Persian Language": 2,
+      "Knowledge Graph-extended Retrieval Augmented Generation for Question Answering": 2,
+      "Context Awareness Gate For Retrieval Augmented Generation": 2,
+      "PersonaRAG: Enhancing Retrieval-Augmented Generation Systems with User-Centric Agents": 2,
+      "Blended RAG: Improving RAG (Retriever-Augmented Generation) Accuracy with Semantic Search and Hybrid Query-Based Retrievers": 2,
+      "mmRAG: A Modular Benchmark for Retrieval-Augmented Generation over Text, Tables, and Knowledge Graphs": 1,
+      "Overview of the TREC 2025 Retrieval Augmented Generation (RAG) Track": 2
+    },
+    "data_01": {
+      "A framework to model real-time databases": 1,
+      "Enabling On-Demand Database Computing with MIT SuperCloud Database Management System": 1,
+      "Evaluation of recommender systems in streaming environments": 1,
+      "Building Scalable AI-Powered Applications with Cloud Databases: Architectures, Best Practices and Performance Considerations": 2,
+      "ParquetDB: A Lightweight Python Parquet-Based Database": 1,
+      "Cognitive Database: A Step towards Endowing Relational Databases with Artificial Intelligence Capabilities": 1,
+      "Designing for Recommending Intermediate States in A Scientific Workflow Management System": 1,
+      "Database Operations in D4M.jl": 1,
+      "Evolving NoSQL Databases Without Downtime": 2,
+      "Performance Study of Time Series Databases": 2
+    },
+    "software_01": {
+      "LLPut: Investigating Large Language Models for Bug Report-Based Input Generation": 2,
+      "Graph Neural Networks For Mapping Variables Between Programs -- Extended Version": 2,
+      "Multi-View Adaptive Contrastive Learning for Information Retrieval Based Fault Localization": 2,
+      "Toward Validation of Textual Information Retrieval Techniques for Software Weaknesses": 2,
+      "Automated Monitoring of Cultural Heritage Artifacts Using Semantic Segmentation": 0,
+      "ZeroDayBench: Evaluating LLM Agents on Unseen Zero-Day Vulnerabilities for Cyberdefense": 2,
+      "Generative AI for Software Metadata: Overview of the Information Retrieval in Software Engineering Track at FIRE 2023": 2,
+      "Dynamic Relation Repairing for Knowledge Enhancement": 0,
+      "Semantic Jira - Semantic Expert Finder in the Bug Tracking Tool Jira": 2,
+      "The Causality/Repair Connection in Databases: Causality-Programs": 0
+    },
+    "cloud_01": {
+      "When More Cores Hurts: The Vector Database Scaling Paradox in HPC": 2,
+      "Building Scalable AI-Powered Applications with Cloud Databases: Architectures, Best Practices and Performance Considerations": 2,
+      "Database Engines: Evolution of Greenness": 1,
+      "Encrypted control for networked systems -- An illustrative introduction and current challenges": 1,
+      "On-Device Machine Learning: An Algorithms and Learning Theory Perspective": 0,
+      "A hybrid local search algorithm for the Continuous Energy-Constrained Scheduling Problem": 0,
+      "CQ CNN: A Hybrid Classical Quantum Convolutional Neural Network for Alzheimer's Disease Detection Using Diffusion Generated and U Net Segmented 3D MRI": 0,
+      "FedOne: Query-Efficient Federated Learning for Black-box Discrete Prompt Learning": 1,
+      "Single-Server Private Information Retrieval with Side Information Under Arbitrary Popularity Profiles": 0,
+      "Modular RADAR: An Immune System Inspired Search and Response Strategy for Distributed Systems": 1
+    }
+  }
+}

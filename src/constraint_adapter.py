@@ -113,16 +113,6 @@ def apply_constraints_to_idea(
             "Write a focused README that explains the constrained MVP, test data, and known limitations."
         )
 
-    elif available_days >= 14:
-        portfolio_steps = [
-            "Add automated tests for one critical data-processing or evaluation path.",
-            "Containerize the service and provide a reproducible local setup command.",
-        ]
-
-        for step in portfolio_steps:
-            if step not in mvp_scope:
-                mvp_scope.append(step)
-
     normalized_stack = [item.lower() for item in tech_stack]
 
     if "streamlit" in normalized_stack and "streamlit" not in [

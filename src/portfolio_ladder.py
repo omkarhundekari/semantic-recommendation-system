@@ -55,30 +55,38 @@ def build_easy_scope(mvp_steps: List[str]) -> List[str]:
     steps = mvp_steps[:4]
 
     steps.append(
-        "Create one polished demo flow with representative inputs and one "
-        "clearly documented success metric."
+        "Run the end-to-end workflow on representative sample data and "
+        "document one domain-relevant success metric."
     )
 
     return unique_items(steps[:5])
 
 
 def build_medium_scope(mvp_steps: List[str]) -> List[str]:
-    steps = mvp_steps[:6]
+    steps = [
+        step
+        for step in mvp_steps[:6]
+        if "automated test" not in step.lower()
+    ]
 
     steps.append(
-        "Add automated tests for one critical data-processing, evaluation, "
-        "or API workflow."
+        "Add automated tests for one critical domain workflow and one "
+        "invalid-input or failure case."
     )
 
     return unique_items(steps[:7])
 
 
 def build_hard_scope(mvp_steps: List[str]) -> List[str]:
-    steps = mvp_steps[:7]
+    steps = [
+        step
+        for step in mvp_steps[:7]
+        if "automated test" not in step.lower()
+    ]
 
     steps.extend(
         [
-            "Add automated tests for core workflows and expected failure cases.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
             "Containerize the application with a reproducible local setup.",
             (
                 "Add an evaluation, monitoring, or reliability view that "

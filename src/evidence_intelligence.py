@@ -309,8 +309,8 @@ def build_project_opportunity(
                 "buildable software projects."
             ),
             "gap": (
-                "Available evidence is often scattered across research, repositories, "
-                "and generic project ideas."
+                "The strongest evidence needs to be turned into one constrained, "
+                "testable workflow with clear inputs, outputs, and validation."
             ),
             "proposal": (
                 "Build an evidence-grounded project planning tool with a focused "

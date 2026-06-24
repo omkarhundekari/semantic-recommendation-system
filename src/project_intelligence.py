@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from evidence_intelligence import build_evidence_intelligence
-
+from roadmap_templates import get_domain_mvp_template
 
 DOMAIN_ALIASES = {
     "security": "cybersecurity",
@@ -672,39 +672,29 @@ def get_idea_specific_mvp(title: str) -> List[str]:
 
 def build_mvp_from_blueprint(blueprint: Dict) -> List[str]:
     title = blueprint.get("project_title", "Project")
-    domain = normalize_domain(blueprint.get("detected_domain", "general"))
+    domain = normalize_domain(
+        blueprint.get("detected_domain", "general")
+    )
 
-    idea_specific_mvp = get_idea_specific_mvp(title)
-    if idea_specific_mvp:
-        return idea_specific_mvp
+    title_specific_mvp = get_idea_specific_mvp(title)
+    if title_specific_mvp:
+        return title_specific_mvp
 
-    base = [
-        f"Create the core workflow for {title}.",
-        "Build a simple input form or upload flow for the user query or project data.",
-        "Store structured project/evidence records in a local database or CSV-backed prototype.",
-        "Show ranked outputs with clear explanations and confidence signals.",
-        "Add a dashboard view for results, scores, and recommended next actions."
+    domain_mvp = get_domain_mvp_template(
+        title=title,
+        domain=domain,
+    )
+
+    if domain_mvp:
+        return domain_mvp
+
+    return [
+        f"Define one narrow, measurable workflow for {title}.",
+        "Create a small reproducible input dataset or sample scenario.",
+        "Implement a transparent scoring, recommendation, or analysis pipeline.",
+        "Show outputs with explanations, confidence signals, and known limitations.",
+        "Validate the workflow against representative expected outcomes.",
     ]
-
-    domain_specific = {
-        "rag_llm": "Evaluate answer grounding, citations, retrieval quality, and hallucination risk.",
-        "mlops": "Track model metrics, versions, drift signals, and deployment-readiness checks.",
-        "data_engineering": "Validate schema, freshness, missing values, anomalies, and pipeline status.",
-        "cybersecurity": "Score risks, explain suspicious signals, and prioritize remediation actions.",
-        "computer_vision": "Process sample images, show detections or extracted text, and display confidence scores.",
-        "fintech": "Score financial risk signals and explain the factors behind each decision.",
-        "healthcare_ai": "Use sample healthcare-style records and clearly separate prediction, explanation, and caution notes.",
-        "developer_tools": "Analyze repository or code-review style inputs and generate engineering productivity insights.",
-        "cloud": "Track resources, costs, risk signals, and optimization recommendations.",
-        "devops": "Ingest logs or pipeline results and group failures with recommended fixes.",
-        "frontend": "Build reusable UI components, responsive views, and accessibility/performance checks.",
-        "backend": "Expose API endpoints, validation logic, persistence, and observability-friendly outputs."
-    }
-
-    if domain in domain_specific:
-        base.append(domain_specific[domain])
-
-    return base
 
 
 

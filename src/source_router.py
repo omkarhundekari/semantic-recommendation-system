@@ -1,283 +1,300 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from embedding_search import search_papers
+from evidence_domain_inference import infer_domain_from_evidence
 from github_corpus_search import search_github_project_corpus
 from project_corpus_search import search_project_corpus
 from query_expander import get_query_metadata
 
 
-def retrieve_evidence(user_query: str, top_k: int = 3) -> Dict:
-    query_metadata = get_query_metadata(user_query)
+def add_source_type(
+    items: List[Dict],
+    source_type: str,
+    retrieval_phase: str,
+) -> List[Dict]:
+    enriched_items = []
 
-    expanded_query = query_metadata["expanded_query"]
-    detected_domain = query_metadata["detected_domain"]
-    detected_intent = query_metadata["detected_intent"]
+    for item in items:
+        enriched_item = dict(item)
+        enriched_item["source_type"] = enriched_item.get(
+            "source_type",
+            source_type,
+        )
+        enriched_item["retrieval_phase"] = retrieval_phase
+        enriched_items.append(enriched_item)
 
-    route = choose_source_route(
-        detected_domain=detected_domain,
-        detected_intent=detected_intent,
-        user_query=user_query
+    return enriched_items
+
+
+def deduplicate_evidence(items: List[Dict]) -> List[Dict]:
+    seen = set()
+    unique_items = []
+
+    for item in items:
+        source_type = str(item.get("source_type", "unknown"))
+        url = str(item.get("url", "")).strip()
+        title = str(item.get("title", "")).strip().lower()
+
+        identity = (
+            source_type,
+            url or title,
+        )
+
+        if identity in seen:
+            continue
+
+        seen.add(identity)
+        unique_items.append(item)
+
+    return unique_items
+
+
+def interleave_evidence_groups(
+    groups: List[List[Dict]],
+) -> List[Dict]:
+    merged = []
+
+    max_length = max(
+        (len(group) for group in groups),
+        default=0,
     )
 
-    research_results = []
-    project_results = []
-    github_results = []
+    for index in range(max_length):
+        for group in groups:
+            if index < len(group):
+                merged.append(group[index])
 
-    if route in ["research", "both"]:
-        research_results = search_papers(
+    return merged
+
+
+def merge_evidence_groups(
+    focused_research: List[Dict],
+    focused_projects: List[Dict],
+    focused_github: List[Dict],
+    broad_research: List[Dict],
+    broad_projects: List[Dict],
+    broad_github: List[Dict],
+    top_k: int,
+) -> List[Dict]:
+    """
+    Focused evidence is always prioritized.
+
+    Broad evidence remains available as a fallback when the focused pass
+    cannot provide enough unique evidence items.
+    """
+    focused_items = interleave_evidence_groups(
+        [
+            focused_projects,
+            focused_research,
+            focused_github,
+        ]
+    )
+
+    broad_items = interleave_evidence_groups(
+        [
+            broad_projects,
+            broad_research,
+            broad_github,
+        ]
+    )
+
+    return deduplicate_evidence(
+        focused_items + broad_items
+    )[:top_k]
+
+
+def build_focused_query(
+    original_query: str,
+    inferred_focus: str,
+) -> str:
+    focus_phrase = inferred_focus.replace("_", " ").strip()
+
+    if not focus_phrase or inferred_focus == "general":
+        return original_query
+
+    return f"{original_query} {focus_phrase}"
+
+
+USER_DIRECTION_ALIASES = {
+    "ai / ml": "ai_ml",
+    "ai/ml": "ai_ml",
+    "ai_ml": "ai_ml",
+    "full-stack / software engineering": "software_engineering",
+    "full stack / software engineering": "software_engineering",
+    "full-stack": "software_engineering",
+    "software engineering": "software_engineering",
+    "cloud / platform": "cloud_platform",
+    "cloud/platform": "cloud_platform",
+    "cloud_platform": "cloud_platform",
+    "cybersecurity": "cybersecurity",
+    "fintech": "fintech",
+    "blockchain": "blockchain",
+    "education technology": "education_tech",
+    "education_tech": "education_tech",
+}
+
+
+def normalize_selected_direction(
+    selected_direction: Optional[str],
+) -> Optional[str]:
+    if not selected_direction:
+        return None
+
+    normalized = selected_direction.strip().lower()
+
+    return USER_DIRECTION_ALIASES.get(
+        normalized,
+        normalized.replace(" ", "_").replace("/", "_"),
+    )
+
+
+def retrieve_evidence(
+    user_query: str,
+    top_k: int = 6,
+    intent_hints: Optional[List[str]] = None,
+    selected_direction: Optional[str] = None,
+) -> Dict:
+    """
+    Two-pass evidence retrieval.
+
+    Pass 1:
+    Broad retrieval across research, project patterns, and GitHub references.
+
+    Pass 2:
+    Evidence-based family/focus inference, followed by focused retrieval.
+    """
+    query_metadata = get_query_metadata(user_query)
+
+    expanded_query = query_metadata.get(
+        "expanded_query",
+        user_query,
+    )
+
+    broad_top_k = max(top_k, 6)
+    focused_top_k = max(top_k, 6)
+
+    broad_research = add_source_type(
+        search_papers(
             expanded_query,
-            top_k=max(top_k, 3)
-        )
+            top_k=broad_top_k,
+        ),
+        source_type="research_paper",
+        retrieval_phase="broad",
+    )
 
-        for item in research_results:
-            item["source_type"] = "research_paper"
-
-    if route in ["project", "both"]:
-        project_results = search_project_corpus(
+    broad_projects = add_source_type(
+        search_project_corpus(
             expanded_query,
-            top_k=max(top_k, 3),
-            domain_filter=detected_domain
-        )
+            top_k=broad_top_k,
+            domain_filter=None,
+        ),
+        source_type="project_pattern",
+        retrieval_phase="broad",
+    )
 
-        for item in project_results:
-            item["source_type"] = item.get(
-                "source_type",
-                "project_pattern"
-            )
-
-        github_results = search_github_project_corpus(
+    broad_github = add_source_type(
+        search_github_project_corpus(
             expanded_query,
-            top_k=max(top_k, 3),
-            domain_filter=detected_domain
-        )
+            top_k=broad_top_k,
+            domain_filter=None,
+        ),
+        source_type="github_repository",
+        retrieval_phase="broad",
+    )
 
-        for item in github_results:
-            item["source_type"] = "github_repository"
+    broad_evidence = (
+        broad_research
+        + broad_projects
+        + broad_github
+    )
 
-    merged_results = merge_evidence(
-        research_results=research_results,
-        project_results=project_results,
-        github_results=github_results,
-        route=route,
-        top_k=top_k
+    inference = infer_domain_from_evidence(
+        broad_evidence,
+        intent_hints=intent_hints,
+    )
+
+    confirmed_direction = normalize_selected_direction(
+        selected_direction,
+    )
+
+    if confirmed_direction:
+        inference = {
+            **inference,
+            "inferred_domain_family": confirmed_direction,
+            "family_confidence": 1.0,
+            "inferred_focus": confirmed_direction,
+            "focus_confidence": 1.0,
+            "requires_clarification": False,
+            "selection_source": "user_confirmed",
+        }
+
+    inferred_focus = inference.get(
+        "inferred_focus",
+        "general",
+    )
+
+    focused_query = build_focused_query(
+        original_query=user_query,
+        inferred_focus=inferred_focus,
+    )
+
+    focused_research = add_source_type(
+        search_papers(
+            focused_query,
+            top_k=focused_top_k,
+        ),
+        source_type="research_paper",
+        retrieval_phase="focused",
+    )
+
+    focused_projects = add_source_type(
+        search_project_corpus(
+            focused_query,
+            top_k=focused_top_k,
+            domain_filter=inferred_focus,
+        ),
+        source_type="project_pattern",
+        retrieval_phase="focused",
+    )
+
+    focused_github = add_source_type(
+        search_github_project_corpus(
+            focused_query,
+            top_k=focused_top_k,
+            domain_filter=inferred_focus,
+        ),
+        source_type="github_repository",
+        retrieval_phase="focused",
+    )
+
+    merged_results = merge_evidence_groups(
+        focused_research=focused_research,
+        focused_projects=focused_projects,
+        focused_github=focused_github,
+        broad_research=broad_research,
+        broad_projects=broad_projects,
+        broad_github=broad_github,
+        top_k=top_k,
     )
 
     return {
         "query": user_query,
         "expanded_query": expanded_query,
-        "detected_domain": detected_domain,
-        "detected_intent": detected_intent,
-        "selected_route": route,
-        "research_results": research_results,
-        "project_results": project_results,
-        "github_results": github_results,
-        "merged_results": merged_results
+        "focused_query": focused_query,
+        "detected_intent": query_metadata.get(
+            "detected_intent",
+            "unknown",
+        ),
+        "selected_route": "broad_then_focused",
+        "selected_direction": normalize_selected_direction(
+            selected_direction,
+        ),
+        "inference": inference,
+        "research_results": focused_research,
+        "project_results": focused_projects,
+        "github_results": focused_github,
+        "broad_research_results": broad_research,
+        "broad_project_results": broad_projects,
+        "broad_github_results": broad_github,
+        "merged_results": merged_results,
     }
-
-
-def choose_source_route(
-    detected_domain: str,
-    detected_intent: str,
-    user_query: str
-) -> str:
-    query = user_query.lower()
-
-    explicit_project_keywords = [
-        "project",
-        "projects",
-        "app",
-        "tool",
-        "dashboard",
-        "platform",
-        "portfolio",
-        "build",
-        "make",
-        "create",
-        "prototype",
-        "mvp"
-    ]
-
-    explicit_research_keywords = [
-        "research",
-        "paper",
-        "papers",
-        "survey",
-        "literature",
-        "method",
-        "methods",
-        "model",
-        "models",
-        "architecture",
-        "algorithm",
-        "benchmark",
-        "evaluation"
-    ]
-
-    research_first_topics = [
-        "rag",
-        "retrieval augmented generation",
-        "retrieval-augmented generation",
-        "retrieval",
-        "question answering",
-        "recommendation",
-        "recommender",
-        "graph neural network",
-        "gnn",
-        "knowledge graph",
-        "nlp",
-        "transformer",
-        "large language model",
-        "llm",
-        "semantic search",
-        "machine learning",
-        "deep learning"
-    ]
-
-    project_first_domains = [
-        "frontend",
-        "backend",
-        "full_stack",
-        "devops",
-        "cloud",
-        "mobile",
-        "developer_tools",
-        "education_tech",
-        "blockchain",
-        "databases"
-    ]
-
-    mixed_domains = [
-        "ai_ml",
-        "rag_llm",
-        "mlops",
-        "data_engineering",
-        "cybersecurity",
-        "healthcare_ai",
-        "computer_vision",
-        "fintech",
-        "nlp",
-        "recommendation_systems"
-    ]
-
-    has_project_intent = (
-        detected_intent == "project_building"
-        or any(keyword in query for keyword in explicit_project_keywords)
-    )
-
-    has_research_intent = any(
-        keyword in query
-        for keyword in explicit_research_keywords
-    )
-
-    has_research_topic = any(
-        topic in query
-        for topic in research_first_topics
-    )
-
-    research_supported_project_domains = [
-        "rag_llm",
-        "ai_ml",
-        "healthcare_ai",
-        "computer_vision",
-        "nlp",
-        "recommendation_systems"
-    ]
-
-    implementation_first_project_domains = [
-        "frontend",
-        "backend",
-        "full_stack",
-        "cloud",
-        "devops",
-        "mlops",
-        "data_engineering",
-        "databases",
-        "cybersecurity",
-        "fintech",
-        "developer_tools",
-        "mobile",
-        "blockchain",
-        "education_tech"
-    ]
-
-    if has_research_intent and not has_project_intent:
-        return "research"
-
-    if has_project_intent:
-        if detected_domain in research_supported_project_domains:
-            return "both"
-
-        if detected_domain in implementation_first_project_domains:
-            return "project"
-
-    if has_research_topic and has_project_intent:
-        return "both"
-
-    if detected_domain in project_first_domains:
-        return "project"
-
-    if detected_domain in mixed_domains:
-        return "research"
-
-    if has_project_intent:
-        return "project"
-
-    return "both"
-
-
-def merge_evidence(
-    research_results: List[Dict],
-    project_results: List[Dict],
-    github_results: List[Dict],
-    route: str,
-    top_k: int
-) -> List[Dict]:
-    """
-    Keeps the three evidence types balanced.
-
-    Project queries:
-    curated project pattern → GitHub implementation reference → repeat
-
-    Mixed queries:
-    curated project pattern → research paper → GitHub reference → repeat
-
-    Pure research queries:
-    research papers only
-    """
-    if route == "research":
-        return research_results[:top_k]
-
-    merged = []
-
-    if route == "project":
-        max_len = max(
-            len(project_results),
-            len(github_results)
-        )
-
-        for index in range(max_len):
-            if index < len(project_results):
-                merged.append(project_results[index])
-
-            if index < len(github_results):
-                merged.append(github_results[index])
-
-        return merged[:top_k]
-
-    max_len = max(
-        len(project_results),
-        len(research_results),
-        len(github_results)
-    )
-
-    for index in range(max_len):
-        if index < len(project_results):
-            merged.append(project_results[index])
-
-        if index < len(research_results):
-            merged.append(research_results[index])
-
-        if index < len(github_results):
-            merged.append(github_results[index])
-
-    return merged[:top_k]
