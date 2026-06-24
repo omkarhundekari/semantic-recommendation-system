@@ -9,6 +9,7 @@ from embedding_search import (
 )
 from reranker import CrossEncoderReranker
 from rrf_fusion import reciprocal_rank_fusion
+from research_records import build_research_record
 
 
 _bm25_retriever = None
@@ -34,19 +35,10 @@ def _get_reranker() -> CrossEncoderReranker:
 
 
 def _document_record(index: int) -> Dict[str, Any]:
-    paper = df.iloc[index]
-
-    return {
-        "index": int(index),
-        "title": paper.get("title", "Untitled Paper"),
-        "content": paper.get("content", ""),
-        "abstract": paper.get("content", ""),
-        "category": paper.get("category", "Unknown Category"),
-        "authors": paper.get("authors", ""),
-        "published": paper.get("published", ""),
-        "url": paper.get("url", ""),
-        "source": paper.get("source", ""),
-    }
+    return build_research_record(
+        paper=df.iloc[index],
+        index=index,
+    )
 
 
 def semantic_retrieve(query: str, top_k: int = 10) -> List[Dict[str, Any]]:

@@ -21,3 +21,7 @@ data/github_project_corpus.csv
 
 # Generated GitHub README enrichment cache
 data/github_repository_details.csv
+data/research_corpus.before_document_id_backup.csv
+
+# Guided smoke-test labels; not independent benchmark ground truth
+data/retrieval_eval_labels_v2.json

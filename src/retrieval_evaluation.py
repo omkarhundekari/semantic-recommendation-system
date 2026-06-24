@@ -3,20 +3,15 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
-from hybrid_retriever import (
-    bm25_retrieve,
-    hybrid_reranked_retrieve,
-    hybrid_rrf_retrieve,
-    semantic_retrieve,
+from research_retrieval_service import retrieve_ranked_evidence
+
+
+MODES = (
+    "semantic",
+    "bm25",
+    "hybrid_rrf",
+    "hybrid_reranked",
 )
-
-
-MODES = {
-    "semantic": semantic_retrieve,
-    "bm25": bm25_retrieve,
-    "hybrid_rrf": hybrid_rrf_retrieve,
-    "hybrid_reranked": hybrid_reranked_retrieve,
-}
 
 
 def precision_at_k(relevances: List[int], k: int) -> float:
@@ -64,12 +59,15 @@ def retrieve_for_mode(
     query: str,
     top_k: int,
 ) -> List[Dict]:
-    retriever = MODES[mode_name]
+    if mode_name not in MODES:
+        raise ValueError(f"Unsupported retrieval mode: {mode_name}")
 
-    if mode_name in {"hybrid_rrf", "hybrid_reranked"}:
-        return retriever(query, top_k=top_k, candidate_k=50)
-
-    return retriever(query, top_k=top_k)
+    return retrieve_ranked_evidence(
+        query=query,
+        top_k=top_k,
+        strategy=mode_name,
+        candidate_k=50,
+    )
 
 
 def export_candidates(

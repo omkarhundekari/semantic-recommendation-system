@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 
-from embedding_search import search_papers
+from research_retrieval_service import retrieve_ranked_evidence
 from evidence_domain_inference import infer_domain_from_evidence
 from github_corpus_search import search_github_project_corpus
 from project_corpus_search import search_project_corpus
@@ -174,9 +174,10 @@ def retrieve_evidence(
     focused_top_k = max(top_k, 6)
 
     broad_research = add_source_type(
-        search_papers(
-            expanded_query,
+        retrieve_ranked_evidence(
+            query=expanded_query,
             top_k=broad_top_k,
+            strategy="hybrid_reranked",
         ),
         source_type="research_paper",
         retrieval_phase="broad",
@@ -239,9 +240,10 @@ def retrieve_evidence(
     )
 
     focused_research = add_source_type(
-        search_papers(
-            focused_query,
+        retrieve_ranked_evidence(
+            query=focused_query,
             top_k=focused_top_k,
+            strategy="hybrid_reranked",
         ),
         source_type="research_paper",
         retrieval_phase="focused",
