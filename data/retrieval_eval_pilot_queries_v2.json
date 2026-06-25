@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "purpose": "Assisted five-query retrieval evaluation pilot",
+  "queries": [
+    {
+      "id": "cyber_01",
+      "domain": "cybersecurity",
+      "query": "detect anomalous authentication behavior from security logs"
+    },
+    {
+      "id": "ml_01",
+      "domain": "ai_ml",
+      "query": "retrieval augmented generation for question answering"
+    },
+    {
+      "id": "data_02",
+      "domain": "data_engineering",
+      "query": "data quality monitoring for analytics pipelines"
+    },
+    {
+      "id": "software_03",
+      "domain": "software_engineering",
+      "query": "API testing and software reliability engineering"
+    },
+    {
+      "id": "cloud_03",
+      "domain": "cloud_platform",
+      "query": "Kubernetes resource scheduling and autoscaling"
+    }
+  ]
+}

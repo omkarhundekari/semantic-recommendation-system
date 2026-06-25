@@ -25,3 +25,6 @@ data/research_corpus.before_document_id_backup.csv
 
 # Guided smoke-test labels; not independent benchmark ground truth
 data/retrieval_eval_labels_v2.json
+
+# Assisted pilot labels are local evaluation notes, not benchmark ground truth.
+data/retrieval_eval_pilot_labels_v2.json

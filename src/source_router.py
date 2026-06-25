@@ -177,7 +177,7 @@ def retrieve_evidence(
         retrieve_ranked_evidence(
             query=expanded_query,
             top_k=broad_top_k,
-            strategy="hybrid_reranked",
+            strategy="hybrid_rrf",
         ),
         source_type="research_paper",
         retrieval_phase="broad",
@@ -243,7 +243,7 @@ def retrieve_evidence(
         retrieve_ranked_evidence(
             query=focused_query,
             top_k=focused_top_k,
-            strategy="hybrid_reranked",
+            strategy="hybrid_rrf",
         ),
         source_type="research_paper",
         retrieval_phase="focused",

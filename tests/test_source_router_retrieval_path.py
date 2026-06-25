@@ -66,11 +66,11 @@ def test_source_router_uses_shared_hybrid_retrieval(monkeypatch):
         {
             "query": "expanded query",
             "top_k": 6,
-            "strategy": "hybrid_reranked",
+            "strategy": "hybrid_rrf",
         },
         {
             "query": "original query",
             "top_k": 6,
-            "strategy": "hybrid_reranked",
+            "strategy": "hybrid_rrf",
         },
     ]
