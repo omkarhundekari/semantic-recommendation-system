@@ -68,6 +68,19 @@ type IntelligenceResponse = {
     project_patterns: number;
     github_repositories: number;
   };
+  research_evidence_assessment?: {
+    confidence: {
+      level: string;
+      reason: string;
+    };
+    evidence: {
+      alignment_summary?: {
+        direct: number;
+        adjacent: number;
+        weak: number;
+      };
+    };
+  };
   directions: Direction[];
 };
 
@@ -570,6 +583,45 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+
+              {result.research_evidence_assessment && (
+                <div className="mt-6 rounded-2xl border border-sky-300/15 bg-sky-300/[0.05] p-5">
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">
+                        Research evidence
+                      </p>
+                      <p className="mt-2 text-lg font-semibold capitalize text-white">
+                        {result.research_evidence_assessment.confidence.level} support
+                      </p>
+                      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
+                        {result.research_evidence_assessment.confidence.reason}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2">
+                        <p className="font-semibold text-emerald-200">
+                          {result.research_evidence_assessment.evidence.alignment_summary?.direct ?? 0}
+                        </p>
+                        <p className="mt-1 text-slate-400">direct</p>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2">
+                        <p className="font-semibold text-amber-200">
+                          {result.research_evidence_assessment.evidence.alignment_summary?.adjacent ?? 0}
+                        </p>
+                        <p className="mt-1 text-slate-400">adjacent</p>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2">
+                        <p className="font-semibold text-slate-200">
+                          {result.research_evidence_assessment.evidence.alignment_summary?.weak ?? 0}
+                        </p>
+                        <p className="mt-1 text-slate-400">weak</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-8 grid gap-5 lg:grid-cols-3">
                 {result.directions.map((direction, index) => {
