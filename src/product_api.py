@@ -11,6 +11,7 @@ from project_idea_generator import generate_project_ideas
 from query_expander import get_query_metadata
 from query_understanding import understand_query
 from research_evidence_assessment import build_evidence_assessment
+from research_query_anchors import extract_required_anchor_terms
 from schemas.product_models import (
     EvidenceReference,
     PipelineStep,
@@ -53,9 +54,12 @@ def build_research_evidence_assessment(
     if not research_results:
         return None
 
+    required_anchor_terms = extract_required_anchor_terms(query)
+
     return build_evidence_assessment(
         research_results,
         query=query,
+        required_anchor_terms=required_anchor_terms,
     )
 
 

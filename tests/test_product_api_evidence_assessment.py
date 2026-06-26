@@ -68,3 +68,33 @@ def test_response_schema_accepts_optional_research_evidence_assessment():
     )
 
     assert response.research_evidence_assessment["confidence"]["level"] == "strong"
+
+
+def test_api_assessment_uses_registered_required_anchors():
+    evidence_payload = {
+        "research_results": [
+            {
+                "document_id": "arxiv:4444.44444",
+                "title": "Retrieval-Augmented Generation for Question Answering",
+                "abstract": (
+                    "We improve retrieval augmented generation for "
+                    "question answering with a retrieval method."
+                ),
+                "category": "cs.IR",
+                "retrieval_rank": 1,
+            }
+        ]
+    }
+
+    result = build_research_evidence_assessment(
+        evidence_payload,
+        query=(
+            "Build a retrieval augmented generation project "
+            "for question answering"
+        ),
+    )
+
+    assert result["required_anchor_terms"] == [
+        "retrieval augmented generation",
+        "question answering",
+    ]
