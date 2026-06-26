@@ -10,6 +10,7 @@ from portfolio_ladder import apply_portfolio_ladder
 from project_idea_generator import generate_project_ideas
 from query_expander import get_query_metadata
 from query_understanding import understand_query
+from research_evidence_assessment import build_evidence_assessment
 from schemas.product_models import (
     EvidenceReference,
     PipelineStep,
@@ -41,6 +42,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def build_research_evidence_assessment(
+    evidence_payload: Dict,
+    query: str,
+):
+    research_results = evidence_payload.get("research_results", [])
+
+    if not research_results:
+        return None
+
+    return build_evidence_assessment(
+        research_results,
+        query=query,
+    )
 
 
 def build_roadmap(idea: Dict) -> List[RoadmapStage]:
@@ -289,6 +305,10 @@ def generate_project_intelligence(
 
     inference = evidence_payload["inference"]
     evidence_items = evidence_payload["merged_results"]
+    research_evidence_assessment = build_research_evidence_assessment(
+        evidence_payload,
+        query=corrected_query,
+    )
 
     pipeline.extend(
         [
@@ -550,6 +570,7 @@ def generate_project_intelligence(
                 evidence_payload.get("github_results", [])
             ),
         },
+        research_evidence_assessment=research_evidence_assessment,
         clarification_required=False,
         inferred_domain_family=inference.get(
             "inferred_domain_family"
