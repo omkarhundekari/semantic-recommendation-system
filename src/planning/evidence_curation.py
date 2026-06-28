@@ -1,7 +1,7 @@
 import re
 from collections import Counter
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from research_query_anchors import (
     extract_required_anchor_terms,
@@ -33,6 +33,26 @@ CURATION_STOP_WORDS = {
     "months",
 }
 
+BRIDGE_STOP_WORDS = CURATION_STOP_WORDS | {
+    "assistant",
+    "based",
+    "building",
+    "core",
+    "depth",
+    "evidence",
+    "grounded",
+    "implementation",
+    "modern",
+    "output",
+    "planning",
+    "portfolio",
+    "practical",
+    "ready",
+    "relevant",
+    "skills",
+    "technical",
+}
+
 
 @dataclass
 class CuratedEvidenceItem:
@@ -41,6 +61,7 @@ class CuratedEvidenceItem:
     matched_anchor_terms: List[str] = field(default_factory=list)
     matched_query_terms: List[str] = field(default_factory=list)
     retention_reason: str = ""
+    support_scope: str = "direct"
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -116,6 +137,21 @@ def _query_terms(query: str) -> List[str]:
     )
 
 
+def _bridge_terms(item: Dict[str, Any]) -> set:
+    return {
+        token
+        for token in re.findall(
+            r"[a-z][a-z0-9_-]{2,}",
+            _item_text(item).lower(),
+        )
+        if token not in BRIDGE_STOP_WORDS
+    }
+
+
+def _normalized_category(item: Dict[str, Any]) -> str:
+    return normalize_text(item.get("category", ""))
+
+
 def _retrieval_score(item: Dict[str, Any]) -> float:
     values = []
 
@@ -164,13 +200,70 @@ def _score_item(
     overlap_score = len(matched_terms) * 2.0
     retrieval_score = min(_retrieval_score(item), 1.0)
 
-    score = anchor_score + overlap_score + retrieval_score
-
     return CuratedEvidenceItem(
         item=item,
-        relevance_score=round(score, 3),
+        relevance_score=round(
+            anchor_score + overlap_score + retrieval_score,
+            3,
+        ),
         matched_anchor_terms=matched_anchors,
         matched_query_terms=matched_terms,
+    )
+
+
+def _sort_key(entry: CuratedEvidenceItem) -> tuple:
+    return (
+        entry.relevance_score,
+        len(entry.matched_anchor_terms),
+        len(entry.matched_query_terms),
+        _retrieval_score(entry.item),
+    )
+
+
+def _adjacent_pattern_candidates(
+    dropped: List[CuratedEvidenceItem],
+    retained: List[CuratedEvidenceItem],
+) -> List[tuple]:
+    direct_categories = {
+        _normalized_category(entry.item)
+        for entry in retained
+        if _normalized_category(entry.item)
+    }
+
+    if not direct_categories:
+        return []
+
+    retained_terms = set()
+
+    for entry in retained:
+        retained_terms.update(_bridge_terms(entry.item))
+
+    candidates = []
+
+    for entry in dropped:
+        item = entry.item
+
+        if item.get("source_type") != "project_pattern":
+            continue
+
+        if _normalized_category(item) not in direct_categories:
+            continue
+
+        shared_terms = _bridge_terms(item) & retained_terms
+
+        if len(shared_terms) < 2:
+            continue
+
+        candidates.append((len(shared_terms), entry))
+
+    return sorted(
+        candidates,
+        key=lambda pair: (
+            pair[0],
+            _retrieval_score(pair[1].item),
+            pair[1].relevance_score,
+        ),
+        reverse=True,
     )
 
 
@@ -199,6 +292,7 @@ def curate_evidence(
         has_query_support = len(entry.matched_query_terms) >= 2
 
         if has_anchor_support or has_query_support:
+            entry.support_scope = "direct"
             entry.retention_reason = (
                 "Matched registered query anchors."
                 if has_anchor_support
@@ -212,20 +306,21 @@ def curate_evidence(
             )
             dropped.append(entry)
 
-    retained.sort(
-        key=lambda entry: (
-            entry.relevance_score,
-            len(entry.matched_anchor_terms),
-            len(entry.matched_query_terms),
-        ),
-        reverse=True,
-    )
+    retained.sort(key=_sort_key, reverse=True)
 
-    # Broad queries may not trigger a registered anchor and may use wording
-    # that appears only sparsely in individual sources. In that case, retain
-    # a small set of retrieval-ranked adjacent sources rather than producing
-    # an empty or single-source planning packet. Anchor-driven queries remain
-    # strict so unrelated material cannot enter through this fallback.
+    if required_anchor_terms:
+        for _, entry in _adjacent_pattern_candidates(
+            dropped=dropped,
+            retained=retained,
+        )[:1]:
+            entry.support_scope = "adjacent_planning"
+            entry.retention_reason = (
+                "Retained as adjacent planning evidence because its "
+                "category and technical concepts align with direct evidence."
+            )
+            retained.append(entry)
+            dropped.remove(entry)
+
     if not required_anchor_terms:
         minimum_coverage = min(3, max_items, len(scored))
 
@@ -250,6 +345,7 @@ def curate_evidence(
                 if len(retained) >= minimum_coverage:
                     break
 
+                entry.support_scope = "adjacent_planning"
                 entry.retention_reason = (
                     "Retained as retrieval-ranked adjacent evidence because "
                     "the broad query did not provide enough lexical coverage."
@@ -257,14 +353,7 @@ def curate_evidence(
                 retained.append(entry)
                 dropped.remove(entry)
 
-    retained.sort(
-        key=lambda entry: (
-            entry.relevance_score,
-            len(entry.matched_anchor_terms),
-            len(entry.matched_query_terms),
-        ),
-        reverse=True,
-    )
+    retained.sort(key=_sort_key, reverse=True)
 
     return EvidenceCurationResult(
         retained=retained[:max_items],

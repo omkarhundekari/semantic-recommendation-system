@@ -167,3 +167,72 @@ def test_curator_preserves_adjacent_ranked_evidence_for_broad_queries():
         in entry.retention_reason
         for entry in result.retained
     )
+
+
+def test_anchor_query_retains_category_aligned_adjacent_pattern_only():
+    result = curate_evidence(
+        evidence_items=[
+            {
+                "document_id": "paper-rag",
+                "source_type": "research_paper",
+                "category": "cs.LG",
+                "title": (
+                    "Knowledge Graph-extended Retrieval Augmented "
+                    "Generation for Question Answering"
+                ),
+                "abstract": (
+                    "Retrieval augmented generation improves "
+                    "question answering."
+                ),
+            },
+            {
+                "source_type": "github_repository",
+                "category": "rag_llm",
+                "title": "HKUDS/LightRAG",
+                "content": (
+                    "Simple retrieval augmented generation with "
+                    "RAG evaluation and LLM workflows."
+                ),
+            },
+            {
+                "source_type": "project_pattern",
+                "category": "rag_llm",
+                "title": "Citation Coverage Checker for LLM Answers",
+                "content": (
+                    "RAG answer grounding, citations, LLM evaluation, "
+                    "and practical portfolio implementation."
+                ),
+                "tags": "citations,answer-grounding,rag,llm,evaluation",
+            },
+            {
+                "source_type": "project_pattern",
+                "category": "ai_ml",
+                "title": "AutoML Experiment Recommendation Assistant",
+                "content": (
+                    "AutoML feature engineering, model selection, "
+                    "and experiment evaluation."
+                ),
+                "tags": "automl,feature-engineering,model-selection,ml",
+            },
+        ],
+        user_query=(
+            "Build a retrieval augmented generation project for "
+            "question answering"
+        ),
+    )
+
+    retained = {
+        entry.item["title"]: entry
+        for entry in result.retained
+    }
+    dropped_titles = {
+        entry.item["title"]
+        for entry in result.dropped
+    }
+
+    assert "Citation Coverage Checker for LLM Answers" in retained
+    assert retained[
+        "Citation Coverage Checker for LLM Answers"
+    ].support_scope == "adjacent_planning"
+
+    assert "AutoML Experiment Recommendation Assistant" in dropped_titles
