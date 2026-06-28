@@ -63,6 +63,7 @@ type IntelligenceResponse = {
   inferred_domain_family?: string | null;
   family_confidence?: number | null;
   inferred_focus?: string | null;
+  resolved_planning_domain?: string | null;
   source_counts?: {
     research_papers: number;
     project_patterns: number;
@@ -573,7 +574,12 @@ export default function Home() {
                   <p>
                     {result.inferred_domain_family?.replaceAll("_", " ") ??
                       "General"}{" "}
-                    · {result.inferred_focus?.replaceAll("_", " ") ?? "focused"}
+                    ·{" "}
+                    {(
+                      result.resolved_planning_domain ??
+                      result.inferred_focus ??
+                      "focused"
+                    ).replaceAll("_", " ")}
                   </p>
                   <p className="mt-1">
                     {confidenceLabel(result.family_confidence)} ·{" "}

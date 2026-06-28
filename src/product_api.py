@@ -66,9 +66,30 @@ def build_research_evidence_assessment(
 def build_roadmap(idea: Dict) -> List[RoadmapStage]:
     mvp_steps = idea.get("mvp_scope", [])
     advanced_extensions = idea.get("advanced_extensions", [])
+    detected_domain = idea.get("detected_domain", "")
 
-    return [
-        RoadmapStage(
+    if detected_domain == "rag_llm":
+        define_stage = RoadmapStage(
+            id="define",
+            title="Define the RAG evaluation question",
+            purpose=(
+                "Choose a narrow RAG workflow, a constrained document set, "
+                "and measurable evaluation targets."
+            ),
+            tasks=[
+                idea.get("evidence_buildable_gap")
+                or (
+                    "Choose one RAG failure mode to inspect, such as "
+                    "retrieval quality, answer faithfulness, or citation coverage."
+                ),
+                (
+                    "Select a small document collection, a fixed question set, "
+                    "and evaluation metrics for retrieval and answer quality."
+                ),
+            ],
+        )
+    else:
+        define_stage = RoadmapStage(
             id="define",
             title="Define the problem",
             purpose="Turn the recommendation into a narrow, measurable problem.",
@@ -80,7 +101,10 @@ def build_roadmap(idea: Dict) -> List[RoadmapStage]:
                 ),
                 "Choose a constrained input source and a realistic first user.",
             ],
-        ),
+        )
+
+    return [
+        define_stage,
         RoadmapStage(
             id="mvp",
             title="Build the MVP",
@@ -582,6 +606,11 @@ def generate_project_intelligence(
         family_confidence=inference.get("family_confidence"),
         inferred_focus=inference.get("inferred_focus"),
         focus_confidence=inference.get("focus_confidence"),
+        resolved_planning_domain=(
+            ideas[0].get("detected_domain")
+            if ideas
+            else None
+        ),
         candidate_families=inference.get(
             "candidate_families",
             [],

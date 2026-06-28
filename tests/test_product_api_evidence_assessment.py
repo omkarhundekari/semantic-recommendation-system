@@ -1,4 +1,8 @@
-from product_api import build_research_evidence_assessment
+from product_api import (
+    build_research_evidence_assessment,
+    generate_project_intelligence,
+)
+from schemas.product_models import ProjectIntelligenceRequest
 
 
 def test_builds_api_assessment_from_focused_research_results():
@@ -65,9 +69,11 @@ def test_response_schema_accepts_optional_research_evidence_assessment():
                 "level": "strong",
             },
         },
+        resolved_planning_domain="rag_llm",
     )
 
     assert response.research_evidence_assessment["confidence"]["level"] == "strong"
+    assert response.resolved_planning_domain == "rag_llm"
 
 
 def test_api_assessment_uses_registered_required_anchors():
@@ -98,3 +104,18 @@ def test_api_assessment_uses_registered_required_anchors():
         "retrieval augmented generation",
         "question answering",
     ]
+
+def test_ready_api_response_exposes_resolved_rag_planning_domain():
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal=(
+                "Build a retrieval augmented generation project for "
+                "question answering for ML engineer roles in 3 weeks"
+            ),
+            selected_direction="AI / ML",
+        )
+    )
+
+    assert response.status == "ready"
+    assert response.inferred_focus == "ai_ml"
+    assert response.resolved_planning_domain == "rag_llm"

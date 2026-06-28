@@ -102,6 +102,7 @@ class ProjectIntelligenceResponse(BaseModel):
     family_confidence: Optional[float] = None
     inferred_focus: Optional[str] = None
     focus_confidence: Optional[float] = None
+    resolved_planning_domain: Optional[str] = None
     candidate_families: List[Dict[str, Any]] = Field(default_factory=list)
     candidate_focuses: List[Dict[str, Any]] = Field(default_factory=list)
 

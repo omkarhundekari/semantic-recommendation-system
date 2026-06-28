@@ -165,7 +165,10 @@ def generate_project_ideas(
             "implementation_signals": implementation_signals,
             "implementation_technologies": implementation_technologies,
             "github_selection_reason": evidence_item.get("selection_reason", ""),
-            "detected_domain": planning_domain,
+            "detected_domain": blueprint.get(
+                "detected_domain",
+                planning_domain,
+            ),
             "detected_intent": detected_intent,
             "idea_angle": blueprint.get("idea_angle", ""),
             "opportunity_area": blueprint.get("opportunity", ""),
