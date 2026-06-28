@@ -2,14 +2,16 @@ from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
 
 from planning.candidate_models import CandidateGenerationRequest
+from planning.evidence_brief import build_evidence_brief
+from planning.evidence_curation import curate_evidence
 from planning.generation_provider import CandidateGenerationProvider
 from planning.planning_orchestrator import PlanningOutcome, plan_candidates
-from planning.evidence_brief import build_evidence_brief
 
 
 @dataclass
 class ShadowPlanningReport:
     evidence_brief: Dict[str, Any]
+    evidence_curation: Dict[str, Any]
     planning_diagnostics: Dict[str, Any]
     selected_titles: List[str]
     selected_candidates: List[Dict[str, Any]]
@@ -35,7 +37,9 @@ def build_generation_request(
     )
 
 
-def _legacy_titles(legacy_ideas: Optional[List[Dict[str, Any]]]) -> List[str]:
+def _legacy_titles(
+    legacy_ideas: Optional[List[Dict[str, Any]]],
+) -> List[str]:
     return [
         str(idea.get("project_title", "")).strip()
         for idea in (legacy_ideas or [])
@@ -51,8 +55,17 @@ def run_shadow_plan(
     legacy_ideas: Optional[List[Dict[str, Any]]] = None,
     max_candidates: int = 3,
 ) -> ShadowPlanningReport:
-    brief = build_evidence_brief(
+    curation = curate_evidence(
         evidence_items=evidence_items,
+        user_query=user_goal,
+    )
+    curated_items = [
+        entry.item
+        for entry in curation.retained
+    ]
+
+    brief = build_evidence_brief(
+        evidence_items=curated_items,
         user_query=user_goal,
     )
     request = build_generation_request(
@@ -86,6 +99,9 @@ def run_shadow_plan(
 
     comparison = {
         "legacy_direction_count": len(legacy_titles),
+        "raw_evidence_count": len(evidence_items),
+        "curated_evidence_count": len(curated_items),
+        "dropped_evidence_count": len(curation.dropped),
         "v2_generated_candidate_count": len(
             outcome.generated_candidates
         ),
@@ -102,6 +118,7 @@ def run_shadow_plan(
 
     return ShadowPlanningReport(
         evidence_brief=brief.to_dict(),
+        evidence_curation=curation.to_dict(),
         planning_diagnostics=outcome.diagnostics(),
         selected_titles=selected_titles,
         selected_candidates=selected_candidates,

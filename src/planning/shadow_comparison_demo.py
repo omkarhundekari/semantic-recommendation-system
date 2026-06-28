@@ -14,6 +14,7 @@ from planning.shadow_runner import (
     run_shadow_plan,
 )
 from planning.evidence_brief import build_evidence_brief
+from planning.evidence_curation import curate_evidence
 from project_idea_generator import generate_project_ideas
 from source_router import retrieve_evidence
 
@@ -58,8 +59,17 @@ def build_shadow_comparison_artifact(
         detected_domain=inference.get("inferred_focus"),
     )
 
-    brief = build_evidence_brief(
+    curation = curate_evidence(
         evidence_items=evidence_items,
+        user_query=user_goal,
+    )
+    curated_items = [
+        entry.item
+        for entry in curation.retained
+    ]
+
+    brief = build_evidence_brief(
+        evidence_items=curated_items,
         user_query=user_goal,
     )
     generation_request = build_generation_request(
@@ -69,6 +79,7 @@ def build_shadow_comparison_artifact(
 
     v2_shadow: Dict[str, Any] = {
         "status": "prompt_ready",
+        "evidence_curation": curation.to_dict(),
         "evidence_brief": brief.to_dict(),
         "candidate_generation_payload": (
             build_candidate_generation_payload(

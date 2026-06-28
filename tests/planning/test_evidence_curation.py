@@ -118,3 +118,52 @@ def test_curator_keeps_generic_queries_usable_without_registered_anchors():
     assert result.required_anchor_terms == []
     assert "Cloud Cost Optimization Toolkit" in retained_titles
     assert "Recipe Discovery App" not in retained_titles
+
+
+def test_curator_preserves_adjacent_ranked_evidence_for_broad_queries():
+    result = curate_evidence(
+        evidence_items=[
+            {
+                "document_id": "paper-1",
+                "source_type": "research_paper",
+                "title": "Event Correlation for Incident Investigation",
+                "abstract": (
+                    "Event correlation improves incident investigation."
+                ),
+                "retrieval_rank": 1,
+            },
+            {
+                "repository_id": "repo-1",
+                "source_type": "github_repository",
+                "title": "Incident Timeline Toolkit",
+                "readme_excerpt": (
+                    "Build timelines from health signals and incident events."
+                ),
+                "retrieval_rank": 2,
+            },
+            {
+                "source_type": "project_pattern",
+                "title": "Platform Engineering Investigation Dashboard",
+                "tags": "observability, incident response",
+                "retrieval_rank": 3,
+            },
+        ],
+        user_query="Build a platform engineering project in 3 weeks.",
+    )
+
+    retained_titles = [
+        entry.item["title"]
+        for entry in result.retained
+    ]
+
+    assert result.required_anchor_terms == []
+    assert len(retained_titles) == 3
+    assert "Event Correlation for Incident Investigation" in retained_titles
+    assert "Incident Timeline Toolkit" in retained_titles
+    assert "Platform Engineering Investigation Dashboard" in retained_titles
+
+    assert any(
+        "retrieval-ranked adjacent evidence"
+        in entry.retention_reason
+        for entry in result.retained
+    )

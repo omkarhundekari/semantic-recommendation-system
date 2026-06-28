@@ -210,3 +210,89 @@ def test_shadow_runner_includes_ranked_selected_candidate_details():
         "Correlation Investigation Workbench"
     )
     assert "ranking" in report.selected_candidates[0]
+
+
+def test_shadow_runner_curates_unrelated_sources_before_generation():
+    report = run_shadow_plan(
+        evidence_items=[
+            {
+                "source_type": "project_pattern",
+                "title": "AutoML Experiment Recommendation Assistant",
+                "tags": "machine learning, experiments",
+            },
+            {
+                "document_id": "paper-rag",
+                "source_type": "research_paper",
+                "title": (
+                    "Knowledge Graph-extended Retrieval Augmented "
+                    "Generation for Question Answering"
+                ),
+                "abstract": (
+                    "Retrieval augmented generation improves "
+                    "question answering."
+                ),
+            },
+            {
+                "source_type": "project_pattern",
+                "title": "Citation Coverage Checker for LLM Answers",
+                "tags": (
+                    "retrieval augmented generation, citations, "
+                    "question answering"
+                ),
+            },
+        ],
+        user_goal=(
+            "Build a retrieval augmented generation project for "
+            "question answering"
+        ),
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Citation-Aware RAG Evaluation Workbench",
+                        "problem_statement": (
+                            "RAG answers need inspectable citation coverage."
+                        ),
+                        "target_user": "ML engineers",
+                        "core_workflow": [
+                            "Load retrieved context and generated answers.",
+                            "Evaluate citation coverage.",
+                        ],
+                        "mvp_scope": [
+                            "Load a small RAG evaluation dataset.",
+                            "Calculate citation coverage.",
+                            "Show answer-level warnings.",
+                        ],
+                        "success_metrics": [
+                            "Citation coverage across evaluation examples."
+                        ],
+                        "evidence_relationship": (
+                            "Uses the retained RAG and citation evidence."
+                        ),
+                        "source_ids": [
+                            "paper-rag",
+                            "Citation Coverage Checker for LLM Answers",
+                        ],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    }
+                ]
+            }
+        ),
+    )
+
+    retained_titles = [
+        source["title"]
+        for source in report.evidence_brief["sources"]
+    ]
+    dropped_titles = [
+        entry["item"]["title"]
+        for entry in report.evidence_curation["dropped"]
+    ]
+
+    assert "AutoML Experiment Recommendation Assistant" in dropped_titles
+    assert "AutoML Experiment Recommendation Assistant" not in retained_titles
+    assert report.comparison["raw_evidence_count"] == 3
+    assert report.comparison["curated_evidence_count"] == 2
+    assert report.planning_diagnostics["valid_candidate_count"] == 1

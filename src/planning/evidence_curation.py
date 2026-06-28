@@ -134,6 +134,13 @@ def _retrieval_score(item: Dict[str, Any]) -> float:
     return max(values, default=0.0)
 
 
+def _has_retrieval_evidence(item: Dict[str, Any]) -> bool:
+    if item.get("retrieval_rank") is not None:
+        return True
+
+    return _retrieval_score(item) > 0.0
+
+
 def _score_item(
     item: Dict[str, Any],
     query_terms: List[str],
@@ -204,6 +211,51 @@ def curate_evidence(
                 "meaningful query terms."
             )
             dropped.append(entry)
+
+    retained.sort(
+        key=lambda entry: (
+            entry.relevance_score,
+            len(entry.matched_anchor_terms),
+            len(entry.matched_query_terms),
+        ),
+        reverse=True,
+    )
+
+    # Broad queries may not trigger a registered anchor and may use wording
+    # that appears only sparsely in individual sources. In that case, retain
+    # a small set of retrieval-ranked adjacent sources rather than producing
+    # an empty or single-source planning packet. Anchor-driven queries remain
+    # strict so unrelated material cannot enter through this fallback.
+    if not required_anchor_terms:
+        minimum_coverage = min(3, max_items, len(scored))
+
+        if len(retained) < minimum_coverage:
+            fallback_candidates = sorted(
+                [
+                    entry
+                    for entry in dropped
+                    if (
+                        entry.matched_query_terms
+                        or _has_retrieval_evidence(entry.item)
+                    )
+                ],
+                key=lambda entry: (
+                    entry.relevance_score,
+                    _retrieval_score(entry.item),
+                ),
+                reverse=True,
+            )
+
+            for entry in fallback_candidates:
+                if len(retained) >= minimum_coverage:
+                    break
+
+                entry.retention_reason = (
+                    "Retained as retrieval-ranked adjacent evidence because "
+                    "the broad query did not provide enough lexical coverage."
+                )
+                retained.append(entry)
+                dropped.remove(entry)
 
     retained.sort(
         key=lambda entry: (
