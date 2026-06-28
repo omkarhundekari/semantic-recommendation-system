@@ -12,6 +12,7 @@ class ShadowPlanningReport:
     evidence_brief: Dict[str, Any]
     planning_diagnostics: Dict[str, Any]
     selected_titles: List[str]
+    selected_candidates: List[Dict[str, Any]]
     legacy_titles: List[str]
     comparison: Dict[str, Any]
 
@@ -70,6 +71,17 @@ def run_shadow_plan(
         ranked.candidate.title
         for ranked in outcome.selected_candidates
     ]
+    selected_candidates = [
+        {
+            **ranked.candidate.to_dict(),
+            "ranking": {
+                "score": ranked.score,
+                "score_breakdown": ranked.score_breakdown,
+                "reasons": ranked.reasons,
+            },
+        }
+        for ranked in outcome.selected_candidates
+    ]
     legacy_titles = _legacy_titles(legacy_ideas)
 
     comparison = {
@@ -92,6 +104,7 @@ def run_shadow_plan(
         evidence_brief=brief.to_dict(),
         planning_diagnostics=outcome.diagnostics(),
         selected_titles=selected_titles,
+        selected_candidates=selected_candidates,
         legacy_titles=legacy_titles,
         comparison=comparison,
     )

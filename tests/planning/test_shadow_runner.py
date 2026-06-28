@@ -160,3 +160,53 @@ def test_shadow_runner_uses_realistic_merged_evidence_shape():
         "Legacy Incident Dashboard",
         "Legacy Deployment Analyzer",
     ]
+
+
+def test_shadow_runner_includes_ranked_selected_candidate_details():
+    report = run_shadow_plan(
+        evidence_items=[
+            {
+                "document_id": "paper-1",
+                "source_type": "research_paper",
+                "title": "Event Correlation",
+                "abstract": "Event correlation supports investigation.",
+            }
+        ],
+        user_goal="Build an investigation tool.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Correlation Investigation Workbench",
+                        "problem_statement": "Signals are disconnected.",
+                        "target_user": "Engineers",
+                        "core_workflow": [
+                            "Load signals.",
+                            "Correlate related records.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample records.",
+                            "Correlate signals.",
+                            "Show a timeline.",
+                        ],
+                        "success_metrics": [
+                            "Related-record discovery time.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses the retrieved correlation evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    }
+                ]
+            }
+        ),
+    )
+
+    assert len(report.selected_candidates) == 1
+    assert report.selected_candidates[0]["title"] == (
+        "Correlation Investigation Workbench"
+    )
+    assert "ranking" in report.selected_candidates[0]
