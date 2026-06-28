@@ -119,3 +119,13 @@ def test_ready_api_response_exposes_resolved_rag_planning_domain():
     assert response.status == "ready"
     assert response.inferred_focus == "ai_ml"
     assert response.resolved_planning_domain == "rag_llm"
+
+    assert len(response.directions) == 3
+    assert all(
+        direction.decision_trace is not None
+        for direction in response.directions
+    )
+    assert all(
+        direction.decision_trace.planning_domain == "rag_llm"
+        for direction in response.directions
+    )

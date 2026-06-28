@@ -2,6 +2,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from schemas.decision_trace_models import ProjectDecisionTrace
+
 
 class UserConstraints(BaseModel):
     skill_level: Optional[str] = Field(
@@ -70,6 +72,7 @@ class ProjectDirection(BaseModel):
     tech_stack: List[str] = Field(default_factory=list)
     target_roles: List[str] = Field(default_factory=list)
     evidence: List[EvidenceReference] = Field(default_factory=list)
+    decision_trace: Optional[ProjectDecisionTrace] = None
     roadmap: List[RoadmapStage] = Field(default_factory=list)
     risks: List[str] = Field(default_factory=list)
     verification: VerificationResult

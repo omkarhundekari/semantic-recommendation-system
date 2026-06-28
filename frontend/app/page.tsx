@@ -16,9 +16,8 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
-  TriangleAlert,
 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useCallback, useMemo, useState } from "react";
 
 type Verification = {
   status: string;
@@ -151,10 +150,7 @@ const tierVisuals: Record<
 };
 
 function getTierVisual(direction: Direction) {
-  return (
-    tierVisuals[direction.difficulty] ??
-    tierVisuals.Medium
-  );
+  return tierVisuals[direction.difficulty] ?? tierVisuals.Medium;
 }
 
 function confidenceLabel(value?: number | null) {
@@ -184,11 +180,107 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showHelpChooser, setShowHelpChooser] = useState(false);
+
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(
     null,
   );
+
   const [activeRoadmapNodeId, setActiveRoadmapNodeId] = useState<string | null>(
     null,
+  );
+
+  const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
+    string | null
+  >(null);
+
+  const [shouldScrollToClarification, setShouldScrollToClarification] =
+    useState(false);
+
+  const [shouldScrollToDirections, setShouldScrollToDirections] =
+    useState(false);
+
+  const [shouldScrollToHelpChooser, setShouldScrollToHelpChooser] =
+    useState(false);
+
+  const clarificationSectionRef = useCallback(
+    (node: HTMLElement | null) => {
+      if (!node || !shouldScrollToClarification) {
+        return;
+      }
+
+      window.requestAnimationFrame(() => {
+        const targetTop =
+          node.getBoundingClientRect().top + window.scrollY - 24;
+
+        window.scrollTo({
+          top: targetTop,
+          behavior: "smooth",
+        });
+
+        window.setTimeout(() => {
+          node
+            .querySelector<HTMLButtonElement>("button")
+            ?.focus({ preventScroll: true });
+
+          setShouldScrollToClarification(false);
+        }, 350);
+      });
+    },
+    [shouldScrollToClarification],
+  );
+
+  const directionsSectionRef = useCallback(
+    (node: HTMLElement | null) => {
+      if (!node || !shouldScrollToDirections) {
+        return;
+      }
+
+      window.requestAnimationFrame(() => {
+        const targetTop =
+          node.getBoundingClientRect().top + window.scrollY - 24;
+
+        window.scrollTo({
+          top: targetTop,
+          behavior: "smooth",
+        });
+
+        window.setTimeout(() => {
+          node
+            .querySelector<HTMLButtonElement>("button")
+            ?.focus({ preventScroll: true });
+
+          setShouldScrollToDirections(false);
+        }, 350);
+      });
+    },
+    [shouldScrollToDirections],
+  );
+
+  const helpChooserRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node || !shouldScrollToHelpChooser) {
+        return;
+      }
+
+      window.requestAnimationFrame(() => {
+        const targetTop =
+          node.getBoundingClientRect().top + window.scrollY - 24;
+
+        window.scrollTo({
+          top: targetTop,
+          behavior: "smooth",
+        });
+
+        window.setTimeout(() => {
+          node
+            .querySelector<HTMLButtonElement>("button")
+            ?.focus({ preventScroll: true });
+
+          setShouldScrollToHelpChooser(false);
+        }, 350);
+      });
+    },
+    [shouldScrollToHelpChooser],
   );
 
   const selectedDirection = useMemo(
@@ -212,6 +304,10 @@ export default function Home() {
     setResult(null);
     setSelectedDirectionId(null);
     setActiveRoadmapNodeId(null);
+    setExpandedWhyDirectionId(null);
+    setShouldScrollToClarification(false);
+    setShouldScrollToDirections(false);
+    setShouldScrollToHelpChooser(false);
     setShowHelpChooser(false);
     setIsLoading(true);
 
@@ -247,13 +343,19 @@ export default function Home() {
         throw new Error("The planning API returned an unexpected response.");
       }
 
-      setResult(payload);
+      if (payload.status !== "ready") {
+        setShouldScrollToClarification(true);
+      }
 
       if (payload.status === "ready" && payload.directions.length > 0) {
+        setShouldScrollToDirections(true);
+
         const firstDirection = payload.directions[0];
         setSelectedDirectionId(firstDirection.id);
         setActiveRoadmapNodeId(firstDirection.roadmap[0]?.id ?? null);
       }
+
+      setResult(payload);
     } catch {
       setError(
         "Could not reach the planning API. Confirm FastAPI is running on port 8000.",
@@ -270,6 +372,7 @@ export default function Home() {
 
   function handleClarificationChoice(option: string) {
     if (option.toLowerCase() === "help me choose") {
+      setShouldScrollToHelpChooser(true);
       setShowHelpChooser(true);
       return;
     }
@@ -288,7 +391,10 @@ export default function Home() {
     window.setTimeout(() => {
       document
         .getElementById("project-roadmap")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
     }, 80);
   }
 
@@ -414,7 +520,9 @@ export default function Home() {
                     Preferred stack
                     <input
                       value={preferredStack}
-                      onChange={(event) => setPreferredStack(event.target.value)}
+                      onChange={(event) =>
+                        setPreferredStack(event.target.value)
+                      }
                       placeholder="Python, React, FastAPI"
                       className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-slate-200 outline-none placeholder:text-slate-500"
                     />
@@ -425,7 +533,8 @@ export default function Home() {
 
             <div className="flex flex-col gap-3 border-t border-white/10 px-2 pt-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm text-slate-400">
-                Grounded in research, implementation references, and realistic scope.
+                Grounded in research, implementation references, and realistic
+                scope.
               </span>
 
               <button
@@ -484,7 +593,12 @@ export default function Home() {
         </motion.div>
 
         {result && result.status !== "ready" && (
-          <section className="border-t border-white/10 py-12">
+          <section
+            ref={clarificationSectionRef}
+            id="clarification-section"
+            tabIndex={-1}
+            className="scroll-mt-6 border-t border-white/10 py-12 outline-none"
+          >
             <motion.div
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -499,13 +613,16 @@ export default function Home() {
                   <p className="text-sm font-medium text-amber-100">
                     One quick decision first
                   </p>
+
                   <h2 className="mt-1 text-2xl font-semibold text-white">
                     {result.clarification_message ??
                       "Give the system one more direction."}
                   </h2>
+
                   <p className="mt-3 max-w-2xl leading-7 text-amber-50/80">
                     We avoid inventing a project when your goal is too broad.
-                    Choose a direction and we will build a grounded plan around it.
+                    Choose a direction and we will build a grounded plan around
+                    it.
                   </p>
 
                   <div className="mt-5 flex flex-wrap gap-2">
@@ -523,15 +640,20 @@ export default function Home() {
                 </div>
               </div>
             </motion.div>
+
             {showHelpChooser && (
               <motion.div
+                ref={helpChooserRef}
+                id="help-chooser"
+                tabIndex={-1}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-5 rounded-3xl border border-sky-300/20 bg-slate-950/45 p-5"
+                className="mt-5 scroll-mt-6 rounded-3xl border border-sky-300/20 bg-slate-950/45 p-5 outline-none"
               >
                 <p className="text-sm font-medium text-sky-200">
                   Let’s narrow it by what you enjoy building
                 </p>
+
                 <p className="mt-2 text-sm leading-6 text-slate-400">
                   This does not lock you into a project. It simply gives the
                   intelligence engine a trustworthy direction to investigate.
@@ -546,6 +668,7 @@ export default function Home() {
                       className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-left transition hover:border-sky-300/40 hover:bg-sky-400/10"
                     >
                       <p className="font-medium text-white">{path.label}</p>
+
                       <p className="mt-2 text-sm leading-6 text-slate-400">
                         {path.description}
                       </p>
@@ -559,12 +682,18 @@ export default function Home() {
 
         {result?.status === "ready" && (
           <>
-            <section className="border-t border-white/10 py-12">
+            <section
+              ref={directionsSectionRef}
+              id="generated-directions"
+              tabIndex={-1}
+              className="scroll-mt-6 border-t border-white/10 py-12 outline-none"
+            >
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
                   <p className="text-sm font-medium text-sky-200">
                     Generated project directions
                   </p>
+
                   <h2 className="mt-2 text-3xl font-semibold text-white">
                     Choose your build path
                   </h2>
@@ -581,11 +710,13 @@ export default function Home() {
                       "focused"
                     ).replaceAll("_", " ")}
                   </p>
+
                   <p className="mt-1">
                     {confidenceLabel(result.family_confidence)} ·{" "}
                     {result.source_counts?.research_papers ?? 0} research ·{" "}
                     {result.source_counts?.project_patterns ?? 0} patterns ·{" "}
-                    {result.source_counts?.github_repositories ?? 0} repositories
+                    {result.source_counts?.github_repositories ?? 0}{" "}
+                    repositories
                   </p>
                 </div>
               </div>
@@ -597,9 +728,12 @@ export default function Home() {
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">
                         Research evidence
                       </p>
+
                       <p className="mt-2 text-lg font-semibold capitalize text-white">
-                        {result.research_evidence_assessment.confidence.level} support
+                        {result.research_evidence_assessment.confidence.level}{" "}
+                        support
                       </p>
+
                       <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
                         {result.research_evidence_assessment.confidence.reason}
                       </p>
@@ -608,19 +742,24 @@ export default function Home() {
                     <div className="grid grid-cols-3 gap-2 text-center text-xs">
                       <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2">
                         <p className="font-semibold text-emerald-200">
-                          {result.research_evidence_assessment.evidence.alignment_summary?.direct ?? 0}
+                          {result.research_evidence_assessment.evidence
+                            .alignment_summary?.direct ?? 0}
                         </p>
                         <p className="mt-1 text-slate-400">direct</p>
                       </div>
+
                       <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2">
                         <p className="font-semibold text-amber-200">
-                          {result.research_evidence_assessment.evidence.alignment_summary?.adjacent ?? 0}
+                          {result.research_evidence_assessment.evidence
+                            .alignment_summary?.adjacent ?? 0}
                         </p>
                         <p className="mt-1 text-slate-400">adjacent</p>
                       </div>
+
                       <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2">
                         <p className="font-semibold text-slate-200">
-                          {result.research_evidence_assessment.evidence.alignment_summary?.weak ?? 0}
+                          {result.research_evidence_assessment.evidence
+                            .alignment_summary?.weak ?? 0}
                         </p>
                         <p className="mt-1 text-slate-400">weak</p>
                       </div>
@@ -633,17 +772,16 @@ export default function Home() {
                 {result.directions.map((direction, index) => {
                   const visual = getTierVisual(direction);
                   const isSelected = direction.id === selectedDirectionId;
+                  const isWhyExpanded =
+                    direction.id === expandedWhyDirectionId;
 
                   return (
-                    <motion.button
+                    <motion.div
                       key={direction.id}
-                      type="button"
-                      onClick={() => chooseDirection(direction)}
                       initial={{ opacity: 0, y: 18 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35, delay: index * 0.08 }}
                       whileHover={{ y: -8, scale: 1.015 }}
-                      whileTap={{ scale: 0.985 }}
                       className={`group relative overflow-hidden rounded-[1.8rem] border bg-slate-950/50 p-5 text-left backdrop-blur-xl transition ${visual.border} ${
                         isSelected
                           ? "border-white/35 shadow-2xl"
@@ -683,40 +821,112 @@ export default function Home() {
                         </p>
 
                         <div className="mt-5 border-t border-white/10 pt-4">
-                          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
-                            Why it fits
-                          </p>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedWhyDirectionId((currentId) =>
+                                currentId === direction.id
+                                  ? null
+                                  : direction.id,
+                              )
+                            }
+                            className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left transition hover:bg-white/[0.04]"
+                            aria-expanded={isWhyExpanded}
+                          >
+                            <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
+                              Why this project?
+                            </span>
 
-                          <p className="mt-2 text-sm leading-6 text-slate-400">
-                            {direction.why_it_fits}
-                          </p>
+                            {isWhyExpanded ? (
+                              <ChevronUp className="h-4 w-4 text-slate-400" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-slate-400" />
+                            )}
+                          </button>
+
+                          <AnimatePresence initial={false}>
+                            {isWhyExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.22 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="mt-3 rounded-2xl border border-sky-300/15 bg-sky-400/[0.05] p-4">
+                                  <p className="text-sm leading-6 text-slate-300">
+                                    {direction.why_it_fits}
+                                  </p>
+
+                                  <div className="mt-4 grid gap-3 border-t border-white/10 pt-4 text-xs sm:grid-cols-2">
+                                    <div>
+                                      <p className="font-medium uppercase tracking-[0.12em] text-slate-500">
+                                        Scope
+                                      </p>
+
+                                      <p className="mt-1 leading-5 text-slate-300">
+                                        {direction.scope}
+                                      </p>
+                                    </div>
+
+                                    <div>
+                                      <p className="font-medium uppercase tracking-[0.12em] text-slate-500">
+                                        Research context
+                                      </p>
+
+                                      <p className="mt-1 leading-5 text-slate-300">
+                                        {result.research_evidence_assessment
+                                          ? `${result.research_evidence_assessment.confidence.level} session-level support`
+                                          : "Evidence assessment unavailable"}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {result.research_evidence_assessment && (
+                                    <p className="mt-3 text-xs leading-5 text-slate-400">
+                                      This reflects evidence for the research
+                                      session. It does not imply that every
+                                      individual idea has direct paper-level
+                                      support.
+                                    </p>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
 
                         <div className="mt-5 flex flex-wrap gap-2">
-                          {direction.tech_stack.slice(0, 4).map((technology) => (
-                            <span
-                              key={technology}
-                              className="rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-xs text-slate-300"
-                            >
-                              {technology}
-                            </span>
-                          ))}
+                          {direction.tech_stack
+                            .slice(0, 4)
+                            .map((technology) => (
+                              <span
+                                key={technology}
+                                className="rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-xs text-slate-300"
+                              >
+                                {technology}
+                              </span>
+                            ))}
                         </div>
 
-                        <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-xs">
-                          <span className="inline-flex items-center gap-1.5 text-emerald-200">
+                        <div className="mt-5 border-t border-white/10 pt-4">
+                          <span className="inline-flex items-center gap-1.5 text-xs text-emerald-200">
                             <ShieldCheck className="h-4 w-4" />
                             Verified {direction.verification.score}/
                             {direction.verification.max_score}
                           </span>
 
-                          <span className="inline-flex items-center gap-1 text-slate-300 transition group-hover:text-white">
-                            Explore roadmap
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => chooseDirection(direction)}
+                            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300/25 bg-sky-400/10 px-4 py-3 text-sm font-semibold text-sky-100 transition hover:border-sky-200/50 hover:bg-sky-300/20 hover:text-white"
+                          >
+                            Open roadmap
+                            <ArrowRight className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
-                    </motion.button>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -754,9 +964,11 @@ export default function Home() {
                         <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
                           Build signal
                         </p>
+
                         <p className="mt-2 font-medium text-white">
                           {selectedDirection.career_signal} career signal
                         </p>
+
                         <p className="mt-2 text-slate-400">
                           {selectedDirection.estimated_effort} ·{" "}
                           {selectedDirection.difficulty}
@@ -800,6 +1012,7 @@ export default function Home() {
                                     <span className="text-xs font-semibold text-sky-200">
                                       0{index + 1}
                                     </span>
+
                                     <span className="text-xs uppercase tracking-[0.13em] text-slate-500">
                                       Stage
                                     </span>
@@ -879,6 +1092,7 @@ function RoadmapDetailPanel({
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-sky-300">
               Selected stage
             </p>
+
             <h3 className="mt-2 text-xl font-semibold text-white">
               {activeNode.title}
             </h3>
@@ -910,26 +1124,6 @@ function RoadmapDetailPanel({
             ))}
           </ul>
         </div>
-
-        {direction.risks.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-amber-300/15 bg-amber-300/[0.06] p-4">
-            <p className="inline-flex items-center gap-2 text-sm font-medium text-amber-100">
-              <TriangleAlert className="h-4 w-4" />
-              Keep the scope honest
-            </p>
-
-            <ul className="mt-3 space-y-2">
-              {direction.risks.slice(0, 2).map((risk) => (
-                <li
-                  key={risk}
-                  className="text-sm leading-6 text-amber-100/75"
-                >
-                  {risk}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         <div className="mt-6 border-t border-white/10 pt-4">
           <p className="inline-flex items-center gap-2 text-sm text-slate-300">

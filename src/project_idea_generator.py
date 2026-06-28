@@ -1,3 +1,4 @@
+import re
 from typing import Dict, List
 
 from query_expander import get_query_metadata
@@ -13,14 +14,142 @@ from project_intelligence import (
 )
 
 
+DOMAIN_RELEVANCE_TERMS = {
+    "rag_llm": {
+        "rag",
+        "graphrag",
+        "retrieval",
+        "retriever",
+        "generation",
+        "llm",
+        "language",
+        "question",
+        "answering",
+        "grounding",
+        "citation",
+        "context",
+        "evaluation",
+        "hallucination",
+    },
+    "machine_learning": {
+        "machine",
+        "learning",
+        "model",
+        "prediction",
+        "classification",
+        "regression",
+        "evaluation",
+        "dataset",
+        "feature",
+    },
+    "cloud_platform": {
+        "cloud",
+        "deployment",
+        "container",
+        "kubernetes",
+        "docker",
+        "aws",
+        "monitoring",
+        "observability",
+        "infrastructure",
+    },
+    "cybersecurity": {
+        "security",
+        "cyber",
+        "threat",
+        "vulnerability",
+        "attack",
+        "incident",
+        "log",
+        "detection",
+        "access",
+    },
+    "frontend": {
+        "frontend",
+        "react",
+        "typescript",
+        "interface",
+        "dashboard",
+        "ui",
+        "ux",
+        "web",
+    },
+}
+
+
+def _meaningful_tokens(value: str) -> set:
+    stop_words = {
+        "and",
+        "for",
+        "from",
+        "into",
+        "that",
+        "this",
+        "with",
+        "your",
+        "build",
+        "project",
+        "system",
+        "studio",
+        "tool",
+    }
+
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", value.lower())
+        if len(token) >= 3 and token not in stop_words
+    }
+
+
+def _evidence_item_text(item: Dict) -> str:
+    fields = [
+        item.get("title", ""),
+        item.get("category", ""),
+        item.get("tags", ""),
+        item.get("skills", ""),
+        item.get("abstract", ""),
+        item.get("content", ""),
+        item.get("selection_reason", ""),
+        item.get("architecture_signals", ""),
+        item.get("technology_signals", ""),
+    ]
+
+    return " ".join(str(field) for field in fields)
+
+
+def _relevance_score(
+    item: Dict,
+    planning_domain: str,
+    project_title: str,
+    idea_angle: str,
+) -> int:
+    item_tokens = _meaningful_tokens(_evidence_item_text(item))
+    domain_tokens = DOMAIN_RELEVANCE_TERMS.get(
+        planning_domain,
+        set(),
+    )
+    project_tokens = _meaningful_tokens(
+        f"{project_title} {idea_angle}"
+    )
+
+    domain_overlap = len(item_tokens & domain_tokens)
+    project_overlap = len(item_tokens & project_tokens)
+
+    return (domain_overlap * 4) + project_overlap
+
+
 def select_evidence_for_focus(
     evidence_items: List[Dict],
     focus_type: str,
-    fallback_index: int
+    fallback_index: int,
+    planning_domain: str,
+    project_title: str,
+    idea_angle: str,
 ) -> Dict:
     """
-    Selects an evidence item whose source type matches the role of the
-    generated project idea.
+    Selects evidence by domain and idea relevance first, then uses source
+    preference only as a tie-breaker. This prevents unrelated project
+    patterns from becoming the named inspiration for a generated idea.
     """
     if not evidence_items:
         return {}
@@ -53,13 +182,40 @@ def select_evidence_for_focus(
         ["project_pattern", "github_repository", "research_paper"],
     )
 
+    source_priority = {
+        source_type: len(source_order) - index
+        for index, source_type in enumerate(source_order)
+    }
+
+    scored_candidates = []
+
+    for index, item in enumerate(evidence_items):
+        relevance = _relevance_score(
+            item=item,
+            planning_domain=planning_domain,
+            project_title=project_title,
+            idea_angle=idea_angle,
+        )
+
+        if relevance <= 0:
+            continue
+
+        score = (relevance * 10) + source_priority.get(
+            item.get("source_type", ""),
+            0,
+        )
+
+        scored_candidates.append((score, -index, item))
+
+    if scored_candidates:
+        return max(scored_candidates, key=lambda candidate: candidate[:2])[2]
+
     for source_type in source_order:
         for item in evidence_items:
             if item.get("source_type") == source_type:
                 return item
 
     return evidence_items[fallback_index % len(evidence_items)]
-
 
 
 def generate_project_ideas(
@@ -101,6 +257,9 @@ def generate_project_ideas(
             evidence_items=search_results,
             focus_type=blueprint.get("evidence_focus_type", ""),
             fallback_index=index,
+            planning_domain=planning_domain,
+            project_title=blueprint.get("project_title", ""),
+            idea_angle=blueprint.get("idea_angle", ""),
         )
 
         evidence_title = evidence_item.get("title", "Untitled Evidence Item")

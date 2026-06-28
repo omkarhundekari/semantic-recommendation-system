@@ -6,7 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from feasibility_scorer import score_project_feasibility
 from plan_repair import repair_project_plan
 from plan_verifier import verify_project_ideas
+from decision_trace_debug import write_decision_trace_artifact
 from portfolio_ladder import apply_portfolio_ladder
+from project_decision_trace import build_project_decision_trace
 from project_idea_generator import generate_project_ideas
 from query_expander import get_query_metadata
 from query_understanding import understand_query
@@ -561,12 +563,31 @@ def generate_project_intelligence(
                 ),
                 target_roles=idea.get("target_roles", []),
                 evidence=build_evidence(idea),
+                decision_trace=(
+                    build_project_decision_trace(
+                        idea=idea,
+                        idea_id=f"direction-{index}",
+                        assessment=research_evidence_assessment,
+                        query=corrected_query,
+                    )
+                    if research_evidence_assessment
+                    else None
+                ),
                 roadmap=build_roadmap(idea),
                 risks=build_risks(idea),
                 verification=VerificationResult(**verification),
                 repairs_applied=repairs,
             )
         )
+
+    write_decision_trace_artifact(
+        query=corrected_query,
+        traces=[
+            direction.decision_trace
+            for direction in directions
+            if direction.decision_trace is not None
+        ],
+    )
 
     pipeline.append(
         PipelineStep(
