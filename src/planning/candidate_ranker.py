@@ -37,6 +37,7 @@ def _tokens(value: str) -> set:
 
 
 def _candidate_text(candidate: CandidateDirection) -> str:
+    """Return complete candidate text for constraint-alignment scoring."""
     return " ".join(
         [
             candidate.title,
@@ -47,6 +48,17 @@ def _candidate_text(candidate: CandidateDirection) -> str:
             " ".join(candidate.success_metrics),
             candidate.evidence_relationship,
             " ".join(candidate.suggested_stack),
+        ]
+    )
+
+
+def _diversity_text(candidate: CandidateDirection) -> str:
+    """Return workflow-defining text used only for diversity checks."""
+    return " ".join(
+        [
+            candidate.title,
+            " ".join(candidate.core_workflow),
+            " ".join(candidate.mvp_scope),
         ]
     )
 
@@ -164,17 +176,43 @@ def _clarity_score(candidate: CandidateDirection) -> float:
     return round(completed / len(sections), 3)
 
 
-def _similarity(
-    left: CandidateDirection,
-    right: CandidateDirection,
-) -> float:
-    left_tokens = _tokens(_candidate_text(left))
-    right_tokens = _tokens(_candidate_text(right))
-
+def _jaccard_similarity(left_tokens: set, right_tokens: set) -> float:
     if not left_tokens or not right_tokens:
         return 0.0
 
     return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
+
+
+def _title_similarity(
+    left: CandidateDirection,
+    right: CandidateDirection,
+) -> float:
+    return _jaccard_similarity(
+        _tokens(left.title),
+        _tokens(right.title),
+    )
+
+
+def _similarity(
+    left: CandidateDirection,
+    right: CandidateDirection,
+) -> float:
+    return _jaccard_similarity(
+        _tokens(_diversity_text(left)),
+        _tokens(_diversity_text(right)),
+    )
+
+
+def _is_near_duplicate(
+    left: CandidateDirection,
+    right: CandidateDirection,
+    workflow_similarity_threshold: float,
+    title_similarity_threshold: float,
+) -> bool:
+    return (
+        _title_similarity(left, right) >= title_similarity_threshold
+        or _similarity(left, right) >= workflow_similarity_threshold
+    )
 
 
 def rank_candidates(
@@ -229,6 +267,7 @@ def select_diverse_candidates(
     ranked_candidates: Sequence[RankedCandidate],
     max_candidates: int = 3,
     similarity_threshold: float = 0.62,
+    title_similarity_threshold: float = 0.40,
 ) -> List[RankedCandidate]:
     selected = []
 
@@ -236,12 +275,17 @@ def select_diverse_candidates(
         if len(selected) >= max_candidates:
             break
 
-        similarities = [
-            _similarity(ranked.candidate, prior.candidate)
+        is_duplicate = any(
+            _is_near_duplicate(
+                ranked.candidate,
+                prior.candidate,
+                workflow_similarity_threshold=similarity_threshold,
+                title_similarity_threshold=title_similarity_threshold,
+            )
             for prior in selected
-        ]
+        )
 
-        if similarities and max(similarities) >= similarity_threshold:
+        if is_duplicate:
             continue
 
         selected.append(ranked)

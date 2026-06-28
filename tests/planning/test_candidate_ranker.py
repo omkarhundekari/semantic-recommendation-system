@@ -142,3 +142,56 @@ def test_diversity_selector_skips_near_duplicate_direction():
     assert "Incident Correlation Workbench" in selected_titles
     assert "Deployment Change Investigation Timeline" in selected_titles
     assert "Incident Event Correlation Dashboard" not in selected_titles
+
+
+def test_title_overlap_rejects_near_duplicate_even_with_different_wording():
+    first = make_candidate(
+        "Incident Correlation Workbench",
+        ["paper-1"],
+    )
+    duplicate = make_candidate(
+        "Incident Event Correlation Dashboard",
+        ["paper-1"],
+        workflow=[
+            "Ingest incident events.",
+            "Correlate related service signals.",
+        ],
+        mvp_scope=[
+            "Load incident records.",
+            "Correlate related events.",
+            "Render a correlation dashboard.",
+        ],
+    )
+    distinct = make_candidate(
+        "Deployment Change Investigation Timeline",
+        ["repo-1"],
+        workflow=[
+            "Ingest deployment changes.",
+            "Compare health signals after releases.",
+        ],
+        mvp_scope=[
+            "Load deployment events.",
+            "Compare deployment and health records.",
+            "Render a release investigation timeline.",
+        ],
+    )
+
+    ranked = rank_candidates(
+        candidates=[first, duplicate, distinct],
+        brief=make_brief(),
+        request=CandidateGenerationRequest(
+            user_goal="Build a platform engineering project."
+        ),
+    )
+
+    selected_titles = [
+        item.candidate.title
+        for item in select_diverse_candidates(
+            ranked,
+            max_candidates=2,
+        )
+    ]
+
+    assert "Incident Correlation Workbench" in selected_titles
+    assert "Deployment Change Investigation Timeline" in selected_titles
+    assert "Incident Event Correlation Dashboard" not in selected_titles
