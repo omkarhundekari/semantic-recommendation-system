@@ -26,6 +26,29 @@ type Verification = {
   warnings: string[];
 };
 
+type DecisionTraceInspiration = {
+  title: string;
+  source_type: string;
+  url?: string | null;
+};
+
+type DecisionTrace = {
+  research_support_scope:
+    | "idea_specific"
+    | "mixed"
+    | "planning_domain";
+  idea_specific_rationale: string;
+  primary_inspiration?: DecisionTraceInspiration | null;
+  supporting_papers?: Array<{
+    document_id: string;
+    title: string;
+  }>;
+  implementation_references?: Array<{
+    title: string;
+    source_type: string;
+  }>;
+};
+
 type RoadmapNode = {
   id: string;
   title: string;
@@ -51,6 +74,7 @@ type Direction = {
   risks: string[];
   repairs_applied: string[];
   verification: Verification;
+  decision_trace?: DecisionTrace | null;
 };
 
 type IntelligenceResponse = {
@@ -167,6 +191,66 @@ function confidenceLabel(value?: number | null) {
   }
 
   return "Emerging signal";
+}
+
+function formatSourceType(sourceType: string) {
+  const labels: Record<string, string> = {
+    github_repository: "GitHub repository",
+    project_pattern: "Project pattern",
+    research_paper: "Research paper",
+  };
+
+  return labels[sourceType] ?? sourceType.replaceAll("_", " ");
+}
+
+function getDecisionTracePresentation(
+  trace?: DecisionTrace | null,
+) {
+  if (!trace) {
+    return {
+      label: "Evidence-informed",
+      detail: "This direction is informed by the broader research session.",
+      badgeClass: "bg-slate-400/10 text-slate-200",
+    };
+  }
+
+  if (trace.research_support_scope === "idea_specific") {
+    const paperCount = trace.supporting_papers?.length ?? 0;
+
+    return {
+      label: "Direct research support",
+      detail:
+        paperCount > 0
+          ? `${paperCount} matching research paper${
+              paperCount === 1 ? "" : "s"
+            } linked to this direction.`
+          : "This direction is linked to a selected research paper.",
+      badgeClass: "bg-emerald-400/10 text-emerald-200",
+    };
+  }
+
+  if (trace.research_support_scope === "mixed") {
+    const implementationCount =
+      trace.implementation_references?.length ?? 0;
+
+    return {
+      label: "Mixed support",
+      detail:
+        implementationCount > 0
+          ? `${implementationCount} implementation reference${
+              implementationCount === 1 ? "" : "s"
+            } plus broader research-session support.`
+          : "A project pattern or implementation signal plus broader research-session support.",
+      badgeClass: "bg-sky-400/10 text-sky-200",
+    };
+  }
+
+  return {
+    label: "Planning-domain support",
+    detail:
+      "This direction is informed by the broader research session, not one specific source.",
+    badgeClass: "bg-amber-400/10 text-amber-200",
+  };
 }
 
 export default function Home() {
@@ -774,6 +858,9 @@ export default function Home() {
                   const isSelected = direction.id === selectedDirectionId;
                   const isWhyExpanded =
                     direction.id === expandedWhyDirectionId;
+                  const tracePresentation = getDecisionTracePresentation(
+                    direction.decision_trace,
+                  );
 
                   return (
                     <motion.div
@@ -858,38 +945,85 @@ export default function Home() {
                                     {direction.why_it_fits}
                                   </p>
 
-                                  <div className="mt-4 grid gap-3 border-t border-white/10 pt-4 text-xs sm:grid-cols-2">
-                                    <div>
-                                      <p className="font-medium uppercase tracking-[0.12em] text-slate-500">
-                                        Scope
-                                      </p>
+                                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                      <div>
+                                        <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                                          Research support
+                                        </p>
 
-                                      <p className="mt-1 leading-5 text-slate-300">
-                                        {direction.scope}
+                                        <span
+                                          className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${tracePresentation.badgeClass}`}
+                                        >
+                                          {tracePresentation.label}
+                                        </span>
+                                      </div>
+
+                                      <p className="max-w-xs text-xs leading-5 text-slate-400 sm:text-right">
+                                        {tracePresentation.detail}
                                       </p>
                                     </div>
 
-                                    <div>
-                                      <p className="font-medium uppercase tracking-[0.12em] text-slate-500">
-                                        Research context
-                                      </p>
+                                    {direction.decision_trace?.primary_inspiration && (
+                                      <div className="mt-4 border-t border-white/10 pt-4">
+                                        <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                                          Primary inspiration
+                                        </p>
 
-                                      <p className="mt-1 leading-5 text-slate-300">
-                                        {result.research_evidence_assessment
-                                          ? `${result.research_evidence_assessment.confidence.level} session-level support`
-                                          : "Evidence assessment unavailable"}
-                                      </p>
-                                    </div>
+                                        {direction.decision_trace.primary_inspiration.url ? (
+                                          <a
+                                            href={
+                                              direction.decision_trace
+                                                .primary_inspiration.url
+                                            }
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="mt-2 block text-sm font-medium leading-6 text-sky-200 transition hover:text-sky-100 hover:underline"
+                                          >
+                                            {
+                                              direction.decision_trace
+                                                .primary_inspiration.title
+                                            }
+                                          </a>
+                                        ) : (
+                                          <p className="mt-2 text-sm font-medium leading-6 text-slate-200">
+                                            {
+                                              direction.decision_trace
+                                                .primary_inspiration.title
+                                            }
+                                          </p>
+                                        )}
+
+                                        <p className="mt-1 text-xs capitalize text-slate-500">
+                                          {formatSourceType(
+                                            direction.decision_trace
+                                              .primary_inspiration.source_type,
+                                          )}
+                                        </p>
+                                      </div>
+                                    )}
+
                                   </div>
 
-                                  {result.research_evidence_assessment && (
-                                    <p className="mt-3 text-xs leading-5 text-slate-400">
-                                      This reflects evidence for the research
-                                      session. It does not imply that every
-                                      individual idea has direct paper-level
-                                      support.
+                                  <div className="mt-4 border-t border-white/10 pt-4 text-xs">
+                                    <p className="font-medium uppercase tracking-[0.12em] text-slate-500">
+                                      Scope
                                     </p>
-                                  )}
+
+                                    <p className="mt-1 leading-5 text-slate-300">
+                                      {direction.scope}
+                                    </p>
+                                  </div>
+
+                                  {direction.decision_trace?.research_support_scope !==
+                                    "idea_specific" &&
+                                    result.research_evidence_assessment && (
+                                      <p className="mt-3 text-xs leading-5 text-slate-400">
+                                        This direction uses broader session-level
+                                        research support rather than claiming direct
+                                        support from one paper.
+                                      </p>
+                                    )}
                                 </div>
                               </motion.div>
                             )}
