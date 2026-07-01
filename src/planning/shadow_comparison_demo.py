@@ -5,7 +5,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from planning.candidate_models import CandidateDirection
 from planning.candidate_prompt import build_candidate_generation_payload
+from planning.semantic_goal_relevance import GoalRelevanceScorer
 from planning.mock_generation_provider import (
     MockCandidateGenerationProvider,
 )
@@ -54,6 +56,8 @@ def build_shadow_comparison_artifact(
     fixture_response: Optional[Dict[str, Any]] = None,
     provider: Optional[CandidateGenerationProvider] = None,
     execution_mode: str = "fixture",
+    semantic_goal_relevance: Optional[List[Dict[str, Any]]] = None,
+    semantic_goal_scorer: Optional[Any] = None,
 ) -> Dict[str, Any]:
     inference = evidence_payload.get("inference", {})
     evidence_items = evidence_payload.get("merged_results", [])
@@ -127,6 +131,15 @@ def build_shadow_comparison_artifact(
             "diagnostics": report.planning_diagnostics,
         }
 
+        if semantic_goal_scorer is not None:
+            semantic_goal_relevance = (
+                build_semantic_goal_relevance_shadow(
+                    selected_candidates=report.selected_candidates,
+                    generation_request=generation_request,
+                    scorer=semantic_goal_scorer,
+                )
+            )
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -145,8 +158,38 @@ def build_shadow_comparison_artifact(
             "direction_count": len(legacy_ideas),
             "directions": _legacy_summary(legacy_ideas),
         },
-        "v2_shadow": v2_shadow,
+        "v2_shadow": {
+            **v2_shadow,
+            "semantic_goal_relevance": list(
+                semantic_goal_relevance or []
+            ),
+        },
     }
+
+
+def build_semantic_goal_relevance_shadow(
+    selected_candidates: List[Dict[str, Any]],
+    generation_request: Any,
+    scorer: GoalRelevanceScorer,
+) -> List[Dict[str, Any]]:
+    candidates = [
+        CandidateDirection(
+            **{
+                key: value
+                for key, value in candidate.items()
+                if key != "ranking"
+            }
+        )
+        for candidate in selected_candidates
+    ]
+
+    return [
+        result.trace.to_dict()
+        for result in scorer.score_candidates(
+            generation_request,
+            candidates,
+        )
+    ]
 
 
 def write_shadow_comparison_artifact(
