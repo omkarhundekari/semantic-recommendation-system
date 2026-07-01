@@ -12,6 +12,8 @@ class EvidenceSource:
     url: Optional[str] = None
     retrieval_rank: Optional[int] = None
     retrieval_signals: Dict[str, float] = field(default_factory=dict)
+    support_scope: str = "direct"
+    retention_reason: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

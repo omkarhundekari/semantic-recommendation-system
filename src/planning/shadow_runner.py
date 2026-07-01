@@ -60,7 +60,11 @@ def run_shadow_plan(
         user_query=user_goal,
     )
     curated_items = [
-        entry.item
+        {
+            **entry.item,
+            "support_scope": entry.support_scope,
+            "retention_reason": entry.retention_reason,
+        }
         for entry in curation.retained
     ]
 

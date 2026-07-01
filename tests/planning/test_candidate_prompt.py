@@ -33,3 +33,47 @@ def test_prompt_contains_only_structured_brief_and_generation_rules():
     assert payload["evidence_brief"]["sources"][0]["source_id"] == "paper-1"
     assert "Do not invent papers" in " ".join(payload["rules"])
     assert payload["required_schema"]["candidates"]
+
+
+def test_prompt_instructs_model_to_avoid_unrequested_niche_scope():
+    brief = EvidenceBrief(
+        query="Build a RAG question-answering project.",
+        sources=[],
+    )
+    request = CandidateGenerationRequest(
+        user_goal="Build a RAG question-answering project.",
+        time_available="3 weeks",
+    )
+
+    payload = json.loads(
+        build_candidate_generation_prompt(
+            brief=brief,
+            request=request,
+        )
+    )
+    rules = " ".join(payload["rules"])
+
+    assert "do not narrow into a language" in rules
+    assert "three weeks or less" in rules
+    assert "optional extension" in rules
+
+
+def test_prompt_requires_selective_source_citations():
+    brief = EvidenceBrief(
+        query="Build a retrieval QA project.",
+        sources=[],
+    )
+    request = CandidateGenerationRequest(
+        user_goal="Build a retrieval QA project.",
+    )
+
+    payload = json.loads(
+        build_candidate_generation_prompt(
+            brief=brief,
+            request=request,
+        )
+    )
+    rules = " ".join(payload["rules"])
+
+    assert "directly material to that candidate" in rules
+    assert "adjacent_planning" in rules

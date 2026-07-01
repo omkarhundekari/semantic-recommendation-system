@@ -296,3 +296,55 @@ def test_shadow_runner_curates_unrelated_sources_before_generation():
     assert report.comparison["raw_evidence_count"] == 3
     assert report.comparison["curated_evidence_count"] == 2
     assert report.planning_diagnostics["valid_candidate_count"] == 1
+
+
+def test_shadow_runner_preserves_curation_metadata_in_evidence_brief():
+    report = run_shadow_plan(
+        evidence_items=[
+            {
+                "document_id": "paper-rag",
+                "source_type": "research_paper",
+                "title": "Retrieval Augmented Generation for Question Answering",
+                "abstract": (
+                    "Retrieval augmented generation supports "
+                    "question answering."
+                ),
+            }
+        ],
+        user_goal="Build a retrieval augmented generation project.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Grounded QA Workbench",
+                        "problem_statement": "Answers need source support.",
+                        "target_user": "ML engineers",
+                        "core_workflow": [
+                            "Retrieve relevant passages.",
+                            "Generate cited answers.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample documents.",
+                            "Retrieve relevant passages.",
+                            "Return answers with citations.",
+                        ],
+                        "success_metrics": [
+                            "Citation coverage per answer.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses the retained RAG research evidence."
+                        ),
+                        "source_ids": ["paper-rag"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    }
+                ]
+            }
+        ),
+    )
+
+    source = report.evidence_brief["sources"][0]
+
+    assert source["support_scope"] == "direct"
+    assert "Matched" in source["retention_reason"]

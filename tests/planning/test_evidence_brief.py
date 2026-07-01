@@ -109,3 +109,28 @@ def test_empty_evidence_produces_an_honest_empty_brief():
     assert brief.coverage_warnings == [
         "No usable evidence sources were available."
     ]
+
+
+def test_brief_preserves_curation_scope_and_retention_reason():
+    brief = build_evidence_brief(
+        evidence_items=[
+            {
+                "document_id": "paper-1",
+                "source_type": "research_paper",
+                "title": "Focused Retrieval Evidence",
+                "abstract": "Retrieval improves grounded answers.",
+                "support_scope": "adjacent_planning",
+                "retention_reason": (
+                    "Retained as adjacent planning evidence."
+                ),
+            }
+        ],
+        user_query="Build a retrieval project.",
+    )
+
+    source = brief.sources[0]
+
+    assert source.support_scope == "adjacent_planning"
+    assert source.retention_reason == (
+        "Retained as adjacent planning evidence."
+    )

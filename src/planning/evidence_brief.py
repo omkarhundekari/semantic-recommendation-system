@@ -191,6 +191,12 @@ def build_evidence_brief(
             url=_as_text(item.get("url")).strip() or None,
             retrieval_rank=_safe_int(item.get("retrieval_rank")),
             retrieval_signals=_retrieval_signals(item),
+            support_scope=(
+                _as_text(item.get("support_scope")).strip() or "direct"
+            ),
+            retention_reason=(
+                _as_text(item.get("retention_reason")).strip()
+            ),
         )
 
         normalized_sources.append(source)
