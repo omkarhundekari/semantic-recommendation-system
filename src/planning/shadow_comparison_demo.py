@@ -9,6 +9,11 @@ from planning.candidate_prompt import build_candidate_generation_payload
 from planning.mock_generation_provider import (
     MockCandidateGenerationProvider,
 )
+from planning.generation_provider import CandidateGenerationProvider
+from planning.live_llm_guard import require_live_openai_access
+from planning.openai_generation_provider import (
+    OpenAICandidateGenerationProvider,
+)
 from planning.shadow_runner import (
     build_generation_request,
     run_shadow_plan,
@@ -47,6 +52,8 @@ def build_shadow_comparison_artifact(
     user_goal: str,
     constraints: Dict[str, Any],
     fixture_response: Optional[Dict[str, Any]] = None,
+    provider: Optional[CandidateGenerationProvider] = None,
+    execution_mode: str = "fixture",
 ) -> Dict[str, Any]:
     inference = evidence_payload.get("inference", {})
     evidence_items = evidence_payload.get("merged_results", [])
@@ -98,20 +105,23 @@ def build_shadow_comparison_artifact(
         },
     }
 
-    if fixture_response is not None:
+    if fixture_response is not None and provider is None:
+        provider = MockCandidateGenerationProvider(
+            response=fixture_response
+        )
+
+    if provider is not None:
         report = run_shadow_plan(
             evidence_items=evidence_items,
             user_goal=user_goal,
             constraints=constraints,
-            provider=MockCandidateGenerationProvider(
-                response=fixture_response
-            ),
+            provider=provider,
             legacy_ideas=legacy_ideas,
             max_candidates=3,
         )
 
         v2_shadow = {
-            "status": "fixture_evaluated",
+            "status": f"{execution_mode}_evaluated",
             "report": report.to_dict(),
             "selected_candidates": report.selected_candidates,
             "diagnostics": report.planning_diagnostics,
@@ -198,6 +208,17 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--provider",
+        choices=["mock", "openai"],
+        default="mock",
+        help="Provider used only for an explicit local evaluation.",
+    )
+    parser.add_argument(
+        "--allow-live-llm",
+        action="store_true",
+        help="Required together with .env settings for a paid OpenAI run.",
+    )
+    parser.add_argument(
         "--output-dir",
         default=str(DEFAULT_OUTPUT_DIR),
     )
@@ -206,6 +227,12 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+
+    if args.provider == "openai":
+        require_live_openai_access(
+            provider_name=args.provider,
+            allow_live_llm=args.allow_live_llm,
+        )
 
     constraints = {
         "skill_level": args.skill_level,
@@ -232,11 +259,25 @@ def main() -> None:
 
         fixture_response = json.loads(fixture_path.read_text())
 
+    provider = None
+    execution_mode = "fixture"
+
+    if args.provider == "openai":
+        if fixture_response is not None:
+            raise SystemExit(
+                "Use either --fixture-response or --provider openai, not both."
+            )
+
+        provider = OpenAICandidateGenerationProvider()
+        execution_mode = "live"
+
     artifact = build_shadow_comparison_artifact(
         evidence_payload=evidence_payload,
         user_goal=args.query,
         constraints=constraints,
         fixture_response=fixture_response,
+        provider=provider,
+        execution_mode=execution_mode,
     )
 
     output_path = write_shadow_comparison_artifact(

@@ -67,3 +67,6 @@ typing_extensions==4.15.0
 tzdata==2026.2
 urllib3==2.6.3
 uvicorn==0.39.0
+
+openai==2.44.0
+python-dotenv==1.2.1

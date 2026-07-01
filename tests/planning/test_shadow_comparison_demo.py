@@ -65,3 +65,35 @@ def test_comparison_artifact_keeps_legacy_and_v2_results_separate():
         "Incident Correlation Workbench"
     )
     assert artifact["retrieval"]["merged_evidence_count"] == 1
+
+
+
+def test_openai_cli_guard_blocks_before_retrieval(monkeypatch):
+    import pytest
+    from types import SimpleNamespace
+
+    from planning import shadow_comparison_demo as demo
+
+    monkeypatch.setenv("PLANNING_PROVIDER", "mock")
+    monkeypatch.setenv("PLANNING_LLM_ENABLED", "false")
+
+    monkeypatch.setattr(
+        demo,
+        "parse_args",
+        lambda: SimpleNamespace(
+            provider="openai",
+            allow_live_llm=True,
+        ),
+    )
+
+    def retrieval_must_not_run(*args, **kwargs):
+        raise AssertionError("Retrieval must not run when guard blocks.")
+
+    monkeypatch.setattr(
+        demo,
+        "retrieve_evidence",
+        retrieval_must_not_run,
+    )
+
+    with pytest.raises(RuntimeError, match="PLANNING_PROVIDER=openai"):
+        demo.main()
