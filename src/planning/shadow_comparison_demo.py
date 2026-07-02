@@ -7,7 +7,9 @@ from typing import Any, Dict, List, Optional
 
 from planning.candidate_models import CandidateDirection
 from planning.candidate_prompt import build_candidate_generation_payload
+from planning.semantic_goal_adapter import SemanticEngineTextEncoder
 from planning.semantic_goal_relevance import GoalRelevanceScorer
+from semantic_engine import SemanticEngine
 from planning.mock_generation_provider import (
     MockCandidateGenerationProvider,
 )
@@ -262,6 +264,14 @@ def parse_args() -> argparse.Namespace:
         help="Required together with .env settings for a paid OpenAI run.",
     )
     parser.add_argument(
+        "--semantic-shadow",
+        action="store_true",
+        help=(
+            "Add local embedding-based goal-relevance traces to the "
+            "comparison artifact without changing candidate selection."
+        ),
+    )
+    parser.add_argument(
         "--output-dir",
         default=str(DEFAULT_OUTPUT_DIR),
     )
@@ -304,6 +314,12 @@ def main() -> None:
 
     provider = None
     execution_mode = "fixture"
+    semantic_goal_scorer = None
+
+    if args.semantic_shadow:
+        semantic_goal_scorer = GoalRelevanceScorer(
+            SemanticEngineTextEncoder(SemanticEngine())
+        )
 
     if args.provider == "openai":
         if fixture_response is not None:
@@ -321,6 +337,7 @@ def main() -> None:
         fixture_response=fixture_response,
         provider=provider,
         execution_mode=execution_mode,
+        semantic_goal_scorer=semantic_goal_scorer,
     )
 
     output_path = write_shadow_comparison_artifact(

@@ -192,3 +192,56 @@ def test_empty_candidates_returns_empty_result():
     )
 
     assert scorer.score_candidates(make_request(), []) == []
+
+
+def test_relevant_candidate_scores_higher_than_unrelated_candidate():
+    request = make_request()
+
+    relevant = make_candidate(
+        title="Incident Timeline",
+        problem_statement=(
+            "Connect deployment changes, service health signals, and "
+            "operational events during an incident."
+        ),
+        target_user="Platform engineers",
+    )
+    unrelated = make_candidate(
+        title="Campus Meal Planner",
+        problem_statement=(
+            "Help students plan meals and generate grocery lists."
+        ),
+        target_user="Students",
+    )
+
+    goal_text = (
+        "Build a project that helps investigate incidents. "
+        "Target roles: Platform Engineer."
+    )
+    relevant_text = (
+        "Incident Timeline. Connect deployment changes, service health "
+        "signals, and operational events during an incident. "
+        "Platform engineers"
+    )
+    unrelated_text = (
+        "Campus Meal Planner. Help students plan meals and generate "
+        "grocery lists. Students"
+    )
+
+    scorer = GoalRelevanceScorer(
+        ControlledEncoder(
+            {
+                goal_text: (1.0, 0.0),
+                relevant_text: (0.9, 0.1),
+                unrelated_text: (0.0, 1.0),
+            }
+        )
+    )
+
+    results = scorer.score_candidates(
+        request,
+        [relevant, unrelated],
+    )
+
+    assert results[0].trace.candidate_title == "Incident Timeline"
+    assert results[0].trace.raw_cosine > results[1].trace.raw_cosine
+    assert results[0].score > results[1].score
