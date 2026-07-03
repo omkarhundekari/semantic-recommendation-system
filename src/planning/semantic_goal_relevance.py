@@ -7,6 +7,10 @@ from planning.candidate_models import (
     CandidateDirection,
     CandidateGenerationRequest,
 )
+from planning.goal_text_builder import (
+    build_candidate_text,
+    build_goal_text,
+)
 
 
 @dataclass(frozen=True)
@@ -68,32 +72,6 @@ def _candidate_key(candidate: CandidateDirection) -> str:
     ).hexdigest()[:12]
 
 
-def _build_goal_text(
-    request: CandidateGenerationRequest,
-) -> str:
-    parts = [request.user_goal.strip()]
-
-    if request.target_roles:
-        parts.append(
-            "Target roles: "
-            + ", ".join(request.target_roles)
-            + "."
-        )
-
-    return " ".join(part for part in parts if part)
-
-
-def _build_candidate_text(
-    candidate: CandidateDirection,
-) -> str:
-    parts = [
-        candidate.title.strip().rstrip("."),
-        candidate.problem_statement.strip().rstrip("."),
-        candidate.target_user.strip().rstrip("."),
-    ]
-    return ". ".join(part for part in parts if part)
-
-
 def _normalize_cosine(raw_cosine: float) -> float:
     return max(0.0, min(1.0, (raw_cosine + 1.0) / 2.0))
 
@@ -110,12 +88,12 @@ class GoalRelevanceScorer:
         if not candidates:
             return []
 
-        goal_text = _build_goal_text(request)
+        goal_text = build_goal_text(request)
         goal_embedding = self._encoder.encode_text(goal_text)
         results = []
 
         for candidate in candidates:
-            candidate_text = _build_candidate_text(candidate)
+            candidate_text = build_candidate_text(candidate)
             candidate_embedding = self._encoder.encode_text(
                 candidate_text
             )

@@ -1,0 +1,60 @@
+from planning.semantic_escalation import (
+    select_low_margin_candidate_keys,
+)
+from planning.semantic_goal_relevance import (
+    GoalRelevanceResult,
+    GoalRelevanceTrace,
+)
+
+
+def make_result(candidate_key, raw_cosine):
+    return GoalRelevanceResult(
+        candidate_key=candidate_key,
+        score=(raw_cosine + 1.0) / 2.0,
+        trace=GoalRelevanceTrace(
+            candidate_key=candidate_key,
+            candidate_title=candidate_key,
+            raw_cosine=raw_cosine,
+            normalized_score=(raw_cosine + 1.0) / 2.0,
+            goal_text_used="Goal",
+            candidate_text_used="Candidate",
+        ),
+    )
+
+
+def test_escalates_top_candidates_within_configured_margin():
+    results = [
+        make_result("direct", 0.70),
+        make_result("near_miss", 0.67),
+        make_result("weaker", 0.40),
+        make_result("unrelated", 0.10),
+    ]
+
+    assert select_low_margin_candidate_keys(
+        results=results,
+        top_k=3,
+        margin_threshold=0.05,
+    ) == {"direct", "near_miss"}
+
+
+def test_does_not_escalate_clear_winner_or_candidates_below_top_k():
+    results = [
+        make_result("winner", 0.80),
+        make_result("adjacent", 0.60),
+        make_result("weak", 0.58),
+        make_result("outside_top_k", 0.30),
+    ]
+
+    assert select_low_margin_candidate_keys(
+        results=results,
+        top_k=3,
+        margin_threshold=0.05,
+    ) == {"winner"}
+
+
+def test_empty_results_return_empty_set():
+    assert select_low_margin_candidate_keys(
+        results=[],
+        top_k=3,
+        margin_threshold=0.05,
+    ) == set()

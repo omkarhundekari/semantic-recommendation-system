@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "incident_response",
+      "user_goal": "Build a cloud incident investigation project that helps platform engineers correlate deployment changes, service health signals, and operational events.",
+      "target_roles": [
+        "Platform Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "incident_timeline",
+          "label": 2,
+          "title": "Incident Investigation Timeline",
+          "problem_statement": "Connect deployment changes, service health signals, and operational events into a shared incident timeline.",
+          "target_user": "Platform engineers investigating production incidents"
+        },
+        {
+          "id": "service_health_dashboard",
+          "label": 1,
+          "title": "Service Health Dashboard",
+          "problem_statement": "Show current service health metrics and uptime trends.",
+          "target_user": "Engineering teams monitoring service health"
+        },
+        {
+          "id": "meal_planner",
+          "label": 0,
+          "title": "Campus Meal Planner",
+          "problem_statement": "Help students plan weekly meals and generate grocery lists.",
+          "target_user": "Students planning meals"
+        },
+        {
+          "id": "incident_alert_feed",
+          "label": 1,
+          "title": "Incident Alert Feed",
+          "problem_statement": "Collect alerts from monitoring tools and route them to on-call responders.",
+          "target_user": "Platform teams responding to production alerts"
+        }
+      ]
+    },
+    {
+      "id": "rag_quality",
+      "user_goal": "Build a retrieval-augmented generation project that helps teams diagnose why answers are unsupported or poorly grounded in source documents.",
+      "target_roles": [
+        "ML Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "rag_evidence_evaluator",
+          "label": 2,
+          "title": "RAG Evidence Quality Evaluator",
+          "problem_statement": "Evaluate whether generated answers are supported by retrieved source passages and identify weak evidence chains.",
+          "target_user": "Teams building retrieval-augmented generation systems"
+        },
+        {
+          "id": "document_search",
+          "label": 1,
+          "title": "Semantic Document Search",
+          "problem_statement": "Help users search internal documents using natural-language queries.",
+          "target_user": "Knowledge workers searching documentation"
+        },
+        {
+          "id": "fitness_tracker",
+          "label": 0,
+          "title": "Workout Progress Tracker",
+          "problem_statement": "Track workouts, sets, and personal fitness goals.",
+          "target_user": "People tracking gym routines"
+        },
+        {
+          "id": "rag_prompt_workspace",
+          "label": 1,
+          "title": "RAG Prompt Workspace",
+          "problem_statement": "Help teams create, compare, and version prompts for retrieval-augmented generation applications.",
+          "target_user": "Teams developing RAG applications"
+        }
+      ]
+    },
+    {
+      "id": "data_quality",
+      "user_goal": "Build a data engineering project that detects pipeline data-quality issues, explains likely causes, and helps teams prioritize fixes.",
+      "target_roles": [
+        "Data Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "pipeline_quality_triage",
+          "label": 2,
+          "title": "Pipeline Data Quality Triage",
+          "problem_statement": "Detect anomalies in pipeline outputs, link them to upstream changes, and prioritize likely root causes.",
+          "target_user": "Data engineers maintaining production pipelines"
+        },
+        {
+          "id": "analytics_dashboard",
+          "label": 1,
+          "title": "Business Analytics Dashboard",
+          "problem_statement": "Visualize business metrics and historical trends for stakeholders.",
+          "target_user": "Business analysts"
+        },
+        {
+          "id": "recipe_recommender",
+          "label": 0,
+          "title": "Recipe Recommendation App",
+          "problem_statement": "Recommend recipes based on available ingredients and dietary preferences.",
+          "target_user": "Home cooks"
+        },
+        {
+          "id": "pipeline_cost_optimizer",
+          "label": 1,
+          "title": "Pipeline Cost Optimizer",
+          "problem_statement": "Analyze data pipeline compute usage and recommend ways to reduce processing costs.",
+          "target_user": "Data engineers operating cloud pipelines"
+        }
+      ]
+    },
+    {
+      "id": "security_triage",
+      "user_goal": "Build a security engineering project that helps analysts prioritize vulnerabilities using exploitability, asset context, and remediation evidence.",
+      "target_roles": [
+        "Security Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "vulnerability_prioritizer",
+          "label": 2,
+          "title": "Context-Aware Vulnerability Prioritizer",
+          "problem_statement": "Rank vulnerabilities using exploitability signals, affected asset context, and available remediation evidence.",
+          "target_user": "Security analysts managing vulnerability remediation"
+        },
+        {
+          "id": "security_log_search",
+          "label": 1,
+          "title": "Security Event Search",
+          "problem_statement": "Search authentication and system logs for suspicious events.",
+          "target_user": "Security operations teams"
+        },
+        {
+          "id": "travel_budget_planner",
+          "label": 0,
+          "title": "Travel Budget Planner",
+          "problem_statement": "Help travelers estimate costs and organize trip budgets.",
+          "target_user": "People planning trips"
+        },
+        {
+          "id": "patch_compliance_dashboard",
+          "label": 1,
+          "title": "Patch Compliance Dashboard",
+          "problem_statement": "Track whether systems have installed required security patches and show compliance status.",
+          "target_user": "Security teams monitoring patch coverage"
+        }
+      ]
+    },
+    {
+      "id": "frontend_accessibility",
+      "user_goal": "Build a frontend engineering project that helps teams detect accessibility problems in web interfaces and prioritize fixes.",
+      "target_roles": [
+        "Frontend Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "accessibility_audit",
+          "label": 2,
+          "title": "Accessibility Issue Auditor",
+          "problem_statement": "Analyze web interface issues, explain accessibility impact, and prioritize remediation work.",
+          "target_user": "Frontend engineers improving web accessibility"
+        },
+        {
+          "id": "component_library",
+          "label": 1,
+          "title": "Reusable Component Library",
+          "problem_statement": "Provide reusable interface components for product teams.",
+          "target_user": "Frontend developers"
+        },
+        {
+          "id": "database_backup_tool",
+          "label": 0,
+          "title": "Database Backup Scheduler",
+          "problem_statement": "Schedule database backups and report backup completion status.",
+          "target_user": "Database administrators"
+        },
+        {
+          "id": "visual_regression_tester",
+          "label": 1,
+          "title": "Visual Regression Tester",
+          "problem_statement": "Compare interface screenshots across releases and flag unexpected visual changes.",
+          "target_user": "Frontend teams reviewing interface releases"
+        }
+      ]
+    }
+  ]
+}
