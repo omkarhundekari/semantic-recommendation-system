@@ -36,7 +36,10 @@ def build_low_margin_escalation_details(
             if top_score is not None
             else None
         )
-        eligible_for_escalation = rank <= top_k
+        eligible_for_escalation = (
+            len(ranked_results) > 1
+            and rank <= top_k
+        )
         escalated = bool(
             eligible_for_escalation
             and margin is not None

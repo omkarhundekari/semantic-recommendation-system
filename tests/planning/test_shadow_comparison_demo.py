@@ -506,6 +506,26 @@ def test_artifact_keeps_cross_encoder_shadow_separate_from_selection():
     assert artifact["v2_shadow"]["semantic_goal_relevance"][0][
         "candidate_key"
     ] == "candidate-1"
-    assert artifact["v2_shadow"]["cross_encoder_goal_relevance"][0][
-        "cross_encoder_raw_score"
-    ] == 4.5
+    assert artifact["v2_shadow"]["cross_encoder_goal_relevance"] == []
+
+
+def test_cross_encoder_shadow_requires_semantic_shadow(monkeypatch):
+    import pytest
+    from types import SimpleNamespace
+
+    from planning import shadow_comparison_demo as demo
+
+    monkeypatch.setattr(
+        demo,
+        "parse_args",
+        lambda: SimpleNamespace(
+            semantic_shadow=False,
+            cross_encoder_shadow=True,
+        ),
+    )
+
+    with pytest.raises(
+        SystemExit,
+        match="--cross-encoder-shadow requires --semantic-shadow",
+    ):
+        demo.main()

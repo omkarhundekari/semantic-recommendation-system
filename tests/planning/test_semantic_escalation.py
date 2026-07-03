@@ -1,4 +1,5 @@
 from planning.semantic_escalation import (
+    build_low_margin_escalation_details,
     select_low_margin_candidate_keys,
 )
 from planning.semantic_goal_relevance import (
@@ -88,3 +89,15 @@ def test_low_margin_escalation_details_include_rank_margin_and_cohort():
 
     assert details["weak"]["embedding_rank"] == 3
     assert details["weak"]["escalated"] is False
+
+
+def test_single_candidate_does_not_escalate_without_competition():
+    details = build_low_margin_escalation_details(
+        results=[make_result("only_candidate", 0.77)],
+        top_k=3,
+        margin_threshold=0.05,
+    )
+
+    assert details["only_candidate"]["embedding_rank"] == 1
+    assert details["only_candidate"]["cohort_size"] == 1
+    assert details["only_candidate"]["escalated"] is False

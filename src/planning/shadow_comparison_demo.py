@@ -7,8 +7,15 @@ from typing import Any, Dict, List, Optional
 
 from planning.candidate_models import CandidateDirection
 from planning.candidate_prompt import build_candidate_generation_payload
+from planning.cross_encoder_goal_adapter import (
+    CrossEncoderGoalPairScorer,
+)
+from planning.cross_encoder_goal_relevance import (
+    CrossEncoderGoalRelevanceScorer,
+)
 from planning.semantic_goal_adapter import SemanticEngineTextEncoder
 from planning.semantic_goal_relevance import GoalRelevanceScorer
+from reranker import CrossEncoderReranker
 from semantic_engine import SemanticEngine
 from planning.mock_generation_provider import (
     MockCandidateGenerationProvider,
@@ -383,6 +390,14 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--cross-encoder-shadow",
+        action="store_true",
+        help=(
+            "Add local cross-encoder traces for ambiguous embedding "
+            "candidates. Requires --semantic-shadow."
+        ),
+    )
+    parser.add_argument(
         "--output-dir",
         default=str(DEFAULT_OUTPUT_DIR),
     )
@@ -391,6 +406,14 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+
+    if (
+        getattr(args, "cross_encoder_shadow", False)
+        and not getattr(args, "semantic_shadow", False)
+    ):
+        raise SystemExit(
+            "--cross-encoder-shadow requires --semantic-shadow"
+        )
 
     if args.provider == "openai":
         require_live_openai_access(
@@ -426,10 +449,20 @@ def main() -> None:
     provider = None
     execution_mode = "fixture"
     semantic_goal_scorer = None
+    cross_encoder_goal_scorer = None
 
     if args.semantic_shadow:
         semantic_goal_scorer = GoalRelevanceScorer(
             SemanticEngineTextEncoder(SemanticEngine())
+        )
+
+    if args.cross_encoder_shadow:
+        cross_encoder_goal_scorer = (
+            CrossEncoderGoalRelevanceScorer(
+                CrossEncoderGoalPairScorer(
+                    CrossEncoderReranker()
+                )
+            )
         )
 
     if args.provider == "openai":
@@ -449,6 +482,7 @@ def main() -> None:
         provider=provider,
         execution_mode=execution_mode,
         semantic_goal_scorer=semantic_goal_scorer,
+        cross_encoder_goal_scorer=cross_encoder_goal_scorer,
     )
 
     output_path = write_shadow_comparison_artifact(
