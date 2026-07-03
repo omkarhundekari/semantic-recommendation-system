@@ -60,9 +60,13 @@ def build_shadow_comparison_artifact(
     execution_mode: str = "fixture",
     semantic_goal_relevance: Optional[List[Dict[str, Any]]] = None,
     semantic_goal_scorer: Optional[Any] = None,
+    cross_encoder_goal_scorer: Optional[Any] = None,
+    cross_encoder_top_k: int = 3,
+    cross_encoder_margin_threshold: float = 0.05,
 ) -> Dict[str, Any]:
     inference = evidence_payload.get("inference", {})
     evidence_items = evidence_payload.get("merged_results", [])
+    cross_encoder_goal_relevance: List[Dict[str, Any]] = []
 
     legacy_ideas = generate_project_ideas(
         search_results=evidence_items,
@@ -142,6 +146,21 @@ def build_shadow_comparison_artifact(
                 )
             )
 
+        if (
+            semantic_goal_scorer is not None
+            and cross_encoder_goal_scorer is not None
+        ):
+            cross_encoder_goal_relevance = (
+                build_cross_encoder_goal_relevance_shadow(
+                    selected_candidates=report.selected_candidates,
+                    generation_request=generation_request,
+                    embedding_scorer=semantic_goal_scorer,
+                    cross_encoder_scorer=cross_encoder_goal_scorer,
+                    top_k=cross_encoder_top_k,
+                    margin_threshold=cross_encoder_margin_threshold,
+                )
+            )
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -164,6 +183,9 @@ def build_shadow_comparison_artifact(
             **v2_shadow,
             "semantic_goal_relevance": list(
                 semantic_goal_relevance or []
+            ),
+            "cross_encoder_goal_relevance": (
+                cross_encoder_goal_relevance
             ),
         },
     }
@@ -190,6 +212,95 @@ def build_semantic_goal_relevance_shadow(
         for result in scorer.score_candidates(
             generation_request,
             candidates,
+        )
+    ]
+
+
+
+def build_cross_encoder_goal_relevance_shadow(
+    selected_candidates: List[Dict[str, Any]],
+    generation_request: Any,
+    embedding_scorer: Any,
+    cross_encoder_scorer: Any,
+    top_k: int,
+    margin_threshold: float,
+) -> List[Dict[str, Any]]:
+    from planning.semantic_escalation import (
+        build_low_margin_escalation_details,
+    )
+
+    candidates = [
+        CandidateDirection(
+            **{
+                key: value
+                for key, value in candidate.items()
+                if key != "ranking"
+            }
+        )
+        for candidate in selected_candidates
+    ]
+
+    embedding_results = embedding_scorer.score_candidates(
+        generation_request,
+        candidates,
+    )
+
+    escalation_details = build_low_margin_escalation_details(
+        results=embedding_results,
+        top_k=top_k,
+        margin_threshold=margin_threshold,
+    )
+    escalated_keys = {
+        candidate_key
+        for candidate_key, detail in escalation_details.items()
+        if detail["escalated"]
+    }
+
+    escalated_pairs = [
+        (candidate, embedding_result)
+        for candidate, embedding_result in zip(
+            candidates,
+            embedding_results,
+        )
+        if embedding_result.candidate_key in escalated_keys
+    ]
+
+    if not escalated_pairs:
+        return []
+
+    cross_encoder_results = cross_encoder_scorer.score_candidates(
+        generation_request,
+        [candidate for candidate, _ in escalated_pairs],
+    )
+
+    return [
+        {
+            "candidate_key": embedding_result.candidate_key,
+            "candidate_title": candidate.title,
+            "embedding_raw_cosine": (
+                embedding_result.trace.raw_cosine
+            ),
+            "embedding_normalized_score": (
+                embedding_result.trace.normalized_score
+            ),
+            "cross_encoder_raw_score": (
+                cross_encoder_result.raw_score
+            ),
+            "embedding_rank": escalation_details[
+                embedding_result.candidate_key
+            ]["embedding_rank"],
+            "top_embedding_margin": escalation_details[
+                embedding_result.candidate_key
+            ]["top_embedding_margin"],
+            "cohort_size": escalation_details[
+                embedding_result.candidate_key
+            ]["cohort_size"],
+            "escalated": True,
+            "escalation_reason": "within_top_margin",
+        }
+        for (candidate, embedding_result), cross_encoder_result in zip(
+            escalated_pairs,
+            cross_encoder_results,
         )
     ]
 
@@ -354,7 +465,6 @@ def main() -> None:
         "V2 status:",
         artifact["v2_shadow"]["status"],
     )
-
 
 if __name__ == "__main__":
     main()

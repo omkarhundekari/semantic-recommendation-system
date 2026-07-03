@@ -263,3 +263,249 @@ def test_comparison_artifact_adds_semantic_traces_from_injected_scorer():
     assert artifact["v2_shadow"]["selected_candidates"][0][
         "title"
     ] == "Incident Timeline Tool"
+
+
+def test_cross_encoder_shadow_scores_only_low_margin_candidates():
+    from planning.shadow_comparison_demo import (
+        build_cross_encoder_goal_relevance_shadow,
+    )
+
+    class FakeEmbeddingTrace:
+        def __init__(self, key, title, raw_cosine):
+            self.candidate_key = key
+            self.candidate_title = title
+            self.raw_cosine = raw_cosine
+            self.normalized_score = (raw_cosine + 1.0) / 2.0
+
+    class FakeEmbeddingResult:
+        def __init__(self, key, title, raw_cosine):
+            self.candidate_key = key
+            self.trace = FakeEmbeddingTrace(
+                key,
+                title,
+                raw_cosine,
+            )
+
+    class FakeEmbeddingScorer:
+        def score_candidates(self, request, candidates):
+            return [
+                FakeEmbeddingResult("direct", candidates[0].title, 0.70),
+                FakeEmbeddingResult(
+                    "near_miss",
+                    candidates[1].title,
+                    0.67,
+                ),
+                FakeEmbeddingResult("weak", candidates[2].title, 0.40),
+            ]
+
+    class FakeCrossEncoderResult:
+        def __init__(self, title, raw_score):
+            self.candidate_title = title
+            self.raw_score = raw_score
+
+    class FakeCrossEncoderScorer:
+        def __init__(self):
+            self.received_titles = None
+
+        def score_candidates(self, request, candidates):
+            self.received_titles = [
+                candidate.title for candidate in candidates
+            ]
+            return [
+                FakeCrossEncoderResult(
+                    candidate.title,
+                    score,
+                )
+                for candidate, score in zip(
+                    candidates,
+                    [4.2, 0.8],
+                )
+            ]
+
+    selected_candidates = [
+        {
+            "title": "Direct Candidate",
+            "problem_statement": "Directly solves the goal.",
+            "target_user": "Engineers",
+            "core_workflow": [],
+            "mvp_scope": [],
+            "success_metrics": [],
+            "evidence_relationship": "",
+            "source_ids": [],
+            "assumptions": [],
+            "suggested_stack": [],
+            "ranking": {"score": 0.9},
+        },
+        {
+            "title": "Near Miss Candidate",
+            "problem_statement": "Related but incomplete.",
+            "target_user": "Engineers",
+            "core_workflow": [],
+            "mvp_scope": [],
+            "success_metrics": [],
+            "evidence_relationship": "",
+            "source_ids": [],
+            "assumptions": [],
+            "suggested_stack": [],
+            "ranking": {"score": 0.8},
+        },
+        {
+            "title": "Weak Candidate",
+            "problem_statement": "Only loosely related.",
+            "target_user": "Engineers",
+            "core_workflow": [],
+            "mvp_scope": [],
+            "success_metrics": [],
+            "evidence_relationship": "",
+            "source_ids": [],
+            "assumptions": [],
+            "suggested_stack": [],
+            "ranking": {"score": 0.7},
+        },
+    ]
+
+    cross_encoder_scorer = FakeCrossEncoderScorer()
+
+    traces = build_cross_encoder_goal_relevance_shadow(
+        selected_candidates=selected_candidates,
+        generation_request=object(),
+        embedding_scorer=FakeEmbeddingScorer(),
+        cross_encoder_scorer=cross_encoder_scorer,
+        top_k=3,
+        margin_threshold=0.05,
+    )
+
+    assert cross_encoder_scorer.received_titles == [
+        "Direct Candidate",
+        "Near Miss Candidate",
+    ]
+    assert [trace["candidate_key"] for trace in traces] == [
+        "direct",
+        "near_miss",
+    ]
+    assert traces[0]["cross_encoder_raw_score"] == 4.2
+    assert traces[1]["cross_encoder_raw_score"] == 0.8
+    assert traces[0]["escalation_reason"] == "within_top_margin"
+    assert traces[0]["embedding_rank"] == 1
+    assert traces[0]["top_embedding_margin"] == 0.0
+    assert traces[0]["cohort_size"] == 3
+    assert traces[1]["embedding_rank"] == 2
+    assert traces[1]["top_embedding_margin"] == 0.03
+    assert traces[0]["embedding_rank"] == 1
+    assert traces[0]["top_embedding_margin"] == 0.0
+    assert traces[0]["cohort_size"] == 3
+    assert traces[1]["embedding_rank"] == 2
+    assert traces[1]["top_embedding_margin"] == 0.03
+
+
+def test_artifact_keeps_cross_encoder_shadow_separate_from_selection():
+    from planning.mock_generation_provider import (
+        MockCandidateGenerationProvider,
+    )
+
+    class FakeEmbeddingTrace:
+        def __init__(self, key, title, raw_cosine):
+            self.candidate_key = key
+            self.candidate_title = title
+            self.raw_cosine = raw_cosine
+            self.normalized_score = (raw_cosine + 1.0) / 2.0
+
+        def to_dict(self):
+            return {
+                "candidate_key": self.candidate_key,
+                "candidate_title": self.candidate_title,
+                "raw_cosine": self.raw_cosine,
+                "normalized_score": self.normalized_score,
+            }
+
+    class FakeEmbeddingResult:
+        def __init__(self, key, title, raw_cosine):
+            self.candidate_key = key
+            self.trace = FakeEmbeddingTrace(
+                key,
+                title,
+                raw_cosine,
+            )
+
+    class FakeEmbeddingScorer:
+        def score_candidates(self, request, candidates):
+            return [
+                FakeEmbeddingResult(
+                    "candidate-1",
+                    candidates[0].title,
+                    0.70,
+                )
+            ]
+
+    class FakeCrossEncoderResult:
+        def __init__(self, title):
+            self.candidate_title = title
+            self.raw_score = 4.5
+
+    class FakeCrossEncoderScorer:
+        def score_candidates(self, request, candidates):
+            return [
+                FakeCrossEncoderResult(candidate.title)
+                for candidate in candidates
+            ]
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {},
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Incident Evidence",
+                    "abstract": "Operational incident evidence.",
+                }
+            ],
+        },
+        user_goal="Build an incident investigation project.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Incident Timeline",
+                        "problem_statement": (
+                            "Connect incident evidence."
+                        ),
+                        "target_user": "Platform engineers",
+                        "core_workflow": [
+                            "Load incident records.",
+                            "Connect related evidence.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample records.",
+                            "Link evidence by incident.",
+                            "Show a shared timeline.",
+                        ],
+                        "success_metrics": [
+                            "Faster incident review.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses retained evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": [],
+                    }
+                ]
+            }
+        ),
+        semantic_goal_scorer=FakeEmbeddingScorer(),
+        cross_encoder_goal_scorer=FakeCrossEncoderScorer(),
+        cross_encoder_top_k=3,
+        cross_encoder_margin_threshold=0.05,
+    )
+
+    assert artifact["v2_shadow"]["selected_candidates"][0][
+        "title"
+    ] == "Incident Timeline"
+    assert artifact["v2_shadow"]["semantic_goal_relevance"][0][
+        "candidate_key"
+    ] == "candidate-1"
+    assert artifact["v2_shadow"]["cross_encoder_goal_relevance"][0][
+        "cross_encoder_raw_score"
+    ] == 4.5

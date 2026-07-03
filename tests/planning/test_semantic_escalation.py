@@ -58,3 +58,33 @@ def test_empty_results_return_empty_set():
         top_k=3,
         margin_threshold=0.05,
     ) == set()
+
+
+def test_low_margin_escalation_details_include_rank_margin_and_cohort():
+    from planning.semantic_escalation import (
+        build_low_margin_escalation_details,
+    )
+
+    results = [
+        make_result("direct", 0.70),
+        make_result("near_miss", 0.67),
+        make_result("weak", 0.40),
+    ]
+
+    details = build_low_margin_escalation_details(
+        results=results,
+        top_k=3,
+        margin_threshold=0.05,
+    )
+
+    assert details["direct"]["embedding_rank"] == 1
+    assert details["direct"]["top_embedding_margin"] == 0.0
+    assert details["direct"]["cohort_size"] == 3
+    assert details["direct"]["escalated"] is True
+
+    assert details["near_miss"]["embedding_rank"] == 2
+    assert details["near_miss"]["top_embedding_margin"] == 0.03
+    assert details["near_miss"]["escalated"] is True
+
+    assert details["weak"]["embedding_rank"] == 3
+    assert details["weak"]["escalated"] is False
