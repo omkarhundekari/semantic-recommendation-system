@@ -50,7 +50,7 @@ def test_does_not_escalate_clear_winner_or_candidates_below_top_k():
         results=results,
         top_k=3,
         margin_threshold=0.05,
-    ) == {"winner"}
+    ) == set()
 
 
 def test_empty_results_return_empty_set():
@@ -101,3 +101,19 @@ def test_single_candidate_does_not_escalate_without_competition():
     assert details["only_candidate"]["embedding_rank"] == 1
     assert details["only_candidate"]["cohort_size"] == 1
     assert details["only_candidate"]["escalated"] is False
+
+
+def test_clear_winner_does_not_escalate_without_close_competitor():
+    details = build_low_margin_escalation_details(
+        results=[
+            make_result("winner", 0.80),
+            make_result("adjacent", 0.60),
+            make_result("weak", 0.30),
+        ],
+        top_k=3,
+        margin_threshold=0.05,
+    )
+
+    assert details["winner"]["escalated"] is False
+    assert details["adjacent"]["escalated"] is False
+    assert details["weak"]["escalated"] is False

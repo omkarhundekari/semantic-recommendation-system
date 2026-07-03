@@ -28,6 +28,15 @@ def build_low_margin_escalation_details(
         else None
     )
 
+    close_candidate_keys = {
+        result.candidate_key
+        for result in top_results
+        if (
+            top_score is not None
+            and top_score - result.trace.raw_cosine <= margin_threshold
+        )
+    }
+    has_ambiguity = len(close_candidate_keys) >= 2
     details = {}
 
     for rank, result in enumerate(ranked_results, start=1):
@@ -36,14 +45,10 @@ def build_low_margin_escalation_details(
             if top_score is not None
             else None
         )
-        eligible_for_escalation = (
-            len(ranked_results) > 1
-            and rank <= top_k
-        )
         escalated = bool(
-            eligible_for_escalation
-            and margin is not None
-            and margin <= margin_threshold
+            has_ambiguity
+            and rank <= top_k
+            and result.candidate_key in close_candidate_keys
         )
 
         details[result.candidate_key] = {
