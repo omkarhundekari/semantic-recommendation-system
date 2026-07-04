@@ -61,6 +61,12 @@ def test_comparison_artifact_keeps_legacy_and_v2_results_separate():
 
     assert artifact["legacy_planner"]["direction_count"] == 3
     assert artifact["v2_shadow"]["status"] == "fixture_evaluated"
+    assert artifact["v2_shadow"]["shadow_readiness"]["status"] == (
+        "needs_review"
+    )
+    assert artifact["v2_shadow"]["shadow_readiness"]["signals"][
+        "selected_candidate_count"
+    ] == 1
     assert artifact["v2_shadow"]["selected_candidates"][0]["title"] == (
         "Incident Correlation Workbench"
     )

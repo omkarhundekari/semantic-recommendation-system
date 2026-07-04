@@ -154,6 +154,7 @@ def build_shadow_comparison_artifact(
             "report": report.to_dict(),
             "selected_candidates": report.selected_candidates,
             "diagnostics": report.planning_diagnostics,
+            "shadow_readiness": report.shadow_readiness,
         }
 
         if semantic_goal_scorer is not None:
