@@ -14,6 +14,7 @@ from query_expander import get_query_metadata
 from query_understanding import understand_query
 from research_evidence_assessment import build_evidence_assessment
 from research_query_anchors import extract_required_anchor_terms
+from product_plan_readiness import assess_product_plan_readiness
 from schemas.product_models import (
     EvidenceReference,
     PipelineStep,
@@ -487,6 +488,14 @@ def generate_project_intelligence(
         constraints,
     )
 
+    product_plan_readiness = assess_product_plan_readiness(
+        evidence_items=evidence_items,
+        ideas=ideas,
+        verification_results=final_verification_results,
+        repairs_by_index=repairs_by_index,
+        research_evidence_assessment=research_evidence_assessment,
+    )
+
     pipeline.extend(
         [
             PipelineStep(
@@ -620,6 +629,7 @@ def generate_project_intelligence(
             ),
         },
         research_evidence_assessment=research_evidence_assessment,
+        product_plan_readiness=product_plan_readiness.to_dict(),
         clarification_required=False,
         inferred_domain_family=inference.get(
             "inferred_domain_family"

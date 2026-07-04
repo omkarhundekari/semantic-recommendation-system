@@ -129,3 +129,14 @@ def test_ready_api_response_exposes_resolved_rag_planning_domain():
         direction.decision_trace.planning_domain == "rag_llm"
         for direction in response.directions
     )
+
+    assert response.product_plan_readiness is not None
+    assert response.product_plan_readiness["status"] in {
+        "ready",
+        "needs_review",
+        "blocked",
+    }
+    assert response.product_plan_readiness["signals"]["direction_count"] == 3
+    assert response.product_plan_readiness["signals"][
+        "portfolio_difficulties"
+    ] == ["Easy", "Medium", "Hard"]
