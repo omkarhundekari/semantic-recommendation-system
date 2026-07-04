@@ -185,6 +185,191 @@
           "target_user": "Frontend teams reviewing interface releases"
         }
       ]
+    },
+    {
+      "id": "api_contract_change_risk",
+      "user_goal": "Build a backend engineering project that helps teams detect API contract changes, identify affected consumers, and prioritize compatibility fixes before deployment.",
+      "target_roles": [
+        "Backend Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "api_contract_impact_analyzer",
+          "label": 2,
+          "title": "API Contract Impact Analyzer",
+          "problem_statement": "Compare API schemas across releases, detect breaking changes, identify affected consumers, and prioritize compatibility fixes.",
+          "target_user": "Backend engineers preparing services for deployment"
+        },
+        {
+          "id": "api_documentation_portal",
+          "label": 1,
+          "title": "Interactive API Documentation Portal",
+          "problem_statement": "Generate searchable API documentation with endpoint examples and request-response references.",
+          "target_user": "Developers integrating with platform APIs"
+        },
+        {
+          "id": "integration_test_dashboard",
+          "label": 1,
+          "title": "Integration Test Dashboard",
+          "problem_statement": "Track integration-test pass rates, flaky tests, and release-readiness trends.",
+          "target_user": "Engineering teams monitoring test health"
+        },
+        {
+          "id": "study_planner",
+          "label": 0,
+          "title": "Study Planner",
+          "problem_statement": "Help students organize assignments, study sessions, and exam preparation.",
+          "target_user": "University students"
+        }
+      ]
+    },
+    {
+      "id": "ml_feature_drift_investigation",
+      "user_goal": "Build an ML platform project that detects feature drift, explains likely upstream causes, and helps teams decide when a model needs retraining.",
+      "target_roles": [
+        "ML Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "feature_drift_root_cause",
+          "label": 2,
+          "title": "Feature Drift Root-Cause Explorer",
+          "problem_statement": "Detect feature-distribution drift, connect changes to upstream data sources, and recommend retraining or data-remediation actions.",
+          "target_user": "ML engineers operating production models"
+        },
+        {
+          "id": "model_performance_dashboard",
+          "label": 1,
+          "title": "Model Performance Dashboard",
+          "problem_statement": "Visualize model accuracy, latency, and prediction quality trends across deployments.",
+          "target_user": "Teams monitoring deployed ML models"
+        },
+        {
+          "id": "dataset_validation_checker",
+          "label": 1,
+          "title": "Dataset Validation Checker",
+          "problem_statement": "Validate dataset schemas, missing values, and data quality rules before model training.",
+          "target_user": "Data teams preparing training datasets"
+        },
+        {
+          "id": "music_playlist_builder",
+          "label": 0,
+          "title": "Music Playlist Builder",
+          "problem_statement": "Create playlists from listening history and mood preferences.",
+          "target_user": "Music listeners"
+        }
+      ]
+    },
+    {
+      "id": "cloud_cost_anomaly",
+      "user_goal": "Build a cloud engineering project that detects unusual spend, explains likely infrastructure causes, and helps teams prioritize cost fixes.",
+      "target_roles": [
+        "Cloud Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "cloud_cost_root_cause",
+          "label": 2,
+          "title": "Cloud Cost Root-Cause Explorer",
+          "problem_statement": "Detect cloud-spend anomalies, correlate them with infrastructure changes and workload behavior, and prioritize likely cost fixes.",
+          "target_user": "Cloud engineers managing production spend"
+        },
+        {
+          "id": "cloud_spend_dashboard",
+          "label": 1,
+          "title": "Cloud Spend Dashboard",
+          "problem_statement": "Visualize cloud costs by service, team, and billing period.",
+          "target_user": "Engineering leaders reviewing cloud spend"
+        },
+        {
+          "id": "resource_rightsizing_advisor",
+          "label": 1,
+          "title": "Resource Rightsizing Advisor",
+          "problem_statement": "Recommend smaller cloud instances based on historical utilization patterns.",
+          "target_user": "Cloud teams optimizing infrastructure"
+        },
+        {
+          "id": "campus_coffee_finder",
+          "label": 0,
+          "title": "Campus Coffee Finder",
+          "problem_statement": "Help students find nearby coffee shops and compare opening hours.",
+          "target_user": "Students on campus"
+        }
+      ]
+    },
+    {
+      "id": "cloud_access_review",
+      "user_goal": "Build a security engineering project that finds over-privileged cloud identities, explains risky access paths, and prioritizes remediation.",
+      "target_roles": [
+        "Security Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "identity_access_path_analyzer",
+          "label": 2,
+          "title": "Identity Access Path Analyzer",
+          "problem_statement": "Analyze cloud identity permissions, identify over-privileged access paths, explain exposure, and prioritize least-privilege remediation.",
+          "target_user": "Security engineers managing cloud access"
+        },
+        {
+          "id": "iam_policy_editor",
+          "label": 1,
+          "title": "IAM Policy Editor",
+          "problem_statement": "Create, validate, and publish cloud IAM policies from reusable templates.",
+          "target_user": "Cloud administrators configuring access"
+        },
+        {
+          "id": "login_anomaly_monitor",
+          "label": 1,
+          "title": "Login Anomaly Monitor",
+          "problem_statement": "Detect suspicious authentication activity and alert security teams about unusual login behavior.",
+          "target_user": "Security operations analysts"
+        },
+        {
+          "id": "travel_budget_calculator",
+          "label": 0,
+          "title": "Travel Budget Calculator",
+          "problem_statement": "Estimate travel expenses across transportation, hotels, and activities.",
+          "target_user": "People planning trips"
+        }
+      ]
+    },
+    {
+      "id": "support_issue_investigation",
+      "user_goal": "Build a developer support project that helps engineers investigate recurring customer issues using support tickets, application logs, and release notes.",
+      "target_roles": [
+        "Software Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "support_issue_evidence_investigator",
+          "label": 2,
+          "title": "Support Issue Evidence Investigator",
+          "problem_statement": "Cluster recurring support issues, connect them with relevant application logs and release notes, and surface evidence for likely causes.",
+          "target_user": "Engineers resolving customer-reported issues"
+        },
+        {
+          "id": "support_ticket_search",
+          "label": 1,
+          "title": "Support Ticket Semantic Search",
+          "problem_statement": "Help support teams search historical tickets using natural-language queries.",
+          "target_user": "Customer support representatives"
+        },
+        {
+          "id": "application_log_explorer",
+          "label": 1,
+          "title": "Application Log Explorer",
+          "problem_statement": "Search and filter application logs during production debugging.",
+          "target_user": "Engineers investigating system behavior"
+        },
+        {
+          "id": "fitness_meal_tracker",
+          "label": 0,
+          "title": "Fitness Meal Tracker",
+          "problem_statement": "Track meals, calories, workouts, and weekly health goals.",
+          "target_user": "People managing fitness routines"
+        }
+      ]
     }
   ]
 }
