@@ -539,21 +539,27 @@ def test_artifact_adds_evidence_support_trace_separately():
     class FakeAssessment:
         def __init__(self, candidate):
             self._candidate = candidate
+            self.citation_integrity = {
+                "provided_count": 1,
+                "valid_count": 1,
+                "invalid_count": 0,
+                "valid_fraction": 1.0,
+            }
+            self.direct_citation_count = 1
+            self.adjacent_citation_count = 0
+            self.uncited_candidate = False
+            self.cited_source_alignments = []
+            self.warnings = []
 
         def to_dict(self):
             return {
                 "candidate_title": self._candidate.title,
-                "citation_integrity": {
-                    "provided_count": 1,
-                    "valid_count": 1,
-                    "invalid_count": 0,
-                    "valid_fraction": 1.0,
-                },
-                "direct_citation_count": 1,
-                "adjacent_citation_count": 0,
-                "uncited_candidate": False,
-                "cited_source_alignments": [],
-                "warnings": [],
+                "citation_integrity": self.citation_integrity,
+                "direct_citation_count": self.direct_citation_count,
+                "adjacent_citation_count": self.adjacent_citation_count,
+                "uncited_candidate": self.uncited_candidate,
+                "cited_source_alignments": self.cited_source_alignments,
+                "warnings": self.warnings,
             }
 
     class FakeEvidenceSupportScorer:
@@ -707,3 +713,174 @@ def test_evidence_support_shadow_flag_initializes_trace_scorer(monkeypatch):
         captured["evidence_support_scorer"],
         FakeEvidenceSupportScorer,
     )
+
+
+def test_shadow_cli_passes_query_understanding_hints_to_retrieval(
+    monkeypatch,
+):
+    from types import SimpleNamespace
+
+    from planning import shadow_comparison_demo as demo
+
+    query = (
+        "Build a developer productivity project that helps engineers "
+        "identify flaky tests."
+    )
+
+    monkeypatch.setattr(
+        demo,
+        "parse_args",
+        lambda: SimpleNamespace(
+            cross_encoder_shadow=False,
+            semantic_shadow=False,
+            evidence_support_shadow=False,
+            provider="mock",
+            allow_live_llm=False,
+            query=query,
+            selected_direction=None,
+            skill_level="",
+            time_available="",
+            target_role=[],
+            preferred_stack=[],
+            fixture_response=None,
+            output_dir="outputs/test_shadow_artifacts",
+        ),
+    )
+
+    monkeypatch.setattr(
+        demo,
+        "understand_query",
+        lambda goal, constraints: {
+            "direction_hints": ["software_engineering"],
+        },
+        raising=False,
+    )
+
+    captured = {}
+
+    def fake_retrieve_evidence(**kwargs):
+        captured.update(kwargs)
+        return {
+            "inference": {},
+            "merged_results": [],
+        }
+
+    monkeypatch.setattr(
+        demo,
+        "retrieve_evidence",
+        fake_retrieve_evidence,
+    )
+    monkeypatch.setattr(
+        demo,
+        "build_shadow_comparison_artifact",
+        lambda **kwargs: {
+            "legacy_planner": {"direction_count": 0},
+            "v2_shadow": {"status": "prompt_ready"},
+        },
+    )
+    monkeypatch.setattr(
+        demo,
+        "write_shadow_comparison_artifact",
+        lambda artifact, output_dir: output_dir / "artifact.json",
+    )
+
+    demo.main()
+
+    assert captured["user_query"] == query
+    assert captured["intent_hints"] == ["software_engineering"]
+
+
+def test_shadow_artifact_exposes_grounding_adequacy_from_evidence_support():
+    from planning import shadow_comparison_demo as demo
+    from planning.mock_generation_provider import MockCandidateGenerationProvider
+
+    class FakeEvidenceSupportScorer:
+        def assess_candidate(self, candidate, brief):
+            from planning.evidence_support import (
+                CandidateEvidenceSupportAssessment,
+                CitedSourceAlignment,
+            )
+
+            return CandidateEvidenceSupportAssessment(
+                candidate_title=candidate.title,
+                citation_integrity={
+                    "provided_count": 1,
+                    "valid_count": 1,
+                    "invalid_count": 0,
+                    "valid_fraction": 1.0,
+                },
+                direct_citation_count=1,
+                adjacent_citation_count=0,
+                uncited_candidate=False,
+                cited_source_alignments=[
+                    CitedSourceAlignment(
+                        source_id="paper-1",
+                        source_type="research_paper",
+                        support_scope="direct",
+                        raw_cosine=0.42,
+                        normalized_score=0.71,
+                    )
+                ],
+            )
+
+    artifact = demo.build_shadow_comparison_artifact(
+        user_goal="Build an incident investigation project.",
+        constraints={},
+        evidence_payload={
+            "selected_route": "test",
+            "expanded_query": "incident investigation",
+            "focused_query": "incident investigation",
+            "inference": {},
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Event Correlation for Incidents",
+                    "abstract": (
+                        "Correlate deployment and service-health events "
+                        "during incident investigation."
+                    ),
+                }
+            ],
+        },
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Incident Timeline Correlator",
+                        "problem_statement": (
+                            "Connect deployment and service-health signals."
+                        ),
+                        "target_user": "Platform engineers",
+                        "core_workflow": [
+                            "Ingest incident signals.",
+                            "Correlate related events.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample events.",
+                            "Correlate related signals.",
+                            "Show an incident timeline.",
+                        ],
+                        "success_metrics": [
+                            "Time to identify related events."
+                        ],
+                        "evidence_relationship": (
+                            "Uses event-correlation evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    }
+                ]
+            }
+        ),
+        execution_mode="fixture",
+        evidence_support_scorer=FakeEvidenceSupportScorer(),
+    )
+
+    traces = artifact["v2_shadow"]["grounding_adequacy"]
+
+    assert len(traces) == 1
+    assert traces[0]["candidate_title"] == "Incident Timeline Correlator"
+    assert traces[0]["adequacy_class"] == "cited_with_direct_scope"
+    assert traces[0]["min_cited_alignment"] == 0.42

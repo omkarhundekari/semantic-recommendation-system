@@ -355,7 +355,11 @@ def correct_query_typos(query: str) -> Tuple[str, List[Dict[str, str]]]:
                 "similarity": round(similarity, 2),
             })
 
-            corrected_tokens.append(corrected_token)
+            corrected_tokens.append(
+                corrected_token
+                if confidence == "high"
+                else token
+            )
         else:
             corrected_tokens.append(token)
 

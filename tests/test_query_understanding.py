@@ -61,5 +61,22 @@ class QueryUnderstandingTests(unittest.TestCase):
         )
 
 
+    def test_developer_productivity_goal_extracts_software_engineering_hint(
+        self,
+    ):
+        result = understand_query(
+            goal=(
+                "Build a developer productivity project that helps engineers "
+                "identify flaky tests, connect failures with code changes, "
+                "and prioritize likely root causes."
+            )
+        )
+
+        self.assertIn(
+            "software_engineering",
+            result["direction_hints"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

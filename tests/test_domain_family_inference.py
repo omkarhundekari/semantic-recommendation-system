@@ -3,6 +3,7 @@ import unittest
 from domain_taxonomy import (
     get_domain_family,
     get_family_focuses,
+    get_focus_from_category,
     is_focus_in_family,
 )
 
@@ -53,6 +54,12 @@ class DomainTaxonomyTests(unittest.TestCase):
                 get_domain_family(focus),
                 "cloud_platform",
             )
+
+    def test_arxiv_software_engineering_maps_to_developer_tools(self):
+        self.assertEqual(
+            get_focus_from_category("cs.SE"),
+            "developer_tools",
+        )
 
     def test_unknown_focus_defaults_to_general(self):
         self.assertEqual(

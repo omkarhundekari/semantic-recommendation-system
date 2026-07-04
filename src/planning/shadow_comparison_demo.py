@@ -34,8 +34,10 @@ from planning.shadow_runner import (
 )
 from planning.evidence_brief import build_evidence_brief
 from planning.evidence_curation import curate_evidence
+from planning.grounding_adequacy import assess_grounding_adequacy
 from project_idea_generator import generate_project_ideas
 from source_router import retrieve_evidence
+from query_understanding import understand_query
 
 
 DEFAULT_OUTPUT_DIR = Path("outputs/shadow_comparisons")
@@ -79,6 +81,7 @@ def build_shadow_comparison_artifact(
     evidence_items = evidence_payload.get("merged_results", [])
     cross_encoder_goal_relevance: List[Dict[str, Any]] = []
     evidence_support: List[Dict[str, Any]] = []
+    grounding_adequacy: List[Dict[str, Any]] = []
 
     legacy_ideas = generate_project_ideas(
         search_results=evidence_items,
@@ -178,11 +181,25 @@ def build_shadow_comparison_artifact(
             )
 
         if evidence_support_scorer is not None:
-            evidence_support = build_evidence_support_shadow(
-                selected_candidates=report.selected_candidates,
-                brief=brief,
-                scorer=evidence_support_scorer,
+            candidate_assessments = (
+                build_selected_candidate_evidence_assessments(
+                    selected_candidates=report.selected_candidates,
+                    brief=brief,
+                    scorer=evidence_support_scorer,
+                )
             )
+            evidence_support = [
+                assessment.to_dict()
+                for _, assessment in candidate_assessments
+            ]
+            grounding_adequacy = [
+                assess_grounding_adequacy(
+                    candidate=candidate,
+                    brief=brief,
+                    assessment=assessment,
+                ).to_dict()
+                for candidate, assessment in candidate_assessments
+            ]
 
     return {
         "schema_version": "1.0",
@@ -211,6 +228,7 @@ def build_shadow_comparison_artifact(
                 cross_encoder_goal_relevance
             ),
             "evidence_support": evidence_support,
+            "grounding_adequacy": grounding_adequacy,
         },
     }
 
@@ -241,11 +259,11 @@ def build_semantic_goal_relevance_shadow(
 
 
 
-def build_evidence_support_shadow(
+def build_selected_candidate_evidence_assessments(
     selected_candidates: List[Dict[str, Any]],
     brief: Any,
     scorer: Any,
-) -> List[Dict[str, Any]]:
+) -> List[Any]:
     candidates = [
         CandidateDirection(
             **{
@@ -258,11 +276,29 @@ def build_evidence_support_shadow(
     ]
 
     return [
-        scorer.assess_candidate(
-            candidate=candidate,
-            brief=brief,
-        ).to_dict()
+        (
+            candidate,
+            scorer.assess_candidate(
+                candidate=candidate,
+                brief=brief,
+            ),
+        )
         for candidate in candidates
+    ]
+
+
+def build_evidence_support_shadow(
+    selected_candidates: List[Dict[str, Any]],
+    brief: Any,
+    scorer: Any,
+) -> List[Dict[str, Any]]:
+    return [
+        assessment.to_dict()
+        for _, assessment in build_selected_candidate_evidence_assessments(
+            selected_candidates=selected_candidates,
+            brief=brief,
+            scorer=scorer,
+        )
     ]
 
 
@@ -478,9 +514,15 @@ def main() -> None:
         "preferred_stack": args.preferred_stack,
     }
 
+    understanding = understand_query(
+        goal=args.query,
+        constraints=constraints,
+    )
+
     evidence_payload = retrieve_evidence(
         user_query=args.query,
         top_k=6,
+        intent_hints=understanding["direction_hints"],
         selected_direction=args.selected_direction,
     )
 

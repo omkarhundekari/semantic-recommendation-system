@@ -39,6 +39,7 @@ CATEGORY_TO_FOCUS: Dict[str, str] = {
     "cs.cl": "nlp",
     "cs.cv": "computer_vision",
     "cs.ir": "recommendation_systems",
+    "cs.se": "developer_tools",
     "cs.cr": "cybersecurity",
 
     # Internal corpus categories
