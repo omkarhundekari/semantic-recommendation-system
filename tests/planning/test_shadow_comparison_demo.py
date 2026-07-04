@@ -529,3 +529,181 @@ def test_cross_encoder_shadow_requires_semantic_shadow(monkeypatch):
         match="--cross-encoder-shadow requires --semantic-shadow",
     ):
         demo.main()
+
+
+def test_artifact_adds_evidence_support_trace_separately():
+    from planning.mock_generation_provider import (
+        MockCandidateGenerationProvider,
+    )
+
+    class FakeAssessment:
+        def __init__(self, candidate):
+            self._candidate = candidate
+
+        def to_dict(self):
+            return {
+                "candidate_title": self._candidate.title,
+                "citation_integrity": {
+                    "provided_count": 1,
+                    "valid_count": 1,
+                    "invalid_count": 0,
+                    "valid_fraction": 1.0,
+                },
+                "direct_citation_count": 1,
+                "adjacent_citation_count": 0,
+                "uncited_candidate": False,
+                "cited_source_alignments": [],
+                "warnings": [],
+            }
+
+    class FakeEvidenceSupportScorer:
+        def __init__(self):
+            self.received_candidates = None
+            self.received_brief = None
+
+        def assess_candidate(self, candidate, brief):
+            self.received_candidates = (
+                self.received_candidates or []
+            ) + [candidate]
+            self.received_brief = brief
+            return FakeAssessment(candidate)
+
+    scorer = FakeEvidenceSupportScorer()
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {},
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Incident Evidence",
+                    "abstract": (
+                        "Correlate operational events during incidents."
+                    ),
+                }
+            ],
+        },
+        user_goal="Build an incident investigation project.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Incident Timeline",
+                        "problem_statement": (
+                            "Connect operational incident signals."
+                        ),
+                        "target_user": "Platform engineers",
+                        "core_workflow": [
+                            "Load incident records.",
+                            "Connect related evidence.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample records.",
+                            "Link evidence by incident.",
+                            "Show a shared timeline.",
+                        ],
+                        "success_metrics": [
+                            "Faster incident review.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses retained incident evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": [],
+                    }
+                ]
+            }
+        ),
+        evidence_support_scorer=scorer,
+    )
+
+    traces = artifact["v2_shadow"]["evidence_support"]
+
+    assert traces[0]["candidate_title"] == "Incident Timeline"
+    assert scorer.received_candidates[0].title == "Incident Timeline"
+    assert scorer.received_brief.sources[0].source_id == "paper-1"
+    assert artifact["v2_shadow"]["selected_candidates"][0][
+        "ranking"
+    ]["score"] >= 0.0
+
+
+def test_evidence_support_shadow_flag_initializes_trace_scorer(monkeypatch):
+    from types import SimpleNamespace
+
+    from planning import shadow_comparison_demo as demo
+
+    monkeypatch.setattr(
+        demo,
+        "parse_args",
+        lambda: SimpleNamespace(
+            cross_encoder_shadow=False,
+            semantic_shadow=False,
+            evidence_support_shadow=True,
+            provider="mock",
+            allow_live_llm=False,
+            query="Build an incident investigation project.",
+            selected_direction=None,
+            skill_level="",
+            time_available="",
+            target_role=[],
+            preferred_stack=[],
+            fixture_response=None,
+            output_dir="outputs/test_shadow_artifacts",
+        ),
+    )
+
+    class FakeSemanticEngine:
+        pass
+
+    class FakeEvidenceSupportScorer:
+        def __init__(self, encoder):
+            self.encoder = encoder
+
+    captured = {}
+
+    def fake_build_artifact(**kwargs):
+        captured.update(kwargs)
+        return {
+            "legacy_planner": {"direction_count": 0},
+            "v2_shadow": {"status": "prompt_ready"},
+        }
+
+    monkeypatch.setattr(demo, "SemanticEngine", FakeSemanticEngine)
+    monkeypatch.setattr(
+        demo,
+        "CandidateEvidenceSupportScorer",
+        FakeEvidenceSupportScorer,
+    )
+    monkeypatch.setattr(
+        demo,
+        "SemanticEngineTextEncoder",
+        lambda engine: ("encoder", engine),
+    )
+    monkeypatch.setattr(
+        demo,
+        "retrieve_evidence",
+        lambda **kwargs: {
+            "inference": {},
+            "merged_results": [],
+        },
+    )
+    monkeypatch.setattr(
+        demo,
+        "build_shadow_comparison_artifact",
+        fake_build_artifact,
+    )
+    monkeypatch.setattr(
+        demo,
+        "write_shadow_comparison_artifact",
+        lambda artifact, output_dir: output_dir / "artifact.json",
+    )
+
+    demo.main()
+
+    assert isinstance(
+        captured["evidence_support_scorer"],
+        FakeEvidenceSupportScorer,
+    )

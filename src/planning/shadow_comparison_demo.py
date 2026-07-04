@@ -13,6 +13,9 @@ from planning.cross_encoder_goal_adapter import (
 from planning.cross_encoder_goal_relevance import (
     CrossEncoderGoalRelevanceScorer,
 )
+from planning.evidence_support import (
+    CandidateEvidenceSupportScorer,
+)
 from planning.semantic_goal_adapter import SemanticEngineTextEncoder
 from planning.semantic_goal_relevance import GoalRelevanceScorer
 from reranker import CrossEncoderReranker
@@ -68,12 +71,14 @@ def build_shadow_comparison_artifact(
     semantic_goal_relevance: Optional[List[Dict[str, Any]]] = None,
     semantic_goal_scorer: Optional[Any] = None,
     cross_encoder_goal_scorer: Optional[Any] = None,
+    evidence_support_scorer: Optional[Any] = None,
     cross_encoder_top_k: int = 3,
     cross_encoder_margin_threshold: float = 0.05,
 ) -> Dict[str, Any]:
     inference = evidence_payload.get("inference", {})
     evidence_items = evidence_payload.get("merged_results", [])
     cross_encoder_goal_relevance: List[Dict[str, Any]] = []
+    evidence_support: List[Dict[str, Any]] = []
 
     legacy_ideas = generate_project_ideas(
         search_results=evidence_items,
@@ -88,7 +93,11 @@ def build_shadow_comparison_artifact(
         user_query=user_goal,
     )
     curated_items = [
-        entry.item
+        {
+            **entry.item,
+            "support_scope": entry.support_scope,
+            "retention_reason": entry.retention_reason,
+        }
         for entry in curation.retained
     ]
 
@@ -168,6 +177,13 @@ def build_shadow_comparison_artifact(
                 )
             )
 
+        if evidence_support_scorer is not None:
+            evidence_support = build_evidence_support_shadow(
+                selected_candidates=report.selected_candidates,
+                brief=brief,
+                scorer=evidence_support_scorer,
+            )
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -194,6 +210,7 @@ def build_shadow_comparison_artifact(
             "cross_encoder_goal_relevance": (
                 cross_encoder_goal_relevance
             ),
+            "evidence_support": evidence_support,
         },
     }
 
@@ -222,6 +239,31 @@ def build_semantic_goal_relevance_shadow(
         )
     ]
 
+
+
+def build_evidence_support_shadow(
+    selected_candidates: List[Dict[str, Any]],
+    brief: Any,
+    scorer: Any,
+) -> List[Dict[str, Any]]:
+    candidates = [
+        CandidateDirection(
+            **{
+                key: value
+                for key, value in candidate.items()
+                if key != "ranking"
+            }
+        )
+        for candidate in selected_candidates
+    ]
+
+    return [
+        scorer.assess_candidate(
+            candidate=candidate,
+            brief=brief,
+        ).to_dict()
+        for candidate in candidates
+    ]
 
 
 def build_cross_encoder_goal_relevance_shadow(
@@ -398,6 +440,14 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--evidence-support-shadow",
+        action="store_true",
+        help=(
+            "Add candidate-to-evidence support traces without changing "
+            "candidate selection."
+        ),
+    )
+    parser.add_argument(
         "--output-dir",
         default=str(DEFAULT_OUTPUT_DIR),
     )
@@ -450,6 +500,7 @@ def main() -> None:
     execution_mode = "fixture"
     semantic_goal_scorer = None
     cross_encoder_goal_scorer = None
+    evidence_support_scorer = None
 
     if args.semantic_shadow:
         semantic_goal_scorer = GoalRelevanceScorer(
@@ -463,6 +514,11 @@ def main() -> None:
                     CrossEncoderReranker()
                 )
             )
+        )
+
+    if getattr(args, "evidence_support_shadow", False):
+        evidence_support_scorer = CandidateEvidenceSupportScorer(
+            SemanticEngineTextEncoder(SemanticEngine())
         )
 
     if args.provider == "openai":
@@ -483,6 +539,7 @@ def main() -> None:
         execution_mode=execution_mode,
         semantic_goal_scorer=semantic_goal_scorer,
         cross_encoder_goal_scorer=cross_encoder_goal_scorer,
+        evidence_support_scorer=evidence_support_scorer,
     )
 
     output_path = write_shadow_comparison_artifact(
