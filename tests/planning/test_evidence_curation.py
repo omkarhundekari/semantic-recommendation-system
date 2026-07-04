@@ -236,3 +236,130 @@ def test_anchor_query_retains_category_aligned_adjacent_pattern_only():
     ].support_scope == "adjacent_planning"
 
     assert "AutoML Experiment Recommendation Assistant" in dropped_titles
+
+
+def test_curator_records_query_phrase_frequency_diagnostics():
+    result = curate_evidence(
+        evidence_items=[
+            {
+                "source_type": "project_pattern",
+                "title": "Flaky Test Detection Dashboard",
+                "tags": "flaky-tests,testing,ci-cd,devops,reliability",
+            },
+            {
+                "source_type": "github_repository",
+                "title": "Code Review Assistant",
+                "readme_excerpt": (
+                    "Analyze code changes and improve developer productivity."
+                ),
+            },
+            {
+                "source_type": "project_pattern",
+                "title": "Commit Change Analytics",
+                "tags": "code-changes,developer-tools,repository",
+            },
+        ],
+        user_query=(
+            "Build a developer productivity project that helps engineers "
+            "identify flaky tests, connect failures with code changes, "
+            "and prioritize likely root causes."
+        ),
+    )
+
+    retained = {
+        entry.item["title"]: entry
+        for entry in result.retained
+    }
+
+    flaky = retained["Flaky Test Detection Dashboard"]
+    code_review = retained["Code Review Assistant"]
+
+    assert "flaky tests" in flaky.matched_query_phrases
+    assert flaky.query_phrase_document_frequencies["flaky tests"] == 1
+    assert code_review.query_phrase_document_frequencies[
+        "code changes"
+    ] == 2
+    assert flaky.curation_pool_size == 3
+
+
+def test_curator_records_query_term_frequency_diagnostics():
+    result = curate_evidence(
+        evidence_items=[
+            {
+                "source_type": "project_pattern",
+                "title": "Flaky Test Detection Dashboard",
+                "tags": "flaky-tests,testing,ci-cd,reliability",
+            },
+            {
+                "source_type": "github_repository",
+                "title": "Code Review Assistant",
+                "readme_excerpt": (
+                    "Analyze code changes and improve developer productivity."
+                ),
+            },
+            {
+                "source_type": "project_pattern",
+                "title": "Commit Change Analytics",
+                "tags": "code-changes,developer-tools,repository",
+            },
+        ],
+        user_query=(
+            "Build a developer productivity project that helps engineers "
+            "identify flaky tests and connect failures with code changes."
+        ),
+    )
+
+    retained = {
+        entry.item["title"]: entry
+        for entry in result.retained
+    }
+
+    flaky = retained["Flaky Test Detection Dashboard"]
+    code_review = retained["Code Review Assistant"]
+
+    assert flaky.query_term_document_frequencies["flaky"] == 1
+    assert code_review.query_term_document_frequencies["code"] == 2
+    assert flaky.curation_pool_size == 3
+
+
+def test_curator_records_unique_query_match_diagnostics():
+    result = curate_evidence(
+        evidence_items=[
+            {
+                "source_type": "project_pattern",
+                "title": "Flaky Test Detection Dashboard",
+                "tags": "flaky-tests,testing,ci-cd,reliability",
+            },
+            {
+                "source_type": "github_repository",
+                "title": "Code Review Assistant",
+                "readme_excerpt": (
+                    "Analyze code changes and improve developer productivity."
+                ),
+            },
+            {
+                "source_type": "project_pattern",
+                "title": "Commit Change Analytics",
+                "tags": "code-changes,developer-tools,repository",
+            },
+        ],
+        user_query=(
+            "Build a developer productivity project that helps engineers "
+            "identify flaky tests and connect failures with code changes."
+        ),
+    )
+
+    retained = {
+        entry.item["title"]: entry
+        for entry in result.retained
+    }
+
+    flaky = retained["Flaky Test Detection Dashboard"]
+    code_review = retained["Code Review Assistant"]
+
+    assert flaky.unique_query_terms == ["flaky", "tests"]
+    assert flaky.unique_query_phrases == ["flaky tests"]
+    assert code_review.unique_query_terms == ["productivity"]
+    assert code_review.unique_query_phrases == [
+        "developer productivity"
+    ]

@@ -348,3 +348,58 @@ def test_shadow_runner_preserves_curation_metadata_in_evidence_brief():
 
     assert source["support_scope"] == "direct"
     assert "Matched" in source["retention_reason"]
+
+
+def test_shadow_runner_exposes_phrase_frequency_diagnostics():
+    report = run_shadow_plan(
+        evidence_items=[
+            {
+                "source_type": "project_pattern",
+                "title": "Flaky Test Detection Dashboard",
+                "tags": "flaky-tests,testing,ci-cd,reliability",
+            },
+            {
+                "source_type": "github_repository",
+                "title": "Code Review Assistant",
+                "readme_excerpt": (
+                    "Analyze code changes and improve developer productivity."
+                ),
+            },
+            {
+                "source_type": "project_pattern",
+                "title": "Commit Change Analytics",
+                "tags": "code-changes,developer-tools,repository",
+            },
+        ],
+        user_goal=(
+            "Build a developer productivity project that helps engineers "
+            "identify flaky tests, connect failures with code changes."
+        ),
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={"candidates": []}
+        ),
+    )
+
+    retained = {
+        entry["item"]["title"]: entry
+        for entry in report.evidence_curation["retained"]
+    }
+
+    flaky = retained["Flaky Test Detection Dashboard"]
+
+    code_review = retained["Code Review Assistant"]
+
+    assert "flaky tests" in flaky["matched_query_phrases"]
+    assert flaky["query_phrase_document_frequencies"][
+        "flaky tests"
+    ] == 1
+    assert flaky["query_term_document_frequencies"]["flaky"] == 1
+    assert code_review["query_term_document_frequencies"]["code"] == 2
+    assert flaky["unique_query_terms"] == ["flaky", "tests"]
+    assert flaky["unique_query_phrases"] == ["flaky tests"]
+    assert code_review["unique_query_terms"] == ["productivity"]
+    assert code_review["unique_query_phrases"] == [
+        "developer productivity"
+    ]
+    assert flaky["curation_pool_size"] == 3

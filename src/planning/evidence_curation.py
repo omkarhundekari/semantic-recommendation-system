@@ -60,6 +60,16 @@ class CuratedEvidenceItem:
     relevance_score: float
     matched_anchor_terms: List[str] = field(default_factory=list)
     matched_query_terms: List[str] = field(default_factory=list)
+    query_term_document_frequencies: Dict[str, int] = field(
+        default_factory=dict
+    )
+    unique_query_terms: List[str] = field(default_factory=list)
+    matched_query_phrases: List[str] = field(default_factory=list)
+    unique_query_phrases: List[str] = field(default_factory=list)
+    query_phrase_document_frequencies: Dict[str, int] = field(
+        default_factory=dict
+    )
+    curation_pool_size: int = 0
     retention_reason: str = ""
     support_scope: str = "direct"
 
@@ -135,6 +145,69 @@ def _query_terms(query: str) -> List[str]:
             if token not in CURATION_STOP_WORDS
         }
     )
+
+
+def _query_term_document_frequencies(
+    scored: List[CuratedEvidenceItem],
+) -> Dict[str, int]:
+    frequencies = Counter()
+
+    for entry in scored:
+        frequencies.update(set(entry.matched_query_terms))
+
+    return dict(frequencies)
+
+
+def _query_phrases(query: str) -> List[str]:
+    tokens = [
+        token
+        for token in re.findall(
+            r"[a-z][a-z0-9_-]{2,}",
+            query.lower(),
+        )
+        if token not in CURATION_STOP_WORDS
+    ]
+
+    phrases = []
+
+    for size in (2, 3):
+        for index in range(len(tokens) - size + 1):
+            phrase = " ".join(tokens[index:index + size])
+
+            if phrase not in phrases:
+                phrases.append(phrase)
+
+    return phrases
+
+
+def _matched_query_phrases(
+    item: Dict[str, Any],
+    query_phrases: List[str],
+) -> List[str]:
+    item_text = normalize_text(_item_text(item))
+
+    return [
+        phrase
+        for phrase in query_phrases
+        if phrase in item_text
+    ]
+
+
+def _query_phrase_document_frequencies(
+    scored: List[CuratedEvidenceItem],
+    query_phrases: List[str],
+) -> Dict[str, int]:
+    frequencies = Counter()
+
+    for entry in scored:
+        frequencies.update(
+            _matched_query_phrases(
+                item=entry.item,
+                query_phrases=query_phrases,
+            )
+        )
+
+    return dict(frequencies)
 
 
 def _bridge_terms(item: Dict[str, Any]) -> set:
@@ -283,6 +356,39 @@ def curate_evidence(
         )
         for item in evidence_items
     ]
+    query_phrases = _query_phrases(user_query)
+    term_document_frequencies = _query_term_document_frequencies(
+        scored=scored,
+    )
+    phrase_document_frequencies = _query_phrase_document_frequencies(
+        scored=scored,
+        query_phrases=query_phrases,
+    )
+
+    for entry in scored:
+        entry.query_term_document_frequencies = {
+            term: term_document_frequencies[term]
+            for term in entry.matched_query_terms
+        }
+        entry.unique_query_terms = [
+            term
+            for term in entry.matched_query_terms
+            if term_document_frequencies[term] == 1
+        ]
+        entry.matched_query_phrases = _matched_query_phrases(
+            item=entry.item,
+            query_phrases=query_phrases,
+        )
+        entry.query_phrase_document_frequencies = {
+            phrase: phrase_document_frequencies[phrase]
+            for phrase in entry.matched_query_phrases
+        }
+        entry.unique_query_phrases = [
+            phrase
+            for phrase in entry.matched_query_phrases
+            if phrase_document_frequencies[phrase] == 1
+        ]
+        entry.curation_pool_size = len(scored)
 
     retained = []
     dropped = []
