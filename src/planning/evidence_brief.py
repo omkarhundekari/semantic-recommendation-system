@@ -73,6 +73,11 @@ def _first_nonempty(values: Iterable[Any]) -> str:
 
 
 def _source_excerpt(item: Dict[str, Any]) -> str:
+    existing_excerpt = _as_text(item.get("excerpt")).strip()
+
+    if existing_excerpt:
+        return existing_excerpt[:MAX_EXCERPT_CHARS].strip()
+
     title = _as_text(item.get("title")).strip()
     body = _first_nonempty(
         [
@@ -90,6 +95,7 @@ def _source_excerpt(item: Dict[str, Any]) -> str:
 def _source_id(item: Dict[str, Any], position: int) -> str:
     return _first_nonempty(
         [
+            item.get("source_id"),
             item.get("document_id"),
             item.get("repository_id"),
             item.get("id"),

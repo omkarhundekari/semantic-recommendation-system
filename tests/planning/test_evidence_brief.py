@@ -134,3 +134,42 @@ def test_brief_preserves_curation_scope_and_retention_reason():
     assert source.retention_reason == (
         "Retained as adjacent planning evidence."
     )
+
+
+def test_brief_preserves_existing_normalized_source_id():
+    brief = build_evidence_brief(
+        evidence_items=[
+            {
+                "source_id": "arxiv:2004.07716",
+                "source_type": "research_paper",
+                "title": "Continuous Health Interface Event Retrieval",
+                "excerpt": "Retrieve events from continuous health data.",
+                "support_scope": "direct",
+            }
+        ],
+        user_query="Build a cloud incident investigation project.",
+    )
+
+    assert brief.sources[0].source_id == "arxiv:2004.07716"
+
+
+def test_brief_preserves_existing_normalized_excerpt():
+    brief = build_evidence_brief(
+        evidence_items=[
+            {
+                "source_id": "paper-1",
+                "source_type": "research_paper",
+                "title": "Event Retrieval",
+                "excerpt": (
+                    "Correlate deployment changes, service health signals, "
+                    "and operational events during cloud incidents."
+                ),
+            }
+        ],
+        user_query="Build a cloud incident investigation project.",
+    )
+
+    assert brief.sources[0].excerpt == (
+        "Correlate deployment changes, service health signals, "
+        "and operational events during cloud incidents."
+    )
