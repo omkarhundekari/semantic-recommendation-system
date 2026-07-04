@@ -6,6 +6,7 @@ from planning.evidence_brief import build_evidence_brief
 from planning.evidence_curation import curate_evidence
 from planning.generation_provider import CandidateGenerationProvider
 from planning.planning_orchestrator import PlanningOutcome, plan_candidates
+from planning.shadow_readiness import assess_shadow_readiness
 
 
 @dataclass
@@ -17,6 +18,7 @@ class ShadowPlanningReport:
     selected_candidates: List[Dict[str, Any]]
     legacy_titles: List[str]
     comparison: Dict[str, Any]
+    shadow_readiness: Dict[str, Any]
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -120,6 +122,12 @@ def run_shadow_plan(
         "coverage_warnings": list(brief.coverage_warnings),
     }
 
+    readiness = assess_shadow_readiness(
+        curation=curation,
+        brief=brief,
+        outcome=outcome,
+    )
+
     return ShadowPlanningReport(
         evidence_brief=brief.to_dict(),
         evidence_curation=curation.to_dict(),
@@ -128,4 +136,5 @@ def run_shadow_plan(
         selected_candidates=selected_candidates,
         legacy_titles=legacy_titles,
         comparison=comparison,
+        shadow_readiness=readiness.to_dict(),
     )

@@ -403,3 +403,153 @@ def test_shadow_runner_exposes_phrase_frequency_diagnostics():
         "developer productivity"
     ]
     assert flaky["curation_pool_size"] == 3
+
+
+def test_shadow_runner_marks_well_supported_output_ready():
+    report = run_shadow_plan(
+        evidence_items=[
+            {
+                "document_id": "paper-1",
+                "source_type": "research_paper",
+                "title": "Incident Correlation Research",
+                "abstract": (
+                    "Event correlation improves incident investigation "
+                    "and observability workflows."
+                ),
+            },
+            {
+                "repository_id": "repo-1",
+                "source_type": "github_repository",
+                "title": "Incident Timeline Toolkit",
+                "readme_excerpt": (
+                    "Build investigation timelines from incident events "
+                    "and deployment signals."
+                ),
+            },
+        ],
+        user_goal="Build an incident investigation project.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Incident Correlation Workbench",
+                        "problem_statement": (
+                            "Incident signals are difficult to connect."
+                        ),
+                        "target_user": "Platform engineers",
+                        "core_workflow": [
+                            "Load incident signals.",
+                            "Correlate related events.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample incident records.",
+                            "Link related events.",
+                            "Show an investigation timeline.",
+                        ],
+                        "success_metrics": [
+                            "Time required to identify related events.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses the retained incident-correlation "
+                            "evidence."
+                        ),
+                        "source_ids": ["paper-1", "repo-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    }
+                ]
+            }
+        ),
+    )
+
+    assert report.shadow_readiness["status"] == "ready"
+    assert report.shadow_readiness["signals"][
+        "curated_evidence_count"
+    ] == 2
+    assert report.shadow_readiness["signals"][
+        "selected_candidate_count"
+    ] == 1
+
+
+def test_shadow_runner_blocks_output_without_valid_candidates():
+    report = run_shadow_plan(
+        evidence_items=[
+            {
+                "document_id": "paper-1",
+                "source_type": "research_paper",
+                "title": "Incident Correlation Research",
+                "abstract": (
+                    "Event correlation improves incident investigation."
+                ),
+            }
+        ],
+        user_goal="Build an incident investigation project.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={"candidates": []}
+        ),
+    )
+
+    assert report.shadow_readiness["status"] == "blocked"
+    assert (
+        "No valid candidate directions were produced."
+        in report.shadow_readiness["reasons"]
+    )
+    assert (
+        "No ranked candidate directions were selected."
+        in report.shadow_readiness["reasons"]
+    )
+
+
+def test_shadow_runner_marks_single_source_output_for_review():
+    report = run_shadow_plan(
+        evidence_items=[
+            {
+                "document_id": "paper-1",
+                "source_type": "research_paper",
+                "title": "Event Correlation",
+                "abstract": (
+                    "Event correlation supports investigation workflows."
+                ),
+            }
+        ],
+        user_goal="Build an investigation tool.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Correlation Investigation Workbench",
+                        "problem_statement": "Signals are disconnected.",
+                        "target_user": "Engineers",
+                        "core_workflow": [
+                            "Load signals.",
+                            "Correlate related records.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample records.",
+                            "Correlate signals.",
+                            "Show a timeline.",
+                        ],
+                        "success_metrics": [
+                            "Related-record discovery time.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses the retrieved correlation evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    }
+                ]
+            }
+        ),
+    )
+
+    assert report.shadow_readiness["status"] == "needs_review"
+    assert (
+        "Only one evidence source was available, so cross-source "
+        "support is limited."
+        in report.shadow_readiness["reasons"]
+    )
