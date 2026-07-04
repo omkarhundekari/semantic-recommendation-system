@@ -370,6 +370,191 @@
           "target_user": "People managing fitness routines"
         }
       ]
+    },
+    {
+      "id": "rag_retrieval_failure_diagnosis",
+      "user_goal": "Build an ML engineering project that helps teams diagnose retrieval failures in RAG systems by identifying missing, irrelevant, or poorly ranked source passages.",
+      "target_roles": [
+        "ML Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "retrieval_failure_investigator",
+          "label": 2,
+          "title": "RAG Retrieval Failure Investigator",
+          "problem_statement": "Analyze retrieved passages for coverage, relevance, and ranking quality to explain why retrieval failed.",
+          "target_user": "ML engineers debugging RAG retrieval"
+        },
+        {
+          "id": "rag_answer_grounding_checker",
+          "label": 1,
+          "title": "RAG Answer Grounding Checker",
+          "problem_statement": "Evaluate whether generated answers are supported by retrieved source passages.",
+          "target_user": "Teams evaluating RAG answer quality"
+        },
+        {
+          "id": "rag_prompt_optimizer",
+          "label": 1,
+          "title": "RAG Prompt Optimizer",
+          "problem_statement": "Compare prompt templates and recommend prompt changes for retrieval-augmented generation applications.",
+          "target_user": "Teams refining RAG prompts"
+        },
+        {
+          "id": "campus_event_finder",
+          "label": 0,
+          "title": "Campus Event Finder",
+          "problem_statement": "Help students discover campus events based on date, location, and interests.",
+          "target_user": "University students"
+        }
+      ]
+    },
+    {
+      "id": "flaky_test_root_cause",
+      "user_goal": "Build a developer productivity project that helps engineers identify flaky tests, connect failures with code changes, and prioritize likely root causes.",
+      "target_roles": [
+        "Software Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "flaky_test_root_cause_explorer",
+          "label": 2,
+          "title": "Flaky Test Root-Cause Explorer",
+          "problem_statement": "Detect unstable tests from CI history, correlate failures with code changes, and surface likely causes.",
+          "target_user": "Engineers maintaining CI pipelines"
+        },
+        {
+          "id": "test_coverage_dashboard",
+          "label": 1,
+          "title": "Test Coverage Dashboard",
+          "problem_statement": "Visualize code coverage trends by repository, service, and release.",
+          "target_user": "Engineering teams tracking test coverage"
+        },
+        {
+          "id": "ci_duration_optimizer",
+          "label": 1,
+          "title": "CI Duration Optimizer",
+          "problem_statement": "Analyze CI execution time and recommend ways to parallelize slow test stages.",
+          "target_user": "Teams improving build speed"
+        },
+        {
+          "id": "book_recommendation_app",
+          "label": 0,
+          "title": "Book Recommendation App",
+          "problem_statement": "Recommend books based on reading history and genre preferences.",
+          "target_user": "Readers looking for books"
+        }
+      ]
+    },
+    {
+      "id": "frontend_performance_regression",
+      "user_goal": "Build a frontend engineering project that detects performance regressions after releases, explains likely causes using web-vital and bundle changes, and prioritizes fixes.",
+      "target_roles": [
+        "Frontend Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "web_performance_regression_investigator",
+          "label": 2,
+          "title": "Web Performance Regression Investigator",
+          "problem_statement": "Compare web-vital, bundle, and network behavior across releases to explain performance regressions.",
+          "target_user": "Frontend engineers improving release quality"
+        },
+        {
+          "id": "visual_regression_tester_adversarial",
+          "label": 1,
+          "title": "Visual Regression Tester",
+          "problem_statement": "Compare interface screenshots across releases and flag unexpected visual changes.",
+          "target_user": "Frontend teams reviewing releases"
+        },
+        {
+          "id": "accessibility_lint_assistant",
+          "label": 1,
+          "title": "Accessibility Lint Assistant",
+          "problem_statement": "Detect accessibility issues in web interfaces and recommend remediation steps.",
+          "target_user": "Frontend developers improving accessibility"
+        },
+        {
+          "id": "language_flashcard_tool",
+          "label": 0,
+          "title": "Language Flashcard Tool",
+          "problem_statement": "Create vocabulary flashcards and track study progress.",
+          "target_user": "Language learners"
+        }
+      ]
+    },
+    {
+      "id": "data_lineage_breakage",
+      "user_goal": "Build a data engineering project that detects broken data lineage after upstream schema changes, identifies downstream assets at risk, and helps teams prioritize repairs.",
+      "target_roles": [
+        "Data Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "lineage_breakage_impact_analyzer",
+          "label": 2,
+          "title": "Data Lineage Breakage Impact Analyzer",
+          "problem_statement": "Detect upstream schema changes, trace affected downstream pipelines and dashboards, and prioritize lineage repair work.",
+          "target_user": "Data engineers maintaining analytics systems"
+        },
+        {
+          "id": "data_schema_catalog",
+          "label": 1,
+          "title": "Data Schema Catalog",
+          "problem_statement": "Document datasets, fields, owners, and schema versions in a searchable catalog.",
+          "target_user": "Teams documenting data assets"
+        },
+        {
+          "id": "pipeline_data_quality_monitor",
+          "label": 1,
+          "title": "Pipeline Data Quality Monitor",
+          "problem_statement": "Monitor missing values, anomalies, and validation-rule failures in production datasets.",
+          "target_user": "Data teams monitoring pipeline quality"
+        },
+        {
+          "id": "restaurant_waitlist_app",
+          "label": 0,
+          "title": "Restaurant Waitlist App",
+          "problem_statement": "Manage table waitlists and notify diners when tables become available.",
+          "target_user": "Restaurant staff"
+        }
+      ]
+    },
+    {
+      "id": "incident_runbook_gap_analysis",
+      "user_goal": "Build a platform engineering project that finds gaps in incident runbooks by comparing recurring production failures with existing operational guidance.",
+      "target_roles": [
+        "Platform Engineer"
+      ],
+      "candidates": [
+        {
+          "id": "runbook_gap_analyzer",
+          "label": 2,
+          "title": "Incident Runbook Gap Analyzer",
+          "problem_statement": "Cluster recurring incident patterns, compare them with existing runbooks, and identify missing operational guidance.",
+          "target_user": "Platform engineers improving incident response"
+        },
+        {
+          "id": "incident_alert_routing",
+          "label": 1,
+          "title": "Incident Alert Routing Manager",
+          "problem_statement": "Route monitoring alerts to on-call responders based on service ownership and severity.",
+          "target_user": "Platform teams responding to alerts"
+        },
+        {
+          "id": "runbook_search_portal",
+          "label": 1,
+          "title": "Runbook Search Portal",
+          "problem_statement": "Help engineers search and browse operational runbooks using natural-language queries.",
+          "target_user": "Engineers finding existing guidance"
+        },
+        {
+          "id": "pet_care_scheduler",
+          "label": 0,
+          "title": "Pet Care Scheduler",
+          "problem_statement": "Schedule feeding, walks, and veterinary reminders for pets.",
+          "target_user": "Pet owners"
+        }
+      ]
     }
   ]
 }
