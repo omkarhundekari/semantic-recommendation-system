@@ -1,0 +1,1911 @@
+{
+  "schema_version": "1.1",
+  "artifact_identity": {
+    "artifact_id": "93133f93272d4bf2ae07d2a719daecc0",
+    "generation_timestamp_utc": "20260705T170027Z",
+    "fixture_id": "sparse_evidence_cloud_cost"
+  },
+  "generated_at_utc": "20260705T170027Z",
+  "query": "Build a cloud cost optimization project that explains why specific resources are driving unexpected spend.",
+  "constraints": {
+    "skill_level": "intermediate",
+    "time_available": "2 weeks",
+    "target_roles": [
+      "Cloud Engineer"
+    ],
+    "preferred_stack": [
+      "Python"
+    ]
+  },
+  "retrieval": {
+    "selected_route": null,
+    "expanded_query": null,
+    "focused_query": null,
+    "inference": {
+      "inferred_focus": "cloud_platform"
+    },
+    "merged_evidence_count": 2
+  },
+  "legacy_planner": {
+    "direction_count": 3,
+    "directions": [
+      {
+        "title": "Project Opportunity Discovery Engine",
+        "evidence_title": "Cloud Billing Export Examples",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "cloud_platform"
+      },
+      {
+        "title": "Technical Roadmap Recommendation System",
+        "evidence_title": "Cloud Billing Export Examples",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "cloud_platform"
+      },
+      {
+        "title": "Evidence-Grounded Portfolio Planner",
+        "evidence_title": "Cloud Billing Export Examples",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "cloud_platform"
+      }
+    ],
+    "raw_ideas": [
+      {
+        "project_title": "Project Opportunity Discovery Engine",
+        "based_on_paper": "Cloud Billing Export Examples",
+        "evidence_title": "Cloud Billing Export Examples",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "cloud_platform",
+        "detected_intent": "project_building",
+        "idea_angle": "Turn technical evidence into buildable project opportunities with scope, risks, and career signal.",
+        "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_focus_type": "buildable_gap",
+        "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Cloud Billing Export Examples",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Cloud Platform",
+          "Performance",
+          "Explainability"
+        ],
+        "extracted_skills": [
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics"
+        ],
+        "research_motivation": "This idea uses 'Cloud Billing Export Examples' as a real implementation reference. It informs a buildable direction for Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Define one narrow, measurable workflow for Project Opportunity Discovery Engine.",
+          "Create a small reproducible input dataset or sample scenario.",
+          "Implement a transparent scoring, recommendation, or analysis pipeline.",
+          "Show outputs with explanations, confidence signals, and known limitations.",
+          "Validate the workflow against representative expected outcomes.",
+          "Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Project Opportunity Discovery Engine that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Software Engineer",
+          "Full-Stack Engineer",
+          "Product Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Cloud Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Technical Roadmap Recommendation System",
+        "based_on_paper": "Cloud Billing Export Examples",
+        "evidence_title": "Cloud Billing Export Examples",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "cloud_platform",
+        "detected_intent": "project_building",
+        "idea_angle": "Generate learning paths, project roadmaps, and role alignment from user goals.",
+        "opportunity_area": "Turn technical evidence into buildable project opportunities with scope, risks, and career signal.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Cloud Billing Export Examples",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Cloud Platform",
+          "Performance",
+          "Explainability"
+        ],
+        "extracted_skills": [
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics"
+        ],
+        "research_motivation": "This idea uses 'Cloud Billing Export Examples' as a real implementation reference. It informs a buildable direction for Turn technical evidence into buildable project opportunities with scope, risks, and career signal.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Define one narrow, measurable workflow for Technical Roadmap Recommendation System.",
+          "Create a small reproducible input dataset or sample scenario.",
+          "Implement a transparent scoring, recommendation, or analysis pipeline.",
+          "Show outputs with explanations, confidence signals, and known limitations.",
+          "Validate the workflow against representative expected outcomes."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Technical Roadmap Recommendation System that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Software Engineer",
+          "Full-Stack Engineer",
+          "Product Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Cloud Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Evidence-Grounded Portfolio Planner",
+        "based_on_paper": "Cloud Billing Export Examples",
+        "evidence_title": "Cloud Billing Export Examples",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "cloud_platform",
+        "detected_intent": "project_building",
+        "idea_angle": "Recommend portfolio projects grounded in evidence, skills, and target roles.",
+        "opportunity_area": "Generate learning paths, project roadmaps, and role alignment from user goals.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Cloud Billing Export Examples",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Cloud Platform",
+          "Performance",
+          "Explainability"
+        ],
+        "extracted_skills": [
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics"
+        ],
+        "research_motivation": "This idea uses 'Cloud Billing Export Examples' as a real implementation reference. It informs a buildable direction for Generate learning paths, project roadmaps, and role alignment from user goals.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Define one narrow, measurable workflow for Evidence-Grounded Portfolio Planner.",
+          "Create a small reproducible input dataset or sample scenario.",
+          "Implement a transparent scoring, recommendation, or analysis pipeline.",
+          "Show outputs with explanations, confidence signals, and known limitations.",
+          "Validate the workflow against representative expected outcomes."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built an Evidence-Grounded Portfolio Planner that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Software Engineer",
+          "Full-Stack Engineer",
+          "Product Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Cloud Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Project Opportunity Discovery Engine",
+          "based_on_paper": "Cloud Billing Export Examples",
+          "evidence_title": "Cloud Billing Export Examples",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "cloud_platform",
+          "detected_intent": "project_building",
+          "idea_angle": "Turn technical evidence into buildable project opportunities with scope, risks, and career signal.",
+          "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_focus_type": "buildable_gap",
+          "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Cloud Billing Export Examples",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Cloud Platform",
+            "Performance",
+            "Explainability"
+          ],
+          "extracted_skills": [
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics"
+          ],
+          "research_motivation": "This idea uses 'Cloud Billing Export Examples' as a real implementation reference. It informs a buildable direction for Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Define one narrow, measurable workflow for Project Opportunity Discovery Engine.",
+            "Create a small reproducible input dataset or sample scenario.",
+            "Implement a transparent scoring, recommendation, or analysis pipeline.",
+            "Show outputs with explanations, confidence signals, and known limitations.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Project Opportunity Discovery Engine that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Software Engineer",
+            "Full-Stack Engineer",
+            "Product Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Cloud Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 7.9,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Project Opportunity Discovery Engine scores 7.9/10 with a strong career signal because it is grounded in github repository, fits the cloud_platform domain, and demonstrates skills such as Full-Stack Development, Project Planning, APIs, Dashboards, Analytics, Python. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          }
+        },
+        {
+          "project_title": "Technical Roadmap Recommendation System",
+          "based_on_paper": "Cloud Billing Export Examples",
+          "evidence_title": "Cloud Billing Export Examples",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "cloud_platform",
+          "detected_intent": "project_building",
+          "idea_angle": "Generate learning paths, project roadmaps, and role alignment from user goals.",
+          "opportunity_area": "Turn technical evidence into buildable project opportunities with scope, risks, and career signal.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Cloud Billing Export Examples",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Cloud Platform",
+            "Performance",
+            "Explainability"
+          ],
+          "extracted_skills": [
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics"
+          ],
+          "research_motivation": "This idea uses 'Cloud Billing Export Examples' as a real implementation reference. It informs a buildable direction for Turn technical evidence into buildable project opportunities with scope, risks, and career signal.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Define one narrow, measurable workflow for Technical Roadmap Recommendation System.",
+            "Create a small reproducible input dataset or sample scenario.",
+            "Implement a transparent scoring, recommendation, or analysis pipeline.",
+            "Show outputs with explanations, confidence signals, and known limitations.",
+            "Validate the workflow against representative expected outcomes.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Technical Roadmap Recommendation System that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Software Engineer",
+            "Full-Stack Engineer",
+            "Product Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Cloud Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 7.9,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Technical Roadmap Recommendation System scores 7.9/10 with a strong career signal because it is grounded in github repository, fits the cloud_platform domain, and demonstrates skills such as Full-Stack Development, Project Planning, APIs, Dashboards, Analytics, Python. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          }
+        },
+        {
+          "project_title": "Evidence-Grounded Portfolio Planner",
+          "based_on_paper": "Cloud Billing Export Examples",
+          "evidence_title": "Cloud Billing Export Examples",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "cloud_platform",
+          "detected_intent": "project_building",
+          "idea_angle": "Recommend portfolio projects grounded in evidence, skills, and target roles.",
+          "opportunity_area": "Generate learning paths, project roadmaps, and role alignment from user goals.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Cloud Billing Export Examples",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Cloud Platform",
+            "Performance",
+            "Explainability"
+          ],
+          "extracted_skills": [
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics"
+          ],
+          "research_motivation": "This idea uses 'Cloud Billing Export Examples' as a real implementation reference. It informs a buildable direction for Generate learning paths, project roadmaps, and role alignment from user goals.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Define one narrow, measurable workflow for Evidence-Grounded Portfolio Planner.",
+            "Create a small reproducible input dataset or sample scenario.",
+            "Implement a transparent scoring, recommendation, or analysis pipeline.",
+            "Show outputs with explanations, confidence signals, and known limitations.",
+            "Validate the workflow against representative expected outcomes.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built an Evidence-Grounded Portfolio Planner that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Software Engineer",
+            "Full-Stack Engineer",
+            "Product Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Cloud Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 7.9,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Evidence-Grounded Portfolio Planner scores 7.9/10 with a strong career signal because it is grounded in github repository, fits the cloud_platform domain, and demonstrates skills such as Full-Stack Development, Project Planning, APIs, Dashboards, Analytics, Python. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          }
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 5,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role.",
+            "The estimated effort exceeds the stated timeline."
+          ]
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    }
+  },
+  "v2_shadow": {
+    "status": "fixture_evaluated",
+    "report": {
+      "evidence_brief": {
+        "query": "Build a cloud cost optimization project that explains why specific resources are driving unexpected spend.",
+        "sources": [
+          {
+            "source_id": "repo-billing-export",
+            "source_type": "github_repository",
+            "title": "Cloud Billing Export Examples",
+            "excerpt": "Cloud Billing Export Examples Examples for exporting daily billing records into tables for reporting and exploration.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 2,
+            "retrieval_signals": {},
+            "support_scope": "adjacent_planning",
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage."
+          },
+          {
+            "source_id": "paper-resource-allocation",
+            "source_type": "research_paper",
+            "title": "Resource Allocation Trends in Distributed Systems",
+            "excerpt": "Resource Allocation Trends in Distributed Systems Resource allocation policies can improve utilization across distributed workloads.",
+            "category": "cs.DC",
+            "url": null,
+            "retrieval_rank": 1,
+            "retrieval_signals": {},
+            "support_scope": "adjacent_planning",
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage."
+          }
+        ],
+        "source_counts": {
+          "github_repository": 1,
+          "research_paper": 1
+        },
+        "recurring_concepts": [],
+        "coverage_warnings": []
+      },
+      "evidence_curation": {
+        "required_anchor_terms": [],
+        "retained": [
+          {
+            "item": {
+              "repository_id": "repo-billing-export",
+              "source_type": "github_repository",
+              "title": "Cloud Billing Export Examples",
+              "readme_excerpt": "Examples for exporting daily billing records into tables for reporting and exploration.",
+              "retrieval_rank": 2
+            },
+            "relevance_score": 2.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "cloud"
+            ],
+            "query_term_document_frequencies": {
+              "cloud": 1
+            },
+            "unique_query_terms": [
+              "cloud"
+            ],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 2,
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage.",
+            "support_scope": "adjacent_planning"
+          },
+          {
+            "item": {
+              "document_id": "paper-resource-allocation",
+              "source_type": "research_paper",
+              "title": "Resource Allocation Trends in Distributed Systems",
+              "abstract": "Resource allocation policies can improve utilization across distributed workloads.",
+              "category": "cs.DC",
+              "retrieval_rank": 1
+            },
+            "relevance_score": 0.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [],
+            "query_term_document_frequencies": {},
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 2,
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage.",
+            "support_scope": "adjacent_planning"
+          }
+        ],
+        "dropped": [],
+        "retained_source_counts": {
+          "github_repository": 1,
+          "research_paper": 1
+        }
+      },
+      "planning_diagnostics": {
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "provider_called": true,
+        "prompt_content_hash": "fb0d4e8b929d210f93fd456992eee2b992a7155dbeb5459882ac83aa25b43899"
+      },
+      "selected_titles": [
+        "Cloud Cost Optimization Command Center",
+        "FinOps Root-Cause Recommendation Engine",
+        "Billing Export Spend Explorer"
+      ],
+      "selected_candidates": [
+        {
+          "title": "Cloud Cost Optimization Command Center",
+          "problem_statement": "Cloud teams need one place to find, explain, and optimize all unexpected infrastructure cost.",
+          "target_user": "Cloud engineers",
+          "core_workflow": [
+            "Load billing exports.",
+            "Identify expensive resources.",
+            "Recommend optimization actions."
+          ],
+          "mvp_scope": [
+            "Load daily billing records.",
+            "Group costs by service.",
+            "Show top spending services.",
+            "Recommend generic savings actions."
+          ],
+          "success_metrics": [
+            "Estimated monthly savings."
+          ],
+          "evidence_relationship": "Uses billing-export implementation context and general resource-allocation research.",
+          "source_ids": [
+            "paper-resource-allocation",
+            "repo-billing-export"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "ranking": {
+            "score": 0.955,
+            "score_breakdown": {
+              "evidence_support": 1.0,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 1.00.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "FinOps Root-Cause Recommendation Engine",
+          "problem_statement": "Teams need automated explanations for unexpected cloud spend and resource waste.",
+          "target_user": "Cloud engineers",
+          "core_workflow": [
+            "Load billing data.",
+            "Detect cost changes.",
+            "Generate root-cause recommendations."
+          ],
+          "mvp_scope": [
+            "Load sample billing rows.",
+            "Detect daily spending changes.",
+            "Display generic cost explanations.",
+            "List possible optimization actions."
+          ],
+          "success_metrics": [
+            "Number of cost changes explained."
+          ],
+          "evidence_relationship": "Adapts generic resource-allocation concepts to cloud cost analysis.",
+          "source_ids": [
+            "paper-resource-allocation"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python"
+          ],
+          "ranking": {
+            "score": 0.911,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Billing Export Spend Explorer",
+          "problem_statement": "Teams need a simple way to inspect spending records from a cloud billing export.",
+          "target_user": "Cloud engineers",
+          "core_workflow": [
+            "Load billing exports.",
+            "Filter service spend.",
+            "Inspect daily cost trends."
+          ],
+          "mvp_scope": [
+            "Load a billing export CSV.",
+            "Filter records by service.",
+            "Show daily spend totals.",
+            "Display top cost categories."
+          ],
+          "success_metrics": [
+            "Number of billing records explored."
+          ],
+          "evidence_relationship": "Uses billing-export implementation context.",
+          "source_ids": [
+            "repo-billing-export"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python"
+          ],
+          "ranking": {
+            "score": 0.911,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        }
+      ],
+      "legacy_titles": [
+        "Project Opportunity Discovery Engine",
+        "Technical Roadmap Recommendation System",
+        "Evidence-Grounded Portfolio Planner"
+      ],
+      "comparison": {
+        "legacy_direction_count": 3,
+        "raw_evidence_count": 2,
+        "curated_evidence_count": 2,
+        "dropped_evidence_count": 0,
+        "v2_generated_candidate_count": 3,
+        "v2_valid_candidate_count": 3,
+        "v2_selected_candidate_count": 3,
+        "v2_selected_titles": [
+          "Cloud Cost Optimization Command Center",
+          "FinOps Root-Cause Recommendation Engine",
+          "Billing Export Spend Explorer"
+        ],
+        "provider_called": true,
+        "coverage_warnings": []
+      },
+      "shadow_readiness": {
+        "status": "ready",
+        "reasons": [
+          "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+        ],
+        "signals": {
+          "raw_evidence_count": 2,
+          "curated_evidence_count": 2,
+          "dropped_evidence_count": 0,
+          "generated_candidate_count": 3,
+          "valid_candidate_count": 3,
+          "selected_candidate_count": 3,
+          "provider_called": true,
+          "coverage_warnings": [],
+          "validation_errors": [],
+          "validation_warnings": []
+        }
+      },
+      "prompt_content_hash": "fb0d4e8b929d210f93fd456992eee2b992a7155dbeb5459882ac83aa25b43899"
+    },
+    "evidence_quality": {
+      "status": "not_routed_pending_calibration",
+      "metrics": {
+        "curation_pool_size": 2,
+        "retained_source_count": 2,
+        "final_brief_source_count": 2,
+        "direct_source_count": 0,
+        "adjacent_source_count": 2,
+        "required_anchor_count": 0,
+        "matched_required_anchor_count": 0,
+        "query_anchor_coverage": null,
+        "unique_query_term_count": 1,
+        "unique_query_phrase_count": 0,
+        "source_type_count": 2,
+        "dominant_source_type": "github_repository",
+        "dominant_source_type_fraction": 0.5,
+        "top_direct_relevance_margin": null,
+        "coverage_warnings": []
+      },
+      "thresholds": {
+        "version": "v1",
+        "calibration_status": "unresolved",
+        "sparse_direct_source_threshold": null,
+        "ambiguity_top_margin_threshold": null,
+        "low_diversity_fraction_threshold": null
+      },
+      "evidence_sparse": null,
+      "evidence_ambiguous": null,
+      "source_diversity_low": null,
+      "unresolved_signal_names": [
+        "evidence_sparse",
+        "evidence_ambiguous",
+        "source_diversity_low"
+      ],
+      "routing_ready": false
+    },
+    "selected_candidates": [
+      {
+        "title": "Cloud Cost Optimization Command Center",
+        "problem_statement": "Cloud teams need one place to find, explain, and optimize all unexpected infrastructure cost.",
+        "target_user": "Cloud engineers",
+        "core_workflow": [
+          "Load billing exports.",
+          "Identify expensive resources.",
+          "Recommend optimization actions."
+        ],
+        "mvp_scope": [
+          "Load daily billing records.",
+          "Group costs by service.",
+          "Show top spending services.",
+          "Recommend generic savings actions."
+        ],
+        "success_metrics": [
+          "Estimated monthly savings."
+        ],
+        "evidence_relationship": "Uses billing-export implementation context and general resource-allocation research.",
+        "source_ids": [
+          "paper-resource-allocation",
+          "repo-billing-export"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ],
+        "ranking": {
+          "score": 0.955,
+          "score_breakdown": {
+            "evidence_support": 1.0,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 1.00.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "FinOps Root-Cause Recommendation Engine",
+        "problem_statement": "Teams need automated explanations for unexpected cloud spend and resource waste.",
+        "target_user": "Cloud engineers",
+        "core_workflow": [
+          "Load billing data.",
+          "Detect cost changes.",
+          "Generate root-cause recommendations."
+        ],
+        "mvp_scope": [
+          "Load sample billing rows.",
+          "Detect daily spending changes.",
+          "Display generic cost explanations.",
+          "List possible optimization actions."
+        ],
+        "success_metrics": [
+          "Number of cost changes explained."
+        ],
+        "evidence_relationship": "Adapts generic resource-allocation concepts to cloud cost analysis.",
+        "source_ids": [
+          "paper-resource-allocation"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python"
+        ],
+        "ranking": {
+          "score": 0.911,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Billing Export Spend Explorer",
+        "problem_statement": "Teams need a simple way to inspect spending records from a cloud billing export.",
+        "target_user": "Cloud engineers",
+        "core_workflow": [
+          "Load billing exports.",
+          "Filter service spend.",
+          "Inspect daily cost trends."
+        ],
+        "mvp_scope": [
+          "Load a billing export CSV.",
+          "Filter records by service.",
+          "Show daily spend totals.",
+          "Display top cost categories."
+        ],
+        "success_metrics": [
+          "Number of billing records explored."
+        ],
+        "evidence_relationship": "Uses billing-export implementation context.",
+        "source_ids": [
+          "repo-billing-export"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python"
+        ],
+        "ranking": {
+          "score": 0.911,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      }
+    ],
+    "generation_metadata": {
+      "prompt_version": "v1",
+      "prompt_content_hash": "fb0d4e8b929d210f93fd456992eee2b992a7155dbeb5459882ac83aa25b43899",
+      "execution_mode": "fixture",
+      "provider_name": "MockCandidateGenerationProvider",
+      "model": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      }
+    },
+    "diagnostics": {
+      "generated_candidate_count": 3,
+      "valid_candidate_count": 3,
+      "selected_candidate_count": 3,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "provider_called": true,
+      "prompt_content_hash": "fb0d4e8b929d210f93fd456992eee2b992a7155dbeb5459882ac83aa25b43899"
+    },
+    "shadow_readiness": {
+      "status": "ready",
+      "reasons": [
+        "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+      ],
+      "signals": {
+        "raw_evidence_count": 2,
+        "curated_evidence_count": 2,
+        "dropped_evidence_count": 0,
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "provider_called": true,
+        "coverage_warnings": [],
+        "validation_errors": [],
+        "validation_warnings": []
+      }
+    },
+    "semantic_goal_relevance": [],
+    "cross_encoder_goal_relevance": [],
+    "semantic_candidate_diversity": null,
+    "evidence_support": [],
+    "grounding_adequacy": [],
+    "quality_warnings": {
+      "warnings": [],
+      "signals": {
+        "coverage_warning_count": 0,
+        "goal_trace_count": 0,
+        "grounding_trace_count": 0,
+        "diversity_pair_count": 0,
+        "quality_warning_count": 0
+      }
+    },
+    "promotion_eligibility": {
+      "status": "not_assessed",
+      "candidate_assessments": [],
+      "summary": {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0
+      },
+      "reason": "Evidence-support shadow was not enabled, so promotion eligibility could not assess direct grounding."
+    },
+    "semantic_diversification_repair": {
+      "status": "no_repair_needed",
+      "directives": [],
+      "signals": {
+        "candidate_count": 3,
+        "similarity_threshold": 0.78,
+        "close_cluster_count": 0,
+        "replacement_count": 0
+      }
+    },
+    "raw_candidates": [
+      {
+        "title": "Cloud Cost Optimization Command Center",
+        "problem_statement": "Cloud teams need one place to find, explain, and optimize all unexpected infrastructure cost.",
+        "target_user": "Cloud engineers",
+        "core_workflow": [
+          "Load billing exports.",
+          "Identify expensive resources.",
+          "Recommend optimization actions."
+        ],
+        "mvp_scope": [
+          "Load daily billing records.",
+          "Group costs by service.",
+          "Show top spending services.",
+          "Recommend generic savings actions."
+        ],
+        "success_metrics": [
+          "Estimated monthly savings."
+        ],
+        "evidence_relationship": "Uses billing-export implementation context and general resource-allocation research.",
+        "source_ids": [
+          "paper-resource-allocation",
+          "repo-billing-export"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ]
+      },
+      {
+        "title": "FinOps Root-Cause Recommendation Engine",
+        "problem_statement": "Teams need automated explanations for unexpected cloud spend and resource waste.",
+        "target_user": "Cloud engineers",
+        "core_workflow": [
+          "Load billing data.",
+          "Detect cost changes.",
+          "Generate root-cause recommendations."
+        ],
+        "mvp_scope": [
+          "Load sample billing rows.",
+          "Detect daily spending changes.",
+          "Display generic cost explanations.",
+          "List possible optimization actions."
+        ],
+        "success_metrics": [
+          "Number of cost changes explained."
+        ],
+        "evidence_relationship": "Adapts generic resource-allocation concepts to cloud cost analysis.",
+        "source_ids": [
+          "paper-resource-allocation"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python"
+        ]
+      },
+      {
+        "title": "Billing Export Spend Explorer",
+        "problem_statement": "Teams need a simple way to inspect spending records from a cloud billing export.",
+        "target_user": "Cloud engineers",
+        "core_workflow": [
+          "Load billing exports.",
+          "Filter service spend.",
+          "Inspect daily cost trends."
+        ],
+        "mvp_scope": [
+          "Load a billing export CSV.",
+          "Filter records by service.",
+          "Show daily spend totals.",
+          "Display top cost categories."
+        ],
+        "success_metrics": [
+          "Number of billing records explored."
+        ],
+        "evidence_relationship": "Uses billing-export implementation context.",
+        "source_ids": [
+          "repo-billing-export"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python"
+        ]
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Cloud Cost Optimization Command Center",
+          "idea_angle": "Cloud teams need one place to find, explain, and optimize all unexpected infrastructure cost. Built for Cloud engineers.",
+          "detected_domain": "cloud_platform",
+          "evidence_buildable_gap": "Cloud teams need one place to find, explain, and optimize all unexpected infrastructure cost.",
+          "evidence_focus_statement": "Uses billing-export implementation context and general resource-allocation research.",
+          "evidence_driven_angle": "Uses billing-export implementation context and general resource-allocation research.",
+          "evidence_project_opportunity": "Cloud teams need one place to find, explain, and optimize all unexpected infrastructure cost.",
+          "research_motivation": "Uses billing-export implementation context and general resource-allocation research.",
+          "mvp_scope": [
+            "Load daily billing records.",
+            "Group costs by service.",
+            "Show top spending services.",
+            "Recommend generic savings actions.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Estimated monthly savings.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "Cloud Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "FastAPI"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-resource-allocation",
+              "title": "Resource Allocation Trends in Distributed Systems",
+              "source_type": "research_paper",
+              "support_scope": "adjacent_planning"
+            },
+            {
+              "source_id": "repo-billing-export",
+              "title": "Cloud Billing Export Examples",
+              "source_type": "github_repository",
+              "support_scope": "adjacent_planning"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-resource-allocation",
+            "repo-billing-export"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Estimated monthly savings."
+          ],
+          "planner_candidate_workflow": [
+            "Load billing exports.",
+            "Identify expensive resources.",
+            "Recommend optimization actions."
+          ],
+          "evidence_title": "Resource Allocation Trends in Distributed Systems",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.DC",
+          "based_on_paper": "Resource Allocation Trends in Distributed Systems",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.0,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Cloud Cost Optimization Command Center scores 8.0/10 with a strong career signal because it is grounded in research paper, fits the cloud_platform domain, and demonstrates skills such as Python, FastAPI. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Cloud Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Cloud Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "FinOps Root-Cause Recommendation Engine",
+          "idea_angle": "Teams need automated explanations for unexpected cloud spend and resource waste. Built for Cloud engineers.",
+          "detected_domain": "cloud_platform",
+          "evidence_buildable_gap": "Teams need automated explanations for unexpected cloud spend and resource waste.",
+          "evidence_focus_statement": "Adapts generic resource-allocation concepts to cloud cost analysis.",
+          "evidence_driven_angle": "Adapts generic resource-allocation concepts to cloud cost analysis.",
+          "evidence_project_opportunity": "Teams need automated explanations for unexpected cloud spend and resource waste.",
+          "research_motivation": "Adapts generic resource-allocation concepts to cloud cost analysis.",
+          "mvp_scope": [
+            "Load sample billing rows.",
+            "Detect daily spending changes.",
+            "Display generic cost explanations.",
+            "List possible optimization actions.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of cost changes explained.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python"
+          ],
+          "target_roles": [
+            "Cloud Engineer"
+          ],
+          "extracted_skills": [
+            "Python"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-resource-allocation",
+              "title": "Resource Allocation Trends in Distributed Systems",
+              "source_type": "research_paper",
+              "support_scope": "adjacent_planning"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-resource-allocation"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of cost changes explained."
+          ],
+          "planner_candidate_workflow": [
+            "Load billing data.",
+            "Detect cost changes.",
+            "Generate root-cause recommendations."
+          ],
+          "evidence_title": "Resource Allocation Trends in Distributed Systems",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.DC",
+          "based_on_paper": "Resource Allocation Trends in Distributed Systems",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.0,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "FinOps Root-Cause Recommendation Engine scores 8.0/10 with a strong career signal because it is grounded in research paper, fits the cloud_platform domain, and demonstrates skills such as Python. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Cloud Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Cloud Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Billing Export Spend Explorer",
+          "idea_angle": "Teams need a simple way to inspect spending records from a cloud billing export. Built for Cloud engineers.",
+          "detected_domain": "cloud_platform",
+          "evidence_buildable_gap": "Teams need a simple way to inspect spending records from a cloud billing export.",
+          "evidence_focus_statement": "Uses billing-export implementation context.",
+          "evidence_driven_angle": "Uses billing-export implementation context.",
+          "evidence_project_opportunity": "Teams need a simple way to inspect spending records from a cloud billing export.",
+          "research_motivation": "Uses billing-export implementation context.",
+          "mvp_scope": [
+            "Load a billing export CSV.",
+            "Filter records by service.",
+            "Show daily spend totals.",
+            "Display top cost categories.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of billing records explored.",
+            "Add a failure-case review workflow and document the prototype's known limitations.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python"
+          ],
+          "target_roles": [
+            "Cloud Engineer"
+          ],
+          "extracted_skills": [
+            "Python"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-billing-export",
+              "title": "Cloud Billing Export Examples",
+              "source_type": "github_repository",
+              "support_scope": "adjacent_planning"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-billing-export"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of billing records explored."
+          ],
+          "planner_candidate_workflow": [
+            "Load billing exports.",
+            "Filter service spend.",
+            "Inspect daily cost trends."
+          ],
+          "evidence_title": "Cloud Billing Export Examples",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "Cloud Billing Export Examples",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 7.9,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Billing Export Spend Explorer scores 7.9/10 with a strong career signal because it is grounded in github repository, fits the cloud_platform domain, and demonstrates skills such as Python. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Cloud Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Cloud Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    },
+    "shadow_vs_deterministic_comparison": {
+      "schema_version": "1.0",
+      "case_id": null,
+      "user_goal": "Build a cloud cost optimization project that explains why specific resources are driving unexpected spend.",
+      "query_fingerprint": "aa7f1ff690831100",
+      "deterministic_candidates": [
+        {
+          "title": "Project Opportunity Discovery Engine",
+          "comparison_text": "Project Opportunity Discovery Engine Turn technical evidence into buildable project opportunities with scope, risks, and career signal. Define one narrow, measurable workflow for Project Opportunity Discovery Engine. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence. Define one narrow, measurable workflow for Project Opportunity Discovery Engine. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        },
+        {
+          "title": "Technical Roadmap Recommendation System",
+          "comparison_text": "Technical Roadmap Recommendation System Generate learning paths, project roadmaps, and role alignment from user goals. Define one narrow, measurable workflow for Technical Roadmap Recommendation System. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Define one narrow, measurable workflow for Technical Roadmap Recommendation System. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes."
+        },
+        {
+          "title": "Evidence-Grounded Portfolio Planner",
+          "comparison_text": "Evidence-Grounded Portfolio Planner Recommend portfolio projects grounded in evidence, skills, and target roles. Define one narrow, measurable workflow for Evidence-Grounded Portfolio Planner. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Define one narrow, measurable workflow for Evidence-Grounded Portfolio Planner. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes."
+        }
+      ],
+      "openai_candidates": [
+        {
+          "title": "Cloud Cost Optimization Command Center",
+          "comparison_text": "Cloud Cost Optimization Command Center Cloud teams need one place to find, explain, and optimize all unexpected infrastructure cost. Cloud engineers Load billing exports. Identify expensive resources. Recommend optimization actions. Load daily billing records. Group costs by service. Show top spending services. Recommend generic savings actions."
+        },
+        {
+          "title": "FinOps Root-Cause Recommendation Engine",
+          "comparison_text": "FinOps Root-Cause Recommendation Engine Teams need automated explanations for unexpected cloud spend and resource waste. Cloud engineers Load billing data. Detect cost changes. Generate root-cause recommendations. Load sample billing rows. Detect daily spending changes. Display generic cost explanations. List possible optimization actions."
+        },
+        {
+          "title": "Billing Export Spend Explorer",
+          "comparison_text": "Billing Export Spend Explorer Teams need a simple way to inspect spending records from a cloud billing export. Cloud engineers Load billing exports. Filter service spend. Inspect daily cost trends. Load a billing export CSV. Filter records by service. Show daily spend totals. Display top cost categories."
+        }
+      ],
+      "deterministic_grounding_classes": [
+        {
+          "candidate_title": "Project Opportunity Discovery Engine",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Technical Roadmap Recommendation System",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Evidence-Grounded Portfolio Planner",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "openai_grounding_classes": [
+        {
+          "candidate_title": "Cloud Cost Optimization Command Center",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "FinOps Root-Cause Recommendation Engine",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Billing Export Spend Explorer",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "deterministic_enrichment": [
+        {
+          "title": "Project Opportunity Discovery Engine",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Technical Roadmap Recommendation System",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Evidence-Grounded Portfolio Planner",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        }
+      ],
+      "openai_enrichment": [
+        {
+          "title": "Cloud Cost Optimization Command Center",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "FinOps Root-Cause Recommendation Engine",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Billing Export Spend Explorer",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        }
+      ],
+      "set_similarity_score": null,
+      "unique_angle_count": 0,
+      "unique_openai_titles": [],
+      "pairwise_similarity": [],
+      "manual_preference": null,
+      "manual_preference_reason": null,
+      "manual_reviewer_notes": null,
+      "notes": [
+        "Cross-set semantic similarity is a difference signal, not a quality score.",
+        "Portfolio tiers are preserved for review but are assigned by candidate order and must not be interpreted as quality labels.",
+        "Deterministic grounding is not assessed by this contract yet; only shadow grounding traces are currently comparable."
+      ]
+    },
+    "manual_review_template": {
+      "rubric_version": "v1",
+      "query_fingerprint": "aa7f1ff690831100",
+      "deterministic_review": {
+        "planner_path": "deterministic",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Project Opportunity Discovery Engine",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Technical Roadmap Recommendation System",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Evidence-Grounded Portfolio Planner",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "openai_review": {
+        "planner_path": "openai",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Cloud Cost Optimization Command Center",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "FinOps Root-Cause Recommendation Engine",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Billing Export Spend Explorer",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "overall_preference": null,
+      "overall_preference_reason": "",
+      "response_quality": null,
+      "response_quality_reason": "",
+      "unique_angle_quality": null,
+      "unique_angle_quality_reason": "",
+      "reviewer_notes": ""
+    }
+  }
+}
