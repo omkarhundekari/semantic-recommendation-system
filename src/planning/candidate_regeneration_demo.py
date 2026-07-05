@@ -93,6 +93,7 @@ def run_guarded_regeneration(
         brief=source.brief,
         request=source.request,
         directive=source.directive,
+        surviving_candidates=source.surviving_candidates,
     )
 
     raw_response = provider.generate_regeneration(
@@ -108,6 +109,7 @@ def run_guarded_regeneration(
         retained_candidates=source.surviving_candidates,
         evidence_support_scorer=evidence_support_scorer,
         semantic_diversity_scorer=semantic_diversity_scorer,
+        surviving_candidates=source.surviving_candidates,
     )
 
 

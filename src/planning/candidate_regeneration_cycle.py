@@ -56,6 +56,7 @@ def run_mock_regeneration_cycle(
     retained_candidates: Sequence[CandidateDirection],
     evidence_support_scorer: CandidateEvidenceSupportScorer,
     semantic_diversity_scorer: SemanticCandidateDiversityScorer,
+    surviving_candidates: Sequence[CandidateDirection] = (),
 ) -> CandidateRegenerationCycle:
     """
     Run a complete targeted-regeneration evaluation without calling an LLM.
@@ -67,6 +68,7 @@ def run_mock_regeneration_cycle(
         brief=brief,
         request=request,
         directive=directive,
+        surviving_candidates=surviving_candidates,
     )
 
     intake = intake_regenerated_candidate(

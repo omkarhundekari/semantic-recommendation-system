@@ -1,5 +1,7 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Sequence
+
+from planning.candidate_models import CandidateDirection
 
 from planning.candidate_models import CandidateGenerationRequest
 from planning.planner_models import EvidenceBrief
@@ -15,8 +17,21 @@ def build_candidate_regeneration_payload(
     brief: EvidenceBrief,
     request: CandidateGenerationRequest,
     directive: DiversificationRepairDirective,
+    surviving_candidates: Optional[
+        Sequence[CandidateDirection]
+    ] = None,
 ) -> Dict[str, Any]:
     regeneration_brief = directive.regeneration_brief
+    surviving_candidates = list(surviving_candidates or [])
+
+    survivor_exclusions = [
+        {
+            "title": candidate.title,
+            "core_workflow": list(candidate.core_workflow),
+            "mvp_scope": list(candidate.mvp_scope),
+        }
+        for candidate in surviving_candidates
+    ]
 
     return {
         "task": (
@@ -31,7 +46,7 @@ def build_candidate_regeneration_payload(
                 "evidence-grounding requirements."
             ),
             (
-                "Do not repeat the retained candidate's primary workflow, "
+                "Do not repeat any surviving candidate's primary workflow, "
                 "MVP focus, or system boundary."
             ),
             (
@@ -50,6 +65,7 @@ def build_candidate_regeneration_payload(
         ],
         "user_request": request.to_dict(),
         "evidence_brief": brief.to_dict(),
+        "surviving_candidates_to_avoid": survivor_exclusions,
         "repair_directive": {
             "replace_candidate_title": (
                 directive.replace_candidate_title
@@ -84,11 +100,15 @@ def build_candidate_regeneration_prompt(
     brief: EvidenceBrief,
     request: CandidateGenerationRequest,
     directive: DiversificationRepairDirective,
+    surviving_candidates: Optional[
+        Sequence[CandidateDirection]
+    ] = None,
 ) -> str:
     payload = build_candidate_regeneration_payload(
         brief=brief,
         request=request,
         directive=directive,
+        surviving_candidates=surviving_candidates,
     )
 
     return json.dumps(payload, indent=2, ensure_ascii=False)

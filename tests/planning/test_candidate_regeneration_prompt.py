@@ -115,6 +115,53 @@ def test_serializes_regeneration_payload_as_valid_json():
         "Pipeline Failure Triage"
     )
     assert (
-        "Do not repeat the retained candidate's primary workflow"
+        "Do not repeat any surviving candidate's primary workflow"
         in parsed["rules"][3]
     )
+
+
+def test_includes_all_surviving_candidate_exclusions():
+    from planning.candidate_models import CandidateDirection
+
+    schema_guard = CandidateDirection(
+        title="Schema Drift Detection and Data Contract Guard",
+        problem_statement="Teams need contract-aware schema review.",
+        target_user="Data engineers",
+        core_workflow=[
+            "Compare observed schemas with declared contracts.",
+            "Explain changed fields and downstream impact.",
+        ],
+        mvp_scope=[
+            "Load schema snapshots.",
+            "Compare contract versions.",
+            "Show drift findings.",
+        ],
+        success_metrics=["Breaking changes are visible."],
+        evidence_relationship="Uses retained evidence.",
+        source_ids=["paper-1"],
+    )
+
+    payload = build_candidate_regeneration_payload(
+        brief=make_brief(),
+        request=make_request(),
+        directive=make_directive(),
+        surviving_candidates=[schema_guard],
+    )
+
+    exclusions = payload["surviving_candidates_to_avoid"]
+
+    assert exclusions == [
+        {
+            "title": "Schema Drift Detection and Data Contract Guard",
+            "core_workflow": [
+                "Compare observed schemas with declared contracts.",
+                "Explain changed fields and downstream impact.",
+            ],
+            "mvp_scope": [
+                "Load schema snapshots.",
+                "Compare contract versions.",
+                "Show drift findings.",
+            ],
+        }
+    ]
+    assert "any surviving candidate" in payload["rules"][3]
