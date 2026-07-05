@@ -1370,3 +1370,44 @@ def test_shadow_artifact_records_feasibility_prescreen_for_promotion():
     assert "Candidate scope exceeds the stated timeline." in (
         assessment["blocking_reasons"]
     )
+
+
+def test_shadow_artifact_records_unresolved_evidence_quality_diagnostics():
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {},
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Incident Correlation Research",
+                    "abstract": (
+                        "Event correlation supports incident "
+                        "investigation workflows."
+                    ),
+                },
+                {
+                    "repository_id": "repo-1",
+                    "source_type": "github_repository",
+                    "title": "Incident Investigation Toolkit",
+                    "readme_excerpt": (
+                        "Correlate operational events into an "
+                        "investigation timeline."
+                    ),
+                },
+            ],
+        },
+        user_goal="Build an incident investigation project.",
+        constraints={},
+    )
+
+    quality = artifact["v2_shadow"]["evidence_quality"]
+
+    assert quality["status"] == "not_routed_pending_calibration"
+    assert quality["routing_ready"] is False
+    assert quality["evidence_sparse"] is None
+    assert quality["evidence_ambiguous"] is None
+    assert quality["source_diversity_low"] is None
+    assert quality["metrics"]["final_brief_source_count"] == 2
+    assert quality["metrics"]["direct_source_count"] >= 1
+    assert "route" not in quality

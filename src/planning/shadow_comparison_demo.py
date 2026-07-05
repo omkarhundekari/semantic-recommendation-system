@@ -60,6 +60,11 @@ from planning.shadow_comparison_enrichment import (
     build_shadow_comparison_enrichment,
 )
 from planning.evidence_brief import build_evidence_brief
+from planning.evidence_quality_signals import (
+    EvidenceQualityThresholds,
+    assess_evidence_quality_signals,
+    build_evidence_quality_metrics,
+)
 from planning.evidence_curation import curate_evidence
 from planning.grounding_adequacy import assess_grounding_adequacy
 from project_idea_generator import generate_project_ideas
@@ -164,10 +169,23 @@ def build_shadow_comparison_artifact(
         constraints=constraints,
     )
 
+    evidence_quality_metrics = build_evidence_quality_metrics(
+        curation=curation,
+        brief=brief,
+    )
+    evidence_quality_signals = assess_evidence_quality_signals(
+        metrics=evidence_quality_metrics,
+        thresholds=EvidenceQualityThresholds(),
+    )
+
     v2_shadow: Dict[str, Any] = {
         "status": "prompt_ready",
         "evidence_curation": curation.to_dict(),
         "evidence_brief": brief.to_dict(),
+        "evidence_quality": {
+            "status": "not_routed_pending_calibration",
+            **evidence_quality_signals.to_dict(),
+        },
         "candidate_generation_payload": (
             build_candidate_generation_payload(
                 brief=brief,
