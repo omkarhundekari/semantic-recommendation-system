@@ -55,3 +55,110 @@ def test_product_direction_accepts_optional_planner_provenance():
         direction.planner_provenance.planning_source
         == "openai_repaired"
     )
+
+
+def test_provenance_preserves_structured_rejection_history():
+    from planning.candidate_provenance import (
+        RegenerationAttemptRecord,
+        RegenerationRejectionReason,
+    )
+
+    provenance = CandidateProvenance(
+        planning_source="openai_repaired",
+        prompt_version="v1",
+        generation_attempt=3,
+        rejected_alternatives=2,
+        regeneration_attempts=[
+            RegenerationAttemptRecord(
+                attempt_number=1,
+                rejection_reason=(
+                    RegenerationRejectionReason.DIVERSITY_FAILURE
+                ),
+                candidate_title=(
+                    "Schema Drift Watchtower for Data Contracts and Alerting"
+                ),
+                diversity_similarity_score=0.905,
+            ),
+            RegenerationAttemptRecord(
+                attempt_number=2,
+                rejection_reason=(
+                    RegenerationRejectionReason.DIVERSITY_FAILURE
+                ),
+                candidate_title=(
+                    "Data Contract Drift Reporter for Pipeline Consumers"
+                ),
+                diversity_similarity_score=0.8769,
+            ),
+        ],
+        grounding_adequacy="cited_with_direct_scope",
+        diversity_check_passed=True,
+        promotion_eligible=True,
+    )
+
+    payload = provenance.to_dict()
+
+    assert payload["planning_source"] == "openai_repaired"
+    assert payload["rejected_alternatives"] == 2
+    assert len(payload["regeneration_attempts"]) == 2
+    assert payload["regeneration_attempts"][0][
+        "rejection_reason"
+    ] == "diversity_failure"
+
+
+def test_provenance_rejects_inconsistent_rejection_history():
+    from planning.candidate_provenance import (
+        RegenerationAttemptRecord,
+        RegenerationRejectionReason,
+    )
+
+    provenance = CandidateProvenance(
+        planning_source="openai_repaired",
+        generation_attempt=2,
+        rejected_alternatives=0,
+        regeneration_attempts=[
+            RegenerationAttemptRecord(
+                attempt_number=1,
+                rejection_reason=(
+                    RegenerationRejectionReason.GROUNDING_FAILURE
+                ),
+            )
+        ],
+    )
+
+    import pytest
+
+    with pytest.raises(ValueError, match="must match"):
+        provenance.to_dict()
+
+
+def test_provenance_rejects_attempt_at_or_after_accepted_attempt():
+    from planning.candidate_provenance import (
+        RegenerationAttemptRecord,
+        RegenerationRejectionReason,
+    )
+
+    provenance = CandidateProvenance(
+        planning_source="openai_repaired",
+        generation_attempt=2,
+        rejected_alternatives=1,
+        regeneration_attempts=[
+            RegenerationAttemptRecord(
+                attempt_number=2,
+                rejection_reason=(
+                    RegenerationRejectionReason.PROMOTION_FAILURE
+                ),
+            )
+        ],
+    )
+
+    import pytest
+
+    with pytest.raises(ValueError, match="must occur before"):
+        provenance.to_dict()
+
+
+def test_planning_source_enum_keeps_stable_wire_values():
+    from planning.candidate_provenance import PlanningSource
+
+    assert PlanningSource.OPENAI_REPAIRED == "openai_repaired"
+    assert PlanningSource.OPENAI_FALLBACK == "openai_fallback"
