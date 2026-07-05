@@ -1,6 +1,10 @@
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
 
+from planning.candidate_feasibility_prescreen import (
+    CandidateFeasibilityPrescreen,
+)
+
 from planning.candidate_models import (
     CandidateDirection,
     CandidateValidationResult,
@@ -92,6 +96,9 @@ def assess_promotion_eligibility(
     semantic_candidate_diversity: Optional[
         CandidateDiversityTrace
     ] = None,
+    feasibility_prescreen: Optional[
+        CandidateFeasibilityPrescreen
+    ] = None,
 ) -> PromotionEligibilityAssessment:
     """
     Assess whether a shadow candidate is structurally safe for a future
@@ -127,6 +134,16 @@ def assess_promotion_eligibility(
         blocking_reasons.append(
             "Candidate is part of a semantically duplicate direction pair."
         )
+
+    if feasibility_prescreen is not None:
+        if feasibility_prescreen.status == "blocked_by_constraints":
+            blocking_reasons.extend(
+                feasibility_prescreen.blocking_reasons
+            )
+        elif feasibility_prescreen.status == "needs_review":
+            review_reasons.extend(
+                feasibility_prescreen.review_reasons
+            )
 
     warning_codes = _candidate_warning_codes(
         candidate.title,
@@ -176,6 +193,11 @@ def assess_promotion_eligibility(
             "has_flagged_duplicate_pair": _has_flagged_duplicate_pair(
                 candidate.title,
                 semantic_candidate_diversity,
+            ),
+            "feasibility_prescreen": (
+                feasibility_prescreen.to_dict()
+                if feasibility_prescreen is not None
+                else None
             ),
         },
     )
