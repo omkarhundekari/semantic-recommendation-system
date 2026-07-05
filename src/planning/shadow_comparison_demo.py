@@ -50,6 +50,9 @@ from planning.shadow_runner import (
 from planning.shadow_quality_warnings import (
     assess_shadow_quality_warnings,
 )
+from planning.shadow_comparison_enrichment import (
+    build_shadow_comparison_enrichment,
+)
 from planning.evidence_brief import build_evidence_brief
 from planning.evidence_curation import curate_evidence
 from planning.grounding_adequacy import assess_grounding_adequacy
@@ -114,6 +117,7 @@ def build_shadow_comparison_artifact(
     semantic_candidate_diversity_scorer: Optional[Any] = None,
     cross_encoder_goal_scorer: Optional[Any] = None,
     evidence_support_scorer: Optional[Any] = None,
+    comparison_encoder: Optional[Any] = None,
     cross_encoder_top_k: int = 3,
     cross_encoder_margin_threshold: float = 0.05,
 ) -> Dict[str, Any]:
@@ -281,6 +285,19 @@ def build_shadow_comparison_artifact(
         ),
     )
 
+    enrichment_comparison = build_shadow_comparison_enrichment(
+        user_goal=user_goal,
+        constraints=constraints,
+        detected_domain=inference.get("inferred_focus") or "general",
+        brief=brief,
+        legacy_ideas=legacy_ideas,
+        selected_candidates=v2_shadow.get("selected_candidates", []),
+        grounding_adequacy=grounding_adequacy,
+        promotion_eligibility=promotion_eligibility,
+        generation_metadata=v2_shadow.get("generation_metadata", {}),
+        comparison_encoder=comparison_encoder,
+    )
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -298,6 +315,8 @@ def build_shadow_comparison_artifact(
         "legacy_planner": {
             "direction_count": len(legacy_ideas),
             "directions": _legacy_summary(legacy_ideas),
+            "raw_ideas": enrichment_comparison["legacy_raw_ideas"],
+            "enrichment": enrichment_comparison["legacy_enrichment"],
         },
         "v2_shadow": {
             **v2_shadow,
@@ -316,6 +335,13 @@ def build_shadow_comparison_artifact(
             "promotion_eligibility": promotion_eligibility,
             "semantic_diversification_repair": (
                 diversification_repair.to_dict()
+            ),
+            "raw_candidates": enrichment_comparison[
+                "shadow_raw_candidates"
+            ],
+            "enrichment": enrichment_comparison["shadow_enrichment"],
+            "shadow_vs_deterministic_comparison": (
+                enrichment_comparison["comparison"]
             ),
         },
     }
@@ -701,6 +727,14 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--shadow-vs-deterministic-shadow",
+        action="store_true",
+        help=(
+            "Add local semantic comparison between deterministic and "
+            "shadow candidate sets without changing selection."
+        ),
+    )
+    parser.add_argument(
         "--evidence-support-shadow",
         action="store_true",
         help=(
@@ -770,10 +804,10 @@ def main() -> None:
     cross_encoder_goal_scorer = None
     evidence_support_scorer = None
 
-    if args.semantic_shadow or getattr(
-        args,
-        "semantic_diversity_shadow",
-        False,
+    if (
+        args.semantic_shadow
+        or getattr(args, "semantic_diversity_shadow", False)
+        or getattr(args, "shadow_vs_deterministic_shadow", False)
     ):
         semantic_encoder = SemanticEngineTextEncoder(SemanticEngine())
 
@@ -825,6 +859,15 @@ def main() -> None:
         ),
         cross_encoder_goal_scorer=cross_encoder_goal_scorer,
         evidence_support_scorer=evidence_support_scorer,
+        comparison_encoder=(
+            semantic_encoder
+            if getattr(
+                args,
+                "shadow_vs_deterministic_shadow",
+                False,
+            )
+            else None
+        ),
     )
 
     output_path = write_shadow_comparison_artifact(

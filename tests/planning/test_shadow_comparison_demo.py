@@ -1220,3 +1220,67 @@ def test_shadow_artifact_exposes_semantic_diversification_repair_plan():
         "Pipeline Failure Triage",
     }
     assert ranked_scores[retained_title] >= ranked_scores[replaced_title]
+
+
+def test_artifact_keeps_complete_enrichment_inputs_for_future_comparison():
+    from planning.semantic_goal_relevance import EmbeddingVector
+
+    class FakeEncoder:
+        def encode_text(self, text):
+            if "timeline" in text.lower():
+                return EmbeddingVector((1.0, 0.0))
+            return EmbeddingVector((0.0, 1.0))
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {"inferred_focus": "cloud_platform"},
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Incident Correlation Research",
+                    "abstract": "Correlate incident events.",
+                }
+            ],
+        },
+        user_goal="Build a cloud incident project.",
+        constraints={
+            "target_roles": ["Platform Engineer"],
+            "preferred_stack": [],
+            "time_available": "3 weeks",
+        },
+        fixture_response={
+            "candidates": [
+                {
+                    "title": "Incident Timeline Tool",
+                    "problem_statement": "Connect incident signals.",
+                    "target_user": "Platform engineers",
+                    "core_workflow": [
+                        "Load incident events.",
+                        "Build a timeline.",
+                    ],
+                    "mvp_scope": [
+                        "Load sample records.",
+                        "Order events.",
+                        "Show a timeline.",
+                    ],
+                    "success_metrics": ["Faster review."],
+                    "evidence_relationship": "Uses retained evidence.",
+                    "source_ids": ["paper-1"],
+                    "assumptions": [],
+                    "suggested_stack": ["Python", "FastAPI"],
+                }
+            ]
+        },
+        comparison_encoder=FakeEncoder(),
+    )
+
+    assert artifact["legacy_planner"]["raw_ideas"]
+    assert artifact["legacy_planner"]["enrichment"]["ideas"]
+    assert artifact["v2_shadow"]["raw_candidates"][0]["title"] == (
+        "Incident Timeline Tool"
+    )
+    assert artifact["v2_shadow"]["enrichment"]["ideas"][0][
+        "planner_provenance"
+    ]["planning_source"] == "openai"
+    assert "shadow_vs_deterministic_comparison" in artifact["v2_shadow"]
