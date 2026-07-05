@@ -38,6 +38,7 @@ def test_builds_unscored_template_from_comparison_payload():
         "candidate_title"
     ] == "Lineage Blast Radius Explorer"
     assert payload["overall_preference"] is None
+    assert payload["response_quality"] is None
 
 
 def test_accepts_both_weak_and_unique_angle_quality_review():
@@ -72,6 +73,11 @@ def test_accepts_both_weak_and_unique_angle_quality_review():
         overall_preference_reason=(
             "Neither planner set directly addresses the requested workflow."
         ),
+        response_quality="exploratory",
+        response_quality_reason=(
+            "Available evidence is adjacent and does not justify "
+            "confident root-cause claims."
+        ),
         unique_angle_quality="worse",
         unique_angle_quality_reason=(
             "The unique angle is less aligned with the specific user goal."
@@ -81,6 +87,7 @@ def test_accepts_both_weak_and_unique_angle_quality_review():
     payload = record.to_dict()
 
     assert payload["overall_preference"] == "both_weak"
+    assert payload["response_quality"] == "exploratory"
     assert payload["unique_angle_quality"] == "worse"
 
 
@@ -123,3 +130,30 @@ def test_rubric_is_serializable_and_versioned():
 
     assert rubric.to_dict()["version"] == "v1"
     assert "goal_alignment_instruction" in rubric.to_dict()
+
+
+
+def test_rejects_invalid_or_unexplained_response_quality():
+    base = {
+        "rubric_version": "v1",
+        "query_fingerprint": "case-response-quality",
+        "deterministic_review": ManualSetReview(
+            planner_path="deterministic"
+        ),
+        "openai_review": ManualSetReview(
+            planner_path="openai"
+        ),
+    }
+
+    with pytest.raises(ValueError, match="response_quality must be"):
+        ManualReviewRecord(
+            **base,
+            response_quality="unknown",
+            response_quality_reason="Invalid value.",
+        ).to_dict()
+
+    with pytest.raises(ValueError, match="response_quality_reason"):
+        ManualReviewRecord(
+            **base,
+            response_quality="limited",
+        ).to_dict()

@@ -15,6 +15,11 @@ UNIQUE_ANGLE_QUALITY_OPTIONS = {
     "worse",
     "not_applicable",
 }
+RESPONSE_QUALITY_OPTIONS = {
+    "standard",
+    "limited",
+    "exploratory",
+}
 
 
 @dataclass(frozen=True)
@@ -137,6 +142,8 @@ class ManualReviewRecord:
     openai_review: ManualSetReview
     overall_preference: Optional[str] = None
     overall_preference_reason: str = ""
+    response_quality: Optional[str] = None
+    response_quality_reason: str = ""
     unique_angle_quality: Optional[str] = None
     unique_angle_quality_reason: str = ""
     reviewer_notes: str = ""
@@ -158,6 +165,24 @@ class ManualReviewRecord:
             raise ValueError(
                 "overall_preference must be one of "
                 f"{sorted(PREFERENCE_OPTIONS)} or None."
+            )
+
+        if (
+            self.response_quality is not None
+            and self.response_quality not in RESPONSE_QUALITY_OPTIONS
+        ):
+            raise ValueError(
+                "response_quality must be one of "
+                f"{sorted(RESPONSE_QUALITY_OPTIONS)} or None."
+            )
+
+        if (
+            self.response_quality is not None
+            and not self.response_quality_reason.strip()
+        ):
+            raise ValueError(
+                "response_quality_reason is required when "
+                "response_quality is set."
             )
 
         if (
@@ -197,6 +222,8 @@ class ManualReviewRecord:
             "openai_review": self.openai_review.to_dict(),
             "overall_preference": self.overall_preference,
             "overall_preference_reason": self.overall_preference_reason,
+            "response_quality": self.response_quality,
+            "response_quality_reason": self.response_quality_reason,
             "unique_angle_quality": self.unique_angle_quality,
             "unique_angle_quality_reason": (
                 self.unique_angle_quality_reason

@@ -1,15 +1,11 @@
 from dataclasses import asdict, dataclass
 from typing import Dict, Tuple
 
-from planning.manual_review_rubric import PREFERENCE_OPTIONS
+from planning.manual_review_rubric import (
+    PREFERENCE_OPTIONS,
+    RESPONSE_QUALITY_OPTIONS,
+)
 from planning.shadow_fixture_registry import fixture_cases
-
-
-_RESPONSE_QUALITY_OPTIONS = {
-    "standard",
-    "limited",
-    "exploratory",
-}
 
 
 @dataclass(frozen=True)
@@ -44,10 +40,10 @@ class FixtureReviewOracle:
                 f"{sorted(PREFERENCE_OPTIONS)}."
             )
 
-        if self.expected_response_quality not in _RESPONSE_QUALITY_OPTIONS:
+        if self.expected_response_quality not in RESPONSE_QUALITY_OPTIONS:
             raise ValueError(
                 "expected_response_quality must be one of "
-                f"{sorted(_RESPONSE_QUALITY_OPTIONS)}."
+                f"{sorted(RESPONSE_QUALITY_OPTIONS)}."
             )
 
         if not self.reviewer_expectations:

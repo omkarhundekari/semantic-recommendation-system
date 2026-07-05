@@ -41,6 +41,7 @@ def test_review_packet_is_self_contained_and_does_not_include_oracle():
     assert "Continuous Health Event Retrieval" in packet
     assert "Health Event Incident Correlator" in packet
     assert "both_weak" in packet
+    assert "standard, limited, exploratory" in packet
     assert "expected_overall_preference" not in packet
     assert "expected_response_quality" not in packet
 

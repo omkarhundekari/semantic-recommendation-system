@@ -110,6 +110,7 @@ def render_review_packet(
         f"- Scope realism: {rubric.scope_realism_instruction}",
         f"- Distinctiveness: {rubric.distinctiveness_instruction}",
         "- Overall preference options: deterministic, openai, tie, both_weak.",
+        "- Response quality options: standard, limited, exploratory.",
         "",
         "## Evidence Brief",
     ]
