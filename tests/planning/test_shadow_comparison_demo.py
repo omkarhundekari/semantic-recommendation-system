@@ -1284,3 +1284,89 @@ def test_artifact_keeps_complete_enrichment_inputs_for_future_comparison():
         "planner_provenance"
     ]["planning_source"] == "openai"
     assert "shadow_vs_deterministic_comparison" in artifact["v2_shadow"]
+
+
+def test_shadow_artifact_records_feasibility_prescreen_for_promotion():
+    from planning.evidence_support import (
+        CandidateEvidenceSupportScorer,
+    )
+    from planning.mock_generation_provider import (
+        MockCandidateGenerationProvider,
+    )
+    from planning.semantic_goal_relevance import EmbeddingVector
+
+    class FakeEncoder:
+        def encode_text(self, text):
+            return EmbeddingVector((1.0, 0.0))
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {
+                "inferred_focus": "data_engineering",
+            },
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Data Quality Research",
+                    "abstract": (
+                        "Data validation improves pipeline reliability."
+                    ),
+                }
+            ],
+        },
+        user_goal="Build a data pipeline quality project.",
+        constraints={
+            "time_available": "weekend",
+            "target_roles": ["Data Engineer"],
+        },
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Lineage-Aware Pipeline Impact Explorer",
+                        "problem_statement": (
+                            "Data engineers need to trace downstream assets "
+                            "affected by a quality incident."
+                        ),
+                        "target_user": "Data engineers",
+                        "core_workflow": [
+                            "Load lineage edges.",
+                            "Trace affected downstream assets.",
+                        ],
+                        "mvp_scope": [
+                            "Load lineage edges.",
+                            "Build an impact graph.",
+                            "Trace downstream assets.",
+                            "Rank severity.",
+                            "Add ownership mapping.",
+                            "Show a dashboard.",
+                        ],
+                        "success_metrics": [
+                            "Reduce time to assess incident impact."
+                        ],
+                        "evidence_relationship": (
+                            "Uses retained data-quality evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    }
+                ]
+            }
+        ),
+        evidence_support_scorer=CandidateEvidenceSupportScorer(
+            FakeEncoder()
+        ),
+    )
+
+    promotion = artifact["v2_shadow"]["promotion_eligibility"]
+    assessment = promotion["candidate_assessments"][0]
+
+    assert assessment["status"] == "ineligible"
+    assert assessment["signals"]["feasibility_prescreen"]["status"] == (
+        "blocked_by_constraints"
+    )
+    assert "Candidate scope exceeds the stated timeline." in (
+        assessment["blocking_reasons"]
+    )

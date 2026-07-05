@@ -5,7 +5,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from planning.candidate_models import CandidateDirection
+from planning.candidate_models import (
+    CandidateDirection,
+    CandidateGenerationRequest,
+)
 from planning.candidate_prompt import (
     CANDIDATE_GENERATION_PROMPT_VERSION,
     build_candidate_generation_payload,
@@ -22,6 +25,9 @@ from planning.evidence_support import (
 from planning.candidate_validator import validate_candidate
 from planning.promotion_eligibility import (
     assess_promotion_eligibility,
+)
+from planning.candidate_feasibility_prescreen import (
+    prescreen_candidate_feasibility,
 )
 from planning.semantic_diversification_repair import (
     build_semantic_diversification_repair_plan,
@@ -273,6 +279,8 @@ def build_shadow_comparison_artifact(
     promotion_eligibility = build_promotion_eligibility_shadow(
         selected_candidates=v2_shadow.get("selected_candidates", []),
         brief=brief,
+        generation_request=generation_request,
+        detected_domain=inference.get("inferred_focus") or "general",
         evidence_support_scorer=evidence_support_scorer,
         quality_warnings=quality_warnings,
         semantic_candidate_diversity=semantic_candidate_diversity,
@@ -379,6 +387,8 @@ def _candidate_diversity_trace_from_dict(
 def build_promotion_eligibility_shadow(
     selected_candidates: List[Dict[str, Any]],
     brief: Any,
+    generation_request: CandidateGenerationRequest,
+    detected_domain: str,
     evidence_support_scorer: Optional[Any],
     quality_warnings: Any,
     semantic_candidate_diversity: Optional[Dict[str, Any]],
@@ -426,6 +436,13 @@ def build_promotion_eligibility_shadow(
             assessment=evidence_assessment,
         )
 
+        feasibility_prescreen = prescreen_candidate_feasibility(
+            candidate=candidate,
+            brief=brief,
+            request=generation_request,
+            detected_domain=detected_domain,
+        )
+
         assessments.append(
             assess_promotion_eligibility(
                 candidate=candidate,
@@ -433,6 +450,7 @@ def build_promotion_eligibility_shadow(
                 grounding=grounding,
                 quality_warnings=quality_warnings,
                 semantic_candidate_diversity=diversity_trace,
+                feasibility_prescreen=feasibility_prescreen,
             ).to_dict()
         )
 
