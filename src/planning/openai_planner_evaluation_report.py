@@ -302,6 +302,98 @@ def _promotion_eligibility_from_artifact(
     }
 
 
+def _candidate_promotion_audit(
+    promotion_eligibility: Dict[str, Any],
+    goal_relevance: List[Dict[str, Any]],
+    grounding: List[Dict[str, Any]],
+    diversity: Optional[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    goal_by_title = {
+        str(trace.get("candidate_title", "")).strip(): trace
+        for trace in goal_relevance
+        if isinstance(trace, dict)
+    }
+    grounding_by_title = {
+        str(trace.get("candidate_title", "")).strip(): trace
+        for trace in grounding
+        if isinstance(trace, dict)
+    }
+
+    nearest_pairs: Dict[str, Dict[str, Any]] = {}
+
+    for pair in (
+        diversity.get("pairwise_similarity", [])
+        if isinstance(diversity, dict)
+        else []
+    ):
+        if not isinstance(pair, dict):
+            continue
+
+        left = str(pair.get("candidate_a_title", "")).strip()
+        right = str(pair.get("candidate_b_title", "")).strip()
+
+        try:
+            similarity = float(pair.get("raw_cosine"))
+        except (TypeError, ValueError):
+            continue
+
+        for title, neighbor in ((left, right), (right, left)):
+            current = nearest_pairs.get(title)
+
+            if current is None or similarity > current["raw_cosine"]:
+                nearest_pairs[title] = {
+                    "candidate_title": neighbor,
+                    "raw_cosine": round(similarity, 4),
+                    "flagged": bool(pair.get("flagged", False)),
+                }
+
+    audit_rows = []
+
+    for assessment in promotion_eligibility.get(
+        "candidate_assessments",
+        [],
+    ):
+        if not isinstance(assessment, dict):
+            continue
+
+        title = str(assessment.get("candidate_title", "")).strip()
+        goal = goal_by_title.get(title, {})
+        grounding_trace = grounding_by_title.get(title, {})
+
+        audit_rows.append(
+            {
+                "candidate_title": title,
+                "promotion_status": assessment.get("status"),
+                "eligible_for_product_promotion": assessment.get(
+                    "eligible_for_product_promotion",
+                    False,
+                ),
+                "blocking_reasons": list(
+                    assessment.get("blocking_reasons", [])
+                ),
+                "review_reasons": list(
+                    assessment.get("review_reasons", [])
+                ),
+                "quality_warning_codes": list(
+                    assessment.get("signals", {}).get(
+                        "candidate_warning_codes",
+                        [],
+                    )
+                ),
+                "goal_relevance_raw_cosine": goal.get("raw_cosine"),
+                "grounding_adequacy_class": grounding_trace.get(
+                    "adequacy_class"
+                ),
+                "minimum_cited_alignment": grounding_trace.get(
+                    "min_cited_alignment"
+                ),
+                "nearest_candidate_pair": nearest_pairs.get(title),
+            }
+        )
+
+    return audit_rows
+
+
 def _case_report(
     case: Dict[str, Any],
     artifact: Optional[Dict[str, Any]],
@@ -365,6 +457,15 @@ def _case_report(
         "promotion_eligibility": _promotion_eligibility_from_artifact(
             shadow=shadow,
             quality_warnings=quality_warnings,
+        ),
+        "promotion_audit": _candidate_promotion_audit(
+            promotion_eligibility=_promotion_eligibility_from_artifact(
+                shadow=shadow,
+                quality_warnings=quality_warnings,
+            ),
+            goal_relevance=goal_relevance,
+            grounding=grounding,
+            diversity=diversity,
         ),
         "goal_relevance_summary": {
             "candidate_count": len(goal_scores),

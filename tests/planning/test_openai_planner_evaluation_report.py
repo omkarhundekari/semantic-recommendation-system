@@ -106,10 +106,26 @@ def test_recomputes_promotion_eligibility_for_older_artifacts(tmp_path):
             "shadow_readiness": {"status": "ready"},
             "semantic_candidate_diversity": {
                 "similarity_threshold": 0.82,
-                "pairwise_similarity": [],
+                "pairwise_similarity": [
+                    {
+                        "candidate_a_title": (
+                            "Incident Correlation Workbench"
+                        ),
+                        "candidate_b_title": "Incident Timeline Tool",
+                        "raw_cosine": 0.71,
+                        "flagged": False,
+                    }
+                ],
                 "passed": True,
             },
-            "semantic_goal_relevance": [],
+            "semantic_goal_relevance": [
+                {
+                    "candidate_title": (
+                        "Incident Correlation Workbench"
+                    ),
+                    "raw_cosine": 0.63,
+                }
+            ],
             "grounding_adequacy": [
                 {
                     "candidate_title": "Incident Correlation Workbench",
@@ -210,6 +226,27 @@ def test_recomputes_promotion_eligibility_for_older_artifacts(tmp_path):
         "ineligible_count": 0,
         "not_assessed_case_count": 0,
     }
+
+    audit = report["case_reports"]["incident"]["promotion_audit"]
+
+    assert audit == [
+        {
+            "candidate_title": "Incident Correlation Workbench",
+            "promotion_status": "eligible",
+            "eligible_for_product_promotion": True,
+            "blocking_reasons": [],
+            "review_reasons": [],
+            "quality_warning_codes": [],
+            "goal_relevance_raw_cosine": 0.63,
+            "grounding_adequacy_class": "cited_with_direct_scope",
+            "minimum_cited_alignment": 0.46,
+            "nearest_candidate_pair": {
+                "candidate_title": "Incident Timeline Tool",
+                "raw_cosine": 0.71,
+                "flagged": False,
+            },
+        }
+    ]
 
 
 def test_marks_sparse_legacy_artifact_promotion_as_not_assessed(tmp_path):
