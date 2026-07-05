@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from planning.candidate_provenance import CandidateProvenance
 from schemas.decision_trace_models import ProjectDecisionTrace
 
 
@@ -72,6 +73,7 @@ class ProjectDirection(BaseModel):
     tech_stack: List[str] = Field(default_factory=list)
     target_roles: List[str] = Field(default_factory=list)
     evidence: List[EvidenceReference] = Field(default_factory=list)
+    planner_provenance: Optional[CandidateProvenance] = None
     decision_trace: Optional[ProjectDecisionTrace] = None
     roadmap: List[RoadmapStage] = Field(default_factory=list)
     risks: List[str] = Field(default_factory=list)

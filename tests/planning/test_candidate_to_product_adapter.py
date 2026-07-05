@@ -1,4 +1,5 @@
 from planning.candidate_models import CandidateDirection
+from planning.candidate_provenance import CandidateProvenance
 from planning.candidate_to_product_adapter import (
     adapt_candidate_to_product_idea,
 )
@@ -155,3 +156,39 @@ def test_adapter_produces_fields_needed_by_existing_verifier():
     }
 
     assert required_fields.issubset(idea)
+
+
+def test_adapter_preserves_optional_planner_provenance():
+    provenance = CandidateProvenance(
+        planning_source="openai_repaired",
+        prompt_version="v1",
+        generation_attempt=3,
+        replacement_angle="Build a lineage-aware blast-radius explorer.",
+        rejected_alternatives=2,
+        grounding_adequacy="cited_with_direct_scope",
+        diversity_check_passed=True,
+        promotion_eligible=True,
+    )
+
+    idea = adapt_candidate_to_product_idea(
+        candidate=make_candidate(),
+        brief=make_brief(),
+        detected_domain="cloud_platform",
+        planner_provenance=provenance,
+    )
+
+    assert idea["planner_provenance"]["planning_source"] == (
+        "openai_repaired"
+    )
+    assert idea["planner_provenance"]["generation_attempt"] == 3
+    assert idea["planner_provenance"]["rejected_alternatives"] == 2
+
+
+def test_adapter_omits_planner_provenance_when_not_supplied():
+    idea = adapt_candidate_to_product_idea(
+        candidate=make_candidate(),
+        brief=make_brief(),
+        detected_domain="cloud_platform",
+    )
+
+    assert "planner_provenance" not in idea

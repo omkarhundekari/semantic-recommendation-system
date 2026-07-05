@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from planning.candidate_models import CandidateDirection
+from planning.candidate_provenance import CandidateProvenance
 from planning.planner_models import EvidenceBrief, EvidenceSource
 
 
@@ -78,6 +79,7 @@ def adapt_candidate_to_product_idea(
     brief: EvidenceBrief,
     detected_domain: str,
     target_roles: Optional[List[str]] = None,
+    planner_provenance: Optional[CandidateProvenance] = None,
 ) -> Dict[str, Any]:
     """
     Convert a validated planner candidate into the legacy product idea shape.
@@ -146,5 +148,12 @@ def adapt_candidate_to_product_idea(
         ),
         "based_on_paper": (
             primary_source.title if primary_source else ""
+        ),
+        **(
+            {
+                "planner_provenance": planner_provenance.to_dict(),
+            }
+            if planner_provenance is not None
+            else {}
         ),
     }
