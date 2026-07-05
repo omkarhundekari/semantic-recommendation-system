@@ -18,6 +18,7 @@ def test_first_fixture_specs_are_valid_and_match_registry_cases():
     assert [spec.case.case_id for spec in specs] == [
         "data_quality_strong_direct",
         "adversarial_cloud_incident_health_near_miss",
+        "sparse_evidence_cloud_cost",
     ]
 
     for spec in specs:
@@ -35,6 +36,7 @@ def test_fixture_spec_rejects_unknown_case():
     [
         "data_quality_strong_direct",
         "adversarial_cloud_incident_health_near_miss",
+        "sparse_evidence_cloud_cost",
     ],
 )
 def test_fixture_specs_build_reviewable_artifacts(case_id):
@@ -86,3 +88,31 @@ def test_adversarial_fixture_keeps_near_miss_source_reviewable():
     )
 
     assert near_miss_candidate["source_ids"] == ["paper-health-events"]
+
+
+
+def test_sparse_fixture_oracle_is_separate_from_generated_artifact():
+    import json
+
+    from planning.fixture_review_oracles import (
+        get_fixture_review_oracle,
+    )
+
+    spec = get_fixture_specification("sparse_evidence_cloud_cost")
+    oracle = get_fixture_review_oracle(spec.case.case_id)
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload=spec.evidence_payload,
+        user_goal=spec.case.user_goal,
+        constraints=spec.case.constraints,
+        provider=MockCandidateGenerationProvider(
+            response=spec.mock_response
+        ),
+    )
+
+    serialized_artifact = json.dumps(artifact)
+
+    assert oracle.expected_overall_preference == "both_weak"
+    assert oracle.expected_response_quality == "exploratory"
+    assert "expected_overall_preference" not in serialized_artifact
+    assert "expected_response_quality" not in serialized_artifact

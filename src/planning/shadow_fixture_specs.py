@@ -411,6 +411,138 @@ def fixture_specifications() -> Tuple[ShadowFixtureSpecification, ...]:
                 "An unscored manual review template is present.",
             ),
         ),
+        ShadowFixtureSpecification(
+            case=_case("sparse_evidence_cloud_cost"),
+            evidence_payload={
+                "inference": {
+                    "inferred_focus": "cloud_platform",
+                },
+                "merged_results": [
+                    {
+                        "document_id": "paper-resource-allocation",
+                        "source_type": "research_paper",
+                        "title": (
+                            "Resource Allocation Trends in Distributed Systems"
+                        ),
+                        "abstract": (
+                            "Resource allocation policies can improve "
+                            "utilization across distributed workloads."
+                        ),
+                        "category": "cs.DC",
+                        "retrieval_rank": 1,
+                    },
+                    {
+                        "repository_id": "repo-billing-export",
+                        "source_type": "github_repository",
+                        "title": "Cloud Billing Export Examples",
+                        "readme_excerpt": (
+                            "Examples for exporting daily billing records "
+                            "into tables for reporting and exploration."
+                        ),
+                        "retrieval_rank": 2,
+                    },
+                ],
+            },
+            mock_response={
+                "candidates": [
+                    {
+                        "title": "Cloud Cost Optimization Command Center",
+                        "problem_statement": (
+                            "Cloud teams need one place to find, explain, "
+                            "and optimize all unexpected infrastructure cost."
+                        ),
+                        "target_user": "Cloud engineers",
+                        "core_workflow": [
+                            "Load billing exports.",
+                            "Identify expensive resources.",
+                            "Recommend optimization actions.",
+                        ],
+                        "mvp_scope": [
+                            "Load daily billing records.",
+                            "Group costs by service.",
+                            "Show top spending services.",
+                            "Recommend generic savings actions.",
+                        ],
+                        "success_metrics": [
+                            "Estimated monthly savings."
+                        ],
+                        "evidence_relationship": (
+                            "Uses billing-export implementation context and "
+                            "general resource-allocation research."
+                        ),
+                        "source_ids": [
+                            "paper-resource-allocation",
+                            "repo-billing-export",
+                        ],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    },
+                    {
+                        "title": "FinOps Root-Cause Recommendation Engine",
+                        "problem_statement": (
+                            "Teams need automated explanations for unexpected "
+                            "cloud spend and resource waste."
+                        ),
+                        "target_user": "Cloud engineers",
+                        "core_workflow": [
+                            "Load billing data.",
+                            "Detect cost changes.",
+                            "Generate root-cause recommendations.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample billing rows.",
+                            "Detect daily spending changes.",
+                            "Display generic cost explanations.",
+                            "List possible optimization actions.",
+                        ],
+                        "success_metrics": [
+                            "Number of cost changes explained."
+                        ],
+                        "evidence_relationship": (
+                            "Adapts generic resource-allocation concepts to "
+                            "cloud cost analysis."
+                        ),
+                        "source_ids": ["paper-resource-allocation"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    },
+                    {
+                        "title": "Billing Export Spend Explorer",
+                        "problem_statement": (
+                            "Teams need a simple way to inspect spending "
+                            "records from a cloud billing export."
+                        ),
+                        "target_user": "Cloud engineers",
+                        "core_workflow": [
+                            "Load billing exports.",
+                            "Filter service spend.",
+                            "Inspect daily cost trends.",
+                        ],
+                        "mvp_scope": [
+                            "Load a billing export CSV.",
+                            "Filter records by service.",
+                            "Show daily spend totals.",
+                            "Display top cost categories.",
+                        ],
+                        "success_metrics": [
+                            "Number of billing records explored."
+                        ],
+                        "evidence_relationship": (
+                            "Uses billing-export implementation context."
+                        ),
+                        "source_ids": ["repo-billing-export"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    },
+                ],
+            },
+            reviewability_requirements=(
+                "Evidence limitations remain visible to reviewers.",
+                "The artifact does not contain an expected winner.",
+                "The packet permits both_weak as an explicit outcome.",
+                "Candidates expose any confidence beyond source support.",
+            ),
+        ),
     )
 
 
