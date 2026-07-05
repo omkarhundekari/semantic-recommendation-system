@@ -1,0 +1,2010 @@
+{
+  "schema_version": "1.1",
+  "artifact_identity": {
+    "artifact_id": "ceb26b6bf0cb44b6a3d4cbe09836ccc1",
+    "generation_timestamp_utc": "20260705T170301Z",
+    "fixture_id": "data_quality_strong_direct"
+  },
+  "generated_at_utc": "20260705T170301Z",
+  "query": "Build a data engineering project that helps teams detect pipeline data-quality failures and prioritize remediation.",
+  "constraints": {
+    "skill_level": "intermediate",
+    "time_available": "3 weeks",
+    "target_roles": [
+      "Data Engineer"
+    ],
+    "preferred_stack": [
+      "Python",
+      "FastAPI"
+    ]
+  },
+  "retrieval": {
+    "selected_route": null,
+    "expanded_query": null,
+    "focused_query": null,
+    "inference": {
+      "inferred_focus": "data_engineering"
+    },
+    "merged_evidence_count": 3
+  },
+  "legacy_planner": {
+    "direction_count": 3,
+    "directions": [
+      {
+        "title": "Data Pipeline Quality Monitor",
+        "evidence_title": "Data Quality Monitoring for Reliable Pipelines",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "data_engineering"
+      },
+      {
+        "title": "Data Lineage and Dependency Visualizer",
+        "evidence_title": "Lineage-Aware Impact Analysis for Data Incidents",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "data_engineering"
+      },
+      {
+        "title": "Warehouse Query and Cost Intelligence Dashboard",
+        "evidence_title": "Data Quality Monitoring for Reliable Pipelines",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "data_engineering"
+      }
+    ],
+    "raw_ideas": [
+      {
+        "project_title": "Data Pipeline Quality Monitor",
+        "based_on_paper": "Data Quality Monitoring for Reliable Pipelines",
+        "evidence_title": "Data Quality Monitoring for Reliable Pipelines",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.DB",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "data_engineering",
+        "detected_intent": "project_building",
+        "idea_angle": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+        "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_focus_type": "buildable_gap",
+        "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research methods observed: anomaly detection. Research concerns observed: data quality, deployment reliability.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Pipeline Quality Observability Toolkit",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Data Engineering",
+          "Evaluation",
+          "Monitoring",
+          "Data Quality"
+        ],
+        "extracted_skills": [
+          "Data Quality",
+          "ETL",
+          "SQL",
+          "Pipeline Monitoring",
+          "Schema Validation",
+          "Data Freshness",
+          "Data Engineering"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Data Quality Monitoring for Reliable Pipelines'. The paper provides evidence related to: Data validation, anomaly detection, and quality observability improve pipeline reliability and remediation decisions.... The generated project 'Data Pipeline Quality Monitor' turns that research direction into a buildable software prototype focused on Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations..",
+        "mvp_scope": [
+          "Ingest a small source dataset into a staged raw table or file layer.",
+          "Apply transformations and create a clean analytics-ready output table.",
+          "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+          "Track pipeline status, row counts, failures, and transformation lineage.",
+          "Build a monitoring view with failed checks and recommended remediation actions.",
+          "Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add data lineage graph and pipeline dependency impact analysis.",
+          "Add data contract validation for schema changes."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "SQL",
+          "Pandas",
+          "Data Validation",
+          "Airflow Concepts",
+          "Data Quality",
+          "ETL",
+          "Pipeline Monitoring",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Data Pipeline Quality Monitor that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Data Engineer",
+          "Analytics Engineer",
+          "Backend Engineer",
+          "Data Platform Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Data Lineage and Dependency Visualizer",
+        "based_on_paper": "Lineage-Aware Impact Analysis for Data Incidents",
+        "evidence_title": "Lineage-Aware Impact Analysis for Data Incidents",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.DB",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "data_engineering",
+        "detected_intent": "project_building",
+        "idea_angle": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+        "opportunity_area": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+        "evidence_focus_type": "research_or_reliability_gap",
+        "evidence_focus_statement": "Address evidence-related concerns around: data quality, deployment reliability.",
+        "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research methods observed: anomaly detection. Research concerns observed: data quality, deployment reliability.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Pipeline Quality Observability Toolkit",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Data Engineering",
+          "Evaluation",
+          "Monitoring",
+          "Data Quality"
+        ],
+        "extracted_skills": [
+          "Data Lineage",
+          "Dependency Mapping",
+          "ETL",
+          "Impact Analysis",
+          "SQL",
+          "Data Platform Design",
+          "Data Engineering"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Lineage-Aware Impact Analysis for Data Incidents'. The paper provides evidence related to: Dataset lineage can identify downstream assets affected by quality incidents and support priority-based remediation.... The generated project 'Data Lineage and Dependency Visualizer' turns that research direction into a buildable software prototype focused on Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations..",
+        "mvp_scope": [
+          "Ingest a small source dataset into a staged raw table or file layer.",
+          "Apply transformations and create a clean analytics-ready output table.",
+          "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+          "Track pipeline status, row counts, failures, and transformation lineage.",
+          "Build a monitoring view with failed checks and recommended remediation actions.",
+          "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add data lineage graph and pipeline dependency impact analysis.",
+          "Add data contract validation for schema changes."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "SQL",
+          "Pandas",
+          "Data Validation",
+          "Airflow Concepts",
+          "Data Lineage",
+          "Dependency Mapping",
+          "ETL",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Data Lineage and Dependency Visualizer that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Data Engineer",
+          "Analytics Engineer",
+          "Backend Engineer",
+          "Data Platform Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Warehouse Query and Cost Intelligence Dashboard",
+        "based_on_paper": "Data Quality Monitoring for Reliable Pipelines",
+        "evidence_title": "Data Quality Monitoring for Reliable Pipelines",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.DB",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "data_engineering",
+        "detected_intent": "project_building",
+        "idea_angle": "Analyze SQL usage, expensive queries, warehouse cost patterns, and optimization opportunities.",
+        "opportunity_area": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+        "evidence_focus_type": "research_or_reliability_gap",
+        "evidence_focus_statement": "Address evidence-related concerns around: data quality, deployment reliability.",
+        "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research methods observed: anomaly detection. Research concerns observed: data quality, deployment reliability.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Pipeline Quality Observability Toolkit",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Data Engineering",
+          "Evaluation",
+          "Monitoring",
+          "Data Quality"
+        ],
+        "extracted_skills": [
+          "SQL",
+          "Query Optimization",
+          "Cost Analysis",
+          "Warehouse Analytics",
+          "Dashboarding",
+          "Performance Tuning",
+          "Data Engineering"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Data Quality Monitoring for Reliable Pipelines'. The paper provides evidence related to: Data validation, anomaly detection, and quality observability improve pipeline reliability and remediation decisions.... The generated project 'Warehouse Query and Cost Intelligence Dashboard' turns that research direction into a buildable software prototype focused on Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems..",
+        "mvp_scope": [
+          "Ingest a small source dataset into a staged raw table or file layer.",
+          "Apply transformations and create a clean analytics-ready output table.",
+          "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+          "Track pipeline status, row counts, failures, and transformation lineage.",
+          "Build a monitoring view with failed checks and recommended remediation actions.",
+          "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add data lineage graph and pipeline dependency impact analysis.",
+          "Add data contract validation for schema changes."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "SQL",
+          "Pandas",
+          "Data Validation",
+          "Airflow Concepts",
+          "Query Optimization",
+          "Cost Analysis",
+          "Warehouse Analytics",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Warehouse Query and Cost Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Data Engineer",
+          "Analytics Engineer",
+          "Backend Engineer",
+          "Data Platform Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Data Pipeline Quality Monitor",
+          "based_on_paper": "Data Quality Monitoring for Reliable Pipelines",
+          "evidence_title": "Data Quality Monitoring for Reliable Pipelines",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.DB",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "data_engineering",
+          "detected_intent": "project_building",
+          "idea_angle": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+          "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_focus_type": "buildable_gap",
+          "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research methods observed: anomaly detection. Research concerns observed: data quality, deployment reliability.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Pipeline Quality Observability Toolkit",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Data Engineering",
+            "Evaluation",
+            "Monitoring",
+            "Data Quality"
+          ],
+          "extracted_skills": [
+            "Data Quality",
+            "ETL",
+            "SQL",
+            "Pipeline Monitoring",
+            "Schema Validation",
+            "Data Freshness",
+            "Data Engineering"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Data Quality Monitoring for Reliable Pipelines'. The paper provides evidence related to: Data validation, anomaly detection, and quality observability improve pipeline reliability and remediation decisions.... The generated project 'Data Pipeline Quality Monitor' turns that research direction into a buildable software prototype focused on Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations..",
+          "mvp_scope": [
+            "Ingest a small source dataset into a staged raw table or file layer.",
+            "Apply transformations and create a clean analytics-ready output table.",
+            "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+            "Track pipeline status, row counts, failures, and transformation lineage.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add data lineage graph and pipeline dependency impact analysis.",
+            "Add data contract validation for schema changes."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "SQL",
+            "Pandas",
+            "Data Validation",
+            "Airflow Concepts",
+            "Data Quality",
+            "ETL",
+            "Pipeline Monitoring",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Data Pipeline Quality Monitor that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Analytics Engineer",
+            "Backend Engineer",
+            "Data Platform Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.4,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Data Pipeline Quality Monitor scores 8.4/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Data Quality, ETL, SQL, Pipeline Monitoring, Schema Validation, Data Freshness. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          }
+        },
+        {
+          "project_title": "Data Lineage and Dependency Visualizer",
+          "based_on_paper": "Lineage-Aware Impact Analysis for Data Incidents",
+          "evidence_title": "Lineage-Aware Impact Analysis for Data Incidents",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.DB",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "data_engineering",
+          "detected_intent": "project_building",
+          "idea_angle": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+          "opportunity_area": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+          "evidence_focus_type": "research_or_reliability_gap",
+          "evidence_focus_statement": "Address evidence-related concerns around: data quality, deployment reliability.",
+          "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research methods observed: anomaly detection. Research concerns observed: data quality, deployment reliability.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Pipeline Quality Observability Toolkit",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Data Engineering",
+            "Evaluation",
+            "Monitoring",
+            "Data Quality"
+          ],
+          "extracted_skills": [
+            "Data Lineage",
+            "Dependency Mapping",
+            "ETL",
+            "Impact Analysis",
+            "SQL",
+            "Data Platform Design",
+            "Data Engineering"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Lineage-Aware Impact Analysis for Data Incidents'. The paper provides evidence related to: Dataset lineage can identify downstream assets affected by quality incidents and support priority-based remediation.... The generated project 'Data Lineage and Dependency Visualizer' turns that research direction into a buildable software prototype focused on Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations..",
+          "mvp_scope": [
+            "Ingest a small source dataset into a staged raw table or file layer.",
+            "Apply transformations and create a clean analytics-ready output table.",
+            "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+            "Track pipeline status, row counts, failures, and transformation lineage.",
+            "Build a monitoring view with failed checks and recommended remediation actions.",
+            "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add data lineage graph and pipeline dependency impact analysis.",
+            "Add data contract validation for schema changes."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "SQL",
+            "Pandas",
+            "Data Validation",
+            "Airflow Concepts",
+            "Data Lineage",
+            "Dependency Mapping",
+            "ETL",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Data Lineage and Dependency Visualizer that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Analytics Engineer",
+            "Backend Engineer",
+            "Data Platform Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.4,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Data Lineage and Dependency Visualizer scores 8.4/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Data Lineage, Dependency Mapping, ETL, Impact Analysis, SQL, Data Platform Design. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          }
+        },
+        {
+          "project_title": "Warehouse Query and Cost Intelligence Dashboard",
+          "based_on_paper": "Data Quality Monitoring for Reliable Pipelines",
+          "evidence_title": "Data Quality Monitoring for Reliable Pipelines",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.DB",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "data_engineering",
+          "detected_intent": "project_building",
+          "idea_angle": "Analyze SQL usage, expensive queries, warehouse cost patterns, and optimization opportunities.",
+          "opportunity_area": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+          "evidence_focus_type": "research_or_reliability_gap",
+          "evidence_focus_statement": "Address evidence-related concerns around: data quality, deployment reliability.",
+          "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research methods observed: anomaly detection. Research concerns observed: data quality, deployment reliability.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Pipeline Quality Observability Toolkit",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Data Engineering",
+            "Evaluation",
+            "Monitoring",
+            "Data Quality"
+          ],
+          "extracted_skills": [
+            "SQL",
+            "Query Optimization",
+            "Cost Analysis",
+            "Warehouse Analytics",
+            "Dashboarding",
+            "Performance Tuning",
+            "Data Engineering"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Data Quality Monitoring for Reliable Pipelines'. The paper provides evidence related to: Data validation, anomaly detection, and quality observability improve pipeline reliability and remediation decisions.... The generated project 'Warehouse Query and Cost Intelligence Dashboard' turns that research direction into a buildable software prototype focused on Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems..",
+          "mvp_scope": [
+            "Ingest a small source dataset into a staged raw table or file layer.",
+            "Apply transformations and create a clean analytics-ready output table.",
+            "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+            "Track pipeline status, row counts, failures, and transformation lineage.",
+            "Build a monitoring view with failed checks and recommended remediation actions.",
+            "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add data lineage graph and pipeline dependency impact analysis.",
+            "Add data contract validation for schema changes.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "SQL",
+            "Pandas",
+            "Data Validation",
+            "Airflow Concepts",
+            "Query Optimization",
+            "Cost Analysis",
+            "Warehouse Analytics",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Warehouse Query and Cost Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Analytics Engineer",
+            "Backend Engineer",
+            "Data Platform Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Warehouse Query and Cost Intelligence Dashboard scores 8.2/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as SQL, Query Optimization, Cost Analysis, Warehouse Analytics, Dashboarding, Performance Tuning. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          }
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    }
+  },
+  "v2_shadow": {
+    "status": "fixture_evaluated",
+    "report": {
+      "evidence_brief": {
+        "query": "Build a data engineering project that helps teams detect pipeline data-quality failures and prioritize remediation.",
+        "sources": [
+          {
+            "source_id": "repo-observability",
+            "source_type": "github_repository",
+            "title": "Pipeline Quality Observability Toolkit",
+            "excerpt": "Pipeline Quality Observability Toolkit Track data checks, failed records, pipeline owners, and quality trends for engineering teams.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 3,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "paper-quality",
+            "source_type": "research_paper",
+            "title": "Data Quality Monitoring for Reliable Pipelines",
+            "excerpt": "Data Quality Monitoring for Reliable Pipelines Data validation, anomaly detection, and quality observability improve pipeline reliability and remediation decisions.",
+            "category": "cs.DB",
+            "url": null,
+            "retrieval_rank": 1,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "paper-lineage",
+            "source_type": "research_paper",
+            "title": "Lineage-Aware Impact Analysis for Data Incidents",
+            "excerpt": "Lineage-Aware Impact Analysis for Data Incidents Dataset lineage can identify downstream assets affected by quality incidents and support priority-based remediation.",
+            "category": "cs.DB",
+            "url": null,
+            "retrieval_rank": 2,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          }
+        ],
+        "source_counts": {
+          "github_repository": 1,
+          "research_paper": 2
+        },
+        "recurring_concepts": [
+          "data",
+          "quality",
+          "observability",
+          "pipeline",
+          "remediation"
+        ],
+        "coverage_warnings": []
+      },
+      "evidence_curation": {
+        "required_anchor_terms": [],
+        "retained": [
+          {
+            "item": {
+              "repository_id": "repo-observability",
+              "source_type": "github_repository",
+              "title": "Pipeline Quality Observability Toolkit",
+              "readme_excerpt": "Track data checks, failed records, pipeline owners, and quality trends for engineering teams.",
+              "retrieval_rank": 3
+            },
+            "relevance_score": 8.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "data",
+              "engineering",
+              "pipeline",
+              "teams"
+            ],
+            "query_term_document_frequencies": {
+              "data": 3,
+              "engineering": 1,
+              "pipeline": 2,
+              "teams": 1
+            },
+            "unique_query_terms": [
+              "engineering",
+              "teams"
+            ],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "document_id": "paper-quality",
+              "source_type": "research_paper",
+              "title": "Data Quality Monitoring for Reliable Pipelines",
+              "abstract": "Data validation, anomaly detection, and quality observability improve pipeline reliability and remediation decisions.",
+              "category": "cs.DB",
+              "retrieval_rank": 1
+            },
+            "relevance_score": 6.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "data",
+              "pipeline",
+              "remediation"
+            ],
+            "query_term_document_frequencies": {
+              "data": 3,
+              "pipeline": 2,
+              "remediation": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "document_id": "paper-lineage",
+              "source_type": "research_paper",
+              "title": "Lineage-Aware Impact Analysis for Data Incidents",
+              "abstract": "Dataset lineage can identify downstream assets affected by quality incidents and support priority-based remediation.",
+              "category": "cs.DB",
+              "retrieval_rank": 2
+            },
+            "relevance_score": 4.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "data",
+              "remediation"
+            ],
+            "query_term_document_frequencies": {
+              "data": 3,
+              "remediation": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          }
+        ],
+        "dropped": [],
+        "retained_source_counts": {
+          "github_repository": 1,
+          "research_paper": 2
+        }
+      },
+      "planning_diagnostics": {
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "provider_called": true,
+        "prompt_content_hash": "3ad5582ae32f6530d441281a5334ea15d3a99dd6710b2eef022f37536f73b939"
+      },
+      "selected_titles": [
+        "Pipeline Data-Quality Monitor",
+        "Quality Trend and Ownership Workbench",
+        "Lineage Impact Explorer for Data Incidents"
+      ],
+      "selected_candidates": [
+        {
+          "title": "Pipeline Data-Quality Monitor",
+          "problem_statement": "Data engineers need a focused way to detect and triage recurring quality failures in pipelines.",
+          "target_user": "Data engineers",
+          "core_workflow": [
+            "Load representative pipeline quality events.",
+            "Run transparent validation checks.",
+            "Show failed checks and remediation priority."
+          ],
+          "mvp_scope": [
+            "Load sample pipeline records and quality rules.",
+            "Run completeness and schema validation checks.",
+            "Store failed checks with timestamps.",
+            "Show a dashboard of active quality failures."
+          ],
+          "success_metrics": [
+            "Number of detected quality failures."
+          ],
+          "evidence_relationship": "Uses direct evidence on data validation and quality observability.",
+          "source_ids": [
+            "paper-quality"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "ranking": {
+            "score": 0.911,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Quality Trend and Ownership Workbench",
+          "problem_statement": "Engineering teams need to see whether recurring quality issues are concentrated by pipeline and owner.",
+          "target_user": "Data platform teams",
+          "core_workflow": [
+            "Load historical quality events.",
+            "Group failures by pipeline and owner.",
+            "Review recurring issue trends."
+          ],
+          "mvp_scope": [
+            "Load historical quality-event records.",
+            "Group failures by pipeline and owner.",
+            "Calculate recurring failure counts.",
+            "Show trend and ownership views."
+          ],
+          "success_metrics": [
+            "Number of recurring issues surfaced."
+          ],
+          "evidence_relationship": "Uses implementation context for pipeline quality observability workflows.",
+          "source_ids": [
+            "repo-observability"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "ranking": {
+            "score": 0.911,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Lineage Impact Explorer for Data Incidents",
+          "problem_statement": "Teams struggle to identify downstream datasets and owners affected by a known quality incident.",
+          "target_user": "Data engineers",
+          "core_workflow": [
+            "Load incident and lineage records.",
+            "Trace affected downstream assets.",
+            "Rank affected owners and dashboards."
+          ],
+          "mvp_scope": [
+            "Store sample dataset lineage edges.",
+            "Load a known data-quality incident.",
+            "Compute affected downstream datasets.",
+            "Show an owner and impact report."
+          ],
+          "success_metrics": [
+            "Time required to identify affected assets."
+          ],
+          "evidence_relationship": "Uses direct evidence on lineage-aware impact analysis for incidents.",
+          "source_ids": [
+            "paper-lineage"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "ranking": {
+            "score": 0.856,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.5,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.50.",
+              "Completeness score: 1.00."
+            ]
+          }
+        }
+      ],
+      "legacy_titles": [
+        "Data Pipeline Quality Monitor",
+        "Data Lineage and Dependency Visualizer",
+        "Warehouse Query and Cost Intelligence Dashboard"
+      ],
+      "comparison": {
+        "legacy_direction_count": 3,
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "v2_generated_candidate_count": 3,
+        "v2_valid_candidate_count": 3,
+        "v2_selected_candidate_count": 3,
+        "v2_selected_titles": [
+          "Pipeline Data-Quality Monitor",
+          "Quality Trend and Ownership Workbench",
+          "Lineage Impact Explorer for Data Incidents"
+        ],
+        "provider_called": true,
+        "coverage_warnings": []
+      },
+      "shadow_readiness": {
+        "status": "ready",
+        "reasons": [
+          "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+        ],
+        "signals": {
+          "raw_evidence_count": 3,
+          "curated_evidence_count": 3,
+          "dropped_evidence_count": 0,
+          "generated_candidate_count": 3,
+          "valid_candidate_count": 3,
+          "selected_candidate_count": 3,
+          "provider_called": true,
+          "coverage_warnings": [],
+          "validation_errors": [],
+          "validation_warnings": []
+        }
+      },
+      "prompt_content_hash": "3ad5582ae32f6530d441281a5334ea15d3a99dd6710b2eef022f37536f73b939"
+    },
+    "evidence_quality": {
+      "status": "not_routed_pending_calibration",
+      "metrics": {
+        "curation_pool_size": 3,
+        "retained_source_count": 3,
+        "final_brief_source_count": 3,
+        "direct_source_count": 3,
+        "adjacent_source_count": 0,
+        "required_anchor_count": 0,
+        "matched_required_anchor_count": 0,
+        "query_anchor_coverage": null,
+        "unique_query_term_count": 2,
+        "unique_query_phrase_count": 0,
+        "source_type_count": 2,
+        "dominant_source_type": "research_paper",
+        "dominant_source_type_fraction": 0.6666666666666666,
+        "top_direct_relevance_margin": 2.0,
+        "coverage_warnings": []
+      },
+      "thresholds": {
+        "version": "v1",
+        "calibration_status": "unresolved",
+        "sparse_direct_source_threshold": null,
+        "ambiguity_top_margin_threshold": null,
+        "low_diversity_fraction_threshold": null
+      },
+      "evidence_sparse": null,
+      "evidence_ambiguous": null,
+      "source_diversity_low": null,
+      "unresolved_signal_names": [
+        "evidence_sparse",
+        "evidence_ambiguous",
+        "source_diversity_low"
+      ],
+      "routing_ready": false
+    },
+    "selected_candidates": [
+      {
+        "title": "Pipeline Data-Quality Monitor",
+        "problem_statement": "Data engineers need a focused way to detect and triage recurring quality failures in pipelines.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load representative pipeline quality events.",
+          "Run transparent validation checks.",
+          "Show failed checks and remediation priority."
+        ],
+        "mvp_scope": [
+          "Load sample pipeline records and quality rules.",
+          "Run completeness and schema validation checks.",
+          "Store failed checks with timestamps.",
+          "Show a dashboard of active quality failures."
+        ],
+        "success_metrics": [
+          "Number of detected quality failures."
+        ],
+        "evidence_relationship": "Uses direct evidence on data validation and quality observability.",
+        "source_ids": [
+          "paper-quality"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ],
+        "ranking": {
+          "score": 0.911,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Quality Trend and Ownership Workbench",
+        "problem_statement": "Engineering teams need to see whether recurring quality issues are concentrated by pipeline and owner.",
+        "target_user": "Data platform teams",
+        "core_workflow": [
+          "Load historical quality events.",
+          "Group failures by pipeline and owner.",
+          "Review recurring issue trends."
+        ],
+        "mvp_scope": [
+          "Load historical quality-event records.",
+          "Group failures by pipeline and owner.",
+          "Calculate recurring failure counts.",
+          "Show trend and ownership views."
+        ],
+        "success_metrics": [
+          "Number of recurring issues surfaced."
+        ],
+        "evidence_relationship": "Uses implementation context for pipeline quality observability workflows.",
+        "source_ids": [
+          "repo-observability"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ],
+        "ranking": {
+          "score": 0.911,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Lineage Impact Explorer for Data Incidents",
+        "problem_statement": "Teams struggle to identify downstream datasets and owners affected by a known quality incident.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load incident and lineage records.",
+          "Trace affected downstream assets.",
+          "Rank affected owners and dashboards."
+        ],
+        "mvp_scope": [
+          "Store sample dataset lineage edges.",
+          "Load a known data-quality incident.",
+          "Compute affected downstream datasets.",
+          "Show an owner and impact report."
+        ],
+        "success_metrics": [
+          "Time required to identify affected assets."
+        ],
+        "evidence_relationship": "Uses direct evidence on lineage-aware impact analysis for incidents.",
+        "source_ids": [
+          "paper-lineage"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "PostgreSQL"
+        ],
+        "ranking": {
+          "score": 0.856,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.5,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.50.",
+            "Completeness score: 1.00."
+          ]
+        }
+      }
+    ],
+    "generation_metadata": {
+      "prompt_version": "v1",
+      "prompt_content_hash": "3ad5582ae32f6530d441281a5334ea15d3a99dd6710b2eef022f37536f73b939",
+      "execution_mode": "fixture",
+      "provider_name": "MockCandidateGenerationProvider",
+      "model": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      }
+    },
+    "diagnostics": {
+      "generated_candidate_count": 3,
+      "valid_candidate_count": 3,
+      "selected_candidate_count": 3,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "provider_called": true,
+      "prompt_content_hash": "3ad5582ae32f6530d441281a5334ea15d3a99dd6710b2eef022f37536f73b939"
+    },
+    "shadow_readiness": {
+      "status": "ready",
+      "reasons": [
+        "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+      ],
+      "signals": {
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "provider_called": true,
+        "coverage_warnings": [],
+        "validation_errors": [],
+        "validation_warnings": []
+      }
+    },
+    "semantic_goal_relevance": [],
+    "cross_encoder_goal_relevance": [],
+    "semantic_candidate_diversity": null,
+    "evidence_support": [],
+    "grounding_adequacy": [],
+    "quality_warnings": {
+      "warnings": [],
+      "signals": {
+        "coverage_warning_count": 0,
+        "goal_trace_count": 0,
+        "grounding_trace_count": 0,
+        "diversity_pair_count": 0,
+        "quality_warning_count": 0
+      }
+    },
+    "promotion_eligibility": {
+      "status": "not_assessed",
+      "candidate_assessments": [],
+      "summary": {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0
+      },
+      "reason": "Evidence-support shadow was not enabled, so promotion eligibility could not assess direct grounding."
+    },
+    "semantic_diversification_repair": {
+      "status": "no_repair_needed",
+      "directives": [],
+      "signals": {
+        "candidate_count": 3,
+        "similarity_threshold": 0.78,
+        "close_cluster_count": 0,
+        "replacement_count": 0
+      }
+    },
+    "raw_candidates": [
+      {
+        "title": "Pipeline Data-Quality Monitor",
+        "problem_statement": "Data engineers need a focused way to detect and triage recurring quality failures in pipelines.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load representative pipeline quality events.",
+          "Run transparent validation checks.",
+          "Show failed checks and remediation priority."
+        ],
+        "mvp_scope": [
+          "Load sample pipeline records and quality rules.",
+          "Run completeness and schema validation checks.",
+          "Store failed checks with timestamps.",
+          "Show a dashboard of active quality failures."
+        ],
+        "success_metrics": [
+          "Number of detected quality failures."
+        ],
+        "evidence_relationship": "Uses direct evidence on data validation and quality observability.",
+        "source_ids": [
+          "paper-quality"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ]
+      },
+      {
+        "title": "Quality Trend and Ownership Workbench",
+        "problem_statement": "Engineering teams need to see whether recurring quality issues are concentrated by pipeline and owner.",
+        "target_user": "Data platform teams",
+        "core_workflow": [
+          "Load historical quality events.",
+          "Group failures by pipeline and owner.",
+          "Review recurring issue trends."
+        ],
+        "mvp_scope": [
+          "Load historical quality-event records.",
+          "Group failures by pipeline and owner.",
+          "Calculate recurring failure counts.",
+          "Show trend and ownership views."
+        ],
+        "success_metrics": [
+          "Number of recurring issues surfaced."
+        ],
+        "evidence_relationship": "Uses implementation context for pipeline quality observability workflows.",
+        "source_ids": [
+          "repo-observability"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ]
+      },
+      {
+        "title": "Lineage Impact Explorer for Data Incidents",
+        "problem_statement": "Teams struggle to identify downstream datasets and owners affected by a known quality incident.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load incident and lineage records.",
+          "Trace affected downstream assets.",
+          "Rank affected owners and dashboards."
+        ],
+        "mvp_scope": [
+          "Store sample dataset lineage edges.",
+          "Load a known data-quality incident.",
+          "Compute affected downstream datasets.",
+          "Show an owner and impact report."
+        ],
+        "success_metrics": [
+          "Time required to identify affected assets."
+        ],
+        "evidence_relationship": "Uses direct evidence on lineage-aware impact analysis for incidents.",
+        "source_ids": [
+          "paper-lineage"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "PostgreSQL"
+        ]
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Pipeline Data-Quality Monitor",
+          "idea_angle": "Data engineers need a focused way to detect and triage recurring quality failures in pipelines. Built for Data engineers.",
+          "detected_domain": "data_engineering",
+          "evidence_buildable_gap": "Data engineers need a focused way to detect and triage recurring quality failures in pipelines.",
+          "evidence_focus_statement": "Uses direct evidence on data validation and quality observability.",
+          "evidence_driven_angle": "Uses direct evidence on data validation and quality observability.",
+          "evidence_project_opportunity": "Data engineers need a focused way to detect and triage recurring quality failures in pipelines.",
+          "research_motivation": "Uses direct evidence on data validation and quality observability.",
+          "mvp_scope": [
+            "Load sample pipeline records and quality rules.",
+            "Run completeness and schema validation checks.",
+            "Store failed checks with timestamps.",
+            "Show a dashboard of active quality failures.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of detected quality failures.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "Data Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "FastAPI"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-quality",
+              "title": "Data Quality Monitoring for Reliable Pipelines",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-quality"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of detected quality failures."
+          ],
+          "planner_candidate_workflow": [
+            "Load representative pipeline quality events.",
+            "Run transparent validation checks.",
+            "Show failed checks and remediation priority."
+          ],
+          "evidence_title": "Data Quality Monitoring for Reliable Pipelines",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.DB",
+          "based_on_paper": "Data Quality Monitoring for Reliable Pipelines",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.3,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Pipeline Data-Quality Monitor scores 8.3/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Python, FastAPI. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Quality Trend and Ownership Workbench",
+          "idea_angle": "Engineering teams need to see whether recurring quality issues are concentrated by pipeline and owner. Built for Data platform teams.",
+          "detected_domain": "data_engineering",
+          "evidence_buildable_gap": "Engineering teams need to see whether recurring quality issues are concentrated by pipeline and owner.",
+          "evidence_focus_statement": "Uses implementation context for pipeline quality observability workflows.",
+          "evidence_driven_angle": "Uses implementation context for pipeline quality observability workflows.",
+          "evidence_project_opportunity": "Engineering teams need to see whether recurring quality issues are concentrated by pipeline and owner.",
+          "research_motivation": "Uses implementation context for pipeline quality observability workflows.",
+          "mvp_scope": [
+            "Load historical quality-event records.",
+            "Group failures by pipeline and owner.",
+            "Calculate recurring failure counts.",
+            "Show trend and ownership views.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of recurring issues surfaced.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "Data Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "FastAPI"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-observability",
+              "title": "Pipeline Quality Observability Toolkit",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-observability"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of recurring issues surfaced."
+          ],
+          "planner_candidate_workflow": [
+            "Load historical quality events.",
+            "Group failures by pipeline and owner.",
+            "Review recurring issue trends."
+          ],
+          "evidence_title": "Pipeline Quality Observability Toolkit",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "Pipeline Quality Observability Toolkit",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Quality Trend and Ownership Workbench scores 8.2/10 with a strong career signal because it is grounded in github repository, fits the data_engineering domain, and demonstrates skills such as Python, FastAPI. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Lineage Impact Explorer for Data Incidents",
+          "idea_angle": "Teams struggle to identify downstream datasets and owners affected by a known quality incident. Built for Data engineers.",
+          "detected_domain": "data_engineering",
+          "evidence_buildable_gap": "Teams struggle to identify downstream datasets and owners affected by a known quality incident.",
+          "evidence_focus_statement": "Uses direct evidence on lineage-aware impact analysis for incidents.",
+          "evidence_driven_angle": "Uses direct evidence on lineage-aware impact analysis for incidents.",
+          "evidence_project_opportunity": "Teams struggle to identify downstream datasets and owners affected by a known quality incident.",
+          "research_motivation": "Uses direct evidence on lineage-aware impact analysis for incidents.",
+          "mvp_scope": [
+            "Store sample dataset lineage edges.",
+            "Load a known data-quality incident.",
+            "Compute affected downstream datasets.",
+            "Show an owner and impact report.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Time required to identify affected assets.",
+            "Add a failure-case review workflow and document the prototype's known limitations.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "PostgreSQL",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "Data Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-lineage",
+              "title": "Lineage-Aware Impact Analysis for Data Incidents",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-lineage"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Time required to identify affected assets."
+          ],
+          "planner_candidate_workflow": [
+            "Load incident and lineage records.",
+            "Trace affected downstream assets.",
+            "Rank affected owners and dashboards."
+          ],
+          "evidence_title": "Lineage-Aware Impact Analysis for Data Incidents",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.DB",
+          "based_on_paper": "Lineage-Aware Impact Analysis for Data Incidents",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.4,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Lineage Impact Explorer for Data Incidents scores 8.4/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Python, PostgreSQL, FastAPI. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    },
+    "shadow_vs_deterministic_comparison": {
+      "schema_version": "1.0",
+      "case_id": null,
+      "user_goal": "Build a data engineering project that helps teams detect pipeline data-quality failures and prioritize remediation.",
+      "query_fingerprint": "5f606fbf06b73b46",
+      "deterministic_candidates": [
+        {
+          "title": "Data Pipeline Quality Monitor",
+          "comparison_text": "Data Pipeline Quality Monitor Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        },
+        {
+          "title": "Data Lineage and Dependency Visualizer",
+          "comparison_text": "Data Lineage and Dependency Visualizer Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        },
+        {
+          "title": "Warehouse Query and Cost Intelligence Dashboard",
+          "comparison_text": "Warehouse Query and Cost Intelligence Dashboard Analyze SQL usage, expensive queries, warehouse cost patterns, and optimization opportunities. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        }
+      ],
+      "openai_candidates": [
+        {
+          "title": "Pipeline Data-Quality Monitor",
+          "comparison_text": "Pipeline Data-Quality Monitor Data engineers need a focused way to detect and triage recurring quality failures in pipelines. Data engineers Load representative pipeline quality events. Run transparent validation checks. Show failed checks and remediation priority. Load sample pipeline records and quality rules. Run completeness and schema validation checks. Store failed checks with timestamps. Show a dashboard of active quality failures."
+        },
+        {
+          "title": "Quality Trend and Ownership Workbench",
+          "comparison_text": "Quality Trend and Ownership Workbench Engineering teams need to see whether recurring quality issues are concentrated by pipeline and owner. Data platform teams Load historical quality events. Group failures by pipeline and owner. Review recurring issue trends. Load historical quality-event records. Group failures by pipeline and owner. Calculate recurring failure counts. Show trend and ownership views."
+        },
+        {
+          "title": "Lineage Impact Explorer for Data Incidents",
+          "comparison_text": "Lineage Impact Explorer for Data Incidents Teams struggle to identify downstream datasets and owners affected by a known quality incident. Data engineers Load incident and lineage records. Trace affected downstream assets. Rank affected owners and dashboards. Store sample dataset lineage edges. Load a known data-quality incident. Compute affected downstream datasets. Show an owner and impact report."
+        }
+      ],
+      "deterministic_grounding_classes": [
+        {
+          "candidate_title": "Data Pipeline Quality Monitor",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Data Lineage and Dependency Visualizer",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Warehouse Query and Cost Intelligence Dashboard",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "openai_grounding_classes": [
+        {
+          "candidate_title": "Pipeline Data-Quality Monitor",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Quality Trend and Ownership Workbench",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Lineage Impact Explorer for Data Incidents",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "deterministic_enrichment": [
+        {
+          "title": "Data Pipeline Quality Monitor",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Data Lineage and Dependency Visualizer",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Warehouse Query and Cost Intelligence Dashboard",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        }
+      ],
+      "openai_enrichment": [
+        {
+          "title": "Pipeline Data-Quality Monitor",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Quality Trend and Ownership Workbench",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Lineage Impact Explorer for Data Incidents",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        }
+      ],
+      "set_similarity_score": null,
+      "unique_angle_count": 0,
+      "unique_openai_titles": [],
+      "pairwise_similarity": [],
+      "manual_preference": null,
+      "manual_preference_reason": null,
+      "manual_reviewer_notes": null,
+      "notes": [
+        "Cross-set semantic similarity is a difference signal, not a quality score.",
+        "Portfolio tiers are preserved for review but are assigned by candidate order and must not be interpreted as quality labels.",
+        "Deterministic grounding is not assessed by this contract yet; only shadow grounding traces are currently comparable."
+      ]
+    },
+    "manual_review_template": {
+      "rubric_version": "v1",
+      "query_fingerprint": "5f606fbf06b73b46",
+      "deterministic_review": {
+        "planner_path": "deterministic",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Data Pipeline Quality Monitor",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Data Lineage and Dependency Visualizer",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Warehouse Query and Cost Intelligence Dashboard",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "openai_review": {
+        "planner_path": "openai",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Pipeline Data-Quality Monitor",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Quality Trend and Ownership Workbench",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Lineage Impact Explorer for Data Incidents",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "overall_preference": null,
+      "overall_preference_reason": "",
+      "response_quality": null,
+      "response_quality_reason": "",
+      "unique_angle_quality": null,
+      "unique_angle_quality_reason": "",
+      "reviewer_notes": ""
+    }
+  }
+}
