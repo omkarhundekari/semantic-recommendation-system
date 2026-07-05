@@ -995,3 +995,30 @@ def test_shadow_artifact_exposes_semantic_candidate_diversity():
 
     assert trace["passed"] is False
     assert trace["pairwise_similarity"][0]["flagged"] is True
+
+
+def test_shadow_artifact_exposes_soft_quality_warnings():
+    from planning import shadow_comparison_demo as demo
+
+    artifact = demo.build_shadow_comparison_artifact(
+        user_goal="Build a cloud incident investigation project.",
+        constraints={},
+        evidence_payload={
+            "inference": {},
+            "merged_results": [
+                {
+                    "document_id": "repo-1",
+                    "source_type": "github_repository",
+                    "title": "Cloud Operations Toolkit",
+                    "abstract": "Organize cloud operational signals.",
+                }
+            ],
+        },
+    )
+
+    warnings = artifact["v2_shadow"]["quality_warnings"]
+
+    assert warnings["signals"]["quality_warning_count"] == 1
+    assert warnings["warnings"][0]["code"] == (
+        "missing_direct_research_evidence"
+    )

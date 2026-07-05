@@ -38,6 +38,9 @@ from planning.shadow_runner import (
     build_generation_request,
     run_shadow_plan,
 )
+from planning.shadow_quality_warnings import (
+    assess_shadow_quality_warnings,
+)
 from planning.evidence_brief import build_evidence_brief
 from planning.evidence_curation import curate_evidence
 from planning.grounding_adequacy import assess_grounding_adequacy
@@ -247,6 +250,13 @@ def build_shadow_comparison_artifact(
                 for candidate, assessment in candidate_assessments
             ]
 
+    quality_warnings = assess_shadow_quality_warnings(
+        coverage_warnings=brief.coverage_warnings,
+        semantic_goal_relevance=semantic_goal_relevance or [],
+        grounding_adequacy=grounding_adequacy,
+        semantic_candidate_diversity=semantic_candidate_diversity,
+    )
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -278,6 +288,7 @@ def build_shadow_comparison_artifact(
             ),
             "evidence_support": evidence_support,
             "grounding_adequacy": grounding_adequacy,
+            "quality_warnings": quality_warnings.to_dict(),
         },
     }
 
