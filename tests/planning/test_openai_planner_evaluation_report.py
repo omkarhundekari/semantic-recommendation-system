@@ -294,3 +294,96 @@ def test_marks_sparse_legacy_artifact_promotion_as_not_assessed(tmp_path):
         "ineligible_count": 0,
         "not_assessed_case_count": 1,
     }
+
+
+def test_recomputes_diversification_repair_for_older_artifacts(tmp_path):
+    user_goal = "Build a data quality project."
+
+    artifact = {
+        "query": user_goal,
+        "v2_shadow": {
+            "generation_metadata": {"usage": {}},
+            "shadow_readiness": {"status": "ready"},
+            "semantic_candidate_diversity": {
+                "similarity_threshold": 0.82,
+                "pairwise_similarity": [
+                    {
+                        "candidate_a_title": "Pipeline Monitor",
+                        "candidate_b_title": "Pipeline Failure Triage",
+                        "raw_cosine": 0.7915,
+                        "flagged": False,
+                    }
+                ],
+                "passed": True,
+            },
+            "semantic_goal_relevance": [],
+            "grounding_adequacy": [],
+            "selected_candidates": [
+                {
+                    "title": "Pipeline Monitor",
+                    "core_workflow": [
+                        "Run validation checks.",
+                        "Show quality alerts.",
+                    ],
+                    "mvp_scope": [
+                        "Load records.",
+                        "Run checks.",
+                        "Show alerts.",
+                    ],
+                    "ranking": {"score": 0.93},
+                },
+                {
+                    "title": "Pipeline Failure Triage",
+                    "core_workflow": [
+                        "Run validation checks.",
+                        "Review failed records.",
+                    ],
+                    "mvp_scope": [
+                        "Load records.",
+                        "Run checks.",
+                        "Show failures.",
+                    ],
+                    "ranking": {"score": 0.84},
+                },
+            ],
+        },
+    }
+
+    (tmp_path / "pipeline.json").write_text(json.dumps(artifact))
+
+    report = build_openai_planner_evaluation_report(
+        dataset={
+            "cases": [
+                {
+                    "id": "pipeline",
+                    "user_goal": user_goal,
+                    "manual_review": {
+                        "verdict": None,
+                        "reason": None,
+                    },
+                }
+            ]
+        },
+        output_dir=tmp_path,
+    )
+
+    repair = report["case_reports"]["pipeline"][
+        "semantic_diversification_repair"
+    ]
+
+    assert repair["status"] == "repair_planned"
+    assert repair["signals"]["close_cluster_count"] == 1
+    assert repair["signals"]["replacement_count"] == 1
+    assert repair["directives"][0]["replace_candidate_title"] == (
+        "Pipeline Failure Triage"
+    )
+
+    assert report["summary"][
+        "semantic_diversification_repair_counts"
+    ] == {
+        "repair_planned_case_count": 1,
+        "no_repair_needed_case_count": 0,
+        "not_assessed_case_count": 0,
+        "close_cluster_count": 1,
+        "planned_replacement_count": 1,
+    }

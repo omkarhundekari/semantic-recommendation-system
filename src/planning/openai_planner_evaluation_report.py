@@ -20,6 +20,9 @@ from planning.semantic_candidate_diversity import (
     CandidateDiversityPair,
     CandidateDiversityTrace,
 )
+from planning.semantic_diversification_repair import (
+    build_semantic_diversification_repair_plan,
+)
 from planning.shadow_quality_warnings import (
     ShadowQualityWarning,
     ShadowQualityWarningAssessment,
@@ -302,6 +305,38 @@ def _promotion_eligibility_from_artifact(
     }
 
 
+def _diversification_repair_from_artifact(
+    shadow: Dict[str, Any],
+) -> Dict[str, Any]:
+    existing = shadow.get("semantic_diversification_repair")
+
+    if isinstance(existing, dict):
+        return existing
+
+    selected_candidates = shadow.get("selected_candidates", [])
+    diversity = shadow.get("semantic_candidate_diversity")
+
+    if not selected_candidates or not isinstance(diversity, dict):
+        return {
+            "status": "not_assessed",
+            "directives": [],
+            "signals": {
+                "candidate_count": 0,
+                "close_cluster_count": 0,
+                "replacement_count": 0,
+            },
+            "reason": (
+                "The artifact lacks selected candidates or semantic "
+                "diversity traces required for repair recomputation."
+            ),
+        }
+
+    return build_semantic_diversification_repair_plan(
+        selected_candidates=selected_candidates,
+        semantic_candidate_diversity=diversity,
+    ).to_dict()
+
+
 def _candidate_promotion_audit(
     promotion_eligibility: Dict[str, Any],
     goal_relevance: List[Dict[str, Any]],
@@ -425,6 +460,14 @@ def _case_report(
             semantic_candidate_diversity=diversity,
         ).to_dict()
 
+    promotion_eligibility = _promotion_eligibility_from_artifact(
+        shadow=shadow,
+        quality_warnings=quality_warnings,
+    )
+    diversification_repair = _diversification_repair_from_artifact(
+        shadow=shadow,
+    )
+
     goal_scores = [
         trace.get("raw_cosine")
         for trace in goal_relevance
@@ -454,15 +497,10 @@ def _case_report(
         "shadow_readiness": readiness,
         "semantic_candidate_diversity": diversity,
         "quality_warnings": quality_warnings,
-        "promotion_eligibility": _promotion_eligibility_from_artifact(
-            shadow=shadow,
-            quality_warnings=quality_warnings,
-        ),
+        "promotion_eligibility": promotion_eligibility,
+        "semantic_diversification_repair": diversification_repair,
         "promotion_audit": _candidate_promotion_audit(
-            promotion_eligibility=_promotion_eligibility_from_artifact(
-                shadow=shadow,
-                quality_warnings=quality_warnings,
-            ),
+            promotion_eligibility=promotion_eligibility,
             goal_relevance=goal_relevance,
             grounding=grounding,
             diversity=diversity,
@@ -574,6 +612,13 @@ def build_openai_planner_evaluation_report(
         "ineligible_count": 0,
         "not_assessed_case_count": 0,
     }
+    diversification_repair_counts = {
+        "repair_planned_case_count": 0,
+        "no_repair_needed_case_count": 0,
+        "not_assessed_case_count": 0,
+        "close_cluster_count": 0,
+        "planned_replacement_count": 0,
+    }
 
     for report in evaluated_reports:
         warnings = report.get("quality_warnings", {}).get(
@@ -606,6 +651,31 @@ def build_openai_planner_evaluation_report(
                 promotion_status_counts[key] += int(
                     promotion_summary.get(key, 0) or 0
                 )
+
+        repair = report.get("semantic_diversification_repair", {})
+        repair_signals = repair.get("signals", {})
+
+        if repair.get("status") == "repair_planned":
+            diversification_repair_counts[
+                "repair_planned_case_count"
+            ] += 1
+        elif repair.get("status") == "no_repair_needed":
+            diversification_repair_counts[
+                "no_repair_needed_case_count"
+            ] += 1
+        else:
+            diversification_repair_counts[
+                "not_assessed_case_count"
+            ] += 1
+
+        diversification_repair_counts["close_cluster_count"] += int(
+            repair_signals.get("close_cluster_count", 0) or 0
+        )
+        diversification_repair_counts[
+            "planned_replacement_count"
+        ] += int(
+            repair_signals.get("replacement_count", 0) or 0
+        )
 
     return {
         "schema_version": "1.0",
@@ -675,6 +745,9 @@ def build_openai_planner_evaluation_report(
                 sorted(quality_warning_counts.items())
             ),
             "promotion_eligibility_counts": promotion_status_counts,
+            "semantic_diversification_repair_counts": (
+                diversification_repair_counts
+            ),
         },
     }
 
