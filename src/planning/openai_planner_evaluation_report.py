@@ -3,6 +3,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from planning.shadow_quality_warnings import (
+    assess_shadow_quality_warnings,
+)
+
 
 def _latest_matching_artifact(
     output_dir: Path,
@@ -44,6 +48,20 @@ def _case_report(
     diversity = shadow.get("semantic_candidate_diversity")
     goal_relevance = shadow.get("semantic_goal_relevance", [])
     grounding = shadow.get("grounding_adequacy", [])
+    coverage_warnings = readiness.get("signals", {}).get(
+        "coverage_warnings",
+        [],
+    )
+
+    quality_warnings = shadow.get("quality_warnings")
+
+    if not isinstance(quality_warnings, dict):
+        quality_warnings = assess_shadow_quality_warnings(
+            coverage_warnings=coverage_warnings,
+            semantic_goal_relevance=goal_relevance,
+            grounding_adequacy=grounding,
+            semantic_candidate_diversity=diversity,
+        ).to_dict()
 
     goal_scores = [
         trace.get("raw_cosine")
@@ -73,6 +91,7 @@ def _case_report(
         "planning_diagnostics": diagnostics,
         "shadow_readiness": readiness,
         "semantic_candidate_diversity": diversity,
+        "quality_warnings": quality_warnings,
         "goal_relevance_summary": {
             "candidate_count": len(goal_scores),
             "minimum_raw_cosine": (
@@ -172,6 +191,26 @@ def build_openai_planner_evaluation_report(
         for report in evaluated_reports
     ]
 
+    quality_warning_counts = {}
+    quality_warning_case_count = 0
+
+    for report in evaluated_reports:
+        warnings = report.get("quality_warnings", {}).get(
+            "warnings",
+            [],
+        )
+
+        if warnings:
+            quality_warning_case_count += 1
+
+        for warning in warnings:
+            code = str(warning.get("code", "")).strip()
+
+            if code:
+                quality_warning_counts[code] = (
+                    quality_warning_counts.get(code, 0) + 1
+                )
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -234,6 +273,10 @@ def build_openai_planner_evaluation_report(
             "total_tokens": sum(
                 int(record.get("total_tokens") or 0)
                 for record in usage_records
+            ),
+            "quality_warning_case_count": quality_warning_case_count,
+            "quality_warning_counts": dict(
+                sorted(quality_warning_counts.items())
             ),
         },
     }
