@@ -3,7 +3,26 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from planning.candidate_models import (
+    CandidateDirection,
+    CandidateValidationResult,
+)
+from planning.candidate_validator import validate_candidate
+from planning.grounding_adequacy import (
+    GroundingAdequacy,
+    GroundingAdequacyTrace,
+)
+from planning.planner_models import EvidenceBrief, EvidenceSource
+from planning.promotion_eligibility import (
+    assess_promotion_eligibility,
+)
+from planning.semantic_candidate_diversity import (
+    CandidateDiversityPair,
+    CandidateDiversityTrace,
+)
 from planning.shadow_quality_warnings import (
+    ShadowQualityWarning,
+    ShadowQualityWarningAssessment,
     assess_shadow_quality_warnings,
 )
 
@@ -30,6 +49,257 @@ def _latest_matching_artifact(
         matches,
         key=lambda item: item[0].stat().st_mtime,
     )[1]
+
+
+def _quality_warning_assessment_from_dict(
+    payload: Dict[str, Any],
+) -> ShadowQualityWarningAssessment:
+    return ShadowQualityWarningAssessment(
+        warnings=[
+            ShadowQualityWarning(
+                code=str(item.get("code", "")),
+                message=str(item.get("message", "")),
+                details=dict(item.get("details", {})),
+            )
+            for item in payload.get("warnings", [])
+            if isinstance(item, dict)
+        ],
+        signals=dict(payload.get("signals", {})),
+    )
+
+
+def _diversity_trace_from_dict(
+    payload: Optional[Dict[str, Any]],
+) -> Optional[CandidateDiversityTrace]:
+    if not isinstance(payload, dict):
+        return None
+
+    return CandidateDiversityTrace(
+        similarity_threshold=float(
+            payload.get("similarity_threshold", 0.82)
+        ),
+        pairwise_similarity=[
+            CandidateDiversityPair(
+                candidate_a_title=str(
+                    pair.get("candidate_a_title", "")
+                ),
+                candidate_b_title=str(
+                    pair.get("candidate_b_title", "")
+                ),
+                raw_cosine=float(pair.get("raw_cosine", 0.0)),
+                flagged=bool(pair.get("flagged", False)),
+            )
+            for pair in payload.get("pairwise_similarity", [])
+            if isinstance(pair, dict)
+        ],
+        passed=bool(payload.get("passed", False)),
+    )
+
+
+def _grounding_by_title(
+    grounding: List[Dict[str, Any]],
+) -> Dict[str, GroundingAdequacyTrace]:
+    result = {}
+
+    for item in grounding:
+        title = str(item.get("candidate_title", "")).strip()
+
+        if not title:
+            continue
+
+        adequacy_value = str(
+            item.get("adequacy_class", "")
+        ).strip()
+
+        try:
+            adequacy_class = GroundingAdequacy(adequacy_value)
+        except ValueError:
+            continue
+
+        result[title] = GroundingAdequacyTrace(
+            candidate_title=title,
+            adequacy_class=adequacy_class,
+            cited_source_ids=list(item.get("cited_source_ids", [])),
+            cited_source_scopes=list(
+                item.get("cited_source_scopes", [])
+            ),
+            cited_alignment_scores=list(
+                item.get("cited_alignment_scores", [])
+            ),
+            min_cited_alignment=item.get("min_cited_alignment"),
+            max_cited_alignment=item.get("max_cited_alignment"),
+            direct_sources_in_brief=int(
+                item.get("direct_sources_in_brief", 0) or 0
+            ),
+            uncited_direct_sources=list(
+                item.get("uncited_direct_sources", [])
+            ),
+            adequacy_reason=str(
+                item.get("adequacy_reason", "")
+            ),
+        )
+
+    return result
+
+
+def _promotion_eligibility_from_artifact(
+    shadow: Dict[str, Any],
+    quality_warnings: Dict[str, Any],
+) -> Dict[str, Any]:
+    existing = shadow.get("promotion_eligibility")
+
+    if isinstance(existing, dict):
+        return existing
+
+    selected_candidates = shadow.get("selected_candidates", [])
+    grounding = shadow.get("grounding_adequacy", [])
+
+    if not selected_candidates or not grounding:
+        return {
+            "status": "not_assessed",
+            "candidate_assessments": [],
+            "summary": {
+                "eligible_count": 0,
+                "needs_review_count": 0,
+                "ineligible_count": 0,
+            },
+            "reason": (
+                "The artifact lacks selected candidates or grounding "
+                "traces required for promotion recomputation."
+            ),
+        }
+
+    report = shadow.get("report", {})
+    brief_payload = report.get("evidence_brief", {})
+
+    sources = [
+        EvidenceSource(
+            source_id=str(source.get("source_id", "")),
+            source_type=str(source.get("source_type", "unknown")),
+            title=str(source.get("title", "")),
+            excerpt=str(source.get("excerpt", "")),
+            category=source.get("category"),
+            url=source.get("url"),
+            retrieval_rank=source.get("retrieval_rank"),
+            retrieval_signals=dict(
+                source.get("retrieval_signals", {})
+            ),
+            support_scope=str(
+                source.get("support_scope", "direct")
+            ),
+            retention_reason=str(
+                source.get("retention_reason", "")
+            ),
+        )
+        for source in brief_payload.get("sources", [])
+        if isinstance(source, dict)
+    ]
+
+    if not sources:
+        return {
+            "status": "not_assessed",
+            "candidate_assessments": [],
+            "summary": {
+                "eligible_count": 0,
+                "needs_review_count": 0,
+                "ineligible_count": 0,
+            },
+            "reason": (
+                "The artifact lacks an evidence brief required for "
+                "promotion recomputation."
+            ),
+        }
+
+    brief = EvidenceBrief(
+        query=str(brief_payload.get("query", "")),
+        sources=sources,
+        source_counts=dict(brief_payload.get("source_counts", {})),
+        recurring_concepts=list(
+            brief_payload.get("recurring_concepts", [])
+        ),
+        coverage_warnings=list(
+            brief_payload.get("coverage_warnings", [])
+        ),
+    )
+
+    grounding_by_title = _grounding_by_title(grounding)
+    warning_assessment = _quality_warning_assessment_from_dict(
+        quality_warnings
+    )
+    diversity_trace = _diversity_trace_from_dict(
+        shadow.get("semantic_candidate_diversity")
+    )
+
+    assessments = []
+
+    for payload in selected_candidates:
+        if not isinstance(payload, dict):
+            continue
+
+        try:
+            candidate = CandidateDirection(
+                **{
+                    key: value
+                    for key, value in payload.items()
+                    if key != "ranking"
+                }
+            )
+        except TypeError:
+            continue
+
+        candidate_grounding = grounding_by_title.get(candidate.title)
+
+        if candidate_grounding is None:
+            continue
+
+        validation: CandidateValidationResult = validate_candidate(
+            candidate,
+            brief,
+        )
+
+        assessments.append(
+            assess_promotion_eligibility(
+                candidate=candidate,
+                validation=validation,
+                grounding=candidate_grounding,
+                quality_warnings=warning_assessment,
+                semantic_candidate_diversity=diversity_trace,
+            ).to_dict()
+        )
+
+    if not assessments:
+        return {
+            "status": "not_assessed",
+            "candidate_assessments": [],
+            "summary": {
+                "eligible_count": 0,
+                "needs_review_count": 0,
+                "ineligible_count": 0,
+            },
+            "reason": (
+                "No selected candidate could be matched to a valid "
+                "grounding trace."
+            ),
+        }
+
+    return {
+        "status": "recomputed",
+        "candidate_assessments": assessments,
+        "summary": {
+            "eligible_count": sum(
+                item["status"] == "eligible"
+                for item in assessments
+            ),
+            "needs_review_count": sum(
+                item["status"] == "needs_review"
+                for item in assessments
+            ),
+            "ineligible_count": sum(
+                item["status"] == "ineligible"
+                for item in assessments
+            ),
+        },
+    }
 
 
 def _case_report(
@@ -92,6 +362,10 @@ def _case_report(
         "shadow_readiness": readiness,
         "semantic_candidate_diversity": diversity,
         "quality_warnings": quality_warnings,
+        "promotion_eligibility": _promotion_eligibility_from_artifact(
+            shadow=shadow,
+            quality_warnings=quality_warnings,
+        ),
         "goal_relevance_summary": {
             "candidate_count": len(goal_scores),
             "minimum_raw_cosine": (
@@ -193,6 +467,12 @@ def build_openai_planner_evaluation_report(
 
     quality_warning_counts = {}
     quality_warning_case_count = 0
+    promotion_status_counts = {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0,
+        "not_assessed_case_count": 0,
+    }
 
     for report in evaluated_reports:
         warnings = report.get("quality_warnings", {}).get(
@@ -209,6 +489,21 @@ def build_openai_planner_evaluation_report(
             if code:
                 quality_warning_counts[code] = (
                     quality_warning_counts.get(code, 0) + 1
+                )
+
+        promotion = report.get("promotion_eligibility", {})
+        promotion_summary = promotion.get("summary", {})
+
+        if promotion.get("status") == "not_assessed":
+            promotion_status_counts["not_assessed_case_count"] += 1
+        else:
+            for key in (
+                "eligible_count",
+                "needs_review_count",
+                "ineligible_count",
+            ):
+                promotion_status_counts[key] += int(
+                    promotion_summary.get(key, 0) or 0
                 )
 
     return {
@@ -278,6 +573,7 @@ def build_openai_planner_evaluation_report(
             "quality_warning_counts": dict(
                 sorted(quality_warning_counts.items())
             ),
+            "promotion_eligibility_counts": promotion_status_counts,
         },
     }
 

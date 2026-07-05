@@ -92,3 +92,168 @@ def test_report_tracks_evaluated_and_missing_cases(tmp_path):
 
     missing = report["case_reports"]["security_triage"]
     assert missing["status"] == "missing_artifact"
+
+
+def test_recomputes_promotion_eligibility_for_older_artifacts(tmp_path):
+    user_goal = "Build an incident investigation project."
+
+    artifact = {
+        "generated_at_utc": "20260705T140000Z",
+        "query": user_goal,
+        "v2_shadow": {
+            "generation_metadata": {"usage": {}},
+            "diagnostics": {},
+            "shadow_readiness": {"status": "ready"},
+            "semantic_candidate_diversity": {
+                "similarity_threshold": 0.82,
+                "pairwise_similarity": [],
+                "passed": True,
+            },
+            "semantic_goal_relevance": [],
+            "grounding_adequacy": [
+                {
+                    "candidate_title": "Incident Correlation Workbench",
+                    "adequacy_class": "cited_with_direct_scope",
+                    "cited_source_ids": ["paper-1"],
+                    "cited_source_scopes": ["direct"],
+                    "cited_alignment_scores": [0.46],
+                    "min_cited_alignment": 0.46,
+                    "max_cited_alignment": 0.46,
+                    "direct_sources_in_brief": 1,
+                    "uncited_direct_sources": [],
+                    "adequacy_reason": "Cites direct evidence.",
+                }
+            ],
+            "selected_candidates": [
+                {
+                    "title": "Incident Correlation Workbench",
+                    "problem_statement": (
+                        "Operational signals are fragmented during "
+                        "incident response."
+                    ),
+                    "target_user": "Platform engineers",
+                    "core_workflow": [
+                        "Load incident events.",
+                        "Correlate related signals.",
+                    ],
+                    "mvp_scope": [
+                        "Load sample records.",
+                        "Correlate event signals.",
+                        "Render an investigation timeline.",
+                    ],
+                    "success_metrics": [
+                        "Reduce investigation time."
+                    ],
+                    "evidence_relationship": (
+                        "Uses retained incident evidence."
+                    ),
+                    "source_ids": ["paper-1"],
+                    "assumptions": [],
+                    "suggested_stack": ["Python", "FastAPI"],
+                    "ranking": {"score": 0.9},
+                }
+            ],
+            "report": {
+                "evidence_brief": {
+                    "query": user_goal,
+                    "sources": [
+                        {
+                            "source_id": "paper-1",
+                            "source_type": "research_paper",
+                            "title": "Incident Correlation Research",
+                            "excerpt": (
+                                "Incident correlation supports response "
+                                "workflows."
+                            ),
+                            "support_scope": "direct",
+                        }
+                    ],
+                    "source_counts": {"research_paper": 1},
+                    "recurring_concepts": [],
+                    "coverage_warnings": [],
+                }
+            },
+        },
+    }
+
+    (tmp_path / "incident.json").write_text(json.dumps(artifact))
+
+    report = build_openai_planner_evaluation_report(
+        dataset={
+            "cases": [
+                {
+                    "id": "incident",
+                    "user_goal": user_goal,
+                    "manual_review": {
+                        "verdict": None,
+                        "reason": None,
+                    },
+                }
+            ]
+        },
+        output_dir=tmp_path,
+    )
+
+    promotion = report["case_reports"]["incident"][
+        "promotion_eligibility"
+    ]
+
+    assert promotion["status"] == "recomputed"
+    assert promotion["summary"] == {
+        "eligible_count": 1,
+        "needs_review_count": 0,
+        "ineligible_count": 0,
+    }
+    assert report["summary"]["promotion_eligibility_counts"] == {
+        "eligible_count": 1,
+        "needs_review_count": 0,
+        "ineligible_count": 0,
+        "not_assessed_case_count": 0,
+    }
+
+
+def test_marks_sparse_legacy_artifact_promotion_as_not_assessed(tmp_path):
+    user_goal = "Build a sparse project."
+
+    (tmp_path / "sparse.json").write_text(
+        json.dumps(
+            {
+                "query": user_goal,
+                "v2_shadow": {
+                    "generation_metadata": {"usage": {}},
+                    "shadow_readiness": {"status": "ready"},
+                    "semantic_candidate_diversity": None,
+                    "semantic_goal_relevance": [],
+                    "grounding_adequacy": [],
+                },
+            }
+        )
+    )
+
+    report = build_openai_planner_evaluation_report(
+        dataset={
+            "cases": [
+                {
+                    "id": "sparse",
+                    "user_goal": user_goal,
+                    "manual_review": {
+                        "verdict": None,
+                        "reason": None,
+                    },
+                }
+            ]
+        },
+        output_dir=tmp_path,
+    )
+
+    promotion = report["case_reports"]["sparse"][
+        "promotion_eligibility"
+    ]
+
+    assert promotion["status"] == "not_assessed"
+    assert report["summary"]["promotion_eligibility_counts"] == {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0,
+        "not_assessed_case_count": 1,
+    }
