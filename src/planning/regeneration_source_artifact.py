@@ -21,6 +21,7 @@ class RegenerationSourceArtifact:
     request: CandidateGenerationRequest
     directive: DiversificationRepairDirective
     retained_candidates: List[CandidateDirection]
+    surviving_candidates: List[CandidateDirection]
     replaced_candidate: CandidateDirection
 
 
@@ -201,6 +202,18 @@ def load_regeneration_source_artifact(
             "Repair directive does not resolve to retained candidates."
         )
 
+    surviving_candidates = [
+        candidate
+        for candidate in candidates
+        if candidate.title != directive.replace_candidate_title
+    ]
+
+    if not surviving_candidates:
+        raise ValueError(
+            "Source artifact has no surviving candidates for replacement "
+            "comparison."
+        )
+
     constraints = artifact.get("constraints", {})
     user_goal = str(artifact.get("query") or brief.query).strip()
 
@@ -221,5 +234,6 @@ def load_regeneration_source_artifact(
         request=request,
         directive=directive,
         retained_candidates=retained_candidates,
+        surviving_candidates=surviving_candidates,
         replaced_candidate=replaced_candidate,
     )

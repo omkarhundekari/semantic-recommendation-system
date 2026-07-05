@@ -52,6 +52,10 @@ def build_regeneration_artifact(
             candidate.to_dict()
             for candidate in source.retained_candidates
         ],
+        "surviving_candidates": [
+            candidate.to_dict()
+            for candidate in source.surviving_candidates
+        ],
         "repair_directive": source.directive.to_dict(),
         "generation_metadata": {
             "provider_name": provider.__class__.__name__,
@@ -101,7 +105,7 @@ def run_guarded_regeneration(
         brief=source.brief,
         request=source.request,
         directive=source.directive,
-        retained_candidates=source.retained_candidates,
+        retained_candidates=source.surviving_candidates,
         evidence_support_scorer=evidence_support_scorer,
         semantic_diversity_scorer=semantic_diversity_scorer,
     )

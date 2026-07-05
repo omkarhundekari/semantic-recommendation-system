@@ -113,3 +113,25 @@ def test_rejects_artifact_without_repair_directives(tmp_path):
 
     with pytest.raises(ValueError, match="no diversification repair"):
         load_regeneration_source_artifact(path)
+
+
+def test_keeps_all_surviving_candidates_for_replacement_comparison(
+    tmp_path,
+):
+    payload = artifact()
+    payload["v2_shadow"]["selected_candidates"].append(
+        candidate("Schema Drift Guard", 0.88)
+    )
+
+    path = tmp_path / "artifact.json"
+    path.write_text(json.dumps(payload))
+
+    context = load_regeneration_source_artifact(path)
+
+    assert [item.title for item in context.retained_candidates] == [
+        "Pipeline Monitor"
+    ]
+    assert [item.title for item in context.surviving_candidates] == [
+        "Pipeline Monitor",
+        "Schema Drift Guard",
+    ]
