@@ -140,3 +140,88 @@ def test_openai_provider_rejects_non_json_output():
 
     with pytest.raises(RuntimeError, match="not valid JSON"):
         provider.generate("Generate candidates.")
+
+
+def valid_regeneration_response():
+    return {
+        "candidate": {
+            "title": "Schema Drift Contract Guard",
+            "problem_statement": (
+                "Data engineers need earlier visibility into schema drift."
+            ),
+            "target_user": "Data engineers",
+            "core_workflow": [
+                "Compare schemas against expected contracts.",
+                "Show changed fields and affected pipelines.",
+            ],
+            "mvp_scope": [
+                "Load representative schema snapshots.",
+                "Compare schemas against a versioned contract.",
+                "Show detected drift findings.",
+            ],
+            "success_metrics": [
+                "Number of schema-drift issues detected.",
+            ],
+            "evidence_relationship": (
+                "Uses only source IDs supplied in the evidence brief."
+            ),
+            "source_ids": ["paper-1"],
+            "assumptions": ["Use versioned sample schemas."],
+            "suggested_stack": ["Python", "FastAPI"],
+        }
+    }
+
+
+def test_openai_provider_generates_guarded_regeneration_response(
+    monkeypatch,
+):
+    monkeypatch.setenv("PLANNING_PROVIDER", "openai")
+    monkeypatch.setenv("PLANNING_LLM_ENABLED", "true")
+
+    fake_client = FakeClient(json.dumps(valid_regeneration_response()))
+    provider = OpenAICandidateGenerationProvider(
+        model="test-model",
+        client=fake_client,
+    )
+
+    result = provider.generate_regeneration(
+        "Generate exactly one replacement candidate.",
+        allow_live_llm=True,
+    )
+
+    assert result == valid_regeneration_response()
+
+    request = fake_client.responses.calls[0]
+
+    assert request["text"]["format"]["name"] == (
+        "candidate_regeneration"
+    )
+    assert request["text"]["format"]["schema"][
+        "required"
+    ] == ["candidate"]
+    assert request["text"]["format"]["schema"][
+        "properties"
+    ]["candidate"]["required"] == [
+        "title",
+        "problem_statement",
+        "target_user",
+        "core_workflow",
+        "mvp_scope",
+        "success_metrics",
+        "evidence_relationship",
+        "source_ids",
+        "assumptions",
+        "suggested_stack",
+    ]
+
+
+def test_openai_provider_blocks_regeneration_without_explicit_guard():
+    provider = OpenAICandidateGenerationProvider(
+        model="test-model",
+        client=FakeClient(json.dumps(valid_regeneration_response())),
+    )
+
+    with pytest.raises(RuntimeError, match="allow-live-llm"):
+        provider.generate_regeneration(
+            "Generate exactly one replacement candidate."
+        )
