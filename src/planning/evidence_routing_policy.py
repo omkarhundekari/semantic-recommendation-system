@@ -130,3 +130,32 @@ def route_evidence_budget(
             "is active."
         ),
     )
+
+
+def route_calibrated_evidence_quality(
+    quality_signals,
+    policy: EvidenceRoutingPolicy = None,
+) -> EvidenceRoutingDecision:
+    """
+    Route only fully resolved evidence-quality signals.
+
+    Unresolved calibration or missing metrics must remain visible in shadow
+    diagnostics rather than silently taking the standard route.
+    """
+    if not quality_signals.routing_ready:
+        unresolved = ", ".join(
+            quality_signals.unresolved_signal_names
+        )
+        raise ValueError(
+            "Evidence routing requires resolved quality signals. "
+            f"Unresolved: {unresolved or 'unknown'}."
+        )
+
+    return route_evidence_budget(
+        EvidenceRoutingSignals(
+            evidence_sparse=quality_signals.evidence_sparse,
+            evidence_ambiguous=quality_signals.evidence_ambiguous,
+            source_diversity_low=quality_signals.source_diversity_low,
+        ),
+        policy=policy,
+    )
