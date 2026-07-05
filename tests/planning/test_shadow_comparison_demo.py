@@ -61,17 +61,24 @@ def test_comparison_artifact_keeps_legacy_and_v2_results_separate():
 
     assert artifact["legacy_planner"]["direction_count"] == 3
     assert artifact["v2_shadow"]["status"] == "fixture_evaluated"
-    assert artifact["v2_shadow"]["generation_metadata"] == {
-        "prompt_version": "v1",
-        "execution_mode": "fixture",
-        "provider_name": "MockCandidateGenerationProvider",
-        "model": None,
-        "usage": {
-            "input_tokens": None,
-            "output_tokens": None,
-            "total_tokens": None,
-        },
+    metadata = artifact["v2_shadow"]["generation_metadata"]
+
+    assert metadata["prompt_version"] == "v1"
+    assert metadata["execution_mode"] == "fixture"
+    assert metadata["provider_name"] == "MockCandidateGenerationProvider"
+    assert metadata["model"] is None
+    assert len(metadata["prompt_content_hash"]) == 64
+    assert metadata["usage"] == {
+        "input_tokens": None,
+        "output_tokens": None,
+        "total_tokens": None,
     }
+
+    identity = artifact["artifact_identity"]
+    assert len(identity["artifact_id"]) == 32
+    assert identity["generation_timestamp_utc"] == (
+        artifact["generated_at_utc"]
+    )
     assert artifact["v2_shadow"]["shadow_readiness"]["status"] == (
         "needs_review"
     )

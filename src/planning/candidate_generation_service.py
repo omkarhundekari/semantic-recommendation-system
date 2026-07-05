@@ -1,3 +1,4 @@
+import hashlib
 from dataclasses import dataclass
 from typing import List
 
@@ -18,6 +19,7 @@ class CandidateGenerationOutcome:
     candidates: List[CandidateDirection]
     validations: List[CandidateValidationResult]
     provider_called: bool
+    prompt_content_hash: str = ""
 
     @property
     def valid_candidates(self) -> List[CandidateDirection]:
@@ -40,6 +42,10 @@ def generate_validated_candidates(
         brief=brief,
         request=request,
     )
+    prompt_content_hash = hashlib.sha256(
+        prompt.encode("utf-8")
+    ).hexdigest()
+
     raw_response = provider.generate(prompt)
     candidates = parse_candidate_payload(raw_response)
     validations = validate_candidate_set(
@@ -51,4 +57,5 @@ def generate_validated_candidates(
         candidates=candidates,
         validations=validations,
         provider_called=True,
+        prompt_content_hash=prompt_content_hash,
     )

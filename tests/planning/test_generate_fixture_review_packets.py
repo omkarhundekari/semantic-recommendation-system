@@ -65,6 +65,19 @@ def test_writes_artifact_and_packet_for_selected_fixture(tmp_path):
     assert "sparse_evidence_cloud_cost" in packet
     assert "Cloud Cost Optimization Command Center" in packet
 
+    artifact = __import__("json").loads(
+        written[0]["artifact_path"].read_text()
+    )
+
+    assert artifact["artifact_identity"]["fixture_id"] == (
+        "sparse_evidence_cloud_cost"
+    )
+    assert len(
+        artifact["v2_shadow"]["generation_metadata"][
+            "prompt_content_hash"
+        ]
+    ) == 64
+
 
 def test_available_fixture_ids_match_selectable_specs():
     assert available_fixture_ids() == (

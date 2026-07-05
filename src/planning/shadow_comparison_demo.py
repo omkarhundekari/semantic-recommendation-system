@@ -1,6 +1,7 @@
 import argparse
 import json
 import re
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -86,11 +87,13 @@ def _query_slug(query: str) -> str:
 def _build_generation_metadata(
     provider: Optional[CandidateGenerationProvider],
     execution_mode: str,
+    prompt_content_hash: Optional[str] = None,
 ) -> Dict[str, Any]:
     usage = getattr(provider, "last_usage", {}) if provider else {}
 
     return {
         "prompt_version": CANDIDATE_GENERATION_PROMPT_VERSION,
+        "prompt_content_hash": prompt_content_hash,
         "execution_mode": execution_mode,
         "provider_name": (
             provider.__class__.__name__ if provider is not None else None
@@ -132,6 +135,7 @@ def build_shadow_comparison_artifact(
     cross_encoder_goal_scorer: Optional[Any] = None,
     evidence_support_scorer: Optional[Any] = None,
     comparison_encoder: Optional[Any] = None,
+    fixture_id: Optional[str] = None,
     cross_encoder_top_k: int = 3,
     cross_encoder_margin_threshold: float = 0.05,
 ) -> Dict[str, Any]:
@@ -236,6 +240,7 @@ def build_shadow_comparison_artifact(
             "generation_metadata": _build_generation_metadata(
                 provider=provider,
                 execution_mode=execution_mode,
+                prompt_content_hash=report.prompt_content_hash,
             ),
             "diagnostics": report.planning_diagnostics,
             "shadow_readiness": report.shadow_readiness,
@@ -338,11 +343,21 @@ def build_shadow_comparison_artifact(
             enrichment_comparison["comparison"]
         ).to_dict()
 
+    generated_at_utc = datetime.now(timezone.utc).strftime(
+        "%Y%m%dT%H%M%SZ"
+    )
+    artifact_identity = {
+        "artifact_id": uuid.uuid4().hex,
+        "generation_timestamp_utc": generated_at_utc,
+    }
+
+    if fixture_id:
+        artifact_identity["fixture_id"] = fixture_id
+
     return {
-        "schema_version": "1.0",
-        "generated_at_utc": datetime.now(timezone.utc).strftime(
-            "%Y%m%dT%H%M%SZ"
-        ),
+        "schema_version": "1.1",
+        "artifact_identity": artifact_identity,
+        "generated_at_utc": generated_at_utc,
         "query": user_goal,
         "constraints": constraints,
         "retrieval": {

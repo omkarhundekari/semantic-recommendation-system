@@ -19,6 +19,7 @@ class ShadowPlanningReport:
     legacy_titles: List[str]
     comparison: Dict[str, Any]
     shadow_readiness: Dict[str, Any]
+    prompt_content_hash: str
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -137,4 +138,5 @@ def run_shadow_plan(
         legacy_titles=legacy_titles,
         comparison=comparison,
         shadow_readiness=readiness.to_dict(),
+        prompt_content_hash=outcome.prompt_content_hash,
     )

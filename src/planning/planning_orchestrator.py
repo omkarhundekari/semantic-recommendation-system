@@ -35,6 +35,7 @@ class PlanningOutcome:
     validation_errors: List[str] = field(default_factory=list)
     validation_warnings: List[str] = field(default_factory=list)
     provider_called: bool = False
+    prompt_content_hash: str = ""
 
     def diagnostics(self) -> Dict:
         return {
@@ -50,6 +51,7 @@ class PlanningOutcome:
                 self.validation_warnings
             ),
             "provider_called": self.provider_called,
+            "prompt_content_hash": self.prompt_content_hash,
         }
 
 
@@ -85,6 +87,7 @@ def plan_candidates(
             validation_errors=validation_errors,
             validation_warnings=validation_warnings,
             provider_called=generation.provider_called,
+            prompt_content_hash=generation.prompt_content_hash,
         )
 
     ranked_candidates = rank_candidates(
@@ -105,4 +108,5 @@ def plan_candidates(
         validation_errors=validation_errors,
         validation_warnings=validation_warnings,
         provider_called=generation.provider_called,
+        prompt_content_hash=generation.prompt_content_hash,
     )

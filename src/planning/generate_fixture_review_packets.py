@@ -68,6 +68,7 @@ def build_fixture_artifact(
         provider=MockCandidateGenerationProvider(
             response=specification.mock_response
         ),
+        fixture_id=specification.case.case_id,
     )
 
 
