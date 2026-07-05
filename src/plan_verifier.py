@@ -27,18 +27,20 @@ def _token_set(value: str) -> set:
 
 
 def _estimated_max_days(value: str) -> int:
-    text = _normalize_text(value)
+    """
+    Extract the upper bound from a feasibility build-time range.
 
-    if "8" in text and "12" in text:
-        return 12
+    Supports normal hyphens, en dashes, and strings such as "10–16 days".
+    Returns zero only when the value has no usable numeric estimate.
+    """
+    import re
 
-    if "5" in text and "8" in text:
-        return 8
+    numbers = [
+        int(number)
+        for number in re.findall(r"\d+", _normalize_text(value))
+    ]
 
-    if "3" in text and "5" in text:
-        return 5
-
-    return 0
+    return max(numbers) if numbers else 0
 
 
 def _is_duplicate(candidate: Dict, other: Dict) -> bool:

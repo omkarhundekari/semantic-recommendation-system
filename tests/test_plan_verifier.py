@@ -117,3 +117,53 @@ class PlanVerifierTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_time_feasibility_uses_upper_bound_for_all_build_ranges():
+    from plan_verifier import verify_project_ideas
+
+    idea = {
+        "project_title": "Lineage-Aware Pipeline Impact Explorer",
+        "idea_angle": "Trace downstream assets affected by incidents.",
+        "research_motivation": "Grounded in data-quality evidence.",
+        "mvp_scope": [
+            "Load lineage edges.",
+            "Trace affected assets.",
+            "Show an impact report.",
+        ],
+        "suggested_tech_stack": ["Python", "FastAPI"],
+        "target_roles": ["Data Engineer"],
+        "evidence_title": "Data Quality Research",
+        "evidence_source_type": "research_paper",
+        "feasibility_analysis": {
+            "build_profile": {
+                "estimated_effort": "10–16 days",
+            }
+        },
+    }
+
+    result = verify_project_ideas(
+        [idea],
+        {
+            "time_available": "1 week",
+            "target_roles": ["Data Engineer"],
+        },
+    )[0]
+
+    assert result["checks"]["time_feasibility"] is False
+    assert (
+        "The estimated effort exceeds the stated timeline."
+        in result["warnings"]
+    )
+
+
+def test_time_feasibility_handles_feasibility_scorer_ranges():
+    from plan_verifier import _estimated_max_days
+
+    assert _estimated_max_days("3–5 days") == 5
+    assert _estimated_max_days("5–8 days") == 8
+    assert _estimated_max_days("6–10 days") == 10
+    assert _estimated_max_days("6–12 days") == 12
+    assert _estimated_max_days("8–14 days") == 14
+    assert _estimated_max_days("9–15 days") == 15
+    assert _estimated_max_days("10–16 days") == 16
