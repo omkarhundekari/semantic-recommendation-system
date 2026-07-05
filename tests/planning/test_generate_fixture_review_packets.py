@@ -59,10 +59,14 @@ def test_writes_artifact_and_packet_for_selected_fixture(tmp_path):
     assert len(written) == 1
     assert written[0]["artifact_path"].exists()
     assert written[0]["packet_path"].exists()
+    assert written[0]["artifact_path"].parent.name == (
+        "sparse_evidence_cloud_cost"
+    )
 
     packet = written[0]["packet_path"].read_text()
 
     assert "sparse_evidence_cloud_cost" in packet
+    assert "## Artifact Identity" in packet
     assert "Cloud Cost Optimization Command Center" in packet
 
     artifact = __import__("json").loads(

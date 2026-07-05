@@ -94,6 +94,11 @@ def render_review_packet(
     lines: List[str] = [
         f"# Manual Review Packet: {specification.case.case_id}",
         "",
+        "## Artifact Identity",
+        "```json",
+        json.dumps(artifact["artifact_identity"], indent=2),
+        "```",
+        "",
         "## User Goal",
         artifact["query"],
         "",
@@ -248,9 +253,13 @@ def write_fixture_review_packets(
     for specification in specifications:
         artifact = build_fixture_artifact(specification)
         case_id = specification.case.case_id
+        artifact_id = artifact["artifact_identity"]["artifact_id"]
 
-        artifact_path = output_dir / f"{case_id}.json"
-        packet_path = output_dir / f"{case_id}_review.md"
+        fixture_output_dir = output_dir / case_id
+        fixture_output_dir.mkdir(parents=True, exist_ok=True)
+
+        artifact_path = fixture_output_dir / f"{artifact_id}.json"
+        packet_path = fixture_output_dir / f"{artifact_id}_review.md"
 
         artifact_path.write_text(json.dumps(artifact, indent=2))
         packet_path.write_text(
