@@ -15,6 +15,7 @@ from query_understanding import understand_query
 from research_evidence_assessment import build_evidence_assessment
 from research_query_anchors import extract_required_anchor_terms
 from product_plan_readiness import assess_product_plan_readiness
+from planning.product_enrichment import enrich_product_ideas
 from schemas.product_models import (
     EvidenceReference,
     PipelineStep,
@@ -448,45 +449,15 @@ def generate_project_intelligence(
         detected_domain=inference.get("inferred_focus"),
     )
 
-    for idea in ideas:
-        idea["feasibility_analysis"] = score_project_feasibility(idea)
-
-    initial_verification_results = verify_project_ideas(
-        ideas,
-        constraints,
+    enrichment = enrich_product_ideas(
+        ideas=ideas,
+        constraints=constraints,
     )
-
-    repaired_ideas = []
-    repairs_by_index = []
-
-    for idea, verification in zip(
-        ideas,
-        initial_verification_results,
-    ):
-        repaired_idea, repairs, _ = repair_project_plan(
-            idea,
-            constraints,
-        )
-
-        repaired_ideas.append(repaired_idea)
-        repairs_by_index.append(repairs)
-
-    ideas = apply_portfolio_ladder(repaired_ideas)
-
-    for idea in ideas:
-        ladder_profile = (
-            idea.get("feasibility_analysis", {})
-            .get("build_profile", {})
-        )
-
-        rescored_feasibility = score_project_feasibility(idea)
-        rescored_feasibility["build_profile"] = ladder_profile
-        idea["feasibility_analysis"] = rescored_feasibility
-
-    final_verification_results = verify_project_ideas(
-        ideas,
-        constraints,
+    ideas = enrichment.ideas
+    final_verification_results = (
+        enrichment.final_verification_results
     )
+    repairs_by_index = enrichment.repairs_by_index
 
     product_plan_readiness = assess_product_plan_readiness(
         evidence_items=evidence_items,
