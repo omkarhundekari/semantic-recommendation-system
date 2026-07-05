@@ -1022,3 +1022,84 @@ def test_shadow_artifact_exposes_soft_quality_warnings():
     assert warnings["warnings"][0]["code"] == (
         "missing_direct_research_evidence"
     )
+
+
+def test_shadow_artifact_exposes_per_candidate_promotion_eligibility():
+    from planning.evidence_support import (
+        CandidateEvidenceSupportScorer,
+    )
+    from planning.semantic_goal_relevance import EmbeddingVector
+    from planning.mock_generation_provider import (
+        MockCandidateGenerationProvider,
+    )
+
+    class FakeEncoder:
+        def encode_text(self, text):
+            return EmbeddingVector((1.0, 0.0))
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {},
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Incident Correlation Research",
+                    "abstract": (
+                        "Event correlation supports incident "
+                        "investigation workflows."
+                    ),
+                }
+            ],
+        },
+        user_goal="Build an incident investigation project.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Incident Correlation Workbench",
+                        "problem_statement": (
+                            "Operational signals are fragmented during "
+                            "incident investigation."
+                        ),
+                        "target_user": "Platform engineers",
+                        "core_workflow": [
+                            "Load incident events.",
+                            "Correlate related operational signals.",
+                        ],
+                        "mvp_scope": [
+                            "Load representative event records.",
+                            "Correlate related incident signals.",
+                            "Show an investigation timeline.",
+                        ],
+                        "success_metrics": [
+                            "Reduce time to identify related events."
+                        ],
+                        "evidence_relationship": (
+                            "Uses retained incident correlation evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    }
+                ]
+            }
+        ),
+        evidence_support_scorer=CandidateEvidenceSupportScorer(
+            FakeEncoder()
+        ),
+    )
+
+    promotion = artifact["v2_shadow"]["promotion_eligibility"]
+
+    assert promotion["status"] == "assessed"
+    assert promotion["summary"] == {
+        "eligible_count": 1,
+        "needs_review_count": 0,
+        "ineligible_count": 0,
+    }
+    assert promotion["candidate_assessments"][0]["status"] == "eligible"
+    assert promotion["candidate_assessments"][0][
+        "eligible_for_product_promotion"
+    ] is True

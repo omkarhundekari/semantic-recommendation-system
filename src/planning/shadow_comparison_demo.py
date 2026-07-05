@@ -19,9 +19,15 @@ from planning.cross_encoder_goal_relevance import (
 from planning.evidence_support import (
     CandidateEvidenceSupportScorer,
 )
+from planning.candidate_validator import validate_candidate
+from planning.promotion_eligibility import (
+    assess_promotion_eligibility,
+)
 from planning.semantic_goal_adapter import SemanticEngineTextEncoder
 from planning.semantic_goal_relevance import GoalRelevanceScorer
 from planning.semantic_candidate_diversity import (
+    CandidateDiversityPair,
+    CandidateDiversityTrace,
     SemanticCandidateDiversityScorer,
 )
 from reranker import CrossEncoderReranker
@@ -257,6 +263,14 @@ def build_shadow_comparison_artifact(
         semantic_candidate_diversity=semantic_candidate_diversity,
     )
 
+    promotion_eligibility = build_promotion_eligibility_shadow(
+        selected_candidates=v2_shadow.get("selected_candidates", []),
+        brief=brief,
+        evidence_support_scorer=evidence_support_scorer,
+        quality_warnings=quality_warnings,
+        semantic_candidate_diversity=semantic_candidate_diversity,
+    )
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -289,7 +303,119 @@ def build_shadow_comparison_artifact(
             "evidence_support": evidence_support,
             "grounding_adequacy": grounding_adequacy,
             "quality_warnings": quality_warnings.to_dict(),
+            "promotion_eligibility": promotion_eligibility,
         },
+    }
+
+
+def _candidate_diversity_trace_from_dict(
+    payload: Optional[Dict[str, Any]],
+) -> Optional[CandidateDiversityTrace]:
+    if not payload:
+        return None
+
+    pairs = [
+        CandidateDiversityPair(
+            candidate_a_title=str(
+                pair.get("candidate_a_title", "")
+            ),
+            candidate_b_title=str(
+                pair.get("candidate_b_title", "")
+            ),
+            raw_cosine=float(pair.get("raw_cosine", 0.0)),
+            flagged=bool(pair.get("flagged", False)),
+        )
+        for pair in payload.get("pairwise_similarity", [])
+    ]
+
+    return CandidateDiversityTrace(
+        similarity_threshold=float(
+            payload.get("similarity_threshold", 0.82)
+        ),
+        pairwise_similarity=pairs,
+        passed=bool(payload.get("passed", False)),
+    )
+
+
+def build_promotion_eligibility_shadow(
+    selected_candidates: List[Dict[str, Any]],
+    brief: Any,
+    evidence_support_scorer: Optional[Any],
+    quality_warnings: Any,
+    semantic_candidate_diversity: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    if evidence_support_scorer is None:
+        return {
+            "status": "not_assessed",
+            "candidate_assessments": [],
+            "summary": {
+                "eligible_count": 0,
+                "needs_review_count": 0,
+                "ineligible_count": 0,
+            },
+            "reason": (
+                "Evidence-support shadow was not enabled, so promotion "
+                "eligibility could not assess direct grounding."
+            ),
+        }
+
+    candidates = [
+        CandidateDirection(
+            **{
+                key: value
+                for key, value in candidate.items()
+                if key != "ranking"
+            }
+        )
+        for candidate in selected_candidates
+    ]
+
+    diversity_trace = _candidate_diversity_trace_from_dict(
+        semantic_candidate_diversity
+    )
+    assessments = []
+
+    for candidate in candidates:
+        validation = validate_candidate(candidate, brief)
+        evidence_assessment = evidence_support_scorer.assess_candidate(
+            candidate=candidate,
+            brief=brief,
+        )
+        grounding = assess_grounding_adequacy(
+            candidate=candidate,
+            brief=brief,
+            assessment=evidence_assessment,
+        )
+
+        assessments.append(
+            assess_promotion_eligibility(
+                candidate=candidate,
+                validation=validation,
+                grounding=grounding,
+                quality_warnings=quality_warnings,
+                semantic_candidate_diversity=diversity_trace,
+            ).to_dict()
+        )
+
+    status_counts = {
+        "eligible_count": sum(
+            assessment["status"] == "eligible"
+            for assessment in assessments
+        ),
+        "needs_review_count": sum(
+            assessment["status"] == "needs_review"
+            for assessment in assessments
+        ),
+        "ineligible_count": sum(
+            assessment["status"] == "ineligible"
+            for assessment in assessments
+        ),
+    }
+
+    return {
+        "status": "assessed",
+        "candidate_assessments": assessments,
+        "summary": status_counts,
     }
 
 
