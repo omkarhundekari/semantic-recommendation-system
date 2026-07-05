@@ -1103,3 +1103,120 @@ def test_shadow_artifact_exposes_per_candidate_promotion_eligibility():
     assert promotion["candidate_assessments"][0][
         "eligible_for_product_promotion"
     ] is True
+
+
+def test_shadow_artifact_exposes_semantic_diversification_repair_plan():
+    from planning.mock_generation_provider import (
+        MockCandidateGenerationProvider,
+    )
+    from planning.semantic_goal_relevance import EmbeddingVector
+
+    class FakeEncoder:
+        def encode_text(self, text):
+            if "Monitor" in text:
+                return EmbeddingVector((1.0, 0.0))
+            return EmbeddingVector((0.8, 0.6))
+
+    from planning.semantic_candidate_diversity import (
+        SemanticCandidateDiversityScorer,
+    )
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {},
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Data Pipeline Quality Research",
+                    "abstract": (
+                        "Pipeline validation and quality checks improve "
+                        "data reliability."
+                    ),
+                }
+            ],
+        },
+        user_goal="Build a data pipeline quality project.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Pipeline Monitor",
+                        "problem_statement": (
+                            "Teams need visibility into data quality."
+                        ),
+                        "target_user": "Data engineers",
+                        "core_workflow": [
+                            "Run data checks.",
+                            "Show quality alerts.",
+                        ],
+                        "mvp_scope": [
+                            "Load pipeline records.",
+                            "Run validation checks.",
+                            "Show alert results.",
+                        ],
+                        "success_metrics": [
+                            "Number of detected quality issues."
+                        ],
+                        "evidence_relationship": (
+                            "Uses retained data quality evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    },
+                    {
+                        "title": "Pipeline Failure Triage",
+                        "problem_statement": (
+                            "Teams need faster pipeline quality triage."
+                        ),
+                        "target_user": "Data engineers",
+                        "core_workflow": [
+                            "Run data checks.",
+                            "Review failed records.",
+                        ],
+                        "mvp_scope": [
+                            "Load pipeline records.",
+                            "Run validation checks.",
+                            "Show failed records.",
+                        ],
+                        "success_metrics": [
+                            "Time to review quality failures."
+                        ],
+                        "evidence_relationship": (
+                            "Uses retained data quality evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    },
+                ]
+            }
+        ),
+        semantic_candidate_diversity_scorer=(
+            SemanticCandidateDiversityScorer(FakeEncoder())
+        ),
+    )
+
+    repair = artifact["v2_shadow"][
+        "semantic_diversification_repair"
+    ]
+
+    assert repair["status"] == "repair_planned"
+    assert repair["signals"]["replacement_count"] == 1
+
+    directive = repair["directives"][0]
+    ranked_scores = {
+        candidate["title"]: candidate["ranking"]["score"]
+        for candidate in artifact["v2_shadow"]["selected_candidates"]
+    }
+
+    retained_title = directive["retain_candidate_titles"][0]
+    replaced_title = directive["replace_candidate_title"]
+
+    assert {retained_title, replaced_title} == {
+        "Pipeline Monitor",
+        "Pipeline Failure Triage",
+    }
+    assert ranked_scores[retained_title] >= ranked_scores[replaced_title]

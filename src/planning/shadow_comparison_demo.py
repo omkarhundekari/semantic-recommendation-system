@@ -23,6 +23,9 @@ from planning.candidate_validator import validate_candidate
 from planning.promotion_eligibility import (
     assess_promotion_eligibility,
 )
+from planning.semantic_diversification_repair import (
+    build_semantic_diversification_repair_plan,
+)
 from planning.semantic_goal_adapter import SemanticEngineTextEncoder
 from planning.semantic_goal_relevance import GoalRelevanceScorer
 from planning.semantic_candidate_diversity import (
@@ -271,6 +274,13 @@ def build_shadow_comparison_artifact(
         semantic_candidate_diversity=semantic_candidate_diversity,
     )
 
+    diversification_repair = build_semantic_diversification_repair_plan(
+        selected_candidates=v2_shadow.get("selected_candidates", []),
+        semantic_candidate_diversity=(
+            semantic_candidate_diversity or {}
+        ),
+    )
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -304,6 +314,9 @@ def build_shadow_comparison_artifact(
             "grounding_adequacy": grounding_adequacy,
             "quality_warnings": quality_warnings.to_dict(),
             "promotion_eligibility": promotion_eligibility,
+            "semantic_diversification_repair": (
+                diversification_repair.to_dict()
+            ),
         },
     }
 
