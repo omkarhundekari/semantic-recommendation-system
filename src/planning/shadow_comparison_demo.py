@@ -21,6 +21,9 @@ from planning.evidence_support import (
 )
 from planning.semantic_goal_adapter import SemanticEngineTextEncoder
 from planning.semantic_goal_relevance import GoalRelevanceScorer
+from planning.semantic_candidate_diversity import (
+    SemanticCandidateDiversityScorer,
+)
 from reranker import CrossEncoderReranker
 from semantic_engine import SemanticEngine
 from planning.mock_generation_provider import (
@@ -96,6 +99,7 @@ def build_shadow_comparison_artifact(
     execution_mode: str = "fixture",
     semantic_goal_relevance: Optional[List[Dict[str, Any]]] = None,
     semantic_goal_scorer: Optional[Any] = None,
+    semantic_candidate_diversity_scorer: Optional[Any] = None,
     cross_encoder_goal_scorer: Optional[Any] = None,
     evidence_support_scorer: Optional[Any] = None,
     cross_encoder_top_k: int = 3,
@@ -104,6 +108,7 @@ def build_shadow_comparison_artifact(
     inference = evidence_payload.get("inference", {})
     evidence_items = evidence_payload.get("merged_results", [])
     cross_encoder_goal_relevance: List[Dict[str, Any]] = []
+    semantic_candidate_diversity: Optional[Dict[str, Any]] = None
     evidence_support: List[Dict[str, Any]] = []
     grounding_adequacy: List[Dict[str, Any]] = []
 
@@ -198,6 +203,14 @@ def build_shadow_comparison_artifact(
                 )
             )
 
+        if semantic_candidate_diversity_scorer is not None:
+            semantic_candidate_diversity = (
+                build_semantic_candidate_diversity_shadow(
+                    selected_candidates=report.selected_candidates,
+                    scorer=semantic_candidate_diversity_scorer,
+                )
+            )
+
         if (
             semantic_goal_scorer is not None
             and cross_encoder_goal_scorer is not None
@@ -260,6 +273,9 @@ def build_shadow_comparison_artifact(
             "cross_encoder_goal_relevance": (
                 cross_encoder_goal_relevance
             ),
+            "semantic_candidate_diversity": (
+                semantic_candidate_diversity
+            ),
             "evidence_support": evidence_support,
             "grounding_adequacy": grounding_adequacy,
         },
@@ -290,6 +306,24 @@ def build_semantic_goal_relevance_shadow(
         )
     ]
 
+
+
+def build_semantic_candidate_diversity_shadow(
+    selected_candidates: List[Dict[str, Any]],
+    scorer: SemanticCandidateDiversityScorer,
+) -> Dict[str, Any]:
+    candidates = [
+        CandidateDirection(
+            **{
+                key: value
+                for key, value in candidate.items()
+                if key != "ranking"
+            }
+        )
+        for candidate in selected_candidates
+    ]
+
+    return scorer.assess_candidates(candidates).to_dict()
 
 
 def build_selected_candidate_evidence_assessments(
@@ -501,6 +535,14 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--semantic-diversity-shadow",
+        action="store_true",
+        help=(
+            "Add pairwise semantic candidate-diversity traces without "
+            "changing candidate selection."
+        ),
+    )
+    parser.add_argument(
         "--cross-encoder-shadow",
         action="store_true",
         help=(
@@ -574,13 +616,28 @@ def main() -> None:
     provider = None
     execution_mode = "fixture"
     semantic_goal_scorer = None
+    semantic_candidate_diversity_scorer = None
     cross_encoder_goal_scorer = None
     evidence_support_scorer = None
 
-    if args.semantic_shadow:
-        semantic_goal_scorer = GoalRelevanceScorer(
-            SemanticEngineTextEncoder(SemanticEngine())
-        )
+    if args.semantic_shadow or getattr(
+        args,
+        "semantic_diversity_shadow",
+        False,
+    ):
+        semantic_encoder = SemanticEngineTextEncoder(SemanticEngine())
+
+        if args.semantic_shadow:
+            semantic_goal_scorer = GoalRelevanceScorer(
+                semantic_encoder
+            )
+
+        if args.semantic_diversity_shadow:
+            semantic_candidate_diversity_scorer = (
+                SemanticCandidateDiversityScorer(
+                    semantic_encoder
+                )
+            )
 
     if args.cross_encoder_shadow:
         cross_encoder_goal_scorer = (
@@ -613,6 +670,9 @@ def main() -> None:
         provider=provider,
         execution_mode=execution_mode,
         semantic_goal_scorer=semantic_goal_scorer,
+        semantic_candidate_diversity_scorer=(
+            semantic_candidate_diversity_scorer
+        ),
         cross_encoder_goal_scorer=cross_encoder_goal_scorer,
         evidence_support_scorer=evidence_support_scorer,
     )

@@ -901,3 +901,97 @@ def test_shadow_artifact_exposes_grounding_adequacy_from_evidence_support():
     assert traces[0]["candidate_title"] == "Incident Timeline Correlator"
     assert traces[0]["adequacy_class"] == "cited_with_direct_scope"
     assert traces[0]["min_cited_alignment"] == 0.42
+
+
+def test_shadow_artifact_exposes_semantic_candidate_diversity():
+    from planning import shadow_comparison_demo as demo
+    from planning.mock_generation_provider import MockCandidateGenerationProvider
+    from planning.semantic_goal_relevance import EmbeddingVector
+
+    class FakeDiversityScorer:
+        def assess_candidates(self, candidates):
+            assert len(candidates) == 2
+
+            class Trace:
+                def to_dict(self):
+                    return {
+                        "similarity_threshold": 0.82,
+                        "pairwise_similarity": [
+                            {
+                                "candidate_a_title": candidates[0].title,
+                                "candidate_b_title": candidates[1].title,
+                                "raw_cosine": 0.91,
+                                "flagged": True,
+                            }
+                        ],
+                        "passed": False,
+                    }
+
+            return Trace()
+
+    artifact = demo.build_shadow_comparison_artifact(
+        user_goal="Build an incident investigation project.",
+        constraints={},
+        evidence_payload={
+            "inference": {},
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Event Correlation for Incidents",
+                    "abstract": "Correlate incident events.",
+                }
+            ],
+        },
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Incident Correlation Dashboard",
+                        "problem_statement": "Connect incident signals.",
+                        "target_user": "Platform engineers",
+                        "core_workflow": [
+                            "Load events.",
+                            "Correlate signals.",
+                        ],
+                        "mvp_scope": [
+                            "Load records.",
+                            "Correlate events.",
+                            "Show a dashboard.",
+                        ],
+                        "success_metrics": ["Faster investigation."],
+                        "evidence_relationship": "Uses incident evidence.",
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    },
+                    {
+                        "title": "Incident Signal Workbench",
+                        "problem_statement": "Inspect related incident signals.",
+                        "target_user": "Platform engineers",
+                        "core_workflow": [
+                            "Load incident records.",
+                            "Inspect signal links.",
+                        ],
+                        "mvp_scope": [
+                            "Load records.",
+                            "Link signals.",
+                            "Show a workbench.",
+                        ],
+                        "success_metrics": ["Faster investigation."],
+                        "evidence_relationship": "Uses incident evidence.",
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    },
+                ]
+            }
+        ),
+        execution_mode="fixture",
+        semantic_candidate_diversity_scorer=FakeDiversityScorer(),
+    )
+
+    trace = artifact["v2_shadow"]["semantic_candidate_diversity"]
+
+    assert trace["passed"] is False
+    assert trace["pairwise_similarity"][0]["flagged"] is True
