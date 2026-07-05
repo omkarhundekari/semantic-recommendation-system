@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "purpose": "Evaluation manifest for the shadow OpenAI candidate-generation planner. Live artifacts remain local under outputs/ and are reviewed against these cases.",
+  "cases": [
+    {
+      "id": "rag_quality",
+      "user_goal": "Build a research-backed RAG evaluation and failure-analysis platform for ML engineers.",
+      "skill_level": "intermediate",
+      "time_available": "3 weeks",
+      "target_roles": [
+        "Machine Learning Engineer",
+        "Backend Engineer"
+      ],
+      "preferred_stack": [
+        "Python",
+        "FastAPI"
+      ],
+      "review_focus": [
+        "candidate diversity",
+        "research grounding",
+        "three-week scope realism"
+      ],
+      "manual_review": {
+        "verdict": null,
+        "reason": null
+      }
+    },
+    {
+      "id": "cloud_incident_investigation",
+      "user_goal": "Build a cloud incident investigation project that helps platform engineers correlate deployment changes, service-health signals, and operational events.",
+      "skill_level": "intermediate",
+      "time_available": "3 weeks",
+      "target_roles": [
+        "Platform Engineer",
+        "Backend Engineer"
+      ],
+      "preferred_stack": [
+        "Python",
+        "FastAPI"
+      ],
+      "review_focus": [
+        "goal alignment",
+        "operational workflow realism",
+        "candidate diversity"
+      ],
+      "manual_review": {
+        "verdict": null,
+        "reason": null
+      }
+    },
+    {
+      "id": "data_pipeline_quality",
+      "user_goal": "Build a data engineering project that detects pipeline data-quality issues, explains likely causes, and helps teams prioritize fixes.",
+      "skill_level": "intermediate",
+      "time_available": "3 weeks",
+      "target_roles": [
+        "Data Engineer"
+      ],
+      "preferred_stack": [
+        "Python",
+        "FastAPI",
+        "PostgreSQL"
+      ],
+      "review_focus": [
+        "evidence relevance",
+        "scope plausibility",
+        "project usefulness"
+      ],
+      "manual_review": {
+        "verdict": null,
+        "reason": null
+      }
+    },
+    {
+      "id": "flaky_test_analysis",
+      "user_goal": "Build a developer productivity project that helps engineers identify flaky tests, connect failures with code changes, and prioritize likely root causes.",
+      "skill_level": "intermediate",
+      "time_available": "3 weeks",
+      "target_roles": [
+        "Software Engineer",
+        "Backend Engineer"
+      ],
+      "preferred_stack": [
+        "Python",
+        "FastAPI"
+      ],
+      "review_focus": [
+        "goal alignment",
+        "distinct technical directions",
+        "MVP feasibility"
+      ],
+      "manual_review": {
+        "verdict": null,
+        "reason": null
+      }
+    },
+    {
+      "id": "security_vulnerability_triage",
+      "user_goal": "Build a security engineering project that helps analysts prioritize vulnerabilities using exploitability, asset context, and remediation evidence.",
+      "skill_level": "intermediate",
+      "time_available": "3 weeks",
+      "target_roles": [
+        "Security Engineer",
+        "Backend Engineer"
+      ],
+      "preferred_stack": [
+        "Python",
+        "FastAPI",
+        "PostgreSQL"
+      ],
+      "review_focus": [
+        "grounding quality",
+        "security-domain specificity",
+        "scope plausibility"
+      ],
+      "manual_review": {
+        "verdict": null,
+        "reason": null
+      }
+    }
+  ]
+}
