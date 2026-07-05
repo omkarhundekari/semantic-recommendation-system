@@ -63,18 +63,26 @@ def test_report_tracks_evaluated_and_missing_cases(tmp_path):
         output_dir=tmp_path,
     )
 
-    assert report["summary"] == {
-        "configured_case_count": 2,
-        "evaluated_case_count": 1,
-        "missing_artifact_case_count": 1,
-        "ready_case_count": 1,
-        "diversity_pass_case_count": 1,
-    }
+    assert report["summary"]["configured_case_count"] == 2
+    assert report["summary"]["evaluated_case_count"] == 1
+    assert report["summary"]["missing_artifact_case_count"] == 1
+    assert report["summary"]["ready_case_count"] == 1
+    assert report["summary"]["diversity_pass_case_count"] == 1
 
     rag = report["case_reports"]["rag_quality"]
     assert rag["status"] == "evaluated"
     assert rag["goal_relevance_summary"]["minimum_raw_cosine"] == 0.7
+    assert rag["goal_relevance_summary"]["average_raw_cosine"] == 0.75
     assert rag["grounding_summary"]["minimum_cited_alignment"] == 0.4
+    assert rag["grounding_summary"]["average_cited_alignment"] == 0.4
+    assert rag["diversity_summary"]["highest_pair_similarity"] is None
+
+    assert report["summary"]["average_case_goal_relevance"] == 0.75
+    assert report["summary"]["minimum_candidate_goal_relevance"] == 0.7
+    assert report["summary"]["average_case_grounding_alignment"] == 0.4
+    assert report["summary"]["minimum_candidate_grounding_alignment"] == 0.4
+    assert report["summary"]["highest_candidate_pair_similarity"] is None
+    assert report["summary"]["total_tokens"] == 0
 
     missing = report["case_reports"]["security_triage"]
     assert missing["status"] == "missing_artifact"

@@ -55,6 +55,16 @@ def _case_report(
         for trace in grounding
         if trace.get("min_cited_alignment") is not None
     ]
+    diversity_pairs = (
+        diversity.get("pairwise_similarity", [])
+        if diversity
+        else []
+    )
+    diversity_scores = [
+        pair.get("raw_cosine")
+        for pair in diversity_pairs
+        if pair.get("raw_cosine") is not None
+    ]
 
     return {
         "status": "evaluated",
@@ -67,6 +77,11 @@ def _case_report(
             "candidate_count": len(goal_scores),
             "minimum_raw_cosine": (
                 round(min(goal_scores), 4)
+                if goal_scores
+                else None
+            ),
+            "average_raw_cosine": (
+                round(sum(goal_scores) / len(goal_scores), 4)
                 if goal_scores
                 else None
             ),
@@ -85,6 +100,22 @@ def _case_report(
             "minimum_cited_alignment": (
                 round(min(grounding_scores), 4)
                 if grounding_scores
+                else None
+            ),
+            "average_cited_alignment": (
+                round(
+                    sum(grounding_scores) / len(grounding_scores),
+                    4,
+                )
+                if grounding_scores
+                else None
+            ),
+        },
+        "diversity_summary": {
+            "pair_count": len(diversity_scores),
+            "highest_pair_similarity": (
+                round(max(diversity_scores), 4)
+                if diversity_scores
                 else None
             ),
         },
@@ -111,6 +142,36 @@ def build_openai_planner_evaluation_report(
         if report["status"] == "evaluated"
     ]
 
+    goal_averages = [
+        report["goal_relevance_summary"]["average_raw_cosine"]
+        for report in evaluated_reports
+        if report["goal_relevance_summary"]["average_raw_cosine"] is not None
+    ]
+    goal_minimums = [
+        report["goal_relevance_summary"]["minimum_raw_cosine"]
+        for report in evaluated_reports
+        if report["goal_relevance_summary"]["minimum_raw_cosine"] is not None
+    ]
+    grounding_averages = [
+        report["grounding_summary"]["average_cited_alignment"]
+        for report in evaluated_reports
+        if report["grounding_summary"]["average_cited_alignment"] is not None
+    ]
+    grounding_minimums = [
+        report["grounding_summary"]["minimum_cited_alignment"]
+        for report in evaluated_reports
+        if report["grounding_summary"]["minimum_cited_alignment"] is not None
+    ]
+    highest_pair_similarities = [
+        report["diversity_summary"]["highest_pair_similarity"]
+        for report in evaluated_reports
+        if report["diversity_summary"]["highest_pair_similarity"] is not None
+    ]
+    usage_records = [
+        report["generation_metadata"].get("usage", {})
+        for report in evaluated_reports
+    ]
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -133,6 +194,46 @@ def build_openai_planner_evaluation_report(
                 for report in evaluated_reports
                 if report["semantic_candidate_diversity"]
                 and report["semantic_candidate_diversity"].get("passed")
+            ),
+            "average_case_goal_relevance": (
+                round(sum(goal_averages) / len(goal_averages), 4)
+                if goal_averages
+                else None
+            ),
+            "minimum_candidate_goal_relevance": (
+                round(min(goal_minimums), 4)
+                if goal_minimums
+                else None
+            ),
+            "average_case_grounding_alignment": (
+                round(
+                    sum(grounding_averages) / len(grounding_averages),
+                    4,
+                )
+                if grounding_averages
+                else None
+            ),
+            "minimum_candidate_grounding_alignment": (
+                round(min(grounding_minimums), 4)
+                if grounding_minimums
+                else None
+            ),
+            "highest_candidate_pair_similarity": (
+                round(max(highest_pair_similarities), 4)
+                if highest_pair_similarities
+                else None
+            ),
+            "total_input_tokens": sum(
+                int(record.get("input_tokens") or 0)
+                for record in usage_records
+            ),
+            "total_output_tokens": sum(
+                int(record.get("output_tokens") or 0)
+                for record in usage_records
+            ),
+            "total_tokens": sum(
+                int(record.get("total_tokens") or 0)
+                for record in usage_records
             ),
         },
     }
