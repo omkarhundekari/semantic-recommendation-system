@@ -59,6 +59,9 @@ from planning.shadow_quality_warnings import (
 from planning.shadow_comparison_enrichment import (
     build_shadow_comparison_enrichment,
 )
+from planning.manual_review_rubric import (
+    build_manual_review_template,
+)
 from planning.evidence_brief import build_evidence_brief
 from planning.evidence_quality_signals import (
     EvidenceQualityThresholds,
@@ -324,6 +327,13 @@ def build_shadow_comparison_artifact(
         comparison_encoder=comparison_encoder,
     )
 
+    manual_review_template = None
+
+    if v2_shadow.get("selected_candidates"):
+        manual_review_template = build_manual_review_template(
+            enrichment_comparison["comparison"]
+        ).to_dict()
+
     return {
         "schema_version": "1.0",
         "generated_at_utc": datetime.now(timezone.utc).strftime(
@@ -368,6 +378,11 @@ def build_shadow_comparison_artifact(
             "enrichment": enrichment_comparison["shadow_enrichment"],
             "shadow_vs_deterministic_comparison": (
                 enrichment_comparison["comparison"]
+            ),
+            **(
+                {"manual_review_template": manual_review_template}
+                if manual_review_template is not None
+                else {}
             ),
         },
     }

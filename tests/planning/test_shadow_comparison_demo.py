@@ -1411,3 +1411,89 @@ def test_shadow_artifact_records_unresolved_evidence_quality_diagnostics():
     assert quality["metrics"]["final_brief_source_count"] == 2
     assert quality["metrics"]["direct_source_count"] >= 1
     assert "route" not in quality
+
+
+def test_complete_shadow_artifact_includes_unscored_manual_review_template():
+    from planning.mock_generation_provider import (
+        MockCandidateGenerationProvider,
+    )
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {},
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Incident Correlation Research",
+                    "abstract": (
+                        "Event correlation supports incident "
+                        "investigation workflows."
+                    ),
+                }
+            ],
+        },
+        user_goal="Build an incident investigation project.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Incident Correlation Workbench",
+                        "problem_statement": (
+                            "Operational signals are fragmented during "
+                            "incident investigation."
+                        ),
+                        "target_user": "Platform engineers",
+                        "core_workflow": [
+                            "Load incident events.",
+                            "Correlate related signals.",
+                        ],
+                        "mvp_scope": [
+                            "Load representative event records.",
+                            "Correlate incident signals.",
+                            "Show an investigation timeline.",
+                        ],
+                        "success_metrics": [
+                            "Reduce time to identify related events."
+                        ],
+                        "evidence_relationship": (
+                            "Uses retained incident correlation evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    }
+                ]
+            }
+        ),
+    )
+
+    template = artifact["v2_shadow"]["manual_review_template"]
+
+    assert template["rubric_version"] == "v1"
+    assert template["overall_preference"] is None
+    assert template["unique_angle_quality"] is None
+    assert template["deterministic_review"]["candidate_reviews"]
+    assert template["openai_review"]["candidate_reviews"] == [
+        {
+            "candidate_title": "Incident Correlation Workbench",
+            "goal_alignment": None,
+            "grounding": None,
+            "scope_realism": None,
+            "notes": "",
+        }
+    ]
+
+
+def test_prompt_ready_artifact_has_no_manual_review_template():
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {},
+            "merged_results": [],
+        },
+        user_goal="Build a project.",
+        constraints={},
+    )
+
+    assert "manual_review_template" not in artifact["v2_shadow"]
