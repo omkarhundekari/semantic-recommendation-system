@@ -1497,3 +1497,67 @@ def test_prompt_ready_artifact_has_no_manual_review_template():
     )
 
     assert "manual_review_template" not in artifact["v2_shadow"]
+
+
+def test_provider_backed_shadow_artifact_keeps_evidence_quality_diagnostics():
+    from planning.mock_generation_provider import (
+        MockCandidateGenerationProvider,
+    )
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload={
+            "inference": {
+                "inferred_focus": "data_engineering",
+            },
+            "merged_results": [
+                {
+                    "document_id": "paper-1",
+                    "source_type": "research_paper",
+                    "title": "Pipeline Quality Research",
+                    "abstract": (
+                        "Data validation improves pipeline reliability."
+                    ),
+                }
+            ],
+        },
+        user_goal="Build a data pipeline quality project.",
+        constraints={},
+        provider=MockCandidateGenerationProvider(
+            response={
+                "candidates": [
+                    {
+                        "title": "Pipeline Quality Monitor",
+                        "problem_statement": (
+                            "Teams need visibility into quality failures."
+                        ),
+                        "target_user": "Data engineers",
+                        "core_workflow": [
+                            "Load pipeline records.",
+                            "Run quality checks.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample records.",
+                            "Run validation checks.",
+                            "Show failed checks.",
+                        ],
+                        "success_metrics": [
+                            "Number of detected quality failures."
+                        ],
+                        "evidence_relationship": (
+                            "Uses retained pipeline quality evidence."
+                        ),
+                        "source_ids": ["paper-1"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    }
+                ]
+            }
+        ),
+    )
+
+    quality = artifact["v2_shadow"]["evidence_quality"]
+
+    assert quality["status"] == "not_routed_pending_calibration"
+    assert quality["routing_ready"] is False
+    assert quality["metrics"]["final_brief_source_count"] == 1
+    assert quality["metrics"]["direct_source_count"] == 1

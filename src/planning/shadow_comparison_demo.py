@@ -228,6 +228,10 @@ def build_shadow_comparison_artifact(
         v2_shadow = {
             "status": f"{execution_mode}_evaluated",
             "report": report.to_dict(),
+            "evidence_quality": {
+                "status": "not_routed_pending_calibration",
+                **evidence_quality_signals.to_dict(),
+            },
             "selected_candidates": report.selected_candidates,
             "generation_metadata": _build_generation_metadata(
                 provider=provider,
