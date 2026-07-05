@@ -13,6 +13,7 @@ class DiversificationRepairDirective:
     highest_pair_similarity: float
     reason: str
     regeneration_brief: Dict[str, Any] = field(default_factory=dict)
+    replacement_angle: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

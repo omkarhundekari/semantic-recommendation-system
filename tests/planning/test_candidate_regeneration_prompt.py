@@ -43,6 +43,10 @@ def make_directive():
         retain_candidate_titles=["Pipeline Monitor"],
         highest_pair_similarity=0.7915,
         reason="Candidate is too similar to a higher-ranked direction.",
+        replacement_angle=(
+            "Build a lineage-aware impact explorer for data-quality "
+            "incidents instead of validation or schema-drift tooling."
+        ),
         regeneration_brief={
             "preserve_user_goal": True,
             "preserve_evidence_constraints": True,
@@ -83,6 +87,12 @@ def test_builds_one_candidate_regeneration_payload():
     )
     assert directive["retain_candidate_titles"] == ["Pipeline Monitor"]
     assert directive["highest_pair_similarity"] == 0.7915
+    assert payload["replacement_strategy"][
+        "required_replacement_angle"
+    ] == (
+        "Build a lineage-aware impact explorer for data-quality "
+        "incidents instead of validation or schema-drift tooling."
+    )
     assert directive["regeneration_brief"][
         "must_differ_from_titles"
     ] == ["Pipeline Monitor"]

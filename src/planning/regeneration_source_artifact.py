@@ -180,6 +180,9 @@ def load_regeneration_source_artifact(
         regeneration_brief=dict(
             directive_payload.get("regeneration_brief", {})
         ),
+        replacement_angle=str(
+            directive_payload.get("replacement_angle", "")
+        ).strip(),
     )
 
     replaced_candidate = candidates_by_title.get(

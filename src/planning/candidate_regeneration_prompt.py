@@ -22,6 +22,7 @@ def build_candidate_regeneration_payload(
     ] = None,
 ) -> Dict[str, Any]:
     regeneration_brief = directive.regeneration_brief
+    replacement_angle = directive.replacement_angle.strip()
     surviving_candidates = list(surviving_candidates or [])
 
     survivor_exclusions = [
@@ -54,6 +55,10 @@ def build_candidate_regeneration_payload(
                 "workflow, target-user interaction, or system boundary."
             ),
             (
+                "Follow the required replacement angle as the primary "
+                "destination for the new direction."
+            ),
+            (
                 "Do not invent papers, repositories, datasets, benchmarks, "
                 "or source facts."
             ),
@@ -66,6 +71,14 @@ def build_candidate_regeneration_payload(
         "user_request": request.to_dict(),
         "evidence_brief": brief.to_dict(),
         "surviving_candidates_to_avoid": survivor_exclusions,
+        "replacement_strategy": {
+            "required_replacement_angle": replacement_angle,
+            "instruction": (
+                "Use this as the primary technical direction. Do not "
+                "reinterpret it as a minor variation of a surviving "
+                "candidate."
+            ),
+        },
         "repair_directive": {
             "replace_candidate_title": (
                 directive.replace_candidate_title

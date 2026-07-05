@@ -1,5 +1,6 @@
 import argparse
 import json
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -142,6 +143,14 @@ def parse_args() -> argparse.Namespace:
         help="Required together with enabled OpenAI .env settings.",
     )
     parser.add_argument(
+        "--replacement-angle",
+        required=True,
+        help=(
+            "Required positive technical direction for the replacement. "
+            "It must be materially distinct from surviving candidates."
+        ),
+    )
+    parser.add_argument(
         "--output-dir",
         default=str(DEFAULT_OUTPUT_DIR),
     )
@@ -159,6 +168,19 @@ def main() -> None:
     source = load_regeneration_source_artifact(
         path=Path(args.source_artifact),
         directive_index=args.directive_index,
+    )
+
+    replacement_angle = args.replacement_angle.strip()
+
+    if not replacement_angle:
+        raise SystemExit("--replacement-angle cannot be empty.")
+
+    source = replace(
+        source,
+        directive=replace(
+            source.directive,
+            replacement_angle=replacement_angle,
+        ),
     )
 
     semantic_encoder = SemanticEngineTextEncoder(SemanticEngine())
