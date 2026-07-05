@@ -84,6 +84,7 @@ def render_review_packet(
     brief = report["evidence_brief"]
     quality = shadow["evidence_quality"]
     comparison = shadow["shadow_vs_deterministic_comparison"]
+    source_relevance = shadow.get("candidate_source_relevance", [])
     template = shadow["manual_review_template"]
 
     brief_sources = {
@@ -199,6 +200,16 @@ def render_review_packet(
             f"  - {step}"
             for step in candidate.get("mvp_scope", [])
         )
+
+    lines.extend(
+        [
+            "",
+            "## Candidate-to-Source Relevance Diagnostics",
+            "```json",
+            json.dumps(source_relevance, indent=2),
+            "```",
+        ]
+    )
 
     semantic_status = (
         "assessed"

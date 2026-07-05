@@ -40,6 +40,8 @@ def test_review_packet_is_self_contained_and_does_not_include_oracle():
     assert "## Evidence Brief" in packet
     assert "Continuous Health Event Retrieval" in packet
     assert "Health Event Incident Correlator" in packet
+    assert "## Candidate-to-Source Relevance Diagnostics" in packet
+    assert "adjacent_context_only" in packet
     assert "both_weak" in packet
     assert "standard, limited, exploratory" in packet
     assert "expected_overall_preference" not in packet

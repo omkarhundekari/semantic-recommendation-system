@@ -116,3 +116,31 @@ def test_sparse_fixture_oracle_is_separate_from_generated_artifact():
     assert oracle.expected_response_quality == "exploratory"
     assert "expected_overall_preference" not in serialized_artifact
     assert "expected_response_quality" not in serialized_artifact
+
+
+
+def test_adversarial_fixture_emits_adjacent_context_relevance_trace():
+    spec = get_fixture_specification(
+        "adversarial_cloud_incident_health_near_miss"
+    )
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload=spec.evidence_payload,
+        user_goal=spec.case.user_goal,
+        constraints=spec.case.constraints,
+        provider=MockCandidateGenerationProvider(
+            response=spec.mock_response
+        ),
+    )
+
+    trace = next(
+        item
+        for item in artifact["v2_shadow"]["candidate_source_relevance"]
+        if (
+            item["candidate_title"]
+            == "Health Event Incident Correlator"
+        )
+    )
+
+    assert trace["source_id"] == "paper-health-events"
+    assert trace["relevance_status"] == "adjacent_context_only"

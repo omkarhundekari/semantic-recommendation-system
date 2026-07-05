@@ -30,6 +30,9 @@ from planning.promotion_eligibility import (
 from planning.candidate_feasibility_prescreen import (
     prescreen_candidate_feasibility,
 )
+from planning.candidate_source_relevance import (
+    assess_candidate_set_source_relevance,
+)
 from planning.semantic_diversification_repair import (
     build_semantic_diversification_repair_plan,
 )
@@ -145,6 +148,7 @@ def build_shadow_comparison_artifact(
     semantic_candidate_diversity: Optional[Dict[str, Any]] = None
     evidence_support: List[Dict[str, Any]] = []
     grounding_adequacy: List[Dict[str, Any]] = []
+    candidate_source_relevance: List[Dict[str, Any]] = []
 
     legacy_ideas = generate_project_ideas(
         search_results=evidence_items,
@@ -245,6 +249,25 @@ def build_shadow_comparison_artifact(
             "diagnostics": report.planning_diagnostics,
             "shadow_readiness": report.shadow_readiness,
         }
+
+        selected_direction_models = [
+            CandidateDirection(
+                **{
+                    key: value
+                    for key, value in candidate.items()
+                    if key != "ranking"
+                }
+            )
+            for candidate in report.selected_candidates
+        ]
+        candidate_source_relevance = [
+            trace.to_dict()
+            for trace in assess_candidate_set_source_relevance(
+                candidates=selected_direction_models,
+                brief=brief,
+                user_goal=user_goal,
+            )
+        ]
 
         if semantic_goal_scorer is not None:
             semantic_goal_relevance = (
@@ -386,6 +409,7 @@ def build_shadow_comparison_artifact(
             ),
             "evidence_support": evidence_support,
             "grounding_adequacy": grounding_adequacy,
+            "candidate_source_relevance": candidate_source_relevance,
             "quality_warnings": quality_warnings.to_dict(),
             "promotion_eligibility": promotion_eligibility,
             "semantic_diversification_repair": (
