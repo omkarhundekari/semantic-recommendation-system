@@ -52,3 +52,27 @@ def test_parser_rejects_missing_required_fields():
 
     with pytest.raises(ValueError, match="missing required fields"):
         parse_candidate_payload(payload)
+
+
+def test_parser_builds_single_regenerated_candidate():
+    from planning.candidate_parser import (
+        parse_single_candidate_payload,
+    )
+
+    candidate = parse_single_candidate_payload(
+        {
+            "candidate": valid_payload()["candidates"][0],
+        }
+    )
+
+    assert candidate.title == "Incident Correlation Workbench"
+    assert candidate.source_ids == ["paper-1"]
+
+
+def test_parser_rejects_regeneration_without_candidate_object():
+    from planning.candidate_parser import (
+        parse_single_candidate_payload,
+    )
+
+    with pytest.raises(ValueError, match="candidate object"):
+        parse_single_candidate_payload({"candidates": []})
