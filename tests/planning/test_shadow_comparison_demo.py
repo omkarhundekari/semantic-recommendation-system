@@ -61,6 +61,17 @@ def test_comparison_artifact_keeps_legacy_and_v2_results_separate():
 
     assert artifact["legacy_planner"]["direction_count"] == 3
     assert artifact["v2_shadow"]["status"] == "fixture_evaluated"
+    assert artifact["v2_shadow"]["generation_metadata"] == {
+        "prompt_version": "v1",
+        "execution_mode": "fixture",
+        "provider_name": "MockCandidateGenerationProvider",
+        "model": None,
+        "usage": {
+            "input_tokens": None,
+            "output_tokens": None,
+            "total_tokens": None,
+        },
+    }
     assert artifact["v2_shadow"]["shadow_readiness"]["status"] == (
         "needs_review"
     )

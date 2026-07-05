@@ -6,7 +6,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from planning.candidate_models import CandidateDirection
-from planning.candidate_prompt import build_candidate_generation_payload
+from planning.candidate_prompt import (
+    CANDIDATE_GENERATION_PROMPT_VERSION,
+    build_candidate_generation_payload,
+)
 from planning.cross_encoder_goal_adapter import (
     CrossEncoderGoalPairScorer,
 )
@@ -46,6 +49,27 @@ DEFAULT_OUTPUT_DIR = Path("outputs/shadow_comparisons")
 def _query_slug(query: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", query.lower()).strip("-")
     return slug[:60] or "shadow-comparison"
+
+
+def _build_generation_metadata(
+    provider: Optional[CandidateGenerationProvider],
+    execution_mode: str,
+) -> Dict[str, Any]:
+    usage = getattr(provider, "last_usage", {}) if provider else {}
+
+    return {
+        "prompt_version": CANDIDATE_GENERATION_PROMPT_VERSION,
+        "execution_mode": execution_mode,
+        "provider_name": (
+            provider.__class__.__name__ if provider is not None else None
+        ),
+        "model": getattr(provider, "model", None) if provider else None,
+        "usage": {
+            "input_tokens": usage.get("input_tokens"),
+            "output_tokens": usage.get("output_tokens"),
+            "total_tokens": usage.get("total_tokens"),
+        },
+    }
 
 
 def _legacy_summary(ideas: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -124,6 +148,10 @@ def build_shadow_comparison_artifact(
             )
         ),
         "selected_candidates": [],
+        "generation_metadata": _build_generation_metadata(
+            provider=None,
+            execution_mode=execution_mode,
+        ),
         "diagnostics": {
             "provider_called": False,
             "message": (
@@ -153,6 +181,10 @@ def build_shadow_comparison_artifact(
             "status": f"{execution_mode}_evaluated",
             "report": report.to_dict(),
             "selected_candidates": report.selected_candidates,
+            "generation_metadata": _build_generation_metadata(
+                provider=provider,
+                execution_mode=execution_mode,
+            ),
             "diagnostics": report.planning_diagnostics,
             "shadow_readiness": report.shadow_readiness,
         }

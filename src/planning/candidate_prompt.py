@@ -5,6 +5,9 @@ from planning.planner_models import EvidenceBrief
 from planning.candidate_models import CandidateGenerationRequest
 
 
+CANDIDATE_GENERATION_PROMPT_VERSION = "v1"
+
+
 def build_candidate_generation_payload(
     brief: EvidenceBrief,
     request: CandidateGenerationRequest,
