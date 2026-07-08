@@ -47,6 +47,9 @@ def assess_shadow_quality_warnings(
     semantic_goal_relevance: Sequence[Dict[str, Any]],
     grounding_adequacy: Sequence[Dict[str, Any]],
     semantic_candidate_diversity: Optional[Dict[str, Any]] = None,
+    candidate_source_relevance: Optional[
+        Sequence[Dict[str, Any]]
+    ] = None,
 ) -> ShadowQualityWarningAssessment:
     warnings: List[ShadowQualityWarning] = []
     coverage = list(coverage_warnings)
@@ -176,6 +179,52 @@ def assess_shadow_quality_warnings(
             )
         )
 
+    source_relevance_traces = list(candidate_source_relevance or [])
+    traces_by_candidate: Dict[str, List[Dict[str, Any]]] = {}
+
+    for trace in source_relevance_traces:
+        candidate_title = trace.get("candidate_title", "")
+
+        if candidate_title:
+            traces_by_candidate.setdefault(
+                candidate_title,
+                [],
+            ).append(trace)
+
+    adjacent_only_candidates = []
+
+    for candidate_title, traces in traces_by_candidate.items():
+        statuses = {
+            trace.get("relevance_status")
+            for trace in traces
+        }
+
+        if statuses == {"adjacent_context_only"}:
+            adjacent_only_candidates.append(
+                {
+                    "candidate_title": candidate_title,
+                    "source_ids": [
+                        trace.get("source_id", "")
+                        for trace in traces
+                    ],
+                    "relevance_statuses": sorted(statuses),
+                }
+            )
+
+    if adjacent_only_candidates:
+        warnings.append(
+            ShadowQualityWarning(
+                code="adjacent_context_only_candidate",
+                message=(
+                    "One or more candidates cite only adjacent-context "
+                    "sources and should not be treated as strongly grounded."
+                ),
+                details={
+                    "candidates": adjacent_only_candidates,
+                },
+            )
+        )
+
     return ShadowQualityWarningAssessment(
         warnings=warnings,
         signals={
@@ -183,6 +232,7 @@ def assess_shadow_quality_warnings(
             "goal_trace_count": len(semantic_goal_relevance),
             "grounding_trace_count": len(grounding_adequacy),
             "diversity_pair_count": len(diversity_pairs),
+            "source_relevance_trace_count": len(source_relevance_traces),
             "quality_warning_count": len(warnings),
         },
     )

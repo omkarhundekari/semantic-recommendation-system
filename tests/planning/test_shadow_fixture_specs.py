@@ -144,3 +144,33 @@ def test_adversarial_fixture_emits_adjacent_context_relevance_trace():
 
     assert trace["source_id"] == "paper-health-events"
     assert trace["relevance_status"] == "adjacent_context_only"
+
+
+
+def test_adversarial_fixture_quality_warnings_flag_adjacent_only_candidate():
+    spec = get_fixture_specification(
+        "adversarial_cloud_incident_health_near_miss"
+    )
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload=spec.evidence_payload,
+        user_goal=spec.case.user_goal,
+        constraints=spec.case.constraints,
+        provider=MockCandidateGenerationProvider(
+            response=spec.mock_response
+        ),
+    )
+
+    warnings = {
+        warning["code"]: warning
+        for warning in artifact["v2_shadow"]["quality_warnings"][
+            "warnings"
+        ]
+    }
+
+    assert "adjacent_context_only_candidate" in warnings
+    assert warnings[
+        "adjacent_context_only_candidate"
+    ]["details"]["candidates"][0]["candidate_title"] == (
+        "Health Event Incident Correlator"
+    )

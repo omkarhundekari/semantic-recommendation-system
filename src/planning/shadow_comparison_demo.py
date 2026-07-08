@@ -327,6 +327,7 @@ def build_shadow_comparison_artifact(
         semantic_goal_relevance=semantic_goal_relevance or [],
         grounding_adequacy=grounding_adequacy,
         semantic_candidate_diversity=semantic_candidate_diversity,
+        candidate_source_relevance=candidate_source_relevance,
     )
 
     promotion_eligibility = build_promotion_eligibility_shadow(

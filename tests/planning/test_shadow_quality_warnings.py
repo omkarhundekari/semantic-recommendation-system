@@ -105,3 +105,57 @@ def test_does_not_warn_at_exact_thresholds():
     )
 
     assert assessment.warnings == []
+
+
+
+def test_warns_when_candidate_cites_only_adjacent_context_sources():
+    assessment = assess_shadow_quality_warnings(
+        coverage_warnings=[],
+        semantic_goal_relevance=[],
+        grounding_adequacy=[],
+        semantic_candidate_diversity=None,
+        candidate_source_relevance=[
+            {
+                "candidate_title": "Health Event Incident Correlator",
+                "source_id": "paper-health-events",
+                "relevance_status": "adjacent_context_only",
+            }
+        ],
+    )
+
+    warnings = {
+        warning.code: warning
+        for warning in assessment.warnings
+    }
+
+    assert set(warnings) == {"adjacent_context_only_candidate"}
+    assert warnings[
+        "adjacent_context_only_candidate"
+    ].details["candidates"][0]["candidate_title"] == (
+        "Health Event Incident Correlator"
+    )
+    assert assessment.signals["source_relevance_trace_count"] == 1
+
+
+def test_does_not_warn_when_candidate_has_direct_supported_source():
+    assessment = assess_shadow_quality_warnings(
+        coverage_warnings=[],
+        semantic_goal_relevance=[],
+        grounding_adequacy=[],
+        semantic_candidate_diversity=None,
+        candidate_source_relevance=[
+            {
+                "candidate_title": "Deployment Correlator",
+                "source_id": "paper-cloud-incidents",
+                "relevance_status": "lexically_supported",
+            },
+            {
+                "candidate_title": "Deployment Correlator",
+                "source_id": "paper-health-events",
+                "relevance_status": "adjacent_context_only",
+            },
+        ],
+    )
+
+    assert assessment.warnings == []
+    assert assessment.signals["source_relevance_trace_count"] == 2

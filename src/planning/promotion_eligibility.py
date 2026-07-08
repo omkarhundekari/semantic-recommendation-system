@@ -163,6 +163,10 @@ def assess_promotion_eligibility(
         "near_duplicate_candidates": (
             "Candidate is semantically close to another direction."
         ),
+        "adjacent_context_only_candidate": (
+            "Candidate cites only adjacent-context sources and needs "
+            "manual grounding review."
+        ),
     }
 
     for code in warning_codes:
