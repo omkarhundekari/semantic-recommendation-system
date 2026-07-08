@@ -83,6 +83,7 @@ def render_review_packet(
     report = shadow["report"]
     brief = report["evidence_brief"]
     quality = shadow["evidence_quality"]
+    quality_warnings = shadow.get("quality_warnings", {})
     comparison = shadow["shadow_vs_deterministic_comparison"]
     source_relevance = shadow.get("candidate_source_relevance", [])
     template = shadow["manual_review_template"]
@@ -207,6 +208,11 @@ def render_review_packet(
             "## Candidate-to-Source Relevance Diagnostics",
             "```json",
             json.dumps(source_relevance, indent=2),
+            "```",
+            "",
+            "## Quality Warnings",
+            "```json",
+            json.dumps(quality_warnings, indent=2),
             "```",
         ]
     )

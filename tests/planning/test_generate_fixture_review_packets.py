@@ -42,6 +42,8 @@ def test_review_packet_is_self_contained_and_does_not_include_oracle():
     assert "Health Event Incident Correlator" in packet
     assert "## Candidate-to-Source Relevance Diagnostics" in packet
     assert "adjacent_context_only" in packet
+    assert "## Quality Warnings" in packet
+    assert "adjacent_context_only_candidate" in packet
     assert "both_weak" in packet
     assert "standard, limited, exploratory" in packet
     assert "expected_overall_preference" not in packet
@@ -91,3 +93,43 @@ def test_available_fixture_ids_match_selectable_specs():
         "adversarial_cloud_incident_health_near_miss",
         "sparse_evidence_cloud_cost",
     )
+
+
+
+def test_adversarial_warning_chain_reaches_review_packet():
+    spec = select_fixture_specifications(
+        ["adversarial_cloud_incident_health_near_miss"]
+    )[0]
+    artifact = build_fixture_artifact(spec)
+    packet = render_review_packet(
+        artifact=artifact,
+        specification=spec,
+    )
+
+    relevance_traces = artifact["v2_shadow"][
+        "candidate_source_relevance"
+    ]
+    quality_warnings = artifact["v2_shadow"]["quality_warnings"]
+
+    health_trace = next(
+        trace
+        for trace in relevance_traces
+        if trace["candidate_title"] == "Health Event Incident Correlator"
+    )
+
+    warning_codes = {
+        warning["code"]
+        for warning in quality_warnings["warnings"]
+    }
+
+    assert health_trace["source_id"] == "paper-health-events"
+    assert health_trace["relevance_status"] == "adjacent_context_only"
+    assert "adjacent_context_only_candidate" in warning_codes
+
+    assert "## Candidate-to-Source Relevance Diagnostics" in packet
+    assert "Health Event Incident Correlator" in packet
+    assert "paper-health-events" in packet
+    assert "adjacent_context_only" in packet
+
+    assert "## Quality Warnings" in packet
+    assert "adjacent_context_only_candidate" in packet
