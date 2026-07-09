@@ -11,24 +11,24 @@ from planning.shadow_reviewer_report import (
 def test_shadow_reviewer_report_uses_latest_reviewed_artifacts():
     report = build_shadow_reviewer_report()
 
-    assert report["reviewed_fixtures"] == 5
-    assert report["unreviewed_fixtures"] == 5
-    assert report["total_review_records"] == 7
-    assert report["review_annotation_count"] == 5
-    assert report["latest_review_annotation_count"] == 5
+    assert report["reviewed_fixtures"] == 6
+    assert report["unreviewed_fixtures"] == 4
+    assert report["total_review_records"] == 8
+    assert report["review_annotation_count"] == 6
+    assert report["latest_review_annotation_count"] == 6
     assert report["data_sufficiency_warning"]
 
     assert report["outcome_distribution"] == {
         "both_weak/exploratory": 1,
-        "openai/limited": 1,
+        "openai/limited": 2,
         "openai/standard": 3,
     }
-    assert report["reviewer_confidence_counts"] == {"high": 5}
+    assert report["reviewer_confidence_counts"] == {"high": 6}
     assert report["both_weak_diagnosis_counts"] == {
         "evidence_sparse": 1,
     }
     assert report["relevance_trace_assessment_counts"] == {
-        "traces_match_reviewer_judgment": 5,
+        "traces_match_reviewer_judgment": 6,
     }
 
     adversarial_status = next(
@@ -53,12 +53,25 @@ def test_shadow_reviewer_report_summarizes_warning_and_relevance_trace():
     report = build_shadow_reviewer_report()
 
     warnings = report["quality_warning_summary"]
-    assert len(warnings) == 1
-    assert warnings[0]["warning_code"] == (
-        "adjacent_context_only_candidate"
-    )
-    assert warnings[0]["candidate_titles"] == [
+    assert len(warnings) == 2
+
+    warnings_by_fixture = {
+        warning["fixture_id"]: warning
+        for warning in warnings
+    }
+
+    assert warnings_by_fixture[
+        "adversarial_cloud_incident_health_near_miss"
+    ]["warning_code"] == "adjacent_context_only_candidate"
+    assert warnings_by_fixture[
+        "adversarial_cloud_incident_health_near_miss"
+    ]["candidate_titles"] == [
         "Health Event Incident Correlator"
+    ]
+    assert warnings_by_fixture[
+        "strict_weekend_scope"
+    ]["candidate_titles"] == [
+        "Simple Remediation Priority Ranker"
     ]
 
     suspicious = [
@@ -67,12 +80,25 @@ def test_shadow_reviewer_report_summarizes_warning_and_relevance_trace():
         if trace["was_flagged"]
     ]
 
-    assert len(suspicious) == 1
-    assert suspicious[0]["candidate_title"] == (
+    assert len(suspicious) == 2
+
+    suspicious_by_candidate = {
+        trace["candidate_title"]: trace
+        for trace in suspicious
+    }
+
+    assert suspicious_by_candidate[
         "Health Event Incident Correlator"
-    )
-    assert suspicious[0]["source_id"] == "paper-health-events"
-    assert suspicious[0]["relevance_status"] == "adjacent_context_only"
+    ]["source_id"] == "paper-health-events"
+    assert suspicious_by_candidate[
+        "Health Event Incident Correlator"
+    ]["relevance_status"] == "adjacent_context_only"
+    assert suspicious_by_candidate[
+        "Simple Remediation Priority Ranker"
+    ]["source_id"] == "paper-data-incident-triage"
+    assert suspicious_by_candidate[
+        "Simple Remediation Priority Ranker"
+    ]["relevance_status"] == "adjacent_context_only"
 
 
 def test_shadow_reviewer_report_markdown_contains_key_sections():
@@ -83,9 +109,9 @@ def test_shadow_reviewer_report_markdown_contains_key_sections():
     assert "## Data Sufficiency Warning" in markdown
     assert "## Outcome Distribution" in markdown
     assert "## Review Annotation Summary" in markdown
-    assert "`high`: 5" in markdown
+    assert "`high`: 6" in markdown
     assert "`evidence_sparse`: 1" in markdown
-    assert "`traces_match_reviewer_judgment`: 5" in markdown
+    assert "`traces_match_reviewer_judgment`: 6" in markdown
     assert "## Quality Warnings Needing Attention" in markdown
     assert "## Suspicious Candidate-to-Source Relevance Traces" in markdown
     assert "adjacent_context_only_candidate" in markdown
@@ -101,5 +127,5 @@ def test_shadow_reviewer_report_writes_markdown_and_json(tmp_path):
     assert paths["json_path"].exists()
 
     payload = json.loads(paths["json_path"].read_text())
-    assert payload["reviewed_fixtures"] == 5
-    assert payload["review_annotation_count"] == 5
+    assert payload["reviewed_fixtures"] == 6
+    assert payload["review_annotation_count"] == 6

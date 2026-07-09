@@ -1,0 +1,2163 @@
+{
+  "schema_version": "1.1",
+  "artifact_identity": {
+    "artifact_id": "0f30d346559e42d9b38d6e8edf27ab0e",
+    "generation_timestamp_utc": "20260709T041939Z",
+    "fixture_id": "strict_weekend_scope"
+  },
+  "generated_at_utc": "20260709T041939Z",
+  "query": "Build a data engineering portfolio project that shows lineage-aware impact analysis for pipeline incidents.",
+  "constraints": {
+    "skill_level": "intermediate",
+    "time_available": "weekend",
+    "target_roles": [
+      "Data Engineer"
+    ],
+    "preferred_stack": [
+      "Python",
+      "FastAPI"
+    ]
+  },
+  "retrieval": {
+    "selected_route": null,
+    "expanded_query": null,
+    "focused_query": null,
+    "inference": {
+      "inferred_focus": "data_engineering"
+    },
+    "merged_evidence_count": 3
+  },
+  "legacy_planner": {
+    "direction_count": 3,
+    "directions": [
+      {
+        "title": "Data Pipeline Quality Monitor",
+        "evidence_title": "Minimal Data Lineage Impact Demo",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "data_engineering"
+      },
+      {
+        "title": "Data Lineage and Dependency Visualizer",
+        "evidence_title": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "data_engineering"
+      },
+      {
+        "title": "Warehouse Query and Cost Intelligence Dashboard",
+        "evidence_title": "Minimal Data Lineage Impact Demo",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "data_engineering"
+      }
+    ],
+    "raw_ideas": [
+      {
+        "project_title": "Data Pipeline Quality Monitor",
+        "based_on_paper": "Minimal Data Lineage Impact Demo",
+        "evidence_title": "Minimal Data Lineage Impact Demo",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "data_engineering",
+        "detected_intent": "project_building",
+        "idea_angle": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+        "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_focus_type": "buildable_gap",
+        "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Minimal Data Lineage Impact Demo",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Data Engineering",
+          "Monitoring",
+          "Data Quality"
+        ],
+        "extracted_skills": [
+          "Data Quality",
+          "ETL",
+          "SQL",
+          "Pipeline Monitoring",
+          "Schema Validation",
+          "Data Freshness",
+          "Data Engineering"
+        ],
+        "research_motivation": "This idea uses 'Minimal Data Lineage Impact Demo' as a real implementation reference. It informs a buildable direction for Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Ingest a small source dataset into a staged raw table or file layer.",
+          "Apply transformations and create a clean analytics-ready output table.",
+          "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+          "Track pipeline status, row counts, failures, and transformation lineage.",
+          "Write a focused README that explains the constrained MVP, test data, and known limitations."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add data lineage graph and pipeline dependency impact analysis.",
+          "Add data contract validation for schema changes."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "SQL",
+          "Pandas",
+          "Data Validation",
+          "Airflow Concepts",
+          "Data Quality",
+          "ETL",
+          "Pipeline Monitoring",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Data Pipeline Quality Monitor that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Data Engineer",
+          "Analytics Engineer",
+          "Backend Engineer",
+          "Data Platform Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated weekend timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Data Lineage and Dependency Visualizer",
+        "based_on_paper": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+        "evidence_title": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.DB",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "data_engineering",
+        "detected_intent": "project_building",
+        "idea_angle": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+        "opportunity_area": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Minimal Data Lineage Impact Demo",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Data Engineering",
+          "Monitoring",
+          "Data Quality"
+        ],
+        "extracted_skills": [
+          "Data Lineage",
+          "Dependency Mapping",
+          "ETL",
+          "Impact Analysis",
+          "SQL",
+          "Data Platform Design",
+          "Data Engineering"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Lineage-Aware Impact Analysis for Pipeline Incidents'. The paper provides evidence related to: Pipeline incident response can use dataset lineage graphs to identify downstream tables, dashboards, owners, and remediation priority.... The generated project 'Data Lineage and Dependency Visualizer' turns that research direction into a buildable software prototype focused on Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations..",
+        "mvp_scope": [
+          "Ingest a small source dataset into a staged raw table or file layer.",
+          "Apply transformations and create a clean analytics-ready output table.",
+          "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+          "Track pipeline status, row counts, failures, and transformation lineage.",
+          "Write a focused README that explains the constrained MVP, test data, and known limitations."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add data lineage graph and pipeline dependency impact analysis.",
+          "Add data contract validation for schema changes."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "SQL",
+          "Pandas",
+          "Data Validation",
+          "Airflow Concepts",
+          "Data Lineage",
+          "Dependency Mapping",
+          "ETL",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Data Lineage and Dependency Visualizer that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Data Engineer",
+          "Analytics Engineer",
+          "Backend Engineer",
+          "Data Platform Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated weekend timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Warehouse Query and Cost Intelligence Dashboard",
+        "based_on_paper": "Minimal Data Lineage Impact Demo",
+        "evidence_title": "Minimal Data Lineage Impact Demo",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "data_engineering",
+        "detected_intent": "project_building",
+        "idea_angle": "Analyze SQL usage, expensive queries, warehouse cost patterns, and optimization opportunities.",
+        "opportunity_area": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Minimal Data Lineage Impact Demo",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Data Engineering",
+          "Monitoring",
+          "Data Quality"
+        ],
+        "extracted_skills": [
+          "SQL",
+          "Query Optimization",
+          "Cost Analysis",
+          "Warehouse Analytics",
+          "Dashboarding",
+          "Performance Tuning",
+          "Data Engineering"
+        ],
+        "research_motivation": "This idea uses 'Minimal Data Lineage Impact Demo' as a real implementation reference. It informs a buildable direction for Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Ingest a small source dataset into a staged raw table or file layer.",
+          "Apply transformations and create a clean analytics-ready output table.",
+          "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+          "Track pipeline status, row counts, failures, and transformation lineage.",
+          "Write a focused README that explains the constrained MVP, test data, and known limitations."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add data lineage graph and pipeline dependency impact analysis.",
+          "Add data contract validation for schema changes."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "SQL",
+          "Pandas",
+          "Data Validation",
+          "Airflow Concepts",
+          "Query Optimization",
+          "Cost Analysis",
+          "Warehouse Analytics",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Warehouse Query and Cost Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Data Engineer",
+          "Analytics Engineer",
+          "Backend Engineer",
+          "Data Platform Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated weekend timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Data Pipeline Quality Monitor",
+          "based_on_paper": "Minimal Data Lineage Impact Demo",
+          "evidence_title": "Minimal Data Lineage Impact Demo",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "data_engineering",
+          "detected_intent": "project_building",
+          "idea_angle": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+          "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_focus_type": "buildable_gap",
+          "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Minimal Data Lineage Impact Demo",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Data Engineering",
+            "Monitoring",
+            "Data Quality"
+          ],
+          "extracted_skills": [
+            "Data Quality",
+            "ETL",
+            "SQL",
+            "Pipeline Monitoring",
+            "Schema Validation",
+            "Data Freshness",
+            "Data Engineering"
+          ],
+          "research_motivation": "This idea uses 'Minimal Data Lineage Impact Demo' as a real implementation reference. It informs a buildable direction for Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Ingest a small source dataset into a staged raw table or file layer.",
+            "Apply transformations and create a clean analytics-ready output table.",
+            "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+            "Track pipeline status, row counts, failures, and transformation lineage.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add data lineage graph and pipeline dependency impact analysis.",
+            "Add data contract validation for schema changes."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "SQL",
+            "Pandas",
+            "Data Validation",
+            "Airflow Concepts",
+            "Data Quality",
+            "ETL",
+            "Pipeline Monitoring",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Data Pipeline Quality Monitor that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Analytics Engineer",
+            "Backend Engineer",
+            "Data Platform Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated weekend timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.4,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Data Pipeline Quality Monitor scores 8.4/10 with a strong career signal because it is grounded in github repository, fits the data_engineering domain, and demonstrates skills such as Data Quality, ETL, SQL, Pipeline Monitoring, Schema Validation, Data Freshness. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          }
+        },
+        {
+          "project_title": "Data Lineage and Dependency Visualizer",
+          "based_on_paper": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+          "evidence_title": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.DB",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "data_engineering",
+          "detected_intent": "project_building",
+          "idea_angle": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+          "opportunity_area": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Minimal Data Lineage Impact Demo",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Data Engineering",
+            "Monitoring",
+            "Data Quality"
+          ],
+          "extracted_skills": [
+            "Data Lineage",
+            "Dependency Mapping",
+            "ETL",
+            "Impact Analysis",
+            "SQL",
+            "Data Platform Design",
+            "Data Engineering"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Lineage-Aware Impact Analysis for Pipeline Incidents'. The paper provides evidence related to: Pipeline incident response can use dataset lineage graphs to identify downstream tables, dashboards, owners, and remediation priority.... The generated project 'Data Lineage and Dependency Visualizer' turns that research direction into a buildable software prototype focused on Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations..",
+          "mvp_scope": [
+            "Ingest a small source dataset into a staged raw table or file layer.",
+            "Apply transformations and create a clean analytics-ready output table.",
+            "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+            "Track pipeline status, row counts, failures, and transformation lineage.",
+            "Document the intentionally constrained MVP and defer advanced automation, integrations, and polish to a later iteration.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add data lineage graph and pipeline dependency impact analysis.",
+            "Add data contract validation for schema changes."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "SQL",
+            "Pandas",
+            "Data Validation",
+            "Airflow Concepts",
+            "Data Lineage",
+            "Dependency Mapping",
+            "ETL",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Data Lineage and Dependency Visualizer that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Analytics Engineer",
+            "Backend Engineer",
+            "Data Platform Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated weekend timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Data Lineage and Dependency Visualizer scores 8.2/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Data Lineage, Dependency Mapping, ETL, Impact Analysis, SQL, Data Platform Design. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          }
+        },
+        {
+          "project_title": "Warehouse Query and Cost Intelligence Dashboard",
+          "based_on_paper": "Minimal Data Lineage Impact Demo",
+          "evidence_title": "Minimal Data Lineage Impact Demo",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "data_engineering",
+          "detected_intent": "project_building",
+          "idea_angle": "Analyze SQL usage, expensive queries, warehouse cost patterns, and optimization opportunities.",
+          "opportunity_area": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Minimal Data Lineage Impact Demo",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Data Engineering",
+            "Monitoring",
+            "Data Quality"
+          ],
+          "extracted_skills": [
+            "SQL",
+            "Query Optimization",
+            "Cost Analysis",
+            "Warehouse Analytics",
+            "Dashboarding",
+            "Performance Tuning",
+            "Data Engineering"
+          ],
+          "research_motivation": "This idea uses 'Minimal Data Lineage Impact Demo' as a real implementation reference. It informs a buildable direction for Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Ingest a small source dataset into a staged raw table or file layer.",
+            "Apply transformations and create a clean analytics-ready output table.",
+            "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+            "Track pipeline status, row counts, failures, and transformation lineage.",
+            "Document the intentionally constrained MVP and defer advanced automation, integrations, and polish to a later iteration.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add data lineage graph and pipeline dependency impact analysis.",
+            "Add data contract validation for schema changes.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "SQL",
+            "Pandas",
+            "Data Validation",
+            "Airflow Concepts",
+            "Query Optimization",
+            "Cost Analysis",
+            "Warehouse Analytics",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Warehouse Query and Cost Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Analytics Engineer",
+            "Backend Engineer",
+            "Data Platform Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated weekend timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Warehouse Query and Cost Intelligence Dashboard scores 8.2/10 with a strong career signal because it is grounded in github repository, fits the data_engineering domain, and demonstrates skills such as SQL, Query Optimization, Cost Analysis, Warehouse Analytics, Dashboarding, Performance Tuning. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          }
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        }
+      ],
+      "repairs_by_index": [
+        [
+          "Narrowed the MVP to fit a short timeline."
+        ],
+        [
+          "Narrowed the MVP to fit a short timeline."
+        ],
+        [
+          "Narrowed the MVP to fit a short timeline."
+        ]
+      ]
+    }
+  },
+  "v2_shadow": {
+    "status": "fixture_evaluated",
+    "report": {
+      "evidence_brief": {
+        "query": "Build a data engineering portfolio project that shows lineage-aware impact analysis for pipeline incidents.",
+        "sources": [
+          {
+            "source_id": "paper-lineage-impact",
+            "source_type": "research_paper",
+            "title": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+            "excerpt": "Lineage-Aware Impact Analysis for Pipeline Incidents Pipeline incident response can use dataset lineage graphs to identify downstream tables, dashboards, owners, and remediation priority.",
+            "category": "cs.DB",
+            "url": null,
+            "retrieval_rank": 1,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "repo-lineage-demo",
+            "source_type": "github_repository",
+            "title": "Minimal Data Lineage Impact Demo",
+            "excerpt": "Minimal Data Lineage Impact Demo Load table dependencies, mark one failed upstream dataset, and list affected downstream assets and owners for incident review.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 2,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "paper-data-incident-triage",
+            "source_type": "research_paper",
+            "title": "Prioritizing Data Incident Remediation",
+            "excerpt": "Prioritizing Data Incident Remediation Data incident triage benefits from ranking affected assets by business importance, ownership, and dependency depth.",
+            "category": "cs.SE",
+            "url": null,
+            "retrieval_rank": 3,
+            "retrieval_signals": {},
+            "support_scope": "adjacent_planning",
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage."
+          }
+        ],
+        "source_counts": {
+          "research_paper": 2,
+          "github_repository": 1
+        },
+        "recurring_concepts": [
+          "incident",
+          "affected",
+          "assets",
+          "data",
+          "dataset",
+          "downstream",
+          "impact",
+          "lineage",
+          "owners",
+          "remediation"
+        ],
+        "coverage_warnings": []
+      },
+      "evidence_curation": {
+        "required_anchor_terms": [],
+        "retained": [
+          {
+            "item": {
+              "document_id": "paper-lineage-impact",
+              "source_type": "research_paper",
+              "title": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+              "abstract": "Pipeline incident response can use dataset lineage graphs to identify downstream tables, dashboards, owners, and remediation priority.",
+              "category": "cs.DB",
+              "retrieval_rank": 1
+            },
+            "relevance_score": 8.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "analysis",
+              "impact",
+              "incidents",
+              "pipeline"
+            ],
+            "query_term_document_frequencies": {
+              "analysis": 1,
+              "impact": 2,
+              "incidents": 1,
+              "pipeline": 1
+            },
+            "unique_query_terms": [
+              "analysis",
+              "incidents",
+              "pipeline"
+            ],
+            "matched_query_phrases": [
+              "impact analysis",
+              "pipeline incidents"
+            ],
+            "unique_query_phrases": [
+              "impact analysis",
+              "pipeline incidents"
+            ],
+            "query_phrase_document_frequencies": {
+              "impact analysis": 1,
+              "pipeline incidents": 1
+            },
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "repository_id": "repo-lineage-demo",
+              "source_type": "github_repository",
+              "title": "Minimal Data Lineage Impact Demo",
+              "readme_excerpt": "Load table dependencies, mark one failed upstream dataset, and list affected downstream assets and owners for incident review.",
+              "retrieval_rank": 2
+            },
+            "relevance_score": 4.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "data",
+              "impact"
+            ],
+            "query_term_document_frequencies": {
+              "data": 2,
+              "impact": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "document_id": "paper-data-incident-triage",
+              "source_type": "research_paper",
+              "title": "Prioritizing Data Incident Remediation",
+              "abstract": "Data incident triage benefits from ranking affected assets by business importance, ownership, and dependency depth.",
+              "category": "cs.SE",
+              "retrieval_rank": 3
+            },
+            "relevance_score": 2.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "data"
+            ],
+            "query_term_document_frequencies": {
+              "data": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage.",
+            "support_scope": "adjacent_planning"
+          }
+        ],
+        "dropped": [],
+        "retained_source_counts": {
+          "research_paper": 2,
+          "github_repository": 1
+        }
+      },
+      "planning_diagnostics": {
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "provider_called": true,
+        "prompt_content_hash": "bc57d64521cddb22072d063f91d93fb70f8a4a6202a7e86048acdf3771ce1732"
+      },
+      "selected_titles": [
+        "Weekend Lineage Impact Mapper",
+        "Incident Owner Lookup Table",
+        "Simple Remediation Priority Ranker"
+      ],
+      "selected_candidates": [
+        {
+          "title": "Weekend Lineage Impact Mapper",
+          "problem_statement": "Data engineers need a small weekend project that shows which downstream tables and dashboards are affected by one known pipeline incident.",
+          "target_user": "Data engineers",
+          "core_workflow": [
+            "Load a small table-lineage graph.",
+            "Select one failed upstream dataset.",
+            "List affected downstream assets and owners."
+          ],
+          "mvp_scope": [
+            "Create a CSV fixture of datasets, owners, and lineage edges.",
+            "Select one failed upstream dataset.",
+            "Traverse downstream dependencies.",
+            "Show affected assets in a simple report."
+          ],
+          "success_metrics": [
+            "Number of affected downstream assets identified.",
+            "Time to generate an impact report."
+          ],
+          "evidence_relationship": "Uses direct lineage-aware impact analysis evidence and keeps the MVP weekend-sized.",
+          "source_ids": [
+            "paper-lineage-impact",
+            "repo-lineage-demo"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "ranking": {
+            "score": 0.955,
+            "score_breakdown": {
+              "evidence_support": 1.0,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 1.00.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Incident Owner Lookup Table",
+          "problem_statement": "Teams need a quick way to map affected datasets from a known incident to responsible owners.",
+          "target_user": "Data engineers",
+          "core_workflow": [
+            "Load affected datasets from a lineage traversal.",
+            "Join datasets with owner metadata.",
+            "Show owner contacts for incident follow-up."
+          ],
+          "mvp_scope": [
+            "Create sample dataset-owner metadata.",
+            "Join impacted datasets with owners.",
+            "Sort affected assets by owner.",
+            "Export a small owner action list."
+          ],
+          "success_metrics": [
+            "Percentage of affected assets with an assigned owner."
+          ],
+          "evidence_relationship": "Uses implementation context from the minimal lineage demo and incident ownership signals.",
+          "source_ids": [
+            "repo-lineage-demo"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python"
+          ],
+          "ranking": {
+            "score": 0.856,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.5,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.50.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Simple Remediation Priority Ranker",
+          "problem_statement": "Data incident responders need a lightweight way to prioritize affected assets after lineage impact analysis.",
+          "target_user": "Data engineers",
+          "core_workflow": [
+            "Load affected downstream assets.",
+            "Assign simple importance and depth scores.",
+            "Rank remediation priority."
+          ],
+          "mvp_scope": [
+            "Create a small affected-asset fixture.",
+            "Add business importance and dependency depth.",
+            "Compute a transparent priority score.",
+            "Show the ranked remediation list."
+          ],
+          "success_metrics": [
+            "Number of affected assets ranked for remediation."
+          ],
+          "evidence_relationship": "Uses data incident triage evidence for prioritizing affected lineage assets.",
+          "source_ids": [
+            "paper-data-incident-triage"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python"
+          ],
+          "ranking": {
+            "score": 0.856,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.5,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.50.",
+              "Completeness score: 1.00."
+            ]
+          }
+        }
+      ],
+      "legacy_titles": [
+        "Data Pipeline Quality Monitor",
+        "Data Lineage and Dependency Visualizer",
+        "Warehouse Query and Cost Intelligence Dashboard"
+      ],
+      "comparison": {
+        "legacy_direction_count": 3,
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "v2_generated_candidate_count": 3,
+        "v2_valid_candidate_count": 3,
+        "v2_selected_candidate_count": 3,
+        "v2_selected_titles": [
+          "Weekend Lineage Impact Mapper",
+          "Incident Owner Lookup Table",
+          "Simple Remediation Priority Ranker"
+        ],
+        "provider_called": true,
+        "coverage_warnings": []
+      },
+      "shadow_readiness": {
+        "status": "ready",
+        "reasons": [
+          "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+        ],
+        "signals": {
+          "raw_evidence_count": 3,
+          "curated_evidence_count": 3,
+          "dropped_evidence_count": 0,
+          "generated_candidate_count": 3,
+          "valid_candidate_count": 3,
+          "selected_candidate_count": 3,
+          "provider_called": true,
+          "coverage_warnings": [],
+          "validation_errors": [],
+          "validation_warnings": []
+        }
+      },
+      "prompt_content_hash": "bc57d64521cddb22072d063f91d93fb70f8a4a6202a7e86048acdf3771ce1732"
+    },
+    "evidence_quality": {
+      "status": "not_routed_pending_calibration",
+      "metrics": {
+        "curation_pool_size": 3,
+        "retained_source_count": 3,
+        "final_brief_source_count": 3,
+        "direct_source_count": 2,
+        "adjacent_source_count": 1,
+        "required_anchor_count": 0,
+        "matched_required_anchor_count": 0,
+        "query_anchor_coverage": null,
+        "unique_query_term_count": 3,
+        "unique_query_phrase_count": 2,
+        "source_type_count": 2,
+        "dominant_source_type": "research_paper",
+        "dominant_source_type_fraction": 0.6666666666666666,
+        "top_direct_relevance_margin": 4.0,
+        "coverage_warnings": []
+      },
+      "thresholds": {
+        "version": "v1",
+        "calibration_status": "unresolved",
+        "sparse_direct_source_threshold": null,
+        "ambiguity_top_margin_threshold": null,
+        "low_diversity_fraction_threshold": null
+      },
+      "evidence_sparse": null,
+      "evidence_ambiguous": null,
+      "source_diversity_low": null,
+      "unresolved_signal_names": [
+        "evidence_sparse",
+        "evidence_ambiguous",
+        "source_diversity_low"
+      ],
+      "routing_ready": false
+    },
+    "selected_candidates": [
+      {
+        "title": "Weekend Lineage Impact Mapper",
+        "problem_statement": "Data engineers need a small weekend project that shows which downstream tables and dashboards are affected by one known pipeline incident.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load a small table-lineage graph.",
+          "Select one failed upstream dataset.",
+          "List affected downstream assets and owners."
+        ],
+        "mvp_scope": [
+          "Create a CSV fixture of datasets, owners, and lineage edges.",
+          "Select one failed upstream dataset.",
+          "Traverse downstream dependencies.",
+          "Show affected assets in a simple report."
+        ],
+        "success_metrics": [
+          "Number of affected downstream assets identified.",
+          "Time to generate an impact report."
+        ],
+        "evidence_relationship": "Uses direct lineage-aware impact analysis evidence and keeps the MVP weekend-sized.",
+        "source_ids": [
+          "paper-lineage-impact",
+          "repo-lineage-demo"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ],
+        "ranking": {
+          "score": 0.955,
+          "score_breakdown": {
+            "evidence_support": 1.0,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 1.00.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Incident Owner Lookup Table",
+        "problem_statement": "Teams need a quick way to map affected datasets from a known incident to responsible owners.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load affected datasets from a lineage traversal.",
+          "Join datasets with owner metadata.",
+          "Show owner contacts for incident follow-up."
+        ],
+        "mvp_scope": [
+          "Create sample dataset-owner metadata.",
+          "Join impacted datasets with owners.",
+          "Sort affected assets by owner.",
+          "Export a small owner action list."
+        ],
+        "success_metrics": [
+          "Percentage of affected assets with an assigned owner."
+        ],
+        "evidence_relationship": "Uses implementation context from the minimal lineage demo and incident ownership signals.",
+        "source_ids": [
+          "repo-lineage-demo"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python"
+        ],
+        "ranking": {
+          "score": 0.856,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.5,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.50.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Simple Remediation Priority Ranker",
+        "problem_statement": "Data incident responders need a lightweight way to prioritize affected assets after lineage impact analysis.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load affected downstream assets.",
+          "Assign simple importance and depth scores.",
+          "Rank remediation priority."
+        ],
+        "mvp_scope": [
+          "Create a small affected-asset fixture.",
+          "Add business importance and dependency depth.",
+          "Compute a transparent priority score.",
+          "Show the ranked remediation list."
+        ],
+        "success_metrics": [
+          "Number of affected assets ranked for remediation."
+        ],
+        "evidence_relationship": "Uses data incident triage evidence for prioritizing affected lineage assets.",
+        "source_ids": [
+          "paper-data-incident-triage"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python"
+        ],
+        "ranking": {
+          "score": 0.856,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.5,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.50.",
+            "Completeness score: 1.00."
+          ]
+        }
+      }
+    ],
+    "generation_metadata": {
+      "prompt_version": "v1",
+      "prompt_content_hash": "bc57d64521cddb22072d063f91d93fb70f8a4a6202a7e86048acdf3771ce1732",
+      "execution_mode": "fixture",
+      "provider_name": "MockCandidateGenerationProvider",
+      "model": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      }
+    },
+    "diagnostics": {
+      "generated_candidate_count": 3,
+      "valid_candidate_count": 3,
+      "selected_candidate_count": 3,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "provider_called": true,
+      "prompt_content_hash": "bc57d64521cddb22072d063f91d93fb70f8a4a6202a7e86048acdf3771ce1732"
+    },
+    "shadow_readiness": {
+      "status": "ready",
+      "reasons": [
+        "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+      ],
+      "signals": {
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "provider_called": true,
+        "coverage_warnings": [],
+        "validation_errors": [],
+        "validation_warnings": []
+      }
+    },
+    "semantic_goal_relevance": [],
+    "cross_encoder_goal_relevance": [],
+    "semantic_candidate_diversity": null,
+    "evidence_support": [],
+    "grounding_adequacy": [],
+    "candidate_source_relevance": [
+      {
+        "candidate_title": "Weekend Lineage Impact Mapper",
+        "source_id": "paper-lineage-impact",
+        "source_type": "research_paper",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "dashboards",
+          "dataset",
+          "downstream",
+          "impact",
+          "incident",
+          "lineage",
+          "owners",
+          "pipeline",
+          "tables"
+        ],
+        "goal_source_shared_terms": [
+          "analysis",
+          "aware",
+          "impact",
+          "incidents",
+          "lineage",
+          "pipeline"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: dashboards, dataset, downstream, impact, incident."
+      },
+      {
+        "candidate_title": "Weekend Lineage Impact Mapper",
+        "source_id": "repo-lineage-demo",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "affected",
+          "assets",
+          "dataset",
+          "downstream",
+          "failed",
+          "impact",
+          "incident",
+          "lineage",
+          "list",
+          "owners",
+          "table",
+          "upstream"
+        ],
+        "goal_source_shared_terms": [
+          "impact",
+          "lineage"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: affected, assets, dataset, downstream, failed."
+      },
+      {
+        "candidate_title": "Incident Owner Lookup Table",
+        "source_id": "repo-lineage-demo",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "affected",
+          "incident",
+          "lineage",
+          "owners",
+          "table"
+        ],
+        "goal_source_shared_terms": [
+          "impact",
+          "lineage"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: affected, incident, lineage, owners, table."
+      },
+      {
+        "candidate_title": "Simple Remediation Priority Ranker",
+        "source_id": "paper-data-incident-triage",
+        "source_type": "research_paper",
+        "support_scope": "adjacent_planning",
+        "candidate_source_shared_terms": [
+          "affected",
+          "assets",
+          "depth",
+          "importance",
+          "incident",
+          "remediation"
+        ],
+        "goal_source_shared_terms": [],
+        "relevance_status": "adjacent_context_only",
+        "relevance_reason": "The cited source is retained only as adjacent planning context and should not be treated as core grounding."
+      }
+    ],
+    "quality_warnings": {
+      "warnings": [
+        {
+          "code": "adjacent_context_only_candidate",
+          "message": "One or more candidates cite only adjacent-context sources and should not be treated as strongly grounded.",
+          "details": {
+            "candidates": [
+              {
+                "candidate_title": "Simple Remediation Priority Ranker",
+                "source_ids": [
+                  "paper-data-incident-triage"
+                ],
+                "relevance_statuses": [
+                  "adjacent_context_only"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "signals": {
+        "coverage_warning_count": 0,
+        "goal_trace_count": 0,
+        "grounding_trace_count": 0,
+        "diversity_pair_count": 0,
+        "source_relevance_trace_count": 4,
+        "quality_warning_count": 1
+      }
+    },
+    "promotion_eligibility": {
+      "status": "not_assessed",
+      "candidate_assessments": [],
+      "summary": {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0
+      },
+      "reason": "Evidence-support shadow was not enabled, so promotion eligibility could not assess direct grounding."
+    },
+    "semantic_diversification_repair": {
+      "status": "no_repair_needed",
+      "directives": [],
+      "signals": {
+        "candidate_count": 3,
+        "similarity_threshold": 0.78,
+        "close_cluster_count": 0,
+        "replacement_count": 0
+      }
+    },
+    "raw_candidates": [
+      {
+        "title": "Weekend Lineage Impact Mapper",
+        "problem_statement": "Data engineers need a small weekend project that shows which downstream tables and dashboards are affected by one known pipeline incident.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load a small table-lineage graph.",
+          "Select one failed upstream dataset.",
+          "List affected downstream assets and owners."
+        ],
+        "mvp_scope": [
+          "Create a CSV fixture of datasets, owners, and lineage edges.",
+          "Select one failed upstream dataset.",
+          "Traverse downstream dependencies.",
+          "Show affected assets in a simple report."
+        ],
+        "success_metrics": [
+          "Number of affected downstream assets identified.",
+          "Time to generate an impact report."
+        ],
+        "evidence_relationship": "Uses direct lineage-aware impact analysis evidence and keeps the MVP weekend-sized.",
+        "source_ids": [
+          "paper-lineage-impact",
+          "repo-lineage-demo"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ]
+      },
+      {
+        "title": "Incident Owner Lookup Table",
+        "problem_statement": "Teams need a quick way to map affected datasets from a known incident to responsible owners.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load affected datasets from a lineage traversal.",
+          "Join datasets with owner metadata.",
+          "Show owner contacts for incident follow-up."
+        ],
+        "mvp_scope": [
+          "Create sample dataset-owner metadata.",
+          "Join impacted datasets with owners.",
+          "Sort affected assets by owner.",
+          "Export a small owner action list."
+        ],
+        "success_metrics": [
+          "Percentage of affected assets with an assigned owner."
+        ],
+        "evidence_relationship": "Uses implementation context from the minimal lineage demo and incident ownership signals.",
+        "source_ids": [
+          "repo-lineage-demo"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python"
+        ]
+      },
+      {
+        "title": "Simple Remediation Priority Ranker",
+        "problem_statement": "Data incident responders need a lightweight way to prioritize affected assets after lineage impact analysis.",
+        "target_user": "Data engineers",
+        "core_workflow": [
+          "Load affected downstream assets.",
+          "Assign simple importance and depth scores.",
+          "Rank remediation priority."
+        ],
+        "mvp_scope": [
+          "Create a small affected-asset fixture.",
+          "Add business importance and dependency depth.",
+          "Compute a transparent priority score.",
+          "Show the ranked remediation list."
+        ],
+        "success_metrics": [
+          "Number of affected assets ranked for remediation."
+        ],
+        "evidence_relationship": "Uses data incident triage evidence for prioritizing affected lineage assets.",
+        "source_ids": [
+          "paper-data-incident-triage"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python"
+        ]
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Weekend Lineage Impact Mapper",
+          "idea_angle": "Data engineers need a small weekend project that shows which downstream tables and dashboards are affected by one known pipeline incident. Built for Data engineers.",
+          "detected_domain": "data_engineering",
+          "evidence_buildable_gap": "Data engineers need a small weekend project that shows which downstream tables and dashboards are affected by one known pipeline incident.",
+          "evidence_focus_statement": "Uses direct lineage-aware impact analysis evidence and keeps the MVP weekend-sized.",
+          "evidence_driven_angle": "Uses direct lineage-aware impact analysis evidence and keeps the MVP weekend-sized.",
+          "evidence_project_opportunity": "Data engineers need a small weekend project that shows which downstream tables and dashboards are affected by one known pipeline incident.",
+          "research_motivation": "Uses direct lineage-aware impact analysis evidence and keeps the MVP weekend-sized.",
+          "mvp_scope": [
+            "Create a CSV fixture of datasets, owners, and lineage edges.",
+            "Select one failed upstream dataset.",
+            "Traverse downstream dependencies.",
+            "Show affected assets in a simple report.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of affected downstream assets identified.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "Data Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "FastAPI"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-lineage-impact",
+              "title": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            },
+            {
+              "source_id": "repo-lineage-demo",
+              "title": "Minimal Data Lineage Impact Demo",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-lineage-impact",
+            "repo-lineage-demo"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of affected downstream assets identified.",
+            "Time to generate an impact report."
+          ],
+          "planner_candidate_workflow": [
+            "Load a small table-lineage graph.",
+            "Select one failed upstream dataset.",
+            "List affected downstream assets and owners."
+          ],
+          "evidence_title": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.DB",
+          "based_on_paper": "Lineage-Aware Impact Analysis for Pipeline Incidents",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.1,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Weekend Lineage Impact Mapper scores 8.1/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Python, FastAPI. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated weekend timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Incident Owner Lookup Table",
+          "idea_angle": "Teams need a quick way to map affected datasets from a known incident to responsible owners. Built for Data engineers.",
+          "detected_domain": "data_engineering",
+          "evidence_buildable_gap": "Teams need a quick way to map affected datasets from a known incident to responsible owners.",
+          "evidence_focus_statement": "Uses implementation context from the minimal lineage demo and incident ownership signals.",
+          "evidence_driven_angle": "Uses implementation context from the minimal lineage demo and incident ownership signals.",
+          "evidence_project_opportunity": "Teams need a quick way to map affected datasets from a known incident to responsible owners.",
+          "research_motivation": "Uses implementation context from the minimal lineage demo and incident ownership signals.",
+          "mvp_scope": [
+            "Create sample dataset-owner metadata.",
+            "Join impacted datasets with owners.",
+            "Sort affected assets by owner.",
+            "Export a small owner action list.",
+            "Document the intentionally constrained MVP and defer advanced automation, integrations, and polish to a later iteration.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Percentage of affected assets with an assigned owner.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "Data Engineer"
+          ],
+          "extracted_skills": [
+            "Python"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-lineage-demo",
+              "title": "Minimal Data Lineage Impact Demo",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-lineage-demo"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Percentage of affected assets with an assigned owner."
+          ],
+          "planner_candidate_workflow": [
+            "Load affected datasets from a lineage traversal.",
+            "Join datasets with owner metadata.",
+            "Show owner contacts for incident follow-up."
+          ],
+          "evidence_title": "Minimal Data Lineage Impact Demo",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "Minimal Data Lineage Impact Demo",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Incident Owner Lookup Table scores 8.2/10 with a strong career signal because it is grounded in github repository, fits the data_engineering domain, and demonstrates skills such as Python, FastAPI. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated weekend timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Simple Remediation Priority Ranker",
+          "idea_angle": "Data incident responders need a lightweight way to prioritize affected assets after lineage impact analysis. Built for Data engineers.",
+          "detected_domain": "data_engineering",
+          "evidence_buildable_gap": "Data incident responders need a lightweight way to prioritize affected assets after lineage impact analysis.",
+          "evidence_focus_statement": "Uses data incident triage evidence for prioritizing affected lineage assets.",
+          "evidence_driven_angle": "Uses data incident triage evidence for prioritizing affected lineage assets.",
+          "evidence_project_opportunity": "Data incident responders need a lightweight way to prioritize affected assets after lineage impact analysis.",
+          "research_motivation": "Uses data incident triage evidence for prioritizing affected lineage assets.",
+          "mvp_scope": [
+            "Create a small affected-asset fixture.",
+            "Add business importance and dependency depth.",
+            "Compute a transparent priority score.",
+            "Show the ranked remediation list.",
+            "Document the intentionally constrained MVP and defer advanced automation, integrations, and polish to a later iteration.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of affected assets ranked for remediation.",
+            "Add a failure-case review workflow and document the prototype's known limitations.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "Data Engineer"
+          ],
+          "extracted_skills": [
+            "Python"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-data-incident-triage",
+              "title": "Prioritizing Data Incident Remediation",
+              "source_type": "research_paper",
+              "support_scope": "adjacent_planning"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-data-incident-triage"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of affected assets ranked for remediation."
+          ],
+          "planner_candidate_workflow": [
+            "Load affected downstream assets.",
+            "Assign simple importance and depth scores.",
+            "Rank remediation priority."
+          ],
+          "evidence_title": "Prioritizing Data Incident Remediation",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.SE",
+          "based_on_paper": "Prioritizing Data Incident Remediation",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.4,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Simple Remediation Priority Ranker scores 8.4/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Python, FastAPI. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer. Scoped for the stated weekend timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        }
+      ],
+      "repairs_by_index": [
+        [
+          "Narrowed the MVP to fit a short timeline."
+        ],
+        [
+          "Narrowed the MVP to fit a short timeline."
+        ],
+        [
+          "Narrowed the MVP to fit a short timeline."
+        ]
+      ]
+    },
+    "shadow_vs_deterministic_comparison": {
+      "schema_version": "1.0",
+      "case_id": null,
+      "user_goal": "Build a data engineering portfolio project that shows lineage-aware impact analysis for pipeline incidents.",
+      "query_fingerprint": "0c4e77c125c922b9",
+      "deterministic_candidates": [
+        {
+          "title": "Data Pipeline Quality Monitor",
+          "comparison_text": "Data Pipeline Quality Monitor Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Write a focused README that explains the constrained MVP, test data, and known limitations. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Write a focused README that explains the constrained MVP, test data, and known limitations."
+        },
+        {
+          "title": "Data Lineage and Dependency Visualizer",
+          "comparison_text": "Data Lineage and Dependency Visualizer Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Write a focused README that explains the constrained MVP, test data, and known limitations. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Write a focused README that explains the constrained MVP, test data, and known limitations."
+        },
+        {
+          "title": "Warehouse Query and Cost Intelligence Dashboard",
+          "comparison_text": "Warehouse Query and Cost Intelligence Dashboard Analyze SQL usage, expensive queries, warehouse cost patterns, and optimization opportunities. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Write a focused README that explains the constrained MVP, test data, and known limitations. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Write a focused README that explains the constrained MVP, test data, and known limitations."
+        }
+      ],
+      "openai_candidates": [
+        {
+          "title": "Weekend Lineage Impact Mapper",
+          "comparison_text": "Weekend Lineage Impact Mapper Data engineers need a small weekend project that shows which downstream tables and dashboards are affected by one known pipeline incident. Data engineers Load a small table-lineage graph. Select one failed upstream dataset. List affected downstream assets and owners. Create a CSV fixture of datasets, owners, and lineage edges. Select one failed upstream dataset. Traverse downstream dependencies. Show affected assets in a simple report."
+        },
+        {
+          "title": "Incident Owner Lookup Table",
+          "comparison_text": "Incident Owner Lookup Table Teams need a quick way to map affected datasets from a known incident to responsible owners. Data engineers Load affected datasets from a lineage traversal. Join datasets with owner metadata. Show owner contacts for incident follow-up. Create sample dataset-owner metadata. Join impacted datasets with owners. Sort affected assets by owner. Export a small owner action list."
+        },
+        {
+          "title": "Simple Remediation Priority Ranker",
+          "comparison_text": "Simple Remediation Priority Ranker Data incident responders need a lightweight way to prioritize affected assets after lineage impact analysis. Data engineers Load affected downstream assets. Assign simple importance and depth scores. Rank remediation priority. Create a small affected-asset fixture. Add business importance and dependency depth. Compute a transparent priority score. Show the ranked remediation list."
+        }
+      ],
+      "deterministic_grounding_classes": [
+        {
+          "candidate_title": "Data Pipeline Quality Monitor",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Data Lineage and Dependency Visualizer",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Warehouse Query and Cost Intelligence Dashboard",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "openai_grounding_classes": [
+        {
+          "candidate_title": "Weekend Lineage Impact Mapper",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Incident Owner Lookup Table",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Simple Remediation Priority Ranker",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "deterministic_enrichment": [
+        {
+          "title": "Data Pipeline Quality Monitor",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Data Lineage and Dependency Visualizer",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Warehouse Query and Cost Intelligence Dashboard",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        }
+      ],
+      "openai_enrichment": [
+        {
+          "title": "Weekend Lineage Impact Mapper",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Incident Owner Lookup Table",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Simple Remediation Priority Ranker",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        }
+      ],
+      "set_similarity_score": null,
+      "unique_angle_count": 0,
+      "unique_openai_titles": [],
+      "pairwise_similarity": [],
+      "manual_preference": null,
+      "manual_preference_reason": null,
+      "manual_reviewer_notes": null,
+      "notes": [
+        "Cross-set semantic similarity is a difference signal, not a quality score.",
+        "Portfolio tiers are preserved for review but are assigned by candidate order and must not be interpreted as quality labels.",
+        "Deterministic grounding is not assessed by this contract yet; only shadow grounding traces are currently comparable."
+      ]
+    },
+    "manual_review_template": {
+      "rubric_version": "v1",
+      "query_fingerprint": "0c4e77c125c922b9",
+      "deterministic_review": {
+        "planner_path": "deterministic",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Data Pipeline Quality Monitor",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Data Lineage and Dependency Visualizer",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Warehouse Query and Cost Intelligence Dashboard",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "openai_review": {
+        "planner_path": "openai",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Weekend Lineage Impact Mapper",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Incident Owner Lookup Table",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Simple Remediation Priority Ranker",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "overall_preference": null,
+      "overall_preference_reason": "",
+      "response_quality": null,
+      "response_quality_reason": "",
+      "unique_angle_quality": null,
+      "unique_angle_quality_reason": "",
+      "reviewer_notes": ""
+    }
+  }
+}
