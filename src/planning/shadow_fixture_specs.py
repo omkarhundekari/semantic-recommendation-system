@@ -119,7 +119,7 @@ def _case(case_id: str) -> ShadowFixtureCase:
 
 def fixture_specifications() -> Tuple[ShadowFixtureSpecification, ...]:
     """
-    First two fixture specifications only.
+    Concrete fixture specifications for controlled shadow evaluation.
 
     These establish that artifact schema, evidence provenance, candidate source
     IDs, and manual review templates are sufficient before expanding to all ten
@@ -270,6 +270,165 @@ def fixture_specifications() -> Tuple[ShadowFixtureSpecification, ...]:
                 "Raw shadow candidates are retained.",
                 "Candidate source IDs map to brief sources.",
                 "Enriched outputs remain available for scope review.",
+                "An unscored manual review template is present.",
+            ),
+        ),
+        ShadowFixtureSpecification(
+            case=_case("rag_qa_strong_direct"),
+            evidence_payload={
+                "inference": {
+                    "inferred_focus": "rag_llm",
+                },
+                "merged_results": [
+                    {
+                        "document_id": "paper-rag-evaluation",
+                        "source_type": "research_paper",
+                        "title": (
+                            "Evaluation of Retrieval Augmented Generation "
+                            "for Question Answering"
+                        ),
+                        "abstract": (
+                            "Retrieval augmented generation for question "
+                            "answering requires evaluation of answer "
+                            "correctness, retrieved context relevance, and "
+                            "failure cases."
+                        ),
+                        "category": "cs.CL",
+                        "retrieval_rank": 1,
+                    },
+                    {
+                        "document_id": "paper-citation-grounding",
+                        "source_type": "research_paper",
+                        "title": (
+                            "Citation Grounding and Evidence Attribution in "
+                            "Question Answering Systems"
+                        ),
+                        "abstract": (
+                            "Question answering systems should connect answer "
+                            "claims to cited passages, measure citation "
+                            "faithfulness, and expose unsupported statements."
+                        ),
+                        "category": "cs.CL",
+                        "retrieval_rank": 2,
+                    },
+                    {
+                        "repository_id": "repo-rag-eval-dashboard",
+                        "source_type": "github_repository",
+                        "title": "RAG Question Answering Evaluation Dashboard",
+                        "readme_excerpt": (
+                            "Evaluate RAG question answering runs with "
+                            "retrieval metrics, answer scores, citation "
+                            "coverage, and per-question failure traces."
+                        ),
+                        "retrieval_rank": 3,
+                    },
+                ],
+            },
+            mock_response={
+                "candidates": [
+                    {
+                        "title": "RAG QA Citation Quality Workbench",
+                        "problem_statement": (
+                            "ML engineers need to verify whether generated "
+                            "question-answering responses cite passages that "
+                            "actually support answer claims."
+                        ),
+                        "target_user": "ML engineers",
+                        "core_workflow": [
+                            "Load question, answer, retrieved passage, and "
+                            "citation records.",
+                            "Check whether answer claims have cited evidence.",
+                            "Show unsupported claims and missing citations.",
+                        ],
+                        "mvp_scope": [
+                            "Load a small RAG question-answering evaluation "
+                            "dataset.",
+                            "Store questions, generated answers, retrieved "
+                            "contexts, and cited passages.",
+                            "Compute citation coverage per answer.",
+                            "Show unsupported answer spans for review.",
+                        ],
+                        "success_metrics": [
+                            "Percentage of answer claims with supporting citations.",
+                            "Number of unsupported claims found.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses direct evidence on citation grounding and "
+                            "evidence attribution for question answering."
+                        ),
+                        "source_ids": ["paper-citation-grounding"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    },
+                    {
+                        "title": "RAG Retrieval Failure Analyzer",
+                        "problem_statement": (
+                            "Teams need to identify whether wrong question "
+                            "answering responses are caused by retrieval "
+                            "failure or answer generation failure."
+                        ),
+                        "target_user": "ML engineers",
+                        "core_workflow": [
+                            "Load questions, retrieved contexts, and answers.",
+                            "Score context relevance for each question.",
+                            "Group failures by retrieval and answer quality.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample RAG evaluation runs.",
+                            "Compare retrieved context terms with each question.",
+                            "Label examples as retrieval miss or answer issue.",
+                            "Show failure categories in a dashboard.",
+                        ],
+                        "success_metrics": [
+                            "Number of QA failures categorized.",
+                            "Share of failures caused by retrieval misses.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses direct RAG question-answering evaluation "
+                            "evidence."
+                        ),
+                        "source_ids": ["paper-rag-evaluation"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    },
+                    {
+                        "title": "Question-Level RAG Evaluation Dashboard",
+                        "problem_statement": (
+                            "Students building RAG demos need a practical way "
+                            "to inspect question-level answer quality, "
+                            "retrieval quality, and citation coverage."
+                        ),
+                        "target_user": "ML engineering students",
+                        "core_workflow": [
+                            "Load RAG evaluation run outputs.",
+                            "Calculate answer, retrieval, and citation metrics.",
+                            "Inspect per-question failures.",
+                        ],
+                        "mvp_scope": [
+                            "Load JSONL evaluation runs.",
+                            "Calculate retrieval hit rate and citation coverage.",
+                            "Show per-question answer quality notes.",
+                            "Export a review summary for each run.",
+                        ],
+                        "success_metrics": [
+                            "Number of evaluated QA examples.",
+                            "Number of citation or retrieval failures surfaced.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses implementation context for RAG QA evaluation "
+                            "dashboards."
+                        ),
+                        "source_ids": ["repo-rag-eval-dashboard"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    },
+                ],
+            },
+            reviewability_requirements=(
+                "The fixture has direct RAG question-answering evidence.",
+                "Citation quality and evaluation quality remain visible.",
+                "Candidate source IDs map to exact brief sources.",
+                "Manual review can distinguish QA-specific ideas from generic LLM apps.",
                 "An unscored manual review template is present.",
             ),
         ),

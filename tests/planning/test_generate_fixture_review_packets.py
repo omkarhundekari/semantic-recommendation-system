@@ -12,6 +12,7 @@ def test_selects_all_initial_fixture_specs_by_default():
 
     assert [spec.case.case_id for spec in specs] == [
         "data_quality_strong_direct",
+        "rag_qa_strong_direct",
         "adversarial_cloud_incident_health_near_miss",
         "sparse_evidence_cloud_cost",
     ]
@@ -90,6 +91,7 @@ def test_writes_artifact_and_packet_for_selected_fixture(tmp_path):
 def test_available_fixture_ids_match_selectable_specs():
     assert available_fixture_ids() == (
         "data_quality_strong_direct",
+        "rag_qa_strong_direct",
         "adversarial_cloud_incident_health_near_miss",
         "sparse_evidence_cloud_cost",
     )
@@ -133,3 +135,22 @@ def test_adversarial_warning_chain_reaches_review_packet():
 
     assert "## Quality Warnings" in packet
     assert "adjacent_context_only_candidate" in packet
+
+
+
+def test_rag_fixture_review_packet_uses_predeclared_oracle_but_hides_it():
+    spec = select_fixture_specifications(["rag_qa_strong_direct"])[0]
+    artifact = build_fixture_artifact(spec)
+    packet = render_review_packet(
+        artifact=artifact,
+        specification=spec,
+    )
+
+    assert "rag_qa_strong_direct" in packet
+    assert "RAG QA Citation Quality Workbench" in packet
+    assert "RAG Retrieval Failure Analyzer" in packet
+    assert "Question-Level RAG Evaluation Dashboard" in packet
+    assert "Citation Grounding" in packet
+    assert "Question Answering" in packet
+    assert "expected_overall_preference" not in packet
+    assert "expected_response_quality" not in packet
