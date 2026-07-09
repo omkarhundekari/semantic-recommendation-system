@@ -15,6 +15,7 @@ def test_selects_all_initial_fixture_specs_by_default():
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
+        "no_research_paper_implementation_only",
         "strict_weekend_scope",
         "sparse_evidence_cloud_cost",
     ]
@@ -96,6 +97,7 @@ def test_available_fixture_ids_match_selectable_specs():
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
+        "no_research_paper_implementation_only",
         "strict_weekend_scope",
         "sparse_evidence_cloud_cost",
     )
@@ -197,5 +199,27 @@ def test_strict_weekend_review_packet_uses_predeclared_oracle_but_hides_it():
     assert "Simple Remediation Priority Ranker" in packet
     assert "weekend" in packet.lower()
     assert "lineage" in packet.lower()
+    assert "expected_overall_preference" not in packet
+    assert "expected_response_quality" not in packet
+
+
+
+def test_implementation_only_review_packet_uses_predeclared_oracle_but_hides_it():
+    spec = select_fixture_specifications([
+        "no_research_paper_implementation_only"
+    ])[0]
+    artifact = build_fixture_artifact(spec)
+    packet = render_review_packet(
+        artifact=artifact,
+        specification=spec,
+    )
+
+    assert "no_research_paper_implementation_only" in packet
+    assert "Repository Ownership Risk Map" in packet
+    assert "Dependency Staleness and Risk Scanner" in packet
+    assert "Repository Health Maintenance Dashboard" in packet
+    assert "github_repository" in packet
+    assert "- Type: research_paper" not in packet
+    assert "\"source_type\": \"research_paper\"" not in packet
     assert "expected_overall_preference" not in packet
     assert "expected_response_quality" not in packet

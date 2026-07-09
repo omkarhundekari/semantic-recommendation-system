@@ -732,6 +732,166 @@ def fixture_specifications() -> Tuple[ShadowFixtureSpecification, ...]:
             ),
         ),
         ShadowFixtureSpecification(
+            case=_case("no_research_paper_implementation_only"),
+            evidence_payload={
+                "inference": {
+                    "inferred_focus": "developer_tools",
+                },
+                "merged_results": [
+                    {
+                        "repository_id": "repo-ownership-map",
+                        "source_type": "github_repository",
+                        "title": "Repository Ownership Mapper",
+                        "readme_excerpt": (
+                            "Parse repository files, CODEOWNERS metadata, "
+                            "commit history, and directory ownership to show "
+                            "which teams maintain each part of a codebase."
+                        ),
+                        "retrieval_rank": 1,
+                    },
+                    {
+                        "repository_id": "repo-dependency-health",
+                        "source_type": "github_repository",
+                        "title": "Dependency Health Scanner",
+                        "readme_excerpt": (
+                            "Inspect dependency manifests, stale packages, "
+                            "transitive dependency depth, and risky outdated "
+                            "libraries for backend services."
+                        ),
+                        "retrieval_rank": 2,
+                    },
+                    {
+                        "repository_id": "repo-risk-dashboard",
+                        "source_type": "github_repository",
+                        "title": "Repository Risk Dashboard",
+                        "readme_excerpt": (
+                            "Combine ownership, churn, dependency age, and "
+                            "hotspot files into a dashboard for engineering "
+                            "maintenance planning."
+                        ),
+                        "retrieval_rank": 3,
+                    },
+                ],
+            },
+            mock_response={
+                "candidates": [
+                    {
+                        "title": "Repository Ownership Risk Map",
+                        "problem_statement": (
+                            "Backend teams need to spot parts of a repository "
+                            "that have unclear ownership and high maintenance "
+                            "risk."
+                        ),
+                        "target_user": "Backend engineers",
+                        "core_workflow": [
+                            "Load repository file paths and ownership metadata.",
+                            "Join owners with recent commit activity.",
+                            "Flag directories with missing or stale ownership.",
+                        ],
+                        "mvp_scope": [
+                            "Parse a small CODEOWNERS-style fixture.",
+                            "Load sample commit metadata by directory.",
+                            "Calculate files or directories without clear owners.",
+                            "Show ownership-risk findings in a simple report.",
+                        ],
+                        "success_metrics": [
+                            "Number of files or directories with missing ownership.",
+                            "Number of stale ownership areas surfaced.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses repository implementation context for "
+                            "ownership mapping, not direct research evidence."
+                        ),
+                        "source_ids": ["repo-ownership-map"],
+                        "assumptions": [
+                            "Repository metadata is available as local fixtures."
+                        ],
+                        "suggested_stack": ["Python"],
+                    },
+                    {
+                        "title": "Dependency Staleness and Risk Scanner",
+                        "problem_statement": (
+                            "Backend engineers need a practical way to identify "
+                            "outdated or risky dependencies before they become "
+                            "maintenance problems."
+                        ),
+                        "target_user": "Backend engineers",
+                        "core_workflow": [
+                            "Load dependency manifest fixtures.",
+                            "Compare package versions and dependency depth.",
+                            "Rank stale or risky dependencies.",
+                        ],
+                        "mvp_scope": [
+                            "Parse one Python or Node dependency manifest.",
+                            "Load mocked latest-version metadata.",
+                            "Compute dependency age and transitive depth.",
+                            "Export a ranked dependency risk list.",
+                        ],
+                        "success_metrics": [
+                            "Number of stale dependencies detected.",
+                            "Number of high-depth dependency risks surfaced.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses implementation context for dependency health "
+                            "scanning rather than research-paper grounding."
+                        ),
+                        "source_ids": ["repo-dependency-health"],
+                        "assumptions": [
+                            "Latest-version data can be mocked for the fixture."
+                        ],
+                        "suggested_stack": ["Python"],
+                    },
+                    {
+                        "title": "Repository Health Maintenance Dashboard",
+                        "problem_statement": (
+                            "Engineering teams need a single view of ownership, "
+                            "churn, dependency age, and hotspot files to plan "
+                            "repository maintenance."
+                        ),
+                        "target_user": "Backend engineers and engineering leads",
+                        "core_workflow": [
+                            "Load ownership, churn, and dependency fixtures.",
+                            "Compute simple repository health indicators.",
+                            "Show the highest-risk areas for maintenance.",
+                        ],
+                        "mvp_scope": [
+                            "Create small ownership, churn, and dependency fixtures.",
+                            "Compute transparent risk scores.",
+                            "Show top risky directories and dependencies.",
+                            "Write a README explaining that evidence is "
+                            "implementation context only.",
+                        ],
+                        "success_metrics": [
+                            "Number of risky repository areas ranked.",
+                            "Number of maintenance actions suggested.",
+                        ],
+                        "evidence_relationship": (
+                            "Combines implementation context from repository "
+                            "ownership, dependency health, and risk dashboard "
+                            "sources while avoiding research-backed claims."
+                        ),
+                        "source_ids": [
+                            "repo-ownership-map",
+                            "repo-dependency-health",
+                            "repo-risk-dashboard",
+                        ],
+                        "assumptions": [
+                            "Risk scoring is heuristic and should be presented "
+                            "as implementation guidance, not research validation."
+                        ],
+                        "suggested_stack": ["Python", "React"],
+                    },
+                ],
+            },
+            reviewability_requirements=(
+                "The fixture intentionally has no research-paper evidence.",
+                "Implementation-context sources remain visible in the evidence brief.",
+                "Candidate source IDs map to exact brief sources.",
+                "Manual review can judge usefulness without overstating grounding.",
+                "An unscored manual review template is present.",
+            ),
+        ),
+        ShadowFixtureSpecification(
             case=_case("strict_weekend_scope"),
             evidence_payload={
                 "inference": {

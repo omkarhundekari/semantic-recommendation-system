@@ -20,6 +20,7 @@ def test_first_fixture_specs_are_valid_and_match_registry_cases():
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
+        "no_research_paper_implementation_only",
         "strict_weekend_scope",
         "sparse_evidence_cloud_cost",
     ]
@@ -41,6 +42,7 @@ def test_fixture_spec_rejects_unknown_case():
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
+        "no_research_paper_implementation_only",
         "strict_weekend_scope",
         "sparse_evidence_cloud_cost",
     ],
@@ -296,5 +298,44 @@ def test_strict_weekend_fixture_has_predeclared_oracle_and_scope_evidence():
     assert "Weekend Lineage Impact Mapper" in serialized_artifact
     assert "Incident Owner Lookup Table" in serialized_artifact
     assert "Simple Remediation Priority Ranker" in serialized_artifact
+    assert "expected_overall_preference" not in serialized_artifact
+    assert "expected_response_quality" not in serialized_artifact
+
+
+
+def test_implementation_only_fixture_has_predeclared_oracle_and_no_research_papers():
+    import json
+
+    from planning.fixture_review_oracles import (
+        get_fixture_review_oracle,
+    )
+
+    spec = get_fixture_specification("no_research_paper_implementation_only")
+    oracle = get_fixture_review_oracle(spec.case.case_id)
+
+    source_types = {
+        item["source_type"]
+        for item in spec.evidence_payload["merged_results"]
+    }
+
+    assert oracle.expected_overall_preference == "openai"
+    assert oracle.expected_response_quality == "limited"
+    assert source_types == {"github_repository"}
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload=spec.evidence_payload,
+        user_goal=spec.case.user_goal,
+        constraints=spec.case.constraints,
+        provider=MockCandidateGenerationProvider(
+            response=spec.mock_response
+        ),
+    )
+
+    serialized_artifact = json.dumps(artifact)
+
+    assert "Repository Ownership Risk Map" in serialized_artifact
+    assert "Dependency Staleness and Risk Scanner" in serialized_artifact
+    assert "Repository Health Maintenance Dashboard" in serialized_artifact
+    assert "research_paper" not in serialized_artifact
     assert "expected_overall_preference" not in serialized_artifact
     assert "expected_response_quality" not in serialized_artifact
