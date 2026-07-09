@@ -188,6 +188,27 @@ def fixture_review_oracles() -> Tuple[FixtureReviewOracle, ...]:
                 "the weekend constraint makes scope realism difficult."
             ),
         ),
+        FixtureReviewOracle(
+            fixture_id="no_research_paper_implementation_only",
+            expected_overall_preference="openai",
+            expected_response_quality="limited",
+            reviewer_expectations=(
+                "Reviewers should verify that implementation context is not "
+                "overstated as direct research evidence.",
+                "The stronger planner path should remain useful for a practical "
+                "repository-health tool while acknowledging limited grounding.",
+                "Quality should be limited unless the artifact clearly separates "
+                "repository evidence from research-paper support."
+            ),
+            rationale=(
+                "This case tests whether the evaluator remains helpful when the "
+                "available evidence is implementation-oriented rather than "
+                "research-paper-backed. The expected preference favors the "
+                "shadow path if it produces more specific repository-health "
+                "workflows, but response quality should remain limited because "
+                "the grounding is not strong direct research evidence."
+            ),
+        ),
     )
 
 
