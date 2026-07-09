@@ -2,8 +2,10 @@ import json
 from pathlib import Path
 
 from planning.llm_readiness_report import (
+    build_latest_reviewed_llm_readiness_reports,
     build_llm_readiness_report_from_artifact,
     render_llm_readiness_report_markdown,
+    write_latest_reviewed_llm_readiness_reports,
     write_llm_readiness_report,
 )
 from planning.llm_routing_policy import (
@@ -160,3 +162,75 @@ def test_llm_readiness_markdown_and_json_do_not_leak_review_oracles(tmp_path):
     assert "expected_overall_preference" not in serialized
     assert "manual_review" not in serialized
     assert "oracle" not in serialized
+
+
+
+def test_latest_reviewed_llm_readiness_reports_use_latest_artifacts_only(tmp_path):
+    reports = build_latest_reviewed_llm_readiness_reports(
+        artifact_dir=Path("data/manual_fixture_artifacts"),
+        session_budget=_budget(),
+    )
+
+    reports_by_fixture = {
+        report.fixture_id: report
+        for report in reports
+    }
+
+    assert len(reports) == 10
+    assert reports_by_fixture[
+        "adversarial_cloud_incident_health_near_miss"
+    ].artifact_id == "414ef0690cd24119b6fd22477fae38b4"
+    assert reports_by_fixture[
+        "incident_investigation_broad"
+    ].artifact_id == "f737ba1de33a41fcab8ff5663795ce5f"
+    assert reports_by_fixture[
+        "deterministic_template_risk"
+    ].artifact_id == "1bc94b0f56984302922f13d42dcb2a2e"
+
+
+def test_write_latest_reviewed_llm_readiness_reports_writes_ten_report_sets(tmp_path):
+    paths = write_latest_reviewed_llm_readiness_reports(
+        artifact_dir=Path("data/manual_fixture_artifacts"),
+        output_dir=tmp_path,
+        session_budget=_budget(),
+    )
+
+    assert len(paths) == 10
+    assert len(list(tmp_path.glob("*.json"))) == 10
+    assert len(list(tmp_path.glob("*.md"))) == 10
+
+
+
+def test_latest_reviewed_llm_readiness_reports_use_latest_artifacts_only(tmp_path):
+    reports = build_latest_reviewed_llm_readiness_reports(
+        artifact_dir=Path("data/manual_fixture_artifacts"),
+        session_budget=_budget(),
+    )
+
+    reports_by_fixture = {
+        report.fixture_id: report
+        for report in reports
+    }
+
+    assert len(reports) == 10
+    assert reports_by_fixture[
+        "adversarial_cloud_incident_health_near_miss"
+    ].artifact_id == "414ef0690cd24119b6fd22477fae38b4"
+    assert reports_by_fixture[
+        "incident_investigation_broad"
+    ].artifact_id == "f737ba1de33a41fcab8ff5663795ce5f"
+    assert reports_by_fixture[
+        "deterministic_template_risk"
+    ].artifact_id == "1bc94b0f56984302922f13d42dcb2a2e"
+
+
+def test_write_latest_reviewed_llm_readiness_reports_writes_ten_report_sets(tmp_path):
+    paths = write_latest_reviewed_llm_readiness_reports(
+        artifact_dir=Path("data/manual_fixture_artifacts"),
+        output_dir=tmp_path,
+        session_budget=_budget(),
+    )
+
+    assert len(paths) == 10
+    assert len(list(tmp_path.glob("*.json"))) == 10
+    assert len(list(tmp_path.glob("*.md"))) == 10

@@ -6,6 +6,10 @@ from pathlib import Path
 from typing import Any
 
 from planning.evidence_cards import build_evidence_cards_from_artifact
+from planning.manual_review_store import (
+    DEFAULT_MANUAL_REVIEW_STORE,
+    load_manual_review_records,
+)
 from planning.llm_routing_policy import (
     DEEP_MODE,
     FAST_MODE,
@@ -207,6 +211,60 @@ def write_llm_readiness_report(
     }
 
 
+def build_latest_reviewed_llm_readiness_reports(
+    *,
+    artifact_dir: Path,
+    review_store_path: Path = DEFAULT_MANUAL_REVIEW_STORE,
+    session_budget: SessionBudgetState,
+) -> list[LLMReadinessReport]:
+    records = load_manual_review_records(review_store_path)
+    latest_by_fixture = {}
+
+    for record in sorted(
+        records,
+        key=lambda item: (
+            item.reviewed_at_utc,
+            item.review_id,
+        ),
+    ):
+        latest_by_fixture[record.fixture_id] = record
+
+    reports = []
+    for fixture_id, record in sorted(latest_by_fixture.items()):
+        artifact_path = artifact_dir / fixture_id / f"{record.artifact_id}.json"
+        if not artifact_path.exists():
+            continue
+
+        artifact = json.loads(artifact_path.read_text())
+        reports.append(
+            build_llm_readiness_report_from_artifact(
+                artifact,
+                session_budget=session_budget,
+            )
+        )
+
+    return reports
+
+
+def write_latest_reviewed_llm_readiness_reports(
+    *,
+    artifact_dir: Path,
+    output_dir: Path,
+    review_store_path: Path = DEFAULT_MANUAL_REVIEW_STORE,
+    session_budget: SessionBudgetState,
+) -> list[dict[str, Path]]:
+    reports = build_latest_reviewed_llm_readiness_reports(
+        artifact_dir=artifact_dir,
+        review_store_path=review_store_path,
+        session_budget=session_budget,
+    )
+
+    return [
+        write_llm_readiness_report(report, output_dir)
+        for report in reports
+    ]
+
+
 def _count_card_field(
     cards: list[Any],
     field_name: str,
@@ -233,20 +291,42 @@ def _main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--artifact-path", required=True)
+    parser.add_argument("--artifact-path")
+    parser.add_argument("--latest-reviewed", action="store_true")
+    parser.add_argument("--artifact-dir", default="data/manual_fixture_artifacts")
+    parser.add_argument("--review-store-path", default=str(DEFAULT_MANUAL_REVIEW_STORE))
     parser.add_argument("--output-dir", default="outputs/reports/llm_readiness")
     parser.add_argument("--calls-remaining", type=int, default=5)
     parser.add_argument("--tokens-remaining", type=int, default=10000)
     args = parser.parse_args()
 
+    session_budget = SessionBudgetState(
+        calls_remaining=args.calls_remaining,
+        tokens_remaining=args.tokens_remaining,
+        budget_available=True,
+    )
+
+    if args.latest_reviewed:
+        paths = write_latest_reviewed_llm_readiness_reports(
+            artifact_dir=Path(args.artifact_dir),
+            output_dir=Path(args.output_dir),
+            review_store_path=Path(args.review_store_path),
+            session_budget=session_budget,
+        )
+
+        print(f"Wrote {len(paths)} latest reviewed LLM readiness report sets.")
+        for path_set in paths:
+            print(f"Markdown report: {path_set['markdown_path']}")
+            print(f"JSON report: {path_set['json_path']}")
+        return
+
+    if not args.artifact_path:
+        raise SystemExit("Provide --artifact-path or --latest-reviewed.")
+
     artifact = json.loads(Path(args.artifact_path).read_text())
     report = build_llm_readiness_report_from_artifact(
         artifact,
-        session_budget=SessionBudgetState(
-            calls_remaining=args.calls_remaining,
-            tokens_remaining=args.tokens_remaining,
-            budget_available=True,
-        ),
+        session_budget=session_budget,
     )
     paths = write_llm_readiness_report(report, Path(args.output_dir))
 
