@@ -1,0 +1,2162 @@
+{
+  "schema_version": "1.1",
+  "artifact_identity": {
+    "artifact_id": "4a0a0ae15216490bbe97333d87365e3a",
+    "generation_timestamp_utc": "20260709T021245Z",
+    "fixture_id": "rag_qa_strong_direct"
+  },
+  "generated_at_utc": "20260709T021245Z",
+  "query": "Build a retrieval augmented generation project for question answering that demonstrates evaluation and citation quality.",
+  "constraints": {
+    "skill_level": "intermediate",
+    "time_available": "3 weeks",
+    "target_roles": [
+      "ML Engineer"
+    ],
+    "preferred_stack": [
+      "Python",
+      "FastAPI"
+    ]
+  },
+  "retrieval": {
+    "selected_route": null,
+    "expanded_query": null,
+    "focused_query": null,
+    "inference": {
+      "inferred_focus": "rag_llm"
+    },
+    "merged_evidence_count": 3
+  },
+  "legacy_planner": {
+    "direction_count": 3,
+    "directions": [
+      {
+        "title": "RAG Evaluation Studio",
+        "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "rag_llm"
+      },
+      {
+        "title": "RAG Pipeline Debugging Workbench",
+        "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "rag_llm"
+      },
+      {
+        "title": "Evidence-Grounded Research Assistant",
+        "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "rag_llm"
+      }
+    ],
+    "raw_ideas": [
+      {
+        "project_title": "RAG Evaluation Studio",
+        "based_on_paper": "Evaluation of Retrieval Augmented Generation for Question Answering",
+        "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.CL",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "rag_llm",
+        "detected_intent": "research_backed_project",
+        "idea_angle": "Evaluate retrieval quality, answer faithfulness, citation coverage, hallucination risk, and context relevance across RAG pipelines.",
+        "opportunity_area": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+        "evidence_focus_type": "buildable_gap",
+        "evidence_focus_statement": "Students and small teams need a practical way to inspect where a RAG pipeline is failing instead of treating it as a black box.",
+        "evidence_driven_angle": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+        "evidence_buildable_gap": "Students and small teams need a practical way to inspect where a RAG pipeline is failing instead of treating it as a black box.",
+        "evidence_project_opportunity": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+        "evidence_summary": "Research methods observed: retrieval. Research concerns observed: citation quality.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "RAG Question Answering Evaluation Dashboard",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Rag Llm",
+          "Retrieval",
+          "Evaluation",
+          "Monitoring",
+          "Explainability"
+        ],
+        "extracted_skills": [
+          "RAG",
+          "Semantic Search",
+          "FAISS / Vector Search",
+          "Embeddings",
+          "LLM Evaluation",
+          "Citation Grounding",
+          "Python"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Evaluation of Retrieval Augmented Generation for Question Answering'. The paper provides evidence related to: Retrieval augmented generation for question answering requires evaluation of answer correctness, retrieved context relevance, and failure cases.... The generated project 'RAG Evaluation Studio' turns that research direction into a buildable software prototype focused on Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding..",
+        "mvp_scope": [
+          "Load a small document collection and preserve source metadata for each chunk.",
+          "Implement chunking, embeddings, retrieval, and ranked evidence selection.",
+          "Generate answers with source citations and expose the retrieved context for inspection.",
+          "Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions.",
+          "Build a debugging view for failed retrievals, weak chunks, and low-confidence answers.",
+          "Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add side-by-side retrieval strategy comparison.",
+          "Add citation coverage scoring and answer faithfulness checks."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "Sentence Transformers",
+          "FAISS",
+          "LangChain / LlamaIndex",
+          "RAG Evaluation",
+          "Vector Search",
+          "RAG",
+          "Semantic Search",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a RAG Evaluation Studio that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Sentence Transformers, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as AI Engineer, LLM Application Engineer, NLP Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "AI Engineer",
+          "LLM Application Engineer",
+          "NLP Engineer",
+          "Search Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to ML Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "RAG Pipeline Debugging Workbench",
+        "based_on_paper": "Evaluation of Retrieval Augmented Generation for Question Answering",
+        "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.CL",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "rag_llm",
+        "detected_intent": "research_backed_project",
+        "idea_angle": "Break RAG failures into retrieval, chunking, reranking, prompting, citation, and grounding issues with actionable fixes.",
+        "opportunity_area": "Evaluate retrieval quality, answer faithfulness, citation coverage, hallucination risk, and context relevance across RAG pipelines.",
+        "evidence_focus_type": "research_or_reliability_gap",
+        "evidence_focus_statement": "Address evidence-related concerns around: citation quality.",
+        "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+        "evidence_buildable_gap": "Students and small teams need a practical way to inspect where a RAG pipeline is failing instead of treating it as a black box.",
+        "evidence_project_opportunity": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+        "evidence_summary": "Research methods observed: retrieval. Research concerns observed: citation quality.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "RAG Question Answering Evaluation Dashboard",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Rag Llm",
+          "Retrieval",
+          "Evaluation",
+          "Monitoring",
+          "Explainability"
+        ],
+        "extracted_skills": [
+          "RAG",
+          "Semantic Search",
+          "FAISS / Vector Search",
+          "Embeddings",
+          "LLM Evaluation",
+          "Citation Grounding",
+          "Python"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Evaluation of Retrieval Augmented Generation for Question Answering'. The paper provides evidence related to: Retrieval augmented generation for question answering requires evaluation of answer correctness, retrieved context relevance, and failure cases.... The generated project 'RAG Pipeline Debugging Workbench' turns that research direction into a buildable software prototype focused on Evaluate retrieval quality, answer faithfulness, citation coverage, hallucination risk, and context relevance across RAG pipelines..",
+        "mvp_scope": [
+          "Load a small document collection and preserve source metadata for each chunk.",
+          "Implement chunking, embeddings, retrieval, and ranked evidence selection.",
+          "Generate answers with source citations and expose the retrieved context for inspection.",
+          "Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions.",
+          "Build a debugging view for failed retrievals, weak chunks, and low-confidence answers.",
+          "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add side-by-side retrieval strategy comparison.",
+          "Add citation coverage scoring and answer faithfulness checks."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "Sentence Transformers",
+          "FAISS",
+          "LangChain / LlamaIndex",
+          "RAG Evaluation",
+          "Vector Search",
+          "RAG",
+          "Semantic Search",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a RAG Pipeline Debugging Workbench that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Sentence Transformers, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as AI Engineer, LLM Application Engineer, NLP Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "AI Engineer",
+          "LLM Application Engineer",
+          "NLP Engineer",
+          "Search Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to ML Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Evidence-Grounded Research Assistant",
+        "based_on_paper": "Evaluation of Retrieval Augmented Generation for Question Answering",
+        "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.CL",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "rag_llm",
+        "detected_intent": "research_backed_project",
+        "idea_angle": "Help users search documents, compare sources, ask grounded questions, and export cited research summaries.",
+        "opportunity_area": "Break RAG failures into retrieval, chunking, reranking, prompting, citation, and grounding issues with actionable fixes.",
+        "evidence_focus_type": "research_or_reliability_gap",
+        "evidence_focus_statement": "Address evidence-related concerns around: citation quality.",
+        "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+        "evidence_buildable_gap": "Students and small teams need a practical way to inspect where a RAG pipeline is failing instead of treating it as a black box.",
+        "evidence_project_opportunity": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+        "evidence_summary": "Research methods observed: retrieval. Research concerns observed: citation quality.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "RAG Question Answering Evaluation Dashboard",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Rag Llm",
+          "Retrieval",
+          "Evaluation",
+          "Monitoring",
+          "Explainability"
+        ],
+        "extracted_skills": [
+          "RAG",
+          "Semantic Search",
+          "FAISS / Vector Search",
+          "Embeddings",
+          "LLM Evaluation",
+          "Citation Grounding",
+          "Python"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Evaluation of Retrieval Augmented Generation for Question Answering'. The paper provides evidence related to: Retrieval augmented generation for question answering requires evaluation of answer correctness, retrieved context relevance, and failure cases.... The generated project 'Evidence-Grounded Research Assistant' turns that research direction into a buildable software prototype focused on Break RAG failures into retrieval, chunking, reranking, prompting, citation, and grounding issues with actionable fixes..",
+        "mvp_scope": [
+          "Load a small document collection and preserve source metadata for each chunk.",
+          "Implement chunking, embeddings, retrieval, and ranked evidence selection.",
+          "Generate answers with source citations and expose the retrieved context for inspection.",
+          "Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions.",
+          "Build a debugging view for failed retrievals, weak chunks, and low-confidence answers.",
+          "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add side-by-side retrieval strategy comparison.",
+          "Add citation coverage scoring and answer faithfulness checks."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "Sentence Transformers",
+          "FAISS",
+          "LangChain / LlamaIndex",
+          "RAG Evaluation",
+          "Vector Search",
+          "RAG",
+          "Semantic Search",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built an Evidence-Grounded Research Assistant that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Sentence Transformers, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as AI Engineer, LLM Application Engineer, NLP Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "AI Engineer",
+          "LLM Application Engineer",
+          "NLP Engineer",
+          "Search Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to ML Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "RAG Evaluation Studio",
+          "based_on_paper": "Evaluation of Retrieval Augmented Generation for Question Answering",
+          "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.CL",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "rag_llm",
+          "detected_intent": "research_backed_project",
+          "idea_angle": "Evaluate retrieval quality, answer faithfulness, citation coverage, hallucination risk, and context relevance across RAG pipelines.",
+          "opportunity_area": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+          "evidence_focus_type": "buildable_gap",
+          "evidence_focus_statement": "Students and small teams need a practical way to inspect where a RAG pipeline is failing instead of treating it as a black box.",
+          "evidence_driven_angle": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+          "evidence_buildable_gap": "Students and small teams need a practical way to inspect where a RAG pipeline is failing instead of treating it as a black box.",
+          "evidence_project_opportunity": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+          "evidence_summary": "Research methods observed: retrieval. Research concerns observed: citation quality.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "RAG Question Answering Evaluation Dashboard",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Rag Llm",
+            "Retrieval",
+            "Evaluation",
+            "Monitoring",
+            "Explainability"
+          ],
+          "extracted_skills": [
+            "RAG",
+            "Semantic Search",
+            "FAISS / Vector Search",
+            "Embeddings",
+            "LLM Evaluation",
+            "Citation Grounding",
+            "Python"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Evaluation of Retrieval Augmented Generation for Question Answering'. The paper provides evidence related to: Retrieval augmented generation for question answering requires evaluation of answer correctness, retrieved context relevance, and failure cases.... The generated project 'RAG Evaluation Studio' turns that research direction into a buildable software prototype focused on Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding..",
+          "mvp_scope": [
+            "Load a small document collection and preserve source metadata for each chunk.",
+            "Implement chunking, embeddings, retrieval, and ranked evidence selection.",
+            "Generate answers with source citations and expose the retrieved context for inspection.",
+            "Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add side-by-side retrieval strategy comparison.",
+            "Add citation coverage scoring and answer faithfulness checks."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "Sentence Transformers",
+            "FAISS",
+            "LangChain / LlamaIndex",
+            "RAG Evaluation",
+            "Vector Search",
+            "RAG",
+            "Semantic Search",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a RAG Evaluation Studio that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Sentence Transformers, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as AI Engineer, LLM Application Engineer, NLP Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "AI Engineer",
+            "LLM Application Engineer",
+            "NLP Engineer",
+            "Search Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to ML Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.8,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Very Strong",
+            "why_worth_building": "RAG Evaluation Studio scores 8.8/10 with a very strong career signal because it is grounded in research paper, fits the rag_llm domain, and demonstrates skills such as RAG, Semantic Search, FAISS / Vector Search, Embeddings, LLM Evaluation, Citation Grounding. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as AI Engineer, LLM Application Engineer, NLP Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          }
+        },
+        {
+          "project_title": "RAG Pipeline Debugging Workbench",
+          "based_on_paper": "Evaluation of Retrieval Augmented Generation for Question Answering",
+          "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.CL",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "rag_llm",
+          "detected_intent": "research_backed_project",
+          "idea_angle": "Break RAG failures into retrieval, chunking, reranking, prompting, citation, and grounding issues with actionable fixes.",
+          "opportunity_area": "Evaluate retrieval quality, answer faithfulness, citation coverage, hallucination risk, and context relevance across RAG pipelines.",
+          "evidence_focus_type": "research_or_reliability_gap",
+          "evidence_focus_statement": "Address evidence-related concerns around: citation quality.",
+          "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+          "evidence_buildable_gap": "Students and small teams need a practical way to inspect where a RAG pipeline is failing instead of treating it as a black box.",
+          "evidence_project_opportunity": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+          "evidence_summary": "Research methods observed: retrieval. Research concerns observed: citation quality.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "RAG Question Answering Evaluation Dashboard",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Rag Llm",
+            "Retrieval",
+            "Evaluation",
+            "Monitoring",
+            "Explainability"
+          ],
+          "extracted_skills": [
+            "RAG",
+            "Semantic Search",
+            "FAISS / Vector Search",
+            "Embeddings",
+            "LLM Evaluation",
+            "Citation Grounding",
+            "Python"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Evaluation of Retrieval Augmented Generation for Question Answering'. The paper provides evidence related to: Retrieval augmented generation for question answering requires evaluation of answer correctness, retrieved context relevance, and failure cases.... The generated project 'RAG Pipeline Debugging Workbench' turns that research direction into a buildable software prototype focused on Evaluate retrieval quality, answer faithfulness, citation coverage, hallucination risk, and context relevance across RAG pipelines..",
+          "mvp_scope": [
+            "Load a small document collection and preserve source metadata for each chunk.",
+            "Implement chunking, embeddings, retrieval, and ranked evidence selection.",
+            "Generate answers with source citations and expose the retrieved context for inspection.",
+            "Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions.",
+            "Build a debugging view for failed retrievals, weak chunks, and low-confidence answers.",
+            "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add side-by-side retrieval strategy comparison.",
+            "Add citation coverage scoring and answer faithfulness checks."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "Sentence Transformers",
+            "FAISS",
+            "LangChain / LlamaIndex",
+            "RAG Evaluation",
+            "Vector Search",
+            "RAG",
+            "Semantic Search",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a RAG Pipeline Debugging Workbench that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Sentence Transformers, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as AI Engineer, LLM Application Engineer, NLP Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "AI Engineer",
+            "LLM Application Engineer",
+            "NLP Engineer",
+            "Search Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to ML Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.8,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Very Strong",
+            "why_worth_building": "RAG Pipeline Debugging Workbench scores 8.8/10 with a very strong career signal because it is grounded in research paper, fits the rag_llm domain, and demonstrates skills such as RAG, Semantic Search, FAISS / Vector Search, Embeddings, LLM Evaluation, Citation Grounding. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as AI Engineer, LLM Application Engineer, NLP Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          }
+        },
+        {
+          "project_title": "Evidence-Grounded Research Assistant",
+          "based_on_paper": "Evaluation of Retrieval Augmented Generation for Question Answering",
+          "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.CL",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "rag_llm",
+          "detected_intent": "research_backed_project",
+          "idea_angle": "Help users search documents, compare sources, ask grounded questions, and export cited research summaries.",
+          "opportunity_area": "Break RAG failures into retrieval, chunking, reranking, prompting, citation, and grounding issues with actionable fixes.",
+          "evidence_focus_type": "research_or_reliability_gap",
+          "evidence_focus_statement": "Address evidence-related concerns around: citation quality.",
+          "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+          "evidence_buildable_gap": "Students and small teams need a practical way to inspect where a RAG pipeline is failing instead of treating it as a black box.",
+          "evidence_project_opportunity": "Build a RAG evaluation and debugging workbench that traces ingestion, chunking, retrieval, reranking, citations, and answer grounding.",
+          "evidence_summary": "Research methods observed: retrieval. Research concerns observed: citation quality.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "RAG Question Answering Evaluation Dashboard",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Rag Llm",
+            "Retrieval",
+            "Evaluation",
+            "Monitoring",
+            "Explainability"
+          ],
+          "extracted_skills": [
+            "RAG",
+            "Semantic Search",
+            "FAISS / Vector Search",
+            "Embeddings",
+            "LLM Evaluation",
+            "Citation Grounding",
+            "Python"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Evaluation of Retrieval Augmented Generation for Question Answering'. The paper provides evidence related to: Retrieval augmented generation for question answering requires evaluation of answer correctness, retrieved context relevance, and failure cases.... The generated project 'Evidence-Grounded Research Assistant' turns that research direction into a buildable software prototype focused on Break RAG failures into retrieval, chunking, reranking, prompting, citation, and grounding issues with actionable fixes..",
+          "mvp_scope": [
+            "Load a small document collection and preserve source metadata for each chunk.",
+            "Implement chunking, embeddings, retrieval, and ranked evidence selection.",
+            "Generate answers with source citations and expose the retrieved context for inspection.",
+            "Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions.",
+            "Build a debugging view for failed retrievals, weak chunks, and low-confidence answers.",
+            "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add side-by-side retrieval strategy comparison.",
+            "Add citation coverage scoring and answer faithfulness checks.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "Sentence Transformers",
+            "FAISS",
+            "LangChain / LlamaIndex",
+            "RAG Evaluation",
+            "Vector Search",
+            "RAG",
+            "Semantic Search",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built an Evidence-Grounded Research Assistant that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Sentence Transformers, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as AI Engineer, LLM Application Engineer, NLP Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "AI Engineer",
+            "LLM Application Engineer",
+            "NLP Engineer",
+            "Search Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to ML Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.8,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Very Strong",
+            "why_worth_building": "Evidence-Grounded Research Assistant scores 8.8/10 with a very strong career signal because it is grounded in research paper, fits the rag_llm domain, and demonstrates skills such as RAG, Semantic Search, FAISS / Vector Search, Embeddings, LLM Evaluation, Citation Grounding. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as AI Engineer, LLM Application Engineer, NLP Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          }
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    }
+  },
+  "v2_shadow": {
+    "status": "fixture_evaluated",
+    "report": {
+      "evidence_brief": {
+        "query": "Build a retrieval augmented generation project for question answering that demonstrates evaluation and citation quality.",
+        "sources": [
+          {
+            "source_id": "paper-rag-evaluation",
+            "source_type": "research_paper",
+            "title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+            "excerpt": "Evaluation of Retrieval Augmented Generation for Question Answering Retrieval augmented generation for question answering requires evaluation of answer correctness, retrieved context relevance, and failure cases.",
+            "category": "cs.CL",
+            "url": null,
+            "retrieval_rank": 1,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched registered query anchors."
+          },
+          {
+            "source_id": "repo-rag-eval-dashboard",
+            "source_type": "github_repository",
+            "title": "RAG Question Answering Evaluation Dashboard",
+            "excerpt": "RAG Question Answering Evaluation Dashboard Evaluate RAG question answering runs with retrieval metrics, answer scores, citation coverage, and per-question failure traces.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 3,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched registered query anchors."
+          },
+          {
+            "source_id": "paper-citation-grounding",
+            "source_type": "research_paper",
+            "title": "Citation Grounding and Evidence Attribution in Question Answering Systems",
+            "excerpt": "Citation Grounding and Evidence Attribution in Question Answering Systems Question answering systems should connect answer claims to cited passages, measure citation faithfulness, and expose unsupported statements.",
+            "category": "cs.CL",
+            "url": null,
+            "retrieval_rank": 2,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched registered query anchors."
+          }
+        ],
+        "source_counts": {
+          "research_paper": 2,
+          "github_repository": 1
+        },
+        "recurring_concepts": [
+          "answer",
+          "answering",
+          "question",
+          "citation",
+          "evaluation",
+          "failure",
+          "retrieval"
+        ],
+        "coverage_warnings": []
+      },
+      "evidence_curation": {
+        "required_anchor_terms": [
+          "retrieval augmented generation",
+          "question answering"
+        ],
+        "retained": [
+          {
+            "item": {
+              "document_id": "paper-rag-evaluation",
+              "source_type": "research_paper",
+              "title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+              "abstract": "Retrieval augmented generation for question answering requires evaluation of answer correctness, retrieved context relevance, and failure cases.",
+              "category": "cs.CL",
+              "retrieval_rank": 1
+            },
+            "relevance_score": 32.0,
+            "matched_anchor_terms": [
+              "retrieval augmented generation",
+              "question answering"
+            ],
+            "matched_query_terms": [
+              "answering",
+              "augmented",
+              "evaluation",
+              "generation",
+              "question",
+              "retrieval"
+            ],
+            "query_term_document_frequencies": {
+              "answering": 3,
+              "augmented": 1,
+              "evaluation": 2,
+              "generation": 1,
+              "question": 3,
+              "retrieval": 2
+            },
+            "unique_query_terms": [
+              "augmented",
+              "generation"
+            ],
+            "matched_query_phrases": [
+              "retrieval augmented",
+              "augmented generation",
+              "question answering",
+              "retrieval augmented generation"
+            ],
+            "unique_query_phrases": [
+              "retrieval augmented",
+              "augmented generation",
+              "retrieval augmented generation"
+            ],
+            "query_phrase_document_frequencies": {
+              "retrieval augmented": 1,
+              "augmented generation": 1,
+              "question answering": 3,
+              "retrieval augmented generation": 1
+            },
+            "curation_pool_size": 3,
+            "retention_reason": "Matched registered query anchors.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "repository_id": "repo-rag-eval-dashboard",
+              "source_type": "github_repository",
+              "title": "RAG Question Answering Evaluation Dashboard",
+              "readme_excerpt": "Evaluate RAG question answering runs with retrieval metrics, answer scores, citation coverage, and per-question failure traces.",
+              "retrieval_rank": 3
+            },
+            "relevance_score": 20.0,
+            "matched_anchor_terms": [
+              "question answering"
+            ],
+            "matched_query_terms": [
+              "answering",
+              "citation",
+              "evaluation",
+              "question",
+              "retrieval"
+            ],
+            "query_term_document_frequencies": {
+              "answering": 3,
+              "citation": 2,
+              "evaluation": 2,
+              "question": 3,
+              "retrieval": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [
+              "question answering"
+            ],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {
+              "question answering": 3
+            },
+            "curation_pool_size": 3,
+            "retention_reason": "Matched registered query anchors.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "document_id": "paper-citation-grounding",
+              "source_type": "research_paper",
+              "title": "Citation Grounding and Evidence Attribution in Question Answering Systems",
+              "abstract": "Question answering systems should connect answer claims to cited passages, measure citation faithfulness, and expose unsupported statements.",
+              "category": "cs.CL",
+              "retrieval_rank": 2
+            },
+            "relevance_score": 16.0,
+            "matched_anchor_terms": [
+              "question answering"
+            ],
+            "matched_query_terms": [
+              "answering",
+              "citation",
+              "question"
+            ],
+            "query_term_document_frequencies": {
+              "answering": 3,
+              "citation": 2,
+              "question": 3
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [
+              "question answering"
+            ],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {
+              "question answering": 3
+            },
+            "curation_pool_size": 3,
+            "retention_reason": "Matched registered query anchors.",
+            "support_scope": "direct"
+          }
+        ],
+        "dropped": [],
+        "retained_source_counts": {
+          "research_paper": 2,
+          "github_repository": 1
+        }
+      },
+      "planning_diagnostics": {
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "provider_called": true,
+        "prompt_content_hash": "48ced1fa7ff7af07257577b7baa873565278f914cf8b0c2d46e0e7b348d24d3e"
+      },
+      "selected_titles": [
+        "RAG QA Citation Quality Workbench",
+        "RAG Retrieval Failure Analyzer",
+        "Question-Level RAG Evaluation Dashboard"
+      ],
+      "selected_candidates": [
+        {
+          "title": "RAG QA Citation Quality Workbench",
+          "problem_statement": "ML engineers need to verify whether generated question-answering responses cite passages that actually support answer claims.",
+          "target_user": "ML engineers",
+          "core_workflow": [
+            "Load question, answer, retrieved passage, and citation records.",
+            "Check whether answer claims have cited evidence.",
+            "Show unsupported claims and missing citations."
+          ],
+          "mvp_scope": [
+            "Load a small RAG question-answering evaluation dataset.",
+            "Store questions, generated answers, retrieved contexts, and cited passages.",
+            "Compute citation coverage per answer.",
+            "Show unsupported answer spans for review."
+          ],
+          "success_metrics": [
+            "Percentage of answer claims with supporting citations.",
+            "Number of unsupported claims found."
+          ],
+          "evidence_relationship": "Uses direct evidence on citation grounding and evidence attribution for question answering.",
+          "source_ids": [
+            "paper-citation-grounding"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "ranking": {
+            "score": 0.866,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.55,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.55.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "RAG Retrieval Failure Analyzer",
+          "problem_statement": "Teams need to identify whether wrong question answering responses are caused by retrieval failure or answer generation failure.",
+          "target_user": "ML engineers",
+          "core_workflow": [
+            "Load questions, retrieved contexts, and answers.",
+            "Score context relevance for each question.",
+            "Group failures by retrieval and answer quality."
+          ],
+          "mvp_scope": [
+            "Load sample RAG evaluation runs.",
+            "Compare retrieved context terms with each question.",
+            "Label examples as retrieval miss or answer issue.",
+            "Show failure categories in a dashboard."
+          ],
+          "success_metrics": [
+            "Number of QA failures categorized.",
+            "Share of failures caused by retrieval misses."
+          ],
+          "evidence_relationship": "Uses direct RAG question-answering evaluation evidence.",
+          "source_ids": [
+            "paper-rag-evaluation"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "ranking": {
+            "score": 0.866,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.55,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.55.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Question-Level RAG Evaluation Dashboard",
+          "problem_statement": "Students building RAG demos need a practical way to inspect question-level answer quality, retrieval quality, and citation coverage.",
+          "target_user": "ML engineering students",
+          "core_workflow": [
+            "Load RAG evaluation run outputs.",
+            "Calculate answer, retrieval, and citation metrics.",
+            "Inspect per-question failures."
+          ],
+          "mvp_scope": [
+            "Load JSONL evaluation runs.",
+            "Calculate retrieval hit rate and citation coverage.",
+            "Show per-question answer quality notes.",
+            "Export a review summary for each run."
+          ],
+          "success_metrics": [
+            "Number of evaluated QA examples.",
+            "Number of citation or retrieval failures surfaced."
+          ],
+          "evidence_relationship": "Uses implementation context for RAG QA evaluation dashboards.",
+          "source_ids": [
+            "repo-rag-eval-dashboard"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "ranking": {
+            "score": 0.866,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.55,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.55.",
+              "Completeness score: 1.00."
+            ]
+          }
+        }
+      ],
+      "legacy_titles": [
+        "RAG Evaluation Studio",
+        "RAG Pipeline Debugging Workbench",
+        "Evidence-Grounded Research Assistant"
+      ],
+      "comparison": {
+        "legacy_direction_count": 3,
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "v2_generated_candidate_count": 3,
+        "v2_valid_candidate_count": 3,
+        "v2_selected_candidate_count": 3,
+        "v2_selected_titles": [
+          "RAG QA Citation Quality Workbench",
+          "RAG Retrieval Failure Analyzer",
+          "Question-Level RAG Evaluation Dashboard"
+        ],
+        "provider_called": true,
+        "coverage_warnings": []
+      },
+      "shadow_readiness": {
+        "status": "ready",
+        "reasons": [
+          "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+        ],
+        "signals": {
+          "raw_evidence_count": 3,
+          "curated_evidence_count": 3,
+          "dropped_evidence_count": 0,
+          "generated_candidate_count": 3,
+          "valid_candidate_count": 3,
+          "selected_candidate_count": 3,
+          "provider_called": true,
+          "coverage_warnings": [],
+          "validation_errors": [],
+          "validation_warnings": []
+        }
+      },
+      "prompt_content_hash": "48ced1fa7ff7af07257577b7baa873565278f914cf8b0c2d46e0e7b348d24d3e"
+    },
+    "evidence_quality": {
+      "status": "not_routed_pending_calibration",
+      "metrics": {
+        "curation_pool_size": 3,
+        "retained_source_count": 3,
+        "final_brief_source_count": 3,
+        "direct_source_count": 3,
+        "adjacent_source_count": 0,
+        "required_anchor_count": 2,
+        "matched_required_anchor_count": 2,
+        "query_anchor_coverage": 1.0,
+        "unique_query_term_count": 2,
+        "unique_query_phrase_count": 3,
+        "source_type_count": 2,
+        "dominant_source_type": "research_paper",
+        "dominant_source_type_fraction": 0.6666666666666666,
+        "top_direct_relevance_margin": 12.0,
+        "coverage_warnings": []
+      },
+      "thresholds": {
+        "version": "v1",
+        "calibration_status": "unresolved",
+        "sparse_direct_source_threshold": null,
+        "ambiguity_top_margin_threshold": null,
+        "low_diversity_fraction_threshold": null
+      },
+      "evidence_sparse": null,
+      "evidence_ambiguous": null,
+      "source_diversity_low": null,
+      "unresolved_signal_names": [
+        "evidence_sparse",
+        "evidence_ambiguous",
+        "source_diversity_low"
+      ],
+      "routing_ready": false
+    },
+    "selected_candidates": [
+      {
+        "title": "RAG QA Citation Quality Workbench",
+        "problem_statement": "ML engineers need to verify whether generated question-answering responses cite passages that actually support answer claims.",
+        "target_user": "ML engineers",
+        "core_workflow": [
+          "Load question, answer, retrieved passage, and citation records.",
+          "Check whether answer claims have cited evidence.",
+          "Show unsupported claims and missing citations."
+        ],
+        "mvp_scope": [
+          "Load a small RAG question-answering evaluation dataset.",
+          "Store questions, generated answers, retrieved contexts, and cited passages.",
+          "Compute citation coverage per answer.",
+          "Show unsupported answer spans for review."
+        ],
+        "success_metrics": [
+          "Percentage of answer claims with supporting citations.",
+          "Number of unsupported claims found."
+        ],
+        "evidence_relationship": "Uses direct evidence on citation grounding and evidence attribution for question answering.",
+        "source_ids": [
+          "paper-citation-grounding"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ],
+        "ranking": {
+          "score": 0.866,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.55,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.55.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "RAG Retrieval Failure Analyzer",
+        "problem_statement": "Teams need to identify whether wrong question answering responses are caused by retrieval failure or answer generation failure.",
+        "target_user": "ML engineers",
+        "core_workflow": [
+          "Load questions, retrieved contexts, and answers.",
+          "Score context relevance for each question.",
+          "Group failures by retrieval and answer quality."
+        ],
+        "mvp_scope": [
+          "Load sample RAG evaluation runs.",
+          "Compare retrieved context terms with each question.",
+          "Label examples as retrieval miss or answer issue.",
+          "Show failure categories in a dashboard."
+        ],
+        "success_metrics": [
+          "Number of QA failures categorized.",
+          "Share of failures caused by retrieval misses."
+        ],
+        "evidence_relationship": "Uses direct RAG question-answering evaluation evidence.",
+        "source_ids": [
+          "paper-rag-evaluation"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ],
+        "ranking": {
+          "score": 0.866,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.55,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.55.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Question-Level RAG Evaluation Dashboard",
+        "problem_statement": "Students building RAG demos need a practical way to inspect question-level answer quality, retrieval quality, and citation coverage.",
+        "target_user": "ML engineering students",
+        "core_workflow": [
+          "Load RAG evaluation run outputs.",
+          "Calculate answer, retrieval, and citation metrics.",
+          "Inspect per-question failures."
+        ],
+        "mvp_scope": [
+          "Load JSONL evaluation runs.",
+          "Calculate retrieval hit rate and citation coverage.",
+          "Show per-question answer quality notes.",
+          "Export a review summary for each run."
+        ],
+        "success_metrics": [
+          "Number of evaluated QA examples.",
+          "Number of citation or retrieval failures surfaced."
+        ],
+        "evidence_relationship": "Uses implementation context for RAG QA evaluation dashboards.",
+        "source_ids": [
+          "repo-rag-eval-dashboard"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ],
+        "ranking": {
+          "score": 0.866,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.55,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.55.",
+            "Completeness score: 1.00."
+          ]
+        }
+      }
+    ],
+    "generation_metadata": {
+      "prompt_version": "v1",
+      "prompt_content_hash": "48ced1fa7ff7af07257577b7baa873565278f914cf8b0c2d46e0e7b348d24d3e",
+      "execution_mode": "fixture",
+      "provider_name": "MockCandidateGenerationProvider",
+      "model": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      }
+    },
+    "diagnostics": {
+      "generated_candidate_count": 3,
+      "valid_candidate_count": 3,
+      "selected_candidate_count": 3,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "provider_called": true,
+      "prompt_content_hash": "48ced1fa7ff7af07257577b7baa873565278f914cf8b0c2d46e0e7b348d24d3e"
+    },
+    "shadow_readiness": {
+      "status": "ready",
+      "reasons": [
+        "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+      ],
+      "signals": {
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "provider_called": true,
+        "coverage_warnings": [],
+        "validation_errors": [],
+        "validation_warnings": []
+      }
+    },
+    "semantic_goal_relevance": [],
+    "cross_encoder_goal_relevance": [],
+    "semantic_candidate_diversity": null,
+    "evidence_support": [],
+    "grounding_adequacy": [],
+    "candidate_source_relevance": [
+      {
+        "candidate_title": "RAG QA Citation Quality Workbench",
+        "source_id": "paper-citation-grounding",
+        "source_type": "research_paper",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "answer",
+          "answering",
+          "citation",
+          "cited",
+          "claims",
+          "evidence",
+          "passages",
+          "question",
+          "unsupported"
+        ],
+        "goal_source_shared_terms": [
+          "answering",
+          "citation",
+          "question"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: answer, answering, citation, cited, claims."
+      },
+      {
+        "candidate_title": "RAG Retrieval Failure Analyzer",
+        "source_id": "paper-rag-evaluation",
+        "source_type": "research_paper",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "answer",
+          "answering",
+          "context",
+          "failure",
+          "generation",
+          "question",
+          "relevance",
+          "retrieval",
+          "retrieved"
+        ],
+        "goal_source_shared_terms": [
+          "answering",
+          "augmented",
+          "evaluation",
+          "generation",
+          "question",
+          "retrieval"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: answer, answering, context, failure, generation."
+      },
+      {
+        "candidate_title": "Question-Level RAG Evaluation Dashboard",
+        "source_id": "repo-rag-eval-dashboard",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "answer",
+          "citation",
+          "coverage",
+          "dashboard",
+          "evaluation",
+          "metrics",
+          "question",
+          "retrieval"
+        ],
+        "goal_source_shared_terms": [
+          "answering",
+          "citation",
+          "evaluation",
+          "question",
+          "retrieval"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: answer, citation, coverage, dashboard, evaluation."
+      }
+    ],
+    "quality_warnings": {
+      "warnings": [],
+      "signals": {
+        "coverage_warning_count": 0,
+        "goal_trace_count": 0,
+        "grounding_trace_count": 0,
+        "diversity_pair_count": 0,
+        "source_relevance_trace_count": 3,
+        "quality_warning_count": 0
+      }
+    },
+    "promotion_eligibility": {
+      "status": "not_assessed",
+      "candidate_assessments": [],
+      "summary": {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0
+      },
+      "reason": "Evidence-support shadow was not enabled, so promotion eligibility could not assess direct grounding."
+    },
+    "semantic_diversification_repair": {
+      "status": "no_repair_needed",
+      "directives": [],
+      "signals": {
+        "candidate_count": 3,
+        "similarity_threshold": 0.78,
+        "close_cluster_count": 0,
+        "replacement_count": 0
+      }
+    },
+    "raw_candidates": [
+      {
+        "title": "RAG QA Citation Quality Workbench",
+        "problem_statement": "ML engineers need to verify whether generated question-answering responses cite passages that actually support answer claims.",
+        "target_user": "ML engineers",
+        "core_workflow": [
+          "Load question, answer, retrieved passage, and citation records.",
+          "Check whether answer claims have cited evidence.",
+          "Show unsupported claims and missing citations."
+        ],
+        "mvp_scope": [
+          "Load a small RAG question-answering evaluation dataset.",
+          "Store questions, generated answers, retrieved contexts, and cited passages.",
+          "Compute citation coverage per answer.",
+          "Show unsupported answer spans for review."
+        ],
+        "success_metrics": [
+          "Percentage of answer claims with supporting citations.",
+          "Number of unsupported claims found."
+        ],
+        "evidence_relationship": "Uses direct evidence on citation grounding and evidence attribution for question answering.",
+        "source_ids": [
+          "paper-citation-grounding"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ]
+      },
+      {
+        "title": "RAG Retrieval Failure Analyzer",
+        "problem_statement": "Teams need to identify whether wrong question answering responses are caused by retrieval failure or answer generation failure.",
+        "target_user": "ML engineers",
+        "core_workflow": [
+          "Load questions, retrieved contexts, and answers.",
+          "Score context relevance for each question.",
+          "Group failures by retrieval and answer quality."
+        ],
+        "mvp_scope": [
+          "Load sample RAG evaluation runs.",
+          "Compare retrieved context terms with each question.",
+          "Label examples as retrieval miss or answer issue.",
+          "Show failure categories in a dashboard."
+        ],
+        "success_metrics": [
+          "Number of QA failures categorized.",
+          "Share of failures caused by retrieval misses."
+        ],
+        "evidence_relationship": "Uses direct RAG question-answering evaluation evidence.",
+        "source_ids": [
+          "paper-rag-evaluation"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ]
+      },
+      {
+        "title": "Question-Level RAG Evaluation Dashboard",
+        "problem_statement": "Students building RAG demos need a practical way to inspect question-level answer quality, retrieval quality, and citation coverage.",
+        "target_user": "ML engineering students",
+        "core_workflow": [
+          "Load RAG evaluation run outputs.",
+          "Calculate answer, retrieval, and citation metrics.",
+          "Inspect per-question failures."
+        ],
+        "mvp_scope": [
+          "Load JSONL evaluation runs.",
+          "Calculate retrieval hit rate and citation coverage.",
+          "Show per-question answer quality notes.",
+          "Export a review summary for each run."
+        ],
+        "success_metrics": [
+          "Number of evaluated QA examples.",
+          "Number of citation or retrieval failures surfaced."
+        ],
+        "evidence_relationship": "Uses implementation context for RAG QA evaluation dashboards.",
+        "source_ids": [
+          "repo-rag-eval-dashboard"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ]
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "RAG QA Citation Quality Workbench",
+          "idea_angle": "ML engineers need to verify whether generated question-answering responses cite passages that actually support answer claims. Built for ML engineers.",
+          "detected_domain": "rag_llm",
+          "evidence_buildable_gap": "ML engineers need to verify whether generated question-answering responses cite passages that actually support answer claims.",
+          "evidence_focus_statement": "Uses direct evidence on citation grounding and evidence attribution for question answering.",
+          "evidence_driven_angle": "Uses direct evidence on citation grounding and evidence attribution for question answering.",
+          "evidence_project_opportunity": "ML engineers need to verify whether generated question-answering responses cite passages that actually support answer claims.",
+          "research_motivation": "Uses direct evidence on citation grounding and evidence attribution for question answering.",
+          "mvp_scope": [
+            "Load a small RAG question-answering evaluation dataset.",
+            "Store questions, generated answers, retrieved contexts, and cited passages.",
+            "Compute citation coverage per answer.",
+            "Show unsupported answer spans for review.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Percentage of answer claims with supporting citations.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "ML Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "FastAPI"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-citation-grounding",
+              "title": "Citation Grounding and Evidence Attribution in Question Answering Systems",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-citation-grounding"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Percentage of answer claims with supporting citations.",
+            "Number of unsupported claims found."
+          ],
+          "planner_candidate_workflow": [
+            "Load question, answer, retrieved passage, and citation records.",
+            "Check whether answer claims have cited evidence.",
+            "Show unsupported claims and missing citations."
+          ],
+          "evidence_title": "Citation Grounding and Evidence Attribution in Question Answering Systems",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.CL",
+          "based_on_paper": "Citation Grounding and Evidence Attribution in Question Answering Systems",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.6,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "RAG QA Citation Quality Workbench scores 8.6/10 with a strong career signal because it is grounded in research paper, fits the rag_llm domain, and demonstrates skills such as Python, FastAPI. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as ML Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to ML Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "RAG Retrieval Failure Analyzer",
+          "idea_angle": "Teams need to identify whether wrong question answering responses are caused by retrieval failure or answer generation failure. Built for ML engineers.",
+          "detected_domain": "rag_llm",
+          "evidence_buildable_gap": "Teams need to identify whether wrong question answering responses are caused by retrieval failure or answer generation failure.",
+          "evidence_focus_statement": "Uses direct RAG question-answering evaluation evidence.",
+          "evidence_driven_angle": "Uses direct RAG question-answering evaluation evidence.",
+          "evidence_project_opportunity": "Teams need to identify whether wrong question answering responses are caused by retrieval failure or answer generation failure.",
+          "research_motivation": "Uses direct RAG question-answering evaluation evidence.",
+          "mvp_scope": [
+            "Load sample RAG evaluation runs.",
+            "Compare retrieved context terms with each question.",
+            "Label examples as retrieval miss or answer issue.",
+            "Show failure categories in a dashboard.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of QA failures categorized.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "ML Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "FastAPI"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-rag-evaluation",
+              "title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-rag-evaluation"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of QA failures categorized.",
+            "Share of failures caused by retrieval misses."
+          ],
+          "planner_candidate_workflow": [
+            "Load questions, retrieved contexts, and answers.",
+            "Score context relevance for each question.",
+            "Group failures by retrieval and answer quality."
+          ],
+          "evidence_title": "Evaluation of Retrieval Augmented Generation for Question Answering",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.CL",
+          "based_on_paper": "Evaluation of Retrieval Augmented Generation for Question Answering",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.5,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "RAG Retrieval Failure Analyzer scores 8.5/10 with a strong career signal because it is grounded in research paper, fits the rag_llm domain, and demonstrates skills such as Python, FastAPI. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as ML Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to ML Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Question-Level RAG Evaluation Dashboard",
+          "idea_angle": "Students building RAG demos need a practical way to inspect question-level answer quality, retrieval quality, and citation coverage. Built for ML engineering students.",
+          "detected_domain": "rag_llm",
+          "evidence_buildable_gap": "Students building RAG demos need a practical way to inspect question-level answer quality, retrieval quality, and citation coverage.",
+          "evidence_focus_statement": "Uses implementation context for RAG QA evaluation dashboards.",
+          "evidence_driven_angle": "Uses implementation context for RAG QA evaluation dashboards.",
+          "evidence_project_opportunity": "Students building RAG demos need a practical way to inspect question-level answer quality, retrieval quality, and citation coverage.",
+          "research_motivation": "Uses implementation context for RAG QA evaluation dashboards.",
+          "mvp_scope": [
+            "Load JSONL evaluation runs.",
+            "Calculate retrieval hit rate and citation coverage.",
+            "Show per-question answer quality notes.",
+            "Export a review summary for each run.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of evaluated QA examples.",
+            "Add a failure-case review workflow and document the prototype's known limitations.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "target_roles": [
+            "ML Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "FastAPI"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-rag-eval-dashboard",
+              "title": "RAG Question Answering Evaluation Dashboard",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-rag-eval-dashboard"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of evaluated QA examples.",
+            "Number of citation or retrieval failures surfaced."
+          ],
+          "planner_candidate_workflow": [
+            "Load RAG evaluation run outputs.",
+            "Calculate answer, retrieval, and citation metrics.",
+            "Inspect per-question failures."
+          ],
+          "evidence_title": "RAG Question Answering Evaluation Dashboard",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "RAG Question Answering Evaluation Dashboard",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.0,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Question-Level RAG Evaluation Dashboard scores 8.0/10 with a strong career signal because it is grounded in github repository, fits the rag_llm domain, and demonstrates skills such as Python, FastAPI. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as ML Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to ML Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, FastAPI where it fits the project. Assumes an intermediate starting level."
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    },
+    "shadow_vs_deterministic_comparison": {
+      "schema_version": "1.0",
+      "case_id": null,
+      "user_goal": "Build a retrieval augmented generation project for question answering that demonstrates evaluation and citation quality.",
+      "query_fingerprint": "946d79f085aca535",
+      "deterministic_candidates": [
+        {
+          "title": "RAG Evaluation Studio",
+          "comparison_text": "RAG Evaluation Studio Evaluate retrieval quality, answer faithfulness, citation coverage, hallucination risk, and context relevance across RAG pipelines. Load a small document collection and preserve source metadata for each chunk. Implement chunking, embeddings, retrieval, and ranked evidence selection. Generate answers with source citations and expose the retrieved context for inspection. Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions. Build a debugging view for failed retrievals, weak chunks, and low-confidence answers. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence. Load a small document collection and preserve source metadata for each chunk. Implement chunking, embeddings, retrieval, and ranked evidence selection. Generate answers with source citations and expose the retrieved context for inspection. Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions. Build a debugging view for failed retrievals, weak chunks, and low-confidence answers. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        },
+        {
+          "title": "RAG Pipeline Debugging Workbench",
+          "comparison_text": "RAG Pipeline Debugging Workbench Break RAG failures into retrieval, chunking, reranking, prompting, citation, and grounding issues with actionable fixes. Load a small document collection and preserve source metadata for each chunk. Implement chunking, embeddings, retrieval, and ranked evidence selection. Generate answers with source citations and expose the retrieved context for inspection. Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions. Build a debugging view for failed retrievals, weak chunks, and low-confidence answers. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs. Load a small document collection and preserve source metadata for each chunk. Implement chunking, embeddings, retrieval, and ranked evidence selection. Generate answers with source citations and expose the retrieved context for inspection. Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions. Build a debugging view for failed retrievals, weak chunks, and low-confidence answers. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        },
+        {
+          "title": "Evidence-Grounded Research Assistant",
+          "comparison_text": "Evidence-Grounded Research Assistant Help users search documents, compare sources, ask grounded questions, and export cited research summaries. Load a small document collection and preserve source metadata for each chunk. Implement chunking, embeddings, retrieval, and ranked evidence selection. Generate answers with source citations and expose the retrieved context for inspection. Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions. Build a debugging view for failed retrievals, weak chunks, and low-confidence answers. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs. Load a small document collection and preserve source metadata for each chunk. Implement chunking, embeddings, retrieval, and ranked evidence selection. Generate answers with source citations and expose the retrieved context for inspection. Measure retrieval relevance, citation coverage, and unsupported-answer risk on sample questions. Build a debugging view for failed retrievals, weak chunks, and low-confidence answers. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        }
+      ],
+      "openai_candidates": [
+        {
+          "title": "RAG QA Citation Quality Workbench",
+          "comparison_text": "RAG QA Citation Quality Workbench ML engineers need to verify whether generated question-answering responses cite passages that actually support answer claims. ML engineers Load question, answer, retrieved passage, and citation records. Check whether answer claims have cited evidence. Show unsupported claims and missing citations. Load a small RAG question-answering evaluation dataset. Store questions, generated answers, retrieved contexts, and cited passages. Compute citation coverage per answer. Show unsupported answer spans for review."
+        },
+        {
+          "title": "RAG Retrieval Failure Analyzer",
+          "comparison_text": "RAG Retrieval Failure Analyzer Teams need to identify whether wrong question answering responses are caused by retrieval failure or answer generation failure. ML engineers Load questions, retrieved contexts, and answers. Score context relevance for each question. Group failures by retrieval and answer quality. Load sample RAG evaluation runs. Compare retrieved context terms with each question. Label examples as retrieval miss or answer issue. Show failure categories in a dashboard."
+        },
+        {
+          "title": "Question-Level RAG Evaluation Dashboard",
+          "comparison_text": "Question-Level RAG Evaluation Dashboard Students building RAG demos need a practical way to inspect question-level answer quality, retrieval quality, and citation coverage. ML engineering students Load RAG evaluation run outputs. Calculate answer, retrieval, and citation metrics. Inspect per-question failures. Load JSONL evaluation runs. Calculate retrieval hit rate and citation coverage. Show per-question answer quality notes. Export a review summary for each run."
+        }
+      ],
+      "deterministic_grounding_classes": [
+        {
+          "candidate_title": "RAG Evaluation Studio",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "RAG Pipeline Debugging Workbench",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Evidence-Grounded Research Assistant",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "openai_grounding_classes": [
+        {
+          "candidate_title": "RAG QA Citation Quality Workbench",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "RAG Retrieval Failure Analyzer",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Question-Level RAG Evaluation Dashboard",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "deterministic_enrichment": [
+        {
+          "title": "RAG Evaluation Studio",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "RAG Pipeline Debugging Workbench",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Evidence-Grounded Research Assistant",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        }
+      ],
+      "openai_enrichment": [
+        {
+          "title": "RAG QA Citation Quality Workbench",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "RAG Retrieval Failure Analyzer",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Question-Level RAG Evaluation Dashboard",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        }
+      ],
+      "set_similarity_score": null,
+      "unique_angle_count": 0,
+      "unique_openai_titles": [],
+      "pairwise_similarity": [],
+      "manual_preference": null,
+      "manual_preference_reason": null,
+      "manual_reviewer_notes": null,
+      "notes": [
+        "Cross-set semantic similarity is a difference signal, not a quality score.",
+        "Portfolio tiers are preserved for review but are assigned by candidate order and must not be interpreted as quality labels.",
+        "Deterministic grounding is not assessed by this contract yet; only shadow grounding traces are currently comparable."
+      ]
+    },
+    "manual_review_template": {
+      "rubric_version": "v1",
+      "query_fingerprint": "946d79f085aca535",
+      "deterministic_review": {
+        "planner_path": "deterministic",
+        "candidate_reviews": [
+          {
+            "candidate_title": "RAG Evaluation Studio",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "RAG Pipeline Debugging Workbench",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Evidence-Grounded Research Assistant",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "openai_review": {
+        "planner_path": "openai",
+        "candidate_reviews": [
+          {
+            "candidate_title": "RAG QA Citation Quality Workbench",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "RAG Retrieval Failure Analyzer",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Question-Level RAG Evaluation Dashboard",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "overall_preference": null,
+      "overall_preference_reason": "",
+      "response_quality": null,
+      "response_quality_reason": "",
+      "unique_angle_quality": null,
+      "unique_angle_quality_reason": "",
+      "reviewer_notes": ""
+    }
+  }
+}
