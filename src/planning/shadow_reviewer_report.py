@@ -346,6 +346,9 @@ def build_shadow_reviewer_report(
         "outcome_distribution": dict(
             sorted(outcome_distribution.items())
         ),
+        "oracle_comparison_counts": dict(
+            sorted(oracle_comparison["comparison_counts"].items())
+        ),
         "reviewer_confidence_counts": dict(
             sorted(reviewer_confidence_counts.items())
         ),
@@ -413,6 +416,20 @@ def render_shadow_reviewer_report(
             lines.append(f"- `{outcome}`: {count}")
     else:
         lines.append("- No reviewed outcomes yet.")
+
+    lines.extend(
+        [
+            "",
+            "## Oracle Comparison Summary",
+            "",
+        ]
+    )
+
+    if report["oracle_comparison_counts"]:
+        for status, count in report["oracle_comparison_counts"].items():
+            lines.append(f"- `{status}`: {count}")
+    else:
+        lines.append("- No oracle comparisons yet.")
 
     lines.extend(
         [
