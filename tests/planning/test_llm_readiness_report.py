@@ -11,6 +11,7 @@ from planning.llm_routing_policy import (
     FAST_MODE,
     INTERVIEW_MODE,
     DETERMINISTIC_SUFFICIENT_FOR_FAST_MODE,
+    FAST_MODE_USES_DETERMINISTIC_OUTPUT,
     NO_QUERY_ALIGNED_EVIDENCE,
     ROUTING_APPROVED,
     SessionBudgetState,
@@ -117,6 +118,11 @@ def test_llm_readiness_allows_limited_mixed_evidence_in_deep_mode():
         "adjacent_context_only": 2,
         "none": 1,
     }
+    assert not reports_by_mode[FAST_MODE].routing_decision.should_route
+    assert reports_by_mode[
+        FAST_MODE
+    ].routing_decision.reason == FAST_MODE_USES_DETERMINISTIC_OUTPUT
+
     assert reports_by_mode[DEEP_MODE].routing_decision.should_route
     assert reports_by_mode[DEEP_MODE].routing_decision.reason == ROUTING_APPROVED
     assert reports_by_mode[

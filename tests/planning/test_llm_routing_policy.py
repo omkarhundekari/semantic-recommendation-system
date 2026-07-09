@@ -8,6 +8,7 @@ from planning.llm_routing_policy import (
     DETERMINISTIC_SUFFICIENT_FOR_FAST_MODE,
     EXPLORATORY_EVIDENCE_ONLY,
     FAST_MODE,
+    FAST_MODE_USES_DETERMINISTIC_OUTPUT,
     INTERVIEW_MODE,
     NO_EVIDENCE_CARDS,
     NO_QUERY_ALIGNED_EVIDENCE,
@@ -81,6 +82,25 @@ def test_routing_uses_deterministic_path_for_strong_fast_mode():
     assert decision.reason == DETERMINISTIC_SUFFICIENT_FOR_FAST_MODE
     assert decision.evidence_confidence == "Strong"
     assert decision.query_aligned_card_count == 3
+
+
+def test_routing_uses_deterministic_path_for_limited_fast_mode():
+    cards = _load_cards(
+        "data/manual_fixture_artifacts/incident_investigation_broad/"
+        "f737ba1de33a41fcab8ff5663795ce5f.json"
+    )
+
+    decision = decide_llm_routing(
+        evidence_cards=cards,
+        session_budget=_healthy_budget(),
+        mode=FAST_MODE,
+        estimated_tokens=1000,
+    )
+
+    assert not decision.should_route
+    assert decision.reason == FAST_MODE_USES_DETERMINISTIC_OUTPUT
+    assert decision.evidence_confidence == "Limited"
+    assert decision.query_aligned_card_count == 1
 
 
 def test_routing_approves_strong_evidence_for_interview_mode():

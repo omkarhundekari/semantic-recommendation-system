@@ -9,6 +9,7 @@ NO_EVIDENCE_CARDS = "no_evidence_cards"
 NO_QUERY_ALIGNED_EVIDENCE = "no_query_aligned_evidence"
 EXPLORATORY_EVIDENCE_ONLY = "exploratory_evidence_only"
 DETERMINISTIC_SUFFICIENT_FOR_FAST_MODE = "deterministic_sufficient_for_fast_mode"
+FAST_MODE_USES_DETERMINISTIC_OUTPUT = "fast_mode_uses_deterministic_output"
 QUOTA_EXHAUSTED = "quota_exhausted"
 TOKEN_BUDGET_EXCEEDED = "token_budget_exceeded"
 BUDGET_UNAVAILABLE = "budget_unavailable"
@@ -106,6 +107,13 @@ def decide_llm_routing(
         return LLMRoutingDecision(
             should_route=False,
             reason=DETERMINISTIC_SUFFICIENT_FOR_FAST_MODE,
+            **base_decision,
+        )
+
+    if mode == FAST_MODE:
+        return LLMRoutingDecision(
+            should_route=False,
+            reason=FAST_MODE_USES_DETERMINISTIC_OUTPUT,
             **base_decision,
         )
 
