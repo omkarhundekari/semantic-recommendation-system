@@ -1,0 +1,2090 @@
+{
+  "schema_version": "1.1",
+  "artifact_identity": {
+    "artifact_id": "d123d89ceb2742a494f3c6f76a797f09",
+    "generation_timestamp_utc": "20260709T044439Z",
+    "fixture_id": "ambiguous_ai_student_project"
+  },
+  "generated_at_utc": "20260709T044439Z",
+  "query": "Build an AI project for students that can help me stand out for software engineering internships.",
+  "constraints": {
+    "skill_level": "intermediate",
+    "time_available": "3 weeks",
+    "target_roles": [
+      "Software Engineer"
+    ],
+    "preferred_stack": [
+      "Python",
+      "React"
+    ]
+  },
+  "retrieval": {
+    "selected_route": null,
+    "expanded_query": null,
+    "focused_query": null,
+    "inference": {
+      "inferred_focus": "ai_ml"
+    },
+    "merged_evidence_count": 3
+  },
+  "legacy_planner": {
+    "direction_count": 3,
+    "directions": [
+      {
+        "title": "Model Evaluation Intelligence Dashboard",
+        "evidence_title": "LLM Agents for Task Planning and Tool Use",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "ai_ml"
+      },
+      {
+        "title": "ML Prediction Monitoring Platform",
+        "evidence_title": "LLM Agents for Task Planning and Tool Use",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "ai_ml"
+      },
+      {
+        "title": "Explainable ML Decision Assistant",
+        "evidence_title": "LLM Agents for Task Planning and Tool Use",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "ai_ml"
+      }
+    ],
+    "raw_ideas": [
+      {
+        "project_title": "Model Evaluation Intelligence Dashboard",
+        "based_on_paper": "LLM Agents for Task Planning and Tool Use",
+        "evidence_title": "LLM Agents for Task Planning and Tool Use",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.AI",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "ai_ml",
+        "detected_intent": "project_building",
+        "idea_angle": "Compare models across metrics, datasets, error slices, feature importance, and deployment readiness.",
+        "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_focus_type": "buildable_gap",
+        "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research methods observed: retrieval.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "AI Student Portfolio App Examples",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Ai Ml",
+          "Retrieval",
+          "Automation"
+        ],
+        "extracted_skills": [
+          "Machine Learning",
+          "Model Evaluation",
+          "Feature Engineering",
+          "Explainability",
+          "Python",
+          "Analytics Dashboards"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'LLM Agents for Task Planning and Tool Use'. The paper provides evidence related to: Large language model agents can plan tasks, call tools, track intermediate state, and support interactive workflows across domains.... The generated project 'Model Evaluation Intelligence Dashboard' turns that research direction into a buildable software prototype focused on Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations..",
+        "mvp_scope": [
+          "Select a small reproducible dataset, target variable, and baseline model.",
+          "Create train, validation, and test splits with a documented evaluation protocol.",
+          "Compare baseline models across accuracy, precision, recall, calibration, and error slices.",
+          "Show feature importance or explanation views for representative predictions.",
+          "Build a dashboard that highlights model tradeoffs and deployment-readiness risks.",
+          "Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "scikit-learn",
+          "Pandas",
+          "Model Evaluation",
+          "Explainability",
+          "Machine Learning",
+          "Feature Engineering",
+          "Analytics Dashboards",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Model Evaluation Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, scikit-learn, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as ML Engineer, Data Scientist, AI Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "ML Engineer",
+          "Data Scientist",
+          "AI Engineer",
+          "Applied ML Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Software Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "ML Prediction Monitoring Platform",
+        "based_on_paper": "LLM Agents for Task Planning and Tool Use",
+        "evidence_title": "LLM Agents for Task Planning and Tool Use",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.AI",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "ai_ml",
+        "detected_intent": "project_building",
+        "idea_angle": "Track prediction quality, anomaly signals, feature drift, and model behavior over time.",
+        "opportunity_area": "Compare models across metrics, datasets, error slices, feature importance, and deployment readiness.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "Research methods observed: retrieval.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research methods observed: retrieval.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "AI Student Portfolio App Examples",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Ai Ml",
+          "Retrieval",
+          "Automation"
+        ],
+        "extracted_skills": [
+          "Machine Learning",
+          "Model Evaluation",
+          "Feature Engineering",
+          "Explainability",
+          "Python",
+          "Analytics Dashboards"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'LLM Agents for Task Planning and Tool Use'. The paper provides evidence related to: Large language model agents can plan tasks, call tools, track intermediate state, and support interactive workflows across domains.... The generated project 'ML Prediction Monitoring Platform' turns that research direction into a buildable software prototype focused on Compare models across metrics, datasets, error slices, feature importance, and deployment readiness..",
+        "mvp_scope": [
+          "Select a small reproducible dataset, target variable, and baseline evaluation metric.",
+          "Create documented train, validation, and test splits with preprocessing steps.",
+          "Train a baseline model and compare results across meaningful error slices.",
+          "Expose prediction explanations, confidence signals, and common failure cases.",
+          "Build a dashboard for metrics, examples, and model-quality tradeoffs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "scikit-learn",
+          "Pandas",
+          "Model Evaluation",
+          "Explainability",
+          "Machine Learning",
+          "Feature Engineering",
+          "Analytics Dashboards",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a ML Prediction Monitoring Platform that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, scikit-learn, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as ML Engineer, Data Scientist, AI Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "ML Engineer",
+          "Data Scientist",
+          "AI Engineer",
+          "Applied ML Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Software Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Explainable ML Decision Assistant",
+        "based_on_paper": "LLM Agents for Task Planning and Tool Use",
+        "evidence_title": "LLM Agents for Task Planning and Tool Use",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.AI",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "ai_ml",
+        "detected_intent": "project_building",
+        "idea_angle": "Generate model explanations, feature impact summaries, and risk notes for prediction-heavy applications.",
+        "opportunity_area": "Track prediction quality, anomaly signals, feature drift, and model behavior over time.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "Research methods observed: retrieval.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research methods observed: retrieval.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "AI Student Portfolio App Examples",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Ai Ml",
+          "Retrieval",
+          "Automation"
+        ],
+        "extracted_skills": [
+          "Machine Learning",
+          "Model Evaluation",
+          "Feature Engineering",
+          "Explainability",
+          "Python",
+          "Analytics Dashboards"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'LLM Agents for Task Planning and Tool Use'. The paper provides evidence related to: Large language model agents can plan tasks, call tools, track intermediate state, and support interactive workflows across domains.... The generated project 'Explainable ML Decision Assistant' turns that research direction into a buildable software prototype focused on Track prediction quality, anomaly signals, feature drift, and model behavior over time..",
+        "mvp_scope": [
+          "Select a small reproducible dataset, target variable, and baseline evaluation metric.",
+          "Create documented train, validation, and test splits with preprocessing steps.",
+          "Train a baseline model and compare results across meaningful error slices.",
+          "Expose prediction explanations, confidence signals, and common failure cases.",
+          "Build a dashboard for metrics, examples, and model-quality tradeoffs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "scikit-learn",
+          "Pandas",
+          "Model Evaluation",
+          "Explainability",
+          "Machine Learning",
+          "Feature Engineering",
+          "Analytics Dashboards",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built an Explainable ML Decision Assistant that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, scikit-learn, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as ML Engineer, Data Scientist, AI Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "ML Engineer",
+          "Data Scientist",
+          "AI Engineer",
+          "Applied ML Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Software Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Model Evaluation Intelligence Dashboard",
+          "based_on_paper": "LLM Agents for Task Planning and Tool Use",
+          "evidence_title": "LLM Agents for Task Planning and Tool Use",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.AI",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "ai_ml",
+          "detected_intent": "project_building",
+          "idea_angle": "Compare models across metrics, datasets, error slices, feature importance, and deployment readiness.",
+          "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_focus_type": "buildable_gap",
+          "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research methods observed: retrieval.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "AI Student Portfolio App Examples",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Ai Ml",
+            "Retrieval",
+            "Automation"
+          ],
+          "extracted_skills": [
+            "Machine Learning",
+            "Model Evaluation",
+            "Feature Engineering",
+            "Explainability",
+            "Python",
+            "Analytics Dashboards"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'LLM Agents for Task Planning and Tool Use'. The paper provides evidence related to: Large language model agents can plan tasks, call tools, track intermediate state, and support interactive workflows across domains.... The generated project 'Model Evaluation Intelligence Dashboard' turns that research direction into a buildable software prototype focused on Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations..",
+          "mvp_scope": [
+            "Select a small reproducible dataset, target variable, and baseline model.",
+            "Create train, validation, and test splits with a documented evaluation protocol.",
+            "Compare baseline models across accuracy, precision, recall, calibration, and error slices.",
+            "Show feature importance or explanation views for representative predictions.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "scikit-learn",
+            "Pandas",
+            "Model Evaluation",
+            "Explainability",
+            "Machine Learning",
+            "Feature Engineering",
+            "Analytics Dashboards",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Model Evaluation Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, scikit-learn, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as ML Engineer, Data Scientist, AI Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "ML Engineer",
+            "Data Scientist",
+            "AI Engineer",
+            "Applied ML Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Software Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.5,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Model Evaluation Intelligence Dashboard scores 8.5/10 with a strong career signal because it is grounded in research paper, fits the ai_ml domain, and demonstrates skills such as Machine Learning, Model Evaluation, Feature Engineering, Explainability, Python, Analytics Dashboards. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as ML Engineer, Data Scientist, AI Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          }
+        },
+        {
+          "project_title": "ML Prediction Monitoring Platform",
+          "based_on_paper": "LLM Agents for Task Planning and Tool Use",
+          "evidence_title": "LLM Agents for Task Planning and Tool Use",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.AI",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "ai_ml",
+          "detected_intent": "project_building",
+          "idea_angle": "Track prediction quality, anomaly signals, feature drift, and model behavior over time.",
+          "opportunity_area": "Compare models across metrics, datasets, error slices, feature importance, and deployment readiness.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "Research methods observed: retrieval.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research methods observed: retrieval.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "AI Student Portfolio App Examples",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Ai Ml",
+            "Retrieval",
+            "Automation"
+          ],
+          "extracted_skills": [
+            "Machine Learning",
+            "Model Evaluation",
+            "Feature Engineering",
+            "Explainability",
+            "Python",
+            "Analytics Dashboards"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'LLM Agents for Task Planning and Tool Use'. The paper provides evidence related to: Large language model agents can plan tasks, call tools, track intermediate state, and support interactive workflows across domains.... The generated project 'ML Prediction Monitoring Platform' turns that research direction into a buildable software prototype focused on Compare models across metrics, datasets, error slices, feature importance, and deployment readiness..",
+          "mvp_scope": [
+            "Select a small reproducible dataset, target variable, and baseline evaluation metric.",
+            "Create documented train, validation, and test splits with preprocessing steps.",
+            "Train a baseline model and compare results across meaningful error slices.",
+            "Expose prediction explanations, confidence signals, and common failure cases.",
+            "Build a dashboard for metrics, examples, and model-quality tradeoffs.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "scikit-learn",
+            "Pandas",
+            "Model Evaluation",
+            "Explainability",
+            "Machine Learning",
+            "Feature Engineering",
+            "Analytics Dashboards",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a ML Prediction Monitoring Platform that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, scikit-learn, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as ML Engineer, Data Scientist, AI Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "ML Engineer",
+            "Data Scientist",
+            "AI Engineer",
+            "Applied ML Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Software Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.5,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "ML Prediction Monitoring Platform scores 8.5/10 with a strong career signal because it is grounded in research paper, fits the ai_ml domain, and demonstrates skills such as Machine Learning, Model Evaluation, Feature Engineering, Explainability, Python, Analytics Dashboards. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as ML Engineer, Data Scientist, AI Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          }
+        },
+        {
+          "project_title": "Explainable ML Decision Assistant",
+          "based_on_paper": "LLM Agents for Task Planning and Tool Use",
+          "evidence_title": "LLM Agents for Task Planning and Tool Use",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.AI",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "ai_ml",
+          "detected_intent": "project_building",
+          "idea_angle": "Generate model explanations, feature impact summaries, and risk notes for prediction-heavy applications.",
+          "opportunity_area": "Track prediction quality, anomaly signals, feature drift, and model behavior over time.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "Research methods observed: retrieval.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research methods observed: retrieval.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "AI Student Portfolio App Examples",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Ai Ml",
+            "Retrieval",
+            "Automation"
+          ],
+          "extracted_skills": [
+            "Machine Learning",
+            "Model Evaluation",
+            "Feature Engineering",
+            "Explainability",
+            "Python",
+            "Analytics Dashboards"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'LLM Agents for Task Planning and Tool Use'. The paper provides evidence related to: Large language model agents can plan tasks, call tools, track intermediate state, and support interactive workflows across domains.... The generated project 'Explainable ML Decision Assistant' turns that research direction into a buildable software prototype focused on Track prediction quality, anomaly signals, feature drift, and model behavior over time..",
+          "mvp_scope": [
+            "Select a small reproducible dataset, target variable, and baseline evaluation metric.",
+            "Create documented train, validation, and test splits with preprocessing steps.",
+            "Train a baseline model and compare results across meaningful error slices.",
+            "Expose prediction explanations, confidence signals, and common failure cases.",
+            "Build a dashboard for metrics, examples, and model-quality tradeoffs.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "scikit-learn",
+            "Pandas",
+            "Model Evaluation",
+            "Explainability",
+            "Machine Learning",
+            "Feature Engineering",
+            "Analytics Dashboards",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built an Explainable ML Decision Assistant that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, scikit-learn, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as ML Engineer, Data Scientist, AI Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "ML Engineer",
+            "Data Scientist",
+            "AI Engineer",
+            "Applied ML Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Software Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.5,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Explainable ML Decision Assistant scores 8.5/10 with a strong career signal because it is grounded in research paper, fits the ai_ml domain, and demonstrates skills such as Machine Learning, Model Evaluation, Feature Engineering, Explainability, Python, Analytics Dashboards. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as ML Engineer, Data Scientist, AI Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          }
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    }
+  },
+  "v2_shadow": {
+    "status": "fixture_evaluated",
+    "report": {
+      "evidence_brief": {
+        "query": "Build an AI project for students that can help me stand out for software engineering internships.",
+        "sources": [
+          {
+            "source_id": "paper-llm-agents",
+            "source_type": "research_paper",
+            "title": "LLM Agents for Task Planning and Tool Use",
+            "excerpt": "LLM Agents for Task Planning and Tool Use Large language model agents can plan tasks, call tools, track intermediate state, and support interactive workflows across domains.",
+            "category": "cs.AI",
+            "url": null,
+            "retrieval_rank": 1,
+            "retrieval_signals": {},
+            "support_scope": "adjacent_planning",
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage."
+          },
+          {
+            "source_id": "paper-rag-learning",
+            "source_type": "research_paper",
+            "title": "Retrieval Augmented Generation for Learning Support",
+            "excerpt": "Retrieval Augmented Generation for Learning Support Retrieval augmented generation can support student learning workflows by grounding answers in course materials and retrieved knowledge.",
+            "category": "cs.CL",
+            "url": null,
+            "retrieval_rank": 2,
+            "retrieval_signals": {},
+            "support_scope": "adjacent_planning",
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage."
+          },
+          {
+            "source_id": "repo-ai-portfolio-apps",
+            "source_type": "github_repository",
+            "title": "AI Student Portfolio App Examples",
+            "excerpt": "AI Student Portfolio App Examples Example AI portfolio apps include chat assistants, summarizers, recommendation tools, study helpers, and dashboards built with Python and React.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 3,
+            "retrieval_signals": {},
+            "support_scope": "adjacent_planning",
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage."
+          }
+        ],
+        "source_counts": {
+          "research_paper": 2,
+          "github_repository": 1
+        },
+        "recurring_concepts": [
+          "student",
+          "support",
+          "tools",
+          "workflows"
+        ],
+        "coverage_warnings": []
+      },
+      "evidence_curation": {
+        "required_anchor_terms": [],
+        "retained": [
+          {
+            "item": {
+              "document_id": "paper-llm-agents",
+              "source_type": "research_paper",
+              "title": "LLM Agents for Task Planning and Tool Use",
+              "abstract": "Large language model agents can plan tasks, call tools, track intermediate state, and support interactive workflows across domains.",
+              "category": "cs.AI",
+              "retrieval_rank": 1
+            },
+            "relevance_score": 2.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "can"
+            ],
+            "query_term_document_frequencies": {
+              "can": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage.",
+            "support_scope": "adjacent_planning"
+          },
+          {
+            "item": {
+              "document_id": "paper-rag-learning",
+              "source_type": "research_paper",
+              "title": "Retrieval Augmented Generation for Learning Support",
+              "abstract": "Retrieval augmented generation can support student learning workflows by grounding answers in course materials and retrieved knowledge.",
+              "category": "cs.CL",
+              "retrieval_rank": 2
+            },
+            "relevance_score": 2.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "can"
+            ],
+            "query_term_document_frequencies": {
+              "can": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage.",
+            "support_scope": "adjacent_planning"
+          },
+          {
+            "item": {
+              "repository_id": "repo-ai-portfolio-apps",
+              "source_type": "github_repository",
+              "title": "AI Student Portfolio App Examples",
+              "readme_excerpt": "Example AI portfolio apps include chat assistants, summarizers, recommendation tools, study helpers, and dashboards built with Python and React.",
+              "retrieval_rank": 3
+            },
+            "relevance_score": 0.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [],
+            "query_term_document_frequencies": {},
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage.",
+            "support_scope": "adjacent_planning"
+          }
+        ],
+        "dropped": [],
+        "retained_source_counts": {
+          "research_paper": 2,
+          "github_repository": 1
+        }
+      },
+      "planning_diagnostics": {
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "provider_called": true,
+        "prompt_content_hash": "033e51f00f04fd9d1d6c5ddd518ad53a31a4966af0fa5faa232a49d17ca4cd21"
+      },
+      "selected_titles": [
+        "AI Internship Project Recommender",
+        "AI Study Assistant with Course-Grounded Answers",
+        "LLM Task Planner for Student Workflows"
+      ],
+      "selected_candidates": [
+        {
+          "title": "AI Internship Project Recommender",
+          "problem_statement": "Students may need help choosing portfolio projects that match skills, interests, and target roles.",
+          "target_user": "Software engineering students",
+          "core_workflow": [
+            "Collect student skills and role preferences.",
+            "Rank project ideas by fit.",
+            "Explain why each idea may help internship positioning."
+          ],
+          "mvp_scope": [
+            "Create a small catalog of AI project ideas.",
+            "Collect skills and target-role inputs.",
+            "Rank projects with transparent scoring rules.",
+            "Show explanations for each recommendation."
+          ],
+          "success_metrics": [
+            "Number of project ideas ranked.",
+            "Number of explanations with clear skill-role mapping."
+          ],
+          "evidence_relationship": "Uses portfolio app implementation context, but lacks direct research evidence for career outcomes.",
+          "source_ids": [
+            "repo-ai-portfolio-apps"
+          ],
+          "assumptions": [
+            "Assumes the user's main need is project selection for internships rather than a specific AI domain."
+          ],
+          "suggested_stack": [
+            "Python",
+            "React"
+          ],
+          "ranking": {
+            "score": 0.911,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "AI Study Assistant with Course-Grounded Answers",
+          "problem_statement": "Students may need a tool that answers study questions using uploaded notes or course material.",
+          "target_user": "Students",
+          "core_workflow": [
+            "Upload small course-note fixtures.",
+            "Ask natural-language study questions.",
+            "Retrieve relevant notes and generate grounded answers."
+          ],
+          "mvp_scope": [
+            "Load a small local note collection.",
+            "Implement keyword or embedding retrieval.",
+            "Return answers with cited source snippets.",
+            "Show a basic React or Streamlit interface."
+          ],
+          "success_metrics": [
+            "Number of answered study questions with citations.",
+            "Share of answers linked to retrieved notes."
+          ],
+          "evidence_relationship": "Uses RAG learning-support evidence, but the user did not explicitly ask for an education or study app.",
+          "source_ids": [
+            "paper-rag-learning"
+          ],
+          "assumptions": [
+            "Assumes the broad AI project request should be narrowed to student learning support."
+          ],
+          "suggested_stack": [
+            "Python",
+            "React"
+          ],
+          "ranking": {
+            "score": 0.866,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.55,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.55.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "LLM Task Planner for Student Workflows",
+          "problem_statement": "Students may benefit from an AI planner that breaks large academic or job-search tasks into steps.",
+          "target_user": "Students",
+          "core_workflow": [
+            "Enter a broad student task.",
+            "Generate a step-by-step plan.",
+            "Track progress and revise next actions."
+          ],
+          "mvp_scope": [
+            "Create task and subtask data models.",
+            "Generate deterministic or mocked planning steps.",
+            "Show editable task plans in a simple UI.",
+            "Add progress tracking for each step."
+          ],
+          "success_metrics": [
+            "Number of plans generated.",
+            "Number of completed subtasks tracked."
+          ],
+          "evidence_relationship": "Uses LLM agent planning evidence, but the user did not specify planning, productivity, or agentic workflows.",
+          "source_ids": [
+            "paper-llm-agents"
+          ],
+          "assumptions": [
+            "Assumes the vague AI project request should become a student productivity agent."
+          ],
+          "suggested_stack": [
+            "Python",
+            "React"
+          ],
+          "ranking": {
+            "score": 0.866,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.55,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.55.",
+              "Completeness score: 1.00."
+            ]
+          }
+        }
+      ],
+      "legacy_titles": [
+        "Model Evaluation Intelligence Dashboard",
+        "ML Prediction Monitoring Platform",
+        "Explainable ML Decision Assistant"
+      ],
+      "comparison": {
+        "legacy_direction_count": 3,
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "v2_generated_candidate_count": 3,
+        "v2_valid_candidate_count": 3,
+        "v2_selected_candidate_count": 3,
+        "v2_selected_titles": [
+          "AI Internship Project Recommender",
+          "AI Study Assistant with Course-Grounded Answers",
+          "LLM Task Planner for Student Workflows"
+        ],
+        "provider_called": true,
+        "coverage_warnings": []
+      },
+      "shadow_readiness": {
+        "status": "ready",
+        "reasons": [
+          "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+        ],
+        "signals": {
+          "raw_evidence_count": 3,
+          "curated_evidence_count": 3,
+          "dropped_evidence_count": 0,
+          "generated_candidate_count": 3,
+          "valid_candidate_count": 3,
+          "selected_candidate_count": 3,
+          "provider_called": true,
+          "coverage_warnings": [],
+          "validation_errors": [],
+          "validation_warnings": []
+        }
+      },
+      "prompt_content_hash": "033e51f00f04fd9d1d6c5ddd518ad53a31a4966af0fa5faa232a49d17ca4cd21"
+    },
+    "evidence_quality": {
+      "status": "not_routed_pending_calibration",
+      "metrics": {
+        "curation_pool_size": 3,
+        "retained_source_count": 3,
+        "final_brief_source_count": 3,
+        "direct_source_count": 0,
+        "adjacent_source_count": 3,
+        "required_anchor_count": 0,
+        "matched_required_anchor_count": 0,
+        "query_anchor_coverage": null,
+        "unique_query_term_count": 0,
+        "unique_query_phrase_count": 0,
+        "source_type_count": 2,
+        "dominant_source_type": "research_paper",
+        "dominant_source_type_fraction": 0.6666666666666666,
+        "top_direct_relevance_margin": null,
+        "coverage_warnings": []
+      },
+      "thresholds": {
+        "version": "v1",
+        "calibration_status": "unresolved",
+        "sparse_direct_source_threshold": null,
+        "ambiguity_top_margin_threshold": null,
+        "low_diversity_fraction_threshold": null
+      },
+      "evidence_sparse": null,
+      "evidence_ambiguous": null,
+      "source_diversity_low": null,
+      "unresolved_signal_names": [
+        "evidence_sparse",
+        "evidence_ambiguous",
+        "source_diversity_low"
+      ],
+      "routing_ready": false
+    },
+    "selected_candidates": [
+      {
+        "title": "AI Internship Project Recommender",
+        "problem_statement": "Students may need help choosing portfolio projects that match skills, interests, and target roles.",
+        "target_user": "Software engineering students",
+        "core_workflow": [
+          "Collect student skills and role preferences.",
+          "Rank project ideas by fit.",
+          "Explain why each idea may help internship positioning."
+        ],
+        "mvp_scope": [
+          "Create a small catalog of AI project ideas.",
+          "Collect skills and target-role inputs.",
+          "Rank projects with transparent scoring rules.",
+          "Show explanations for each recommendation."
+        ],
+        "success_metrics": [
+          "Number of project ideas ranked.",
+          "Number of explanations with clear skill-role mapping."
+        ],
+        "evidence_relationship": "Uses portfolio app implementation context, but lacks direct research evidence for career outcomes.",
+        "source_ids": [
+          "repo-ai-portfolio-apps"
+        ],
+        "assumptions": [
+          "Assumes the user's main need is project selection for internships rather than a specific AI domain."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ],
+        "ranking": {
+          "score": 0.911,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "AI Study Assistant with Course-Grounded Answers",
+        "problem_statement": "Students may need a tool that answers study questions using uploaded notes or course material.",
+        "target_user": "Students",
+        "core_workflow": [
+          "Upload small course-note fixtures.",
+          "Ask natural-language study questions.",
+          "Retrieve relevant notes and generate grounded answers."
+        ],
+        "mvp_scope": [
+          "Load a small local note collection.",
+          "Implement keyword or embedding retrieval.",
+          "Return answers with cited source snippets.",
+          "Show a basic React or Streamlit interface."
+        ],
+        "success_metrics": [
+          "Number of answered study questions with citations.",
+          "Share of answers linked to retrieved notes."
+        ],
+        "evidence_relationship": "Uses RAG learning-support evidence, but the user did not explicitly ask for an education or study app.",
+        "source_ids": [
+          "paper-rag-learning"
+        ],
+        "assumptions": [
+          "Assumes the broad AI project request should be narrowed to student learning support."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ],
+        "ranking": {
+          "score": 0.866,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.55,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.55.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "LLM Task Planner for Student Workflows",
+        "problem_statement": "Students may benefit from an AI planner that breaks large academic or job-search tasks into steps.",
+        "target_user": "Students",
+        "core_workflow": [
+          "Enter a broad student task.",
+          "Generate a step-by-step plan.",
+          "Track progress and revise next actions."
+        ],
+        "mvp_scope": [
+          "Create task and subtask data models.",
+          "Generate deterministic or mocked planning steps.",
+          "Show editable task plans in a simple UI.",
+          "Add progress tracking for each step."
+        ],
+        "success_metrics": [
+          "Number of plans generated.",
+          "Number of completed subtasks tracked."
+        ],
+        "evidence_relationship": "Uses LLM agent planning evidence, but the user did not specify planning, productivity, or agentic workflows.",
+        "source_ids": [
+          "paper-llm-agents"
+        ],
+        "assumptions": [
+          "Assumes the vague AI project request should become a student productivity agent."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ],
+        "ranking": {
+          "score": 0.866,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.55,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.55.",
+            "Completeness score: 1.00."
+          ]
+        }
+      }
+    ],
+    "generation_metadata": {
+      "prompt_version": "v1",
+      "prompt_content_hash": "033e51f00f04fd9d1d6c5ddd518ad53a31a4966af0fa5faa232a49d17ca4cd21",
+      "execution_mode": "fixture",
+      "provider_name": "MockCandidateGenerationProvider",
+      "model": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      }
+    },
+    "diagnostics": {
+      "generated_candidate_count": 3,
+      "valid_candidate_count": 3,
+      "selected_candidate_count": 3,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "provider_called": true,
+      "prompt_content_hash": "033e51f00f04fd9d1d6c5ddd518ad53a31a4966af0fa5faa232a49d17ca4cd21"
+    },
+    "shadow_readiness": {
+      "status": "ready",
+      "reasons": [
+        "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+      ],
+      "signals": {
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "provider_called": true,
+        "coverage_warnings": [],
+        "validation_errors": [],
+        "validation_warnings": []
+      }
+    },
+    "semantic_goal_relevance": [],
+    "cross_encoder_goal_relevance": [],
+    "semantic_candidate_diversity": null,
+    "evidence_support": [],
+    "grounding_adequacy": [],
+    "candidate_source_relevance": [
+      {
+        "candidate_title": "AI Internship Project Recommender",
+        "source_id": "repo-ai-portfolio-apps",
+        "source_type": "github_repository",
+        "support_scope": "adjacent_planning",
+        "candidate_source_shared_terms": [
+          "portfolio",
+          "student"
+        ],
+        "goal_source_shared_terms": [],
+        "relevance_status": "adjacent_context_only",
+        "relevance_reason": "The cited source is retained only as adjacent planning context and should not be treated as core grounding."
+      },
+      {
+        "candidate_title": "AI Study Assistant with Course-Grounded Answers",
+        "source_id": "paper-rag-learning",
+        "source_type": "research_paper",
+        "support_scope": "adjacent_planning",
+        "candidate_source_shared_terms": [
+          "answers",
+          "course"
+        ],
+        "goal_source_shared_terms": [],
+        "relevance_status": "adjacent_context_only",
+        "relevance_reason": "The cited source is retained only as adjacent planning context and should not be treated as core grounding."
+      },
+      {
+        "candidate_title": "LLM Task Planner for Student Workflows",
+        "source_id": "paper-llm-agents",
+        "source_type": "research_paper",
+        "support_scope": "adjacent_planning",
+        "candidate_source_shared_terms": [
+          "large",
+          "plan",
+          "task",
+          "tasks",
+          "track"
+        ],
+        "goal_source_shared_terms": [],
+        "relevance_status": "adjacent_context_only",
+        "relevance_reason": "The cited source is retained only as adjacent planning context and should not be treated as core grounding."
+      }
+    ],
+    "quality_warnings": {
+      "warnings": [
+        {
+          "code": "adjacent_context_only_candidate",
+          "message": "One or more candidates cite only adjacent-context sources and should not be treated as strongly grounded.",
+          "details": {
+            "candidates": [
+              {
+                "candidate_title": "AI Internship Project Recommender",
+                "source_ids": [
+                  "repo-ai-portfolio-apps"
+                ],
+                "relevance_statuses": [
+                  "adjacent_context_only"
+                ]
+              },
+              {
+                "candidate_title": "AI Study Assistant with Course-Grounded Answers",
+                "source_ids": [
+                  "paper-rag-learning"
+                ],
+                "relevance_statuses": [
+                  "adjacent_context_only"
+                ]
+              },
+              {
+                "candidate_title": "LLM Task Planner for Student Workflows",
+                "source_ids": [
+                  "paper-llm-agents"
+                ],
+                "relevance_statuses": [
+                  "adjacent_context_only"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "signals": {
+        "coverage_warning_count": 0,
+        "goal_trace_count": 0,
+        "grounding_trace_count": 0,
+        "diversity_pair_count": 0,
+        "source_relevance_trace_count": 3,
+        "quality_warning_count": 1
+      }
+    },
+    "promotion_eligibility": {
+      "status": "not_assessed",
+      "candidate_assessments": [],
+      "summary": {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0
+      },
+      "reason": "Evidence-support shadow was not enabled, so promotion eligibility could not assess direct grounding."
+    },
+    "semantic_diversification_repair": {
+      "status": "no_repair_needed",
+      "directives": [],
+      "signals": {
+        "candidate_count": 3,
+        "similarity_threshold": 0.78,
+        "close_cluster_count": 0,
+        "replacement_count": 0
+      }
+    },
+    "raw_candidates": [
+      {
+        "title": "AI Internship Project Recommender",
+        "problem_statement": "Students may need help choosing portfolio projects that match skills, interests, and target roles.",
+        "target_user": "Software engineering students",
+        "core_workflow": [
+          "Collect student skills and role preferences.",
+          "Rank project ideas by fit.",
+          "Explain why each idea may help internship positioning."
+        ],
+        "mvp_scope": [
+          "Create a small catalog of AI project ideas.",
+          "Collect skills and target-role inputs.",
+          "Rank projects with transparent scoring rules.",
+          "Show explanations for each recommendation."
+        ],
+        "success_metrics": [
+          "Number of project ideas ranked.",
+          "Number of explanations with clear skill-role mapping."
+        ],
+        "evidence_relationship": "Uses portfolio app implementation context, but lacks direct research evidence for career outcomes.",
+        "source_ids": [
+          "repo-ai-portfolio-apps"
+        ],
+        "assumptions": [
+          "Assumes the user's main need is project selection for internships rather than a specific AI domain."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ]
+      },
+      {
+        "title": "AI Study Assistant with Course-Grounded Answers",
+        "problem_statement": "Students may need a tool that answers study questions using uploaded notes or course material.",
+        "target_user": "Students",
+        "core_workflow": [
+          "Upload small course-note fixtures.",
+          "Ask natural-language study questions.",
+          "Retrieve relevant notes and generate grounded answers."
+        ],
+        "mvp_scope": [
+          "Load a small local note collection.",
+          "Implement keyword or embedding retrieval.",
+          "Return answers with cited source snippets.",
+          "Show a basic React or Streamlit interface."
+        ],
+        "success_metrics": [
+          "Number of answered study questions with citations.",
+          "Share of answers linked to retrieved notes."
+        ],
+        "evidence_relationship": "Uses RAG learning-support evidence, but the user did not explicitly ask for an education or study app.",
+        "source_ids": [
+          "paper-rag-learning"
+        ],
+        "assumptions": [
+          "Assumes the broad AI project request should be narrowed to student learning support."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ]
+      },
+      {
+        "title": "LLM Task Planner for Student Workflows",
+        "problem_statement": "Students may benefit from an AI planner that breaks large academic or job-search tasks into steps.",
+        "target_user": "Students",
+        "core_workflow": [
+          "Enter a broad student task.",
+          "Generate a step-by-step plan.",
+          "Track progress and revise next actions."
+        ],
+        "mvp_scope": [
+          "Create task and subtask data models.",
+          "Generate deterministic or mocked planning steps.",
+          "Show editable task plans in a simple UI.",
+          "Add progress tracking for each step."
+        ],
+        "success_metrics": [
+          "Number of plans generated.",
+          "Number of completed subtasks tracked."
+        ],
+        "evidence_relationship": "Uses LLM agent planning evidence, but the user did not specify planning, productivity, or agentic workflows.",
+        "source_ids": [
+          "paper-llm-agents"
+        ],
+        "assumptions": [
+          "Assumes the vague AI project request should become a student productivity agent."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ]
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "AI Internship Project Recommender",
+          "idea_angle": "Students may need help choosing portfolio projects that match skills, interests, and target roles. Built for Software engineering students.",
+          "detected_domain": "ai_ml",
+          "evidence_buildable_gap": "Students may need help choosing portfolio projects that match skills, interests, and target roles.",
+          "evidence_focus_statement": "Uses portfolio app implementation context, but lacks direct research evidence for career outcomes.",
+          "evidence_driven_angle": "Uses portfolio app implementation context, but lacks direct research evidence for career outcomes.",
+          "evidence_project_opportunity": "Students may need help choosing portfolio projects that match skills, interests, and target roles.",
+          "research_motivation": "Uses portfolio app implementation context, but lacks direct research evidence for career outcomes.",
+          "mvp_scope": [
+            "Create a small catalog of AI project ideas.",
+            "Collect skills and target-role inputs.",
+            "Rank projects with transparent scoring rules.",
+            "Show explanations for each recommendation.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of project ideas ranked.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "React"
+          ],
+          "target_roles": [
+            "Software Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "React"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-ai-portfolio-apps",
+              "title": "AI Student Portfolio App Examples",
+              "source_type": "github_repository",
+              "support_scope": "adjacent_planning"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-ai-portfolio-apps"
+          ],
+          "planner_candidate_assumptions": [
+            "Assumes the user's main need is project selection for internships rather than a specific AI domain."
+          ],
+          "planner_candidate_success_metrics": [
+            "Number of project ideas ranked.",
+            "Number of explanations with clear skill-role mapping."
+          ],
+          "planner_candidate_workflow": [
+            "Collect student skills and role preferences.",
+            "Rank project ideas by fit.",
+            "Explain why each idea may help internship positioning."
+          ],
+          "evidence_title": "AI Student Portfolio App Examples",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "AI Student Portfolio App Examples",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "AI Internship Project Recommender scores 8.2/10 with a strong career signal because it is grounded in github repository, fits the ai_ml domain, and demonstrates skills such as Python, React. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Software Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Software Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "AI Study Assistant with Course-Grounded Answers",
+          "idea_angle": "Students may need a tool that answers study questions using uploaded notes or course material. Built for Students.",
+          "detected_domain": "ai_ml",
+          "evidence_buildable_gap": "Students may need a tool that answers study questions using uploaded notes or course material.",
+          "evidence_focus_statement": "Uses RAG learning-support evidence, but the user did not explicitly ask for an education or study app.",
+          "evidence_driven_angle": "Uses RAG learning-support evidence, but the user did not explicitly ask for an education or study app.",
+          "evidence_project_opportunity": "Students may need a tool that answers study questions using uploaded notes or course material.",
+          "research_motivation": "Uses RAG learning-support evidence, but the user did not explicitly ask for an education or study app.",
+          "mvp_scope": [
+            "Load a small local note collection.",
+            "Implement keyword or embedding retrieval.",
+            "Return answers with cited source snippets.",
+            "Show a basic React or Streamlit interface.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of answered study questions with citations.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "React"
+          ],
+          "target_roles": [
+            "Software Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "React"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-rag-learning",
+              "title": "Retrieval Augmented Generation for Learning Support",
+              "source_type": "research_paper",
+              "support_scope": "adjacent_planning"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-rag-learning"
+          ],
+          "planner_candidate_assumptions": [
+            "Assumes the broad AI project request should be narrowed to student learning support."
+          ],
+          "planner_candidate_success_metrics": [
+            "Number of answered study questions with citations.",
+            "Share of answers linked to retrieved notes."
+          ],
+          "planner_candidate_workflow": [
+            "Upload small course-note fixtures.",
+            "Ask natural-language study questions.",
+            "Retrieve relevant notes and generate grounded answers."
+          ],
+          "evidence_title": "Retrieval Augmented Generation for Learning Support",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.CL",
+          "based_on_paper": "Retrieval Augmented Generation for Learning Support",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.6,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "AI Study Assistant with Course-Grounded Answers scores 8.6/10 with a strong career signal because it is grounded in research paper, fits the ai_ml domain, and demonstrates skills such as Python, React. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Software Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Software Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "LLM Task Planner for Student Workflows",
+          "idea_angle": "Students may benefit from an AI planner that breaks large academic or job-search tasks into steps. Built for Students.",
+          "detected_domain": "ai_ml",
+          "evidence_buildable_gap": "Students may benefit from an AI planner that breaks large academic or job-search tasks into steps.",
+          "evidence_focus_statement": "Uses LLM agent planning evidence, but the user did not specify planning, productivity, or agentic workflows.",
+          "evidence_driven_angle": "Uses LLM agent planning evidence, but the user did not specify planning, productivity, or agentic workflows.",
+          "evidence_project_opportunity": "Students may benefit from an AI planner that breaks large academic or job-search tasks into steps.",
+          "research_motivation": "Uses LLM agent planning evidence, but the user did not specify planning, productivity, or agentic workflows.",
+          "mvp_scope": [
+            "Create task and subtask data models.",
+            "Generate deterministic or mocked planning steps.",
+            "Show editable task plans in a simple UI.",
+            "Add progress tracking for each step.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of plans generated.",
+            "Add a failure-case review workflow and document the prototype's known limitations.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "React"
+          ],
+          "target_roles": [
+            "Software Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "React"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-llm-agents",
+              "title": "LLM Agents for Task Planning and Tool Use",
+              "source_type": "research_paper",
+              "support_scope": "adjacent_planning"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-llm-agents"
+          ],
+          "planner_candidate_assumptions": [
+            "Assumes the vague AI project request should become a student productivity agent."
+          ],
+          "planner_candidate_success_metrics": [
+            "Number of plans generated.",
+            "Number of completed subtasks tracked."
+          ],
+          "planner_candidate_workflow": [
+            "Enter a broad student task.",
+            "Generate a step-by-step plan.",
+            "Track progress and revise next actions."
+          ],
+          "evidence_title": "LLM Agents for Task Planning and Tool Use",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.AI",
+          "based_on_paper": "LLM Agents for Task Planning and Tool Use",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.6,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "LLM Task Planner for Student Workflows scores 8.6/10 with a strong career signal because it is grounded in research paper, fits the ai_ml domain, and demonstrates skills such as Python, React. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Software Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Software Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    },
+    "shadow_vs_deterministic_comparison": {
+      "schema_version": "1.0",
+      "case_id": null,
+      "user_goal": "Build an AI project for students that can help me stand out for software engineering internships.",
+      "query_fingerprint": "17d0931cedb753fa",
+      "deterministic_candidates": [
+        {
+          "title": "Model Evaluation Intelligence Dashboard",
+          "comparison_text": "Model Evaluation Intelligence Dashboard Compare models across metrics, datasets, error slices, feature importance, and deployment readiness. Select a small reproducible dataset, target variable, and baseline model. Create train, validation, and test splits with a documented evaluation protocol. Compare baseline models across accuracy, precision, recall, calibration, and error slices. Show feature importance or explanation views for representative predictions. Build a dashboard that highlights model tradeoffs and deployment-readiness risks. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence. Select a small reproducible dataset, target variable, and baseline model. Create train, validation, and test splits with a documented evaluation protocol. Compare baseline models across accuracy, precision, recall, calibration, and error slices. Show feature importance or explanation views for representative predictions. Build a dashboard that highlights model tradeoffs and deployment-readiness risks. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        },
+        {
+          "title": "ML Prediction Monitoring Platform",
+          "comparison_text": "ML Prediction Monitoring Platform Track prediction quality, anomaly signals, feature drift, and model behavior over time. Select a small reproducible dataset, target variable, and baseline evaluation metric. Create documented train, validation, and test splits with preprocessing steps. Train a baseline model and compare results across meaningful error slices. Expose prediction explanations, confidence signals, and common failure cases. Build a dashboard for metrics, examples, and model-quality tradeoffs. Select a small reproducible dataset, target variable, and baseline evaluation metric. Create documented train, validation, and test splits with preprocessing steps. Train a baseline model and compare results across meaningful error slices. Expose prediction explanations, confidence signals, and common failure cases. Build a dashboard for metrics, examples, and model-quality tradeoffs."
+        },
+        {
+          "title": "Explainable ML Decision Assistant",
+          "comparison_text": "Explainable ML Decision Assistant Generate model explanations, feature impact summaries, and risk notes for prediction-heavy applications. Select a small reproducible dataset, target variable, and baseline evaluation metric. Create documented train, validation, and test splits with preprocessing steps. Train a baseline model and compare results across meaningful error slices. Expose prediction explanations, confidence signals, and common failure cases. Build a dashboard for metrics, examples, and model-quality tradeoffs. Select a small reproducible dataset, target variable, and baseline evaluation metric. Create documented train, validation, and test splits with preprocessing steps. Train a baseline model and compare results across meaningful error slices. Expose prediction explanations, confidence signals, and common failure cases. Build a dashboard for metrics, examples, and model-quality tradeoffs."
+        }
+      ],
+      "openai_candidates": [
+        {
+          "title": "AI Internship Project Recommender",
+          "comparison_text": "AI Internship Project Recommender Students may need help choosing portfolio projects that match skills, interests, and target roles. Software engineering students Collect student skills and role preferences. Rank project ideas by fit. Explain why each idea may help internship positioning. Create a small catalog of AI project ideas. Collect skills and target-role inputs. Rank projects with transparent scoring rules. Show explanations for each recommendation."
+        },
+        {
+          "title": "AI Study Assistant with Course-Grounded Answers",
+          "comparison_text": "AI Study Assistant with Course-Grounded Answers Students may need a tool that answers study questions using uploaded notes or course material. Students Upload small course-note fixtures. Ask natural-language study questions. Retrieve relevant notes and generate grounded answers. Load a small local note collection. Implement keyword or embedding retrieval. Return answers with cited source snippets. Show a basic React or Streamlit interface."
+        },
+        {
+          "title": "LLM Task Planner for Student Workflows",
+          "comparison_text": "LLM Task Planner for Student Workflows Students may benefit from an AI planner that breaks large academic or job-search tasks into steps. Students Enter a broad student task. Generate a step-by-step plan. Track progress and revise next actions. Create task and subtask data models. Generate deterministic or mocked planning steps. Show editable task plans in a simple UI. Add progress tracking for each step."
+        }
+      ],
+      "deterministic_grounding_classes": [
+        {
+          "candidate_title": "Model Evaluation Intelligence Dashboard",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "ML Prediction Monitoring Platform",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Explainable ML Decision Assistant",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "openai_grounding_classes": [
+        {
+          "candidate_title": "AI Internship Project Recommender",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "AI Study Assistant with Course-Grounded Answers",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "LLM Task Planner for Student Workflows",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "deterministic_enrichment": [
+        {
+          "title": "Model Evaluation Intelligence Dashboard",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "ML Prediction Monitoring Platform",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Explainable ML Decision Assistant",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        }
+      ],
+      "openai_enrichment": [
+        {
+          "title": "AI Internship Project Recommender",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "AI Study Assistant with Course-Grounded Answers",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "LLM Task Planner for Student Workflows",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        }
+      ],
+      "set_similarity_score": null,
+      "unique_angle_count": 0,
+      "unique_openai_titles": [],
+      "pairwise_similarity": [],
+      "manual_preference": null,
+      "manual_preference_reason": null,
+      "manual_reviewer_notes": null,
+      "notes": [
+        "Cross-set semantic similarity is a difference signal, not a quality score.",
+        "Portfolio tiers are preserved for review but are assigned by candidate order and must not be interpreted as quality labels.",
+        "Deterministic grounding is not assessed by this contract yet; only shadow grounding traces are currently comparable."
+      ]
+    },
+    "manual_review_template": {
+      "rubric_version": "v1",
+      "query_fingerprint": "17d0931cedb753fa",
+      "deterministic_review": {
+        "planner_path": "deterministic",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Model Evaluation Intelligence Dashboard",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "ML Prediction Monitoring Platform",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Explainable ML Decision Assistant",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "openai_review": {
+        "planner_path": "openai",
+        "candidate_reviews": [
+          {
+            "candidate_title": "AI Internship Project Recommender",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "AI Study Assistant with Course-Grounded Answers",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "LLM Task Planner for Student Workflows",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "overall_preference": null,
+      "overall_preference_reason": "",
+      "response_quality": null,
+      "response_quality_reason": "",
+      "unique_angle_quality": null,
+      "unique_angle_quality_reason": "",
+      "reviewer_notes": ""
+    }
+  }
+}
