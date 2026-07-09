@@ -14,12 +14,21 @@ def test_shadow_reviewer_report_uses_latest_reviewed_artifacts():
     assert report["reviewed_fixtures"] == 5
     assert report["unreviewed_fixtures"] == 5
     assert report["total_review_records"] == 7
+    assert report["review_annotation_count"] == 5
+    assert report["latest_review_annotation_count"] == 5
     assert report["data_sufficiency_warning"]
 
     assert report["outcome_distribution"] == {
         "both_weak/exploratory": 1,
         "openai/limited": 1,
         "openai/standard": 3,
+    }
+    assert report["reviewer_confidence_counts"] == {"high": 5}
+    assert report["both_weak_diagnosis_counts"] == {
+        "evidence_sparse": 1,
+    }
+    assert report["relevance_trace_assessment_counts"] == {
+        "traces_match_reviewer_judgment": 5,
     }
 
     adversarial_status = next(
@@ -31,6 +40,10 @@ def test_shadow_reviewer_report_uses_latest_reviewed_artifacts():
 
     assert adversarial_status["artifact_id"] == (
         "414ef0690cd24119b6fd22477fae38b4"
+    )
+    assert adversarial_status["reviewer_confidence"] == "high"
+    assert adversarial_status["relevance_trace_assessment"] == (
+        "traces_match_reviewer_judgment"
     )
     assert adversarial_status["has_quality_warnings"] is True
     assert adversarial_status["has_suspicious_relevance"] is True
@@ -69,6 +82,10 @@ def test_shadow_reviewer_report_markdown_contains_key_sections():
     assert "# Shadow Reviewer Report" in markdown
     assert "## Data Sufficiency Warning" in markdown
     assert "## Outcome Distribution" in markdown
+    assert "## Review Annotation Summary" in markdown
+    assert "`high`: 5" in markdown
+    assert "`evidence_sparse`: 1" in markdown
+    assert "`traces_match_reviewer_judgment`: 5" in markdown
     assert "## Quality Warnings Needing Attention" in markdown
     assert "## Suspicious Candidate-to-Source Relevance Traces" in markdown
     assert "adjacent_context_only_candidate" in markdown
@@ -85,3 +102,4 @@ def test_shadow_reviewer_report_writes_markdown_and_json(tmp_path):
 
     payload = json.loads(paths["json_path"].read_text())
     assert payload["reviewed_fixtures"] == 5
+    assert payload["review_annotation_count"] == 5

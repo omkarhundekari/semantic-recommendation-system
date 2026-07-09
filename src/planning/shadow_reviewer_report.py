@@ -10,6 +10,10 @@ from planning.fixture_review_oracle_comparison import (
     build_fixture_review_oracle_comparison,
 )
 from planning.fixture_review_oracles import fixture_review_oracles
+from planning.manual_review_annotations import (
+    DEFAULT_MANUAL_REVIEW_ANNOTATION_STORE,
+    load_manual_review_annotations,
+)
 from planning.manual_review_store import (
     DEFAULT_MANUAL_REVIEW_STORE,
     StoredManualReviewRecord,
@@ -59,6 +63,9 @@ class FixtureReviewStatus:
     response_quality: Optional[str]
     oracle_status: Optional[str]
     oracle_matched: Optional[bool]
+    reviewer_confidence: Optional[str]
+    both_weak_diagnosis: Optional[str]
+    relevance_trace_assessment: Optional[str]
     has_quality_warnings: bool
     has_suspicious_relevance: bool
 
@@ -126,8 +133,14 @@ def _source_title_lookup(
 def build_shadow_reviewer_report(
     artifact_dir: Path = DEFAULT_ARTIFACT_DIR,
     review_store_path: Path = DEFAULT_MANUAL_REVIEW_STORE,
+    annotation_store_path: Path = DEFAULT_MANUAL_REVIEW_ANNOTATION_STORE,
 ) -> Dict[str, Any]:
     records = load_manual_review_records(review_store_path)
+    annotations = load_manual_review_annotations(annotation_store_path)
+    annotations_by_review_id = {
+        annotation.review_id: annotation
+        for annotation in annotations
+    }
     artifacts_by_id = _load_artifacts_by_id(artifact_dir)
     latest_by_fixture = _latest_records_by_fixture(records)
 
@@ -159,6 +172,24 @@ def build_shadow_reviewer_report(
             f"{record.review.response_quality}"
         )
         for record in latest_by_fixture.values()
+    )
+    latest_annotations = [
+        annotations_by_review_id[record.review_id]
+        for record in latest_by_fixture.values()
+        if record.review_id in annotations_by_review_id
+    ]
+    reviewer_confidence_counts = Counter(
+        annotation.reviewer_confidence
+        for annotation in latest_annotations
+    )
+    both_weak_diagnosis_counts = Counter(
+        annotation.both_weak_diagnosis
+        for annotation in latest_annotations
+        if annotation.both_weak_diagnosis is not None
+    )
+    relevance_trace_assessment_counts = Counter(
+        annotation.relevance_trace_assessment
+        for annotation in latest_annotations
     )
 
     quality_warning_summary: List[QualityWarningSummary] = []
@@ -214,6 +245,11 @@ def build_shadow_reviewer_report(
         record = latest_by_fixture.get(fixture_id)
         artifact = latest_artifact_payloads.get(fixture_id)
         oracle = oracle_by_fixture.get(fixture_id)
+        annotation = (
+            annotations_by_review_id.get(record.review_id)
+            if record
+            else None
+        )
 
         warnings = (
             artifact.get("v2_shadow", {})
@@ -265,6 +301,21 @@ def build_shadow_reviewer_report(
                     is not None
                     else None
                 ),
+                reviewer_confidence=(
+                    annotation.reviewer_confidence
+                    if annotation
+                    else None
+                ),
+                both_weak_diagnosis=(
+                    annotation.both_weak_diagnosis
+                    if annotation
+                    else None
+                ),
+                relevance_trace_assessment=(
+                    annotation.relevance_trace_assessment
+                    if annotation
+                    else None
+                ),
                 has_quality_warnings=bool(warnings),
                 has_suspicious_relevance=has_suspicious_relevance,
             )
@@ -279,6 +330,8 @@ def build_shadow_reviewer_report(
         "reviewed_fixtures": reviewed_fixture_count,
         "unreviewed_fixtures": len(fixture_ids) - reviewed_fixture_count,
         "total_review_records": len(records),
+        "review_annotation_count": len(annotations),
+        "latest_review_annotation_count": len(latest_annotations),
         "total_artifact_files": len(artifacts_by_id),
         "data_sufficiency_warning": (
             "WARNING: This report covers "
@@ -292,6 +345,15 @@ def build_shadow_reviewer_report(
         ),
         "outcome_distribution": dict(
             sorted(outcome_distribution.items())
+        ),
+        "reviewer_confidence_counts": dict(
+            sorted(reviewer_confidence_counts.items())
+        ),
+        "both_weak_diagnosis_counts": dict(
+            sorted(both_weak_diagnosis_counts.items())
+        ),
+        "relevance_trace_assessment_counts": dict(
+            sorted(relevance_trace_assessment_counts.items())
         ),
         "quality_warning_summary": [
             row.to_dict()
@@ -337,6 +399,8 @@ def render_shadow_reviewer_report(
             f"- Reviewed fixtures: {report['reviewed_fixtures']}",
             f"- Unreviewed fixtures: {report['unreviewed_fixtures']}",
             f"- Review records: {report['total_review_records']}",
+            f"- Review annotations: {report['review_annotation_count']}",
+            f"- Latest review annotations: {report['latest_review_annotation_count']}",
             f"- Artifact files: {report['total_artifact_files']}",
             "",
             "## Outcome Distribution",
@@ -349,6 +413,39 @@ def render_shadow_reviewer_report(
             lines.append(f"- `{outcome}`: {count}")
     else:
         lines.append("- No reviewed outcomes yet.")
+
+    lines.extend(
+        [
+            "",
+            "## Review Annotation Summary",
+            "",
+            "Reviewer confidence:",
+        ]
+    )
+
+    if report["reviewer_confidence_counts"]:
+        for key, count in report["reviewer_confidence_counts"].items():
+            lines.append(f"- `{key}`: {count}")
+    else:
+        lines.append("- No latest review annotations yet.")
+
+    lines.append("")
+    lines.append("Both-weak diagnosis:")
+
+    if report["both_weak_diagnosis_counts"]:
+        for key, count in report["both_weak_diagnosis_counts"].items():
+            lines.append(f"- `{key}`: {count}")
+    else:
+        lines.append("- No both-weak diagnosis annotations.")
+
+    lines.append("")
+    lines.append("Relevance trace assessment:")
+
+    if report["relevance_trace_assessment_counts"]:
+        for key, count in report["relevance_trace_assessment_counts"].items():
+            lines.append(f"- `{key}`: {count}")
+    else:
+        lines.append("- No relevance trace annotations yet.")
 
     lines.extend(
         [
@@ -414,8 +511,8 @@ def render_shadow_reviewer_report(
         [
             "## Fixture Review Status",
             "",
-            "| Fixture | Reviewed | Latest artifact | Outcome | Quality | Oracle | Warnings | Suspicious relevance |",
-            "|---|---:|---|---|---|---|---:|---:|",
+            "| Fixture | Reviewed | Latest artifact | Outcome | Quality | Oracle | Confidence | Both-weak diagnosis | Relevance assessment | Warnings | Suspicious relevance |",
+            "|---|---:|---|---|---|---|---|---|---|---:|---:|",
         ]
     )
 
@@ -433,6 +530,9 @@ def render_shadow_reviewer_report(
             f"{row['review_outcome'] or ''} | "
             f"{row['response_quality'] or ''} | "
             f"{row['oracle_status'] or ''} | "
+            f"{row['reviewer_confidence'] or ''} | "
+            f"{row['both_weak_diagnosis'] or ''} | "
+            f"{row['relevance_trace_assessment'] or ''} | "
             f"{'yes' if row['has_quality_warnings'] else 'no'} | "
             f"{'yes' if row['has_suspicious_relevance'] else 'no'} |"
         )
