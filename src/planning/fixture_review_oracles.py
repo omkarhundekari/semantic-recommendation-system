@@ -85,6 +85,25 @@ def fixture_review_oracles() -> Tuple[FixtureReviewOracle, ...]:
                 "rubric permits both_weak instead of forcing a preference."
             ),
         ),
+        FixtureReviewOracle(
+            fixture_id="rag_qa_strong_direct",
+            expected_overall_preference="openai",
+            expected_response_quality="standard",
+            reviewer_expectations=(
+                "Reviewers should expect strong direct evidence for RAG "
+                "question answering, citation quality, and evaluation.",
+                "Candidate directions should remain specifically about "
+                "question answering rather than generic LLM applications.",
+                "The stronger path should produce distinct evaluation, "
+                "citation-grounding, or retrieval-quality workflows.",
+            ),
+            rationale=(
+                "This controlled case is intended to test an anchor-heavy "
+                "RAG question-answering goal with direct evidence. A standard "
+                "quality outcome is expected only if the selected directions "
+                "stay grounded in evaluation and citation quality."
+            ),
+        ),
     )
 
 
