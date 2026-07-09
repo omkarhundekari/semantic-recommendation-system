@@ -209,6 +209,26 @@ def fixture_review_oracles() -> Tuple[FixtureReviewOracle, ...]:
                 "the grounding is not strong direct research evidence."
             ),
         ),
+        FixtureReviewOracle(
+            fixture_id="ambiguous_ai_student_project",
+            expected_overall_preference="both_weak",
+            expected_response_quality="exploratory",
+            reviewer_expectations=(
+                "Reviewers should penalize overconfident project recommendations "
+                "when the user goal is broad and underspecified.",
+                "Both planner paths should be judged on whether they acknowledge "
+                "ambiguity instead of inventing a narrow AI project intent.",
+                "Response quality should remain exploratory unless the artifact "
+                "clearly frames the output as options requiring user clarification."
+            ),
+            rationale=(
+                "This case represents a common vague user request: build an AI "
+                "project that helps a student stand out. The expected result is "
+                "both_weak/exploratory if the planners turn the broad career goal "
+                "into confident project recommendations without enough intent, "
+                "domain, or evidence constraints."
+            ),
+        ),
     )
 
 

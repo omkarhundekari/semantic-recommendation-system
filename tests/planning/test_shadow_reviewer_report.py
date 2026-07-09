@@ -26,6 +26,7 @@ def test_shadow_reviewer_report_uses_latest_reviewed_artifacts():
     assert report["oracle_comparison_counts"] == {
         "matched": 6,
         "mismatch": 1,
+        "missing_review": 1,
     }
     assert report["reviewer_confidence_counts"] == {"high": 7}
     assert report["both_weak_diagnosis_counts"] == {
@@ -118,6 +119,7 @@ def test_shadow_reviewer_report_markdown_contains_key_sections():
     assert "## Oracle Comparison Summary" in markdown
     assert "`matched`: 6" in markdown
     assert "`mismatch`: 1" in markdown
+    assert "`missing_review`: 1" in markdown
     assert "## Review Annotation Summary" in markdown
     assert "`high`: 7" in markdown
     assert "`evidence_sparse`: 1" in markdown
@@ -142,4 +144,5 @@ def test_shadow_reviewer_report_writes_markdown_and_json(tmp_path):
     assert payload["oracle_comparison_counts"] == {
         "matched": 6,
         "mismatch": 1,
+        "missing_review": 1,
     }
