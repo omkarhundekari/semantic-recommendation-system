@@ -732,6 +732,159 @@ def fixture_specifications() -> Tuple[ShadowFixtureSpecification, ...]:
             ),
         ),
         ShadowFixtureSpecification(
+            case=_case("strict_weekend_scope"),
+            evidence_payload={
+                "inference": {
+                    "inferred_focus": "data_engineering",
+                },
+                "merged_results": [
+                    {
+                        "document_id": "paper-lineage-impact",
+                        "source_type": "research_paper",
+                        "title": (
+                            "Lineage-Aware Impact Analysis for Pipeline "
+                            "Incidents"
+                        ),
+                        "abstract": (
+                            "Pipeline incident response can use dataset "
+                            "lineage graphs to identify downstream tables, "
+                            "dashboards, owners, and remediation priority."
+                        ),
+                        "category": "cs.DB",
+                        "retrieval_rank": 1,
+                    },
+                    {
+                        "repository_id": "repo-lineage-demo",
+                        "source_type": "github_repository",
+                        "title": "Minimal Data Lineage Impact Demo",
+                        "readme_excerpt": (
+                            "Load table dependencies, mark one failed upstream "
+                            "dataset, and list affected downstream assets and "
+                            "owners for incident review."
+                        ),
+                        "retrieval_rank": 2,
+                    },
+                    {
+                        "document_id": "paper-data-incident-triage",
+                        "source_type": "research_paper",
+                        "title": "Prioritizing Data Incident Remediation",
+                        "abstract": (
+                            "Data incident triage benefits from ranking "
+                            "affected assets by business importance, ownership, "
+                            "and dependency depth."
+                        ),
+                        "category": "cs.SE",
+                        "retrieval_rank": 3,
+                    },
+                ],
+            },
+            mock_response={
+                "candidates": [
+                    {
+                        "title": "Weekend Lineage Impact Mapper",
+                        "problem_statement": (
+                            "Data engineers need a small weekend project that "
+                            "shows which downstream tables and dashboards are "
+                            "affected by one known pipeline incident."
+                        ),
+                        "target_user": "Data engineers",
+                        "core_workflow": [
+                            "Load a small table-lineage graph.",
+                            "Select one failed upstream dataset.",
+                            "List affected downstream assets and owners.",
+                        ],
+                        "mvp_scope": [
+                            "Create a CSV fixture of datasets, owners, and "
+                            "lineage edges.",
+                            "Select one failed upstream dataset.",
+                            "Traverse downstream dependencies.",
+                            "Show affected assets in a simple report.",
+                        ],
+                        "success_metrics": [
+                            "Number of affected downstream assets identified.",
+                            "Time to generate an impact report.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses direct lineage-aware impact analysis evidence "
+                            "and keeps the MVP weekend-sized."
+                        ),
+                        "source_ids": [
+                            "paper-lineage-impact",
+                            "repo-lineage-demo",
+                        ],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    },
+                    {
+                        "title": "Incident Owner Lookup Table",
+                        "problem_statement": (
+                            "Teams need a quick way to map affected datasets "
+                            "from a known incident to responsible owners."
+                        ),
+                        "target_user": "Data engineers",
+                        "core_workflow": [
+                            "Load affected datasets from a lineage traversal.",
+                            "Join datasets with owner metadata.",
+                            "Show owner contacts for incident follow-up.",
+                        ],
+                        "mvp_scope": [
+                            "Create sample dataset-owner metadata.",
+                            "Join impacted datasets with owners.",
+                            "Sort affected assets by owner.",
+                            "Export a small owner action list.",
+                        ],
+                        "success_metrics": [
+                            "Percentage of affected assets with an assigned owner."
+                        ],
+                        "evidence_relationship": (
+                            "Uses implementation context from the minimal "
+                            "lineage demo and incident ownership signals."
+                        ),
+                        "source_ids": ["repo-lineage-demo"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    },
+                    {
+                        "title": "Simple Remediation Priority Ranker",
+                        "problem_statement": (
+                            "Data incident responders need a lightweight way "
+                            "to prioritize affected assets after lineage impact "
+                            "analysis."
+                        ),
+                        "target_user": "Data engineers",
+                        "core_workflow": [
+                            "Load affected downstream assets.",
+                            "Assign simple importance and depth scores.",
+                            "Rank remediation priority.",
+                        ],
+                        "mvp_scope": [
+                            "Create a small affected-asset fixture.",
+                            "Add business importance and dependency depth.",
+                            "Compute a transparent priority score.",
+                            "Show the ranked remediation list.",
+                        ],
+                        "success_metrics": [
+                            "Number of affected assets ranked for remediation."
+                        ],
+                        "evidence_relationship": (
+                            "Uses data incident triage evidence for prioritizing "
+                            "affected lineage assets."
+                        ),
+                        "source_ids": ["paper-data-incident-triage"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python"],
+                    },
+                ],
+            },
+            reviewability_requirements=(
+                "The fixture has direct lineage-aware impact evidence.",
+                "The weekend time constraint remains visible.",
+                "Candidate source IDs map to exact brief sources.",
+                "Manual review can judge whether both paths are useful but scope-limited.",
+                "An unscored manual review template is present.",
+            ),
+        ),
+        ShadowFixtureSpecification(
             case=_case("sparse_evidence_cloud_cost"),
             evidence_payload={
                 "inference": {

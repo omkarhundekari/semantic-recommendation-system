@@ -20,6 +20,7 @@ def test_first_fixture_specs_are_valid_and_match_registry_cases():
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
+        "strict_weekend_scope",
         "sparse_evidence_cloud_cost",
     ]
 
@@ -40,6 +41,7 @@ def test_fixture_spec_rejects_unknown_case():
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
+        "strict_weekend_scope",
         "sparse_evidence_cloud_cost",
     ],
 )
@@ -255,5 +257,44 @@ def test_flaky_tests_fixture_has_predeclared_oracle_and_multi_anchor_evidence():
     assert "Flaky Test Detection Dashboard" in serialized_artifact
     assert "Code Change Failure Correlator" in serialized_artifact
     assert "CI Root Cause Prioritization Queue" in serialized_artifact
+    assert "expected_overall_preference" not in serialized_artifact
+    assert "expected_response_quality" not in serialized_artifact
+
+
+
+def test_strict_weekend_fixture_has_predeclared_oracle_and_scope_evidence():
+    import json
+
+    from planning.fixture_review_oracles import (
+        get_fixture_review_oracle,
+    )
+
+    spec = get_fixture_specification("strict_weekend_scope")
+    oracle = get_fixture_review_oracle(spec.case.case_id)
+
+    source_titles = {
+        item["title"]
+        for item in spec.evidence_payload["merged_results"]
+    }
+
+    assert oracle.expected_overall_preference == "tie"
+    assert oracle.expected_response_quality == "limited"
+    assert any("Lineage" in title for title in source_titles)
+    assert any("Remediation" in title for title in source_titles)
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload=spec.evidence_payload,
+        user_goal=spec.case.user_goal,
+        constraints=spec.case.constraints,
+        provider=MockCandidateGenerationProvider(
+            response=spec.mock_response
+        ),
+    )
+
+    serialized_artifact = json.dumps(artifact)
+
+    assert "Weekend Lineage Impact Mapper" in serialized_artifact
+    assert "Incident Owner Lookup Table" in serialized_artifact
+    assert "Simple Remediation Priority Ranker" in serialized_artifact
     assert "expected_overall_preference" not in serialized_artifact
     assert "expected_response_quality" not in serialized_artifact

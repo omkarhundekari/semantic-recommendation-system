@@ -15,6 +15,7 @@ def test_selects_all_initial_fixture_specs_by_default():
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
+        "strict_weekend_scope",
         "sparse_evidence_cloud_cost",
     ]
 
@@ -95,6 +96,7 @@ def test_available_fixture_ids_match_selectable_specs():
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
+        "strict_weekend_scope",
         "sparse_evidence_cloud_cost",
     )
 
@@ -176,5 +178,24 @@ def test_flaky_tests_review_packet_uses_predeclared_oracle_but_hides_it():
     assert "flaky tests" in packet.lower()
     assert "code changes" in packet.lower()
     assert "root cause" in packet.lower()
+    assert "expected_overall_preference" not in packet
+    assert "expected_response_quality" not in packet
+
+
+
+def test_strict_weekend_review_packet_uses_predeclared_oracle_but_hides_it():
+    spec = select_fixture_specifications(["strict_weekend_scope"])[0]
+    artifact = build_fixture_artifact(spec)
+    packet = render_review_packet(
+        artifact=artifact,
+        specification=spec,
+    )
+
+    assert "strict_weekend_scope" in packet
+    assert "Weekend Lineage Impact Mapper" in packet
+    assert "Incident Owner Lookup Table" in packet
+    assert "Simple Remediation Priority Ranker" in packet
+    assert "weekend" in packet.lower()
+    assert "lineage" in packet.lower()
     assert "expected_overall_preference" not in packet
     assert "expected_response_quality" not in packet
