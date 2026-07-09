@@ -86,6 +86,27 @@ def fixture_review_oracles() -> Tuple[FixtureReviewOracle, ...]:
             ),
         ),
         FixtureReviewOracle(
+            fixture_id="data_quality_strong_direct",
+            expected_overall_preference="openai",
+            expected_response_quality="standard",
+            reviewer_expectations=(
+                "Reviewers should expect strong direct evidence for data "
+                "quality monitoring, pipeline observability, and lineage-aware "
+                "incident impact analysis.",
+                "Candidate directions should stay focused on data-quality "
+                "failure detection, prioritization, ownership, or remediation.",
+                "The stronger path should produce distinct operational "
+                "workflows rather than repeating one validation-dashboard "
+                "template."
+            ),
+            rationale=(
+                "This controlled case provides direct data-quality, "
+                "observability, and lineage evidence. A standard quality "
+                "shadow preference is expected when the selected directions "
+                "remain grounded, realistic, and operationally distinct."
+            ),
+        ),
+        FixtureReviewOracle(
             fixture_id="rag_qa_strong_direct",
             expected_overall_preference="openai",
             expected_response_quality="standard",
