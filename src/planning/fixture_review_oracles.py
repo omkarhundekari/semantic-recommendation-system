@@ -249,6 +249,27 @@ def fixture_review_oracles() -> Tuple[FixtureReviewOracle, ...]:
                 "monitoring or generic dashboard ideas."
             ),
         ),
+        FixtureReviewOracle(
+            fixture_id="incident_investigation_broad",
+            expected_overall_preference="openai",
+            expected_response_quality="limited",
+            reviewer_expectations=(
+                "Reviewers should check whether candidates convert a broad incident "
+                "investigation goal into concrete, reviewable workflows.",
+                "The stronger planner path should produce focused directions around "
+                "timeline reconstruction, signal correlation, or evidence collection "
+                "instead of generic monitoring dashboards.",
+                "Response quality should remain limited unless the artifact gives "
+                "tight evidence, clear scope, and non-overlapping candidate angles."
+            ),
+            rationale=(
+                "This case represents a broad incident-investigation request. The "
+                "expected outcome favors the shadow path if it produces more concrete "
+                "investigation workflows, but quality should remain limited when the "
+                "goal is broad and the evidence does not fully constrain the best "
+                "product direction."
+            ),
+        ),
     )
 
 
