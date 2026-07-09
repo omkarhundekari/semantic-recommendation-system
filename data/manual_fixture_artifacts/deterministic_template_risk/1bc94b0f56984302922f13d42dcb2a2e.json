@@ -1,0 +1,2119 @@
+{
+  "schema_version": "1.1",
+  "artifact_identity": {
+    "artifact_id": "1bc94b0f56984302922f13d42dcb2a2e",
+    "generation_timestamp_utc": "20260709T045305Z",
+    "fixture_id": "deterministic_template_risk"
+  },
+  "generated_at_utc": "20260709T045305Z",
+  "query": "Build a project that helps support engineers understand which downstream dashboards and owners are affected after a known data-quality incident.",
+  "constraints": {
+    "skill_level": "intermediate",
+    "time_available": "3 weeks",
+    "target_roles": [
+      "Data Engineer",
+      "Backend Engineer"
+    ],
+    "preferred_stack": [
+      "Python",
+      "PostgreSQL"
+    ]
+  },
+  "retrieval": {
+    "selected_route": null,
+    "expanded_query": null,
+    "focused_query": null,
+    "inference": {
+      "inferred_focus": "data_engineering"
+    },
+    "merged_evidence_count": 3
+  },
+  "legacy_planner": {
+    "direction_count": 3,
+    "directions": [
+      {
+        "title": "Data Pipeline Quality Monitor",
+        "evidence_title": "Downstream Impact Analysis for Data Quality Incidents",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "data_engineering"
+      },
+      {
+        "title": "Data Lineage and Dependency Visualizer",
+        "evidence_title": "Downstream Impact Analysis for Data Quality Incidents",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "data_engineering"
+      },
+      {
+        "title": "Warehouse Query and Cost Intelligence Dashboard",
+        "evidence_title": "Dashboard Impact Review Toolkit",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "data_engineering"
+      }
+    ],
+    "raw_ideas": [
+      {
+        "project_title": "Data Pipeline Quality Monitor",
+        "based_on_paper": "Downstream Impact Analysis for Data Quality Incidents",
+        "evidence_title": "Downstream Impact Analysis for Data Quality Incidents",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.DB",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "data_engineering",
+        "detected_intent": "project_building",
+        "idea_angle": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+        "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_focus_type": "buildable_gap",
+        "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research concerns observed: data quality.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Dashboard Impact Review Toolkit",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Data Engineering",
+          "Evaluation",
+          "Monitoring",
+          "Data Quality"
+        ],
+        "extracted_skills": [
+          "Data Quality",
+          "ETL",
+          "SQL",
+          "Pipeline Monitoring",
+          "Schema Validation",
+          "Data Freshness",
+          "Data Engineering"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Downstream Impact Analysis for Data Quality Incidents'. The paper provides evidence related to: Data-quality incidents can affect downstream dashboards, owners, reports, and dependent datasets. Impact analysis helps teams prioritize communication and remediation.... The generated project 'Data Pipeline Quality Monitor' turns that research direction into a buildable software prototype focused on Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations..",
+        "mvp_scope": [
+          "Ingest a small source dataset into a staged raw table or file layer.",
+          "Apply transformations and create a clean analytics-ready output table.",
+          "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+          "Track pipeline status, row counts, failures, and transformation lineage.",
+          "Build a monitoring view with failed checks and recommended remediation actions.",
+          "Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add data lineage graph and pipeline dependency impact analysis.",
+          "Add data contract validation for schema changes."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "SQL",
+          "Pandas",
+          "Data Validation",
+          "Airflow Concepts",
+          "Data Quality",
+          "ETL",
+          "Pipeline Monitoring",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Data Pipeline Quality Monitor that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Data Engineer",
+          "Analytics Engineer",
+          "Backend Engineer",
+          "Data Platform Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer, Backend Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, PostgreSQL where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Data Lineage and Dependency Visualizer",
+        "based_on_paper": "Downstream Impact Analysis for Data Quality Incidents",
+        "evidence_title": "Downstream Impact Analysis for Data Quality Incidents",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.DB",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "data_engineering",
+        "detected_intent": "project_building",
+        "idea_angle": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+        "opportunity_area": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+        "evidence_focus_type": "research_or_reliability_gap",
+        "evidence_focus_statement": "Address evidence-related concerns around: data quality.",
+        "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research concerns observed: data quality.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Dashboard Impact Review Toolkit",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Data Engineering",
+          "Evaluation",
+          "Monitoring",
+          "Data Quality"
+        ],
+        "extracted_skills": [
+          "Data Lineage",
+          "Dependency Mapping",
+          "ETL",
+          "Impact Analysis",
+          "SQL",
+          "Data Platform Design",
+          "Data Engineering"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Downstream Impact Analysis for Data Quality Incidents'. The paper provides evidence related to: Data-quality incidents can affect downstream dashboards, owners, reports, and dependent datasets. Impact analysis helps teams prioritize communication and remediation.... The generated project 'Data Lineage and Dependency Visualizer' turns that research direction into a buildable software prototype focused on Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations..",
+        "mvp_scope": [
+          "Ingest a small source dataset into a staged raw table or file layer.",
+          "Apply transformations and create a clean analytics-ready output table.",
+          "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+          "Track pipeline status, row counts, failures, and transformation lineage.",
+          "Build a monitoring view with failed checks and recommended remediation actions.",
+          "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add data lineage graph and pipeline dependency impact analysis.",
+          "Add data contract validation for schema changes."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "SQL",
+          "Pandas",
+          "Data Validation",
+          "Airflow Concepts",
+          "Data Lineage",
+          "Dependency Mapping",
+          "ETL",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Data Lineage and Dependency Visualizer that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Data Engineer",
+          "Analytics Engineer",
+          "Backend Engineer",
+          "Data Platform Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer, Backend Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, PostgreSQL where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Warehouse Query and Cost Intelligence Dashboard",
+        "based_on_paper": "Dashboard Impact Review Toolkit",
+        "evidence_title": "Dashboard Impact Review Toolkit",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "data_engineering",
+        "detected_intent": "project_building",
+        "idea_angle": "Analyze SQL usage, expensive queries, warehouse cost patterns, and optimization opportunities.",
+        "opportunity_area": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+        "evidence_focus_type": "research_or_reliability_gap",
+        "evidence_focus_statement": "Address evidence-related concerns around: data quality.",
+        "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research concerns observed: data quality.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Dashboard Impact Review Toolkit",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Data Engineering",
+          "Evaluation",
+          "Monitoring",
+          "Data Quality"
+        ],
+        "extracted_skills": [
+          "SQL",
+          "Query Optimization",
+          "Cost Analysis",
+          "Warehouse Analytics",
+          "Dashboarding",
+          "Performance Tuning",
+          "Data Engineering"
+        ],
+        "research_motivation": "This idea uses 'Dashboard Impact Review Toolkit' as a real implementation reference. It informs a buildable direction for Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Ingest a small source dataset into a staged raw table or file layer.",
+          "Apply transformations and create a clean analytics-ready output table.",
+          "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+          "Track pipeline status, row counts, failures, and transformation lineage.",
+          "Build a monitoring view with failed checks and recommended remediation actions.",
+          "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add data lineage graph and pipeline dependency impact analysis.",
+          "Add data contract validation for schema changes."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "SQL",
+          "Pandas",
+          "Data Validation",
+          "Airflow Concepts",
+          "Query Optimization",
+          "Cost Analysis",
+          "Warehouse Analytics",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Warehouse Query and Cost Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Data Engineer",
+          "Analytics Engineer",
+          "Backend Engineer",
+          "Data Platform Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer, Backend Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, PostgreSQL where it fits the project. Assumes an intermediate starting level."
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Data Pipeline Quality Monitor",
+          "based_on_paper": "Downstream Impact Analysis for Data Quality Incidents",
+          "evidence_title": "Downstream Impact Analysis for Data Quality Incidents",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.DB",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "data_engineering",
+          "detected_intent": "project_building",
+          "idea_angle": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+          "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_focus_type": "buildable_gap",
+          "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research concerns observed: data quality.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Dashboard Impact Review Toolkit",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Data Engineering",
+            "Evaluation",
+            "Monitoring",
+            "Data Quality"
+          ],
+          "extracted_skills": [
+            "Data Quality",
+            "ETL",
+            "SQL",
+            "Pipeline Monitoring",
+            "Schema Validation",
+            "Data Freshness",
+            "Data Engineering"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Downstream Impact Analysis for Data Quality Incidents'. The paper provides evidence related to: Data-quality incidents can affect downstream dashboards, owners, reports, and dependent datasets. Impact analysis helps teams prioritize communication and remediation.... The generated project 'Data Pipeline Quality Monitor' turns that research direction into a buildable software prototype focused on Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations..",
+          "mvp_scope": [
+            "Ingest a small source dataset into a staged raw table or file layer.",
+            "Apply transformations and create a clean analytics-ready output table.",
+            "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+            "Track pipeline status, row counts, failures, and transformation lineage.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add data lineage graph and pipeline dependency impact analysis.",
+            "Add data contract validation for schema changes."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "SQL",
+            "Pandas",
+            "Data Validation",
+            "Airflow Concepts",
+            "Data Quality",
+            "ETL",
+            "Pipeline Monitoring",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Data Pipeline Quality Monitor that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Analytics Engineer",
+            "Backend Engineer",
+            "Data Platform Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer, Backend Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, PostgreSQL where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Data Pipeline Quality Monitor scores 8.2/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Data Quality, ETL, SQL, Pipeline Monitoring, Schema Validation, Data Freshness. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          }
+        },
+        {
+          "project_title": "Data Lineage and Dependency Visualizer",
+          "based_on_paper": "Downstream Impact Analysis for Data Quality Incidents",
+          "evidence_title": "Downstream Impact Analysis for Data Quality Incidents",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.DB",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "data_engineering",
+          "detected_intent": "project_building",
+          "idea_angle": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+          "opportunity_area": "Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations.",
+          "evidence_focus_type": "research_or_reliability_gap",
+          "evidence_focus_statement": "Address evidence-related concerns around: data quality.",
+          "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research concerns observed: data quality.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Dashboard Impact Review Toolkit",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Data Engineering",
+            "Evaluation",
+            "Monitoring",
+            "Data Quality"
+          ],
+          "extracted_skills": [
+            "Data Lineage",
+            "Dependency Mapping",
+            "ETL",
+            "Impact Analysis",
+            "SQL",
+            "Data Platform Design",
+            "Data Engineering"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Downstream Impact Analysis for Data Quality Incidents'. The paper provides evidence related to: Data-quality incidents can affect downstream dashboards, owners, reports, and dependent datasets. Impact analysis helps teams prioritize communication and remediation.... The generated project 'Data Lineage and Dependency Visualizer' turns that research direction into a buildable software prototype focused on Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations..",
+          "mvp_scope": [
+            "Ingest a small source dataset into a staged raw table or file layer.",
+            "Apply transformations and create a clean analytics-ready output table.",
+            "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+            "Track pipeline status, row counts, failures, and transformation lineage.",
+            "Build a monitoring view with failed checks and recommended remediation actions.",
+            "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add data lineage graph and pipeline dependency impact analysis.",
+            "Add data contract validation for schema changes."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "SQL",
+            "Pandas",
+            "Data Validation",
+            "Airflow Concepts",
+            "Data Lineage",
+            "Dependency Mapping",
+            "ETL",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Data Lineage and Dependency Visualizer that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Analytics Engineer",
+            "Backend Engineer",
+            "Data Platform Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer, Backend Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, PostgreSQL where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Data Lineage and Dependency Visualizer scores 8.2/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Data Lineage, Dependency Mapping, ETL, Impact Analysis, SQL, Data Platform Design. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          }
+        },
+        {
+          "project_title": "Warehouse Query and Cost Intelligence Dashboard",
+          "based_on_paper": "Dashboard Impact Review Toolkit",
+          "evidence_title": "Dashboard Impact Review Toolkit",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "data_engineering",
+          "detected_intent": "project_building",
+          "idea_angle": "Analyze SQL usage, expensive queries, warehouse cost patterns, and optimization opportunities.",
+          "opportunity_area": "Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.",
+          "evidence_focus_type": "research_or_reliability_gap",
+          "evidence_focus_statement": "Address evidence-related concerns around: data quality.",
+          "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research concerns observed: data quality.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Dashboard Impact Review Toolkit",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Data Engineering",
+            "Evaluation",
+            "Monitoring",
+            "Data Quality"
+          ],
+          "extracted_skills": [
+            "SQL",
+            "Query Optimization",
+            "Cost Analysis",
+            "Warehouse Analytics",
+            "Dashboarding",
+            "Performance Tuning",
+            "Data Engineering"
+          ],
+          "research_motivation": "This idea uses 'Dashboard Impact Review Toolkit' as a real implementation reference. It informs a buildable direction for Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Ingest a small source dataset into a staged raw table or file layer.",
+            "Apply transformations and create a clean analytics-ready output table.",
+            "Validate schema, freshness, null rates, duplicate records, and key business rules.",
+            "Track pipeline status, row counts, failures, and transformation lineage.",
+            "Build a monitoring view with failed checks and recommended remediation actions.",
+            "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add data lineage graph and pipeline dependency impact analysis.",
+            "Add data contract validation for schema changes.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "SQL",
+            "Pandas",
+            "Data Validation",
+            "Airflow Concepts",
+            "Query Optimization",
+            "Cost Analysis",
+            "Warehouse Analytics",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Warehouse Query and Cost Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, SQL, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Analytics Engineer",
+            "Backend Engineer",
+            "Data Platform Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer, Backend Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, PostgreSQL where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Warehouse Query and Cost Intelligence Dashboard scores 8.2/10 with a strong career signal because it is grounded in github repository, fits the data_engineering domain, and demonstrates skills such as SQL, Query Optimization, Cost Analysis, Warehouse Analytics, Dashboarding, Performance Tuning. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Analytics Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          }
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    }
+  },
+  "v2_shadow": {
+    "status": "fixture_evaluated",
+    "report": {
+      "evidence_brief": {
+        "query": "Build a project that helps support engineers understand which downstream dashboards and owners are affected after a known data-quality incident.",
+        "sources": [
+          {
+            "source_id": "paper-data-quality-impact",
+            "source_type": "research_paper",
+            "title": "Downstream Impact Analysis for Data Quality Incidents",
+            "excerpt": "Downstream Impact Analysis for Data Quality Incidents Data-quality incidents can affect downstream dashboards, owners, reports, and dependent datasets. Impact analysis helps teams prioritize communication and remediation.",
+            "category": "cs.DB",
+            "url": null,
+            "retrieval_rank": 1,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "paper-owner-aware-lineage",
+            "source_type": "research_paper",
+            "title": "Owner-Aware Dataset Lineage for Incident Response",
+            "excerpt": "Owner-Aware Dataset Lineage for Incident Response Dataset lineage enriched with owner metadata can identify accountable teams, impacted assets, and affected analytics consumers after upstream failures.",
+            "category": "cs.DB",
+            "url": null,
+            "retrieval_rank": 2,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "repo-dashboard-impact",
+            "source_type": "github_repository",
+            "title": "Dashboard Impact Review Toolkit",
+            "excerpt": "Dashboard Impact Review Toolkit Load dashboard dependencies, upstream data quality events, dataset owners, and affected business views to generate incident impact reports.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 3,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          }
+        ],
+        "source_counts": {
+          "research_paper": 2,
+          "github_repository": 1
+        },
+        "recurring_concepts": [
+          "affected",
+          "data",
+          "dataset",
+          "impact",
+          "incident",
+          "owners",
+          "quality",
+          "reports",
+          "teams",
+          "upstream"
+        ],
+        "coverage_warnings": []
+      },
+      "evidence_curation": {
+        "required_anchor_terms": [],
+        "retained": [
+          {
+            "item": {
+              "document_id": "paper-data-quality-impact",
+              "source_type": "research_paper",
+              "title": "Downstream Impact Analysis for Data Quality Incidents",
+              "abstract": "Data-quality incidents can affect downstream dashboards, owners, reports, and dependent datasets. Impact analysis helps teams prioritize communication and remediation.",
+              "category": "cs.DB",
+              "retrieval_rank": 1
+            },
+            "relevance_score": 8.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "dashboards",
+              "downstream",
+              "helps",
+              "owners"
+            ],
+            "query_term_document_frequencies": {
+              "dashboards": 1,
+              "downstream": 1,
+              "helps": 1,
+              "owners": 2
+            },
+            "unique_query_terms": [
+              "dashboards",
+              "downstream",
+              "helps"
+            ],
+            "matched_query_phrases": [
+              "downstream dashboards",
+              "dashboards owners",
+              "downstream dashboards owners"
+            ],
+            "unique_query_phrases": [
+              "downstream dashboards",
+              "dashboards owners",
+              "downstream dashboards owners"
+            ],
+            "query_phrase_document_frequencies": {
+              "downstream dashboards": 1,
+              "dashboards owners": 1,
+              "downstream dashboards owners": 1
+            },
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "document_id": "paper-owner-aware-lineage",
+              "source_type": "research_paper",
+              "title": "Owner-Aware Dataset Lineage for Incident Response",
+              "abstract": "Dataset lineage enriched with owner metadata can identify accountable teams, impacted assets, and affected analytics consumers after upstream failures.",
+              "category": "cs.DB",
+              "retrieval_rank": 2
+            },
+            "relevance_score": 6.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "affected",
+              "after",
+              "incident"
+            ],
+            "query_term_document_frequencies": {
+              "affected": 2,
+              "after": 1,
+              "incident": 2
+            },
+            "unique_query_terms": [
+              "after"
+            ],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "repository_id": "repo-dashboard-impact",
+              "source_type": "github_repository",
+              "title": "Dashboard Impact Review Toolkit",
+              "readme_excerpt": "Load dashboard dependencies, upstream data quality events, dataset owners, and affected business views to generate incident impact reports.",
+              "retrieval_rank": 3
+            },
+            "relevance_score": 6.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "affected",
+              "incident",
+              "owners"
+            ],
+            "query_term_document_frequencies": {
+              "affected": 2,
+              "incident": 2,
+              "owners": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          }
+        ],
+        "dropped": [],
+        "retained_source_counts": {
+          "research_paper": 2,
+          "github_repository": 1
+        }
+      },
+      "planning_diagnostics": {
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "provider_called": true,
+        "prompt_content_hash": "a0ace671cc9092983d3e2fafeb3dc2af64b3795778e2e7f3cc02277dcc115f66"
+      },
+      "selected_titles": [
+        "Data Quality Incident Impact Map",
+        "Owner Notification Priority Queue",
+        "Dashboard Blast Radius Review"
+      ],
+      "selected_candidates": [
+        {
+          "title": "Data Quality Incident Impact Map",
+          "problem_statement": "Data engineers need to identify which dashboards, datasets, and owners are affected after a known data-quality incident.",
+          "target_user": "Data engineers and analytics engineers",
+          "core_workflow": [
+            "Load a known data-quality incident.",
+            "Traverse downstream dataset and dashboard dependencies.",
+            "List affected owners and business views."
+          ],
+          "mvp_scope": [
+            "Create fixture tables for incidents, datasets, dashboards, and owners.",
+            "Represent lineage edges between upstream and downstream assets.",
+            "Traverse dependencies from one known incident source.",
+            "Show impacted dashboards, owners, and severity notes."
+          ],
+          "success_metrics": [
+            "Number of affected dashboards identified.",
+            "Percentage of affected assets with owner metadata."
+          ],
+          "evidence_relationship": "Uses direct evidence on downstream impact analysis for data-quality incidents.",
+          "source_ids": [
+            "paper-data-quality-impact"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "ranking": {
+            "score": 0.896,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.7,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.70.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Owner Notification Priority Queue",
+          "problem_statement": "Data platform teams need to prioritize which owners and consumers to notify after a data-quality incident.",
+          "target_user": "Data platform teams",
+          "core_workflow": [
+            "Load impacted datasets and dashboards.",
+            "Join assets with owner and consumer metadata.",
+            "Rank owners by affected asset count and severity."
+          ],
+          "mvp_scope": [
+            "Create owner and dashboard dependency fixtures.",
+            "Join affected assets to accountable owners.",
+            "Compute a transparent notification priority score.",
+            "Export a prioritized owner action queue."
+          ],
+          "success_metrics": [
+            "Number of owners prioritized for notification.",
+            "Number of impacted assets covered by owner assignments."
+          ],
+          "evidence_relationship": "Uses owner-aware lineage evidence for incident response.",
+          "source_ids": [
+            "paper-owner-aware-lineage"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "ranking": {
+            "score": 0.896,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.7,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.70.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Dashboard Blast Radius Review",
+          "problem_statement": "Analytics teams need a practical review view that shows the dashboard blast radius of a known upstream quality failure.",
+          "target_user": "Analytics engineers",
+          "core_workflow": [
+            "Load dashboard dependency fixtures.",
+            "Mark one upstream data-quality event.",
+            "Generate a dashboard impact report."
+          ],
+          "mvp_scope": [
+            "Create sample dashboard dependency records.",
+            "Map dashboards to upstream datasets and owners.",
+            "Filter dashboards affected by one incident.",
+            "Generate a review report for affected business views."
+          ],
+          "success_metrics": [
+            "Number of affected dashboards surfaced.",
+            "Time to produce a dashboard impact report."
+          ],
+          "evidence_relationship": "Uses implementation context for dashboard impact review workflows.",
+          "source_ids": [
+            "repo-dashboard-impact"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "React"
+          ],
+          "ranking": {
+            "score": 0.841,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.425,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.42.",
+              "Completeness score: 1.00."
+            ]
+          }
+        }
+      ],
+      "legacy_titles": [
+        "Data Pipeline Quality Monitor",
+        "Data Lineage and Dependency Visualizer",
+        "Warehouse Query and Cost Intelligence Dashboard"
+      ],
+      "comparison": {
+        "legacy_direction_count": 3,
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "v2_generated_candidate_count": 3,
+        "v2_valid_candidate_count": 3,
+        "v2_selected_candidate_count": 3,
+        "v2_selected_titles": [
+          "Data Quality Incident Impact Map",
+          "Owner Notification Priority Queue",
+          "Dashboard Blast Radius Review"
+        ],
+        "provider_called": true,
+        "coverage_warnings": []
+      },
+      "shadow_readiness": {
+        "status": "ready",
+        "reasons": [
+          "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+        ],
+        "signals": {
+          "raw_evidence_count": 3,
+          "curated_evidence_count": 3,
+          "dropped_evidence_count": 0,
+          "generated_candidate_count": 3,
+          "valid_candidate_count": 3,
+          "selected_candidate_count": 3,
+          "provider_called": true,
+          "coverage_warnings": [],
+          "validation_errors": [],
+          "validation_warnings": []
+        }
+      },
+      "prompt_content_hash": "a0ace671cc9092983d3e2fafeb3dc2af64b3795778e2e7f3cc02277dcc115f66"
+    },
+    "evidence_quality": {
+      "status": "not_routed_pending_calibration",
+      "metrics": {
+        "curation_pool_size": 3,
+        "retained_source_count": 3,
+        "final_brief_source_count": 3,
+        "direct_source_count": 3,
+        "adjacent_source_count": 0,
+        "required_anchor_count": 0,
+        "matched_required_anchor_count": 0,
+        "query_anchor_coverage": null,
+        "unique_query_term_count": 4,
+        "unique_query_phrase_count": 3,
+        "source_type_count": 2,
+        "dominant_source_type": "research_paper",
+        "dominant_source_type_fraction": 0.6666666666666666,
+        "top_direct_relevance_margin": 2.0,
+        "coverage_warnings": []
+      },
+      "thresholds": {
+        "version": "v1",
+        "calibration_status": "unresolved",
+        "sparse_direct_source_threshold": null,
+        "ambiguity_top_margin_threshold": null,
+        "low_diversity_fraction_threshold": null
+      },
+      "evidence_sparse": null,
+      "evidence_ambiguous": null,
+      "source_diversity_low": null,
+      "unresolved_signal_names": [
+        "evidence_sparse",
+        "evidence_ambiguous",
+        "source_diversity_low"
+      ],
+      "routing_ready": false
+    },
+    "selected_candidates": [
+      {
+        "title": "Data Quality Incident Impact Map",
+        "problem_statement": "Data engineers need to identify which dashboards, datasets, and owners are affected after a known data-quality incident.",
+        "target_user": "Data engineers and analytics engineers",
+        "core_workflow": [
+          "Load a known data-quality incident.",
+          "Traverse downstream dataset and dashboard dependencies.",
+          "List affected owners and business views."
+        ],
+        "mvp_scope": [
+          "Create fixture tables for incidents, datasets, dashboards, and owners.",
+          "Represent lineage edges between upstream and downstream assets.",
+          "Traverse dependencies from one known incident source.",
+          "Show impacted dashboards, owners, and severity notes."
+        ],
+        "success_metrics": [
+          "Number of affected dashboards identified.",
+          "Percentage of affected assets with owner metadata."
+        ],
+        "evidence_relationship": "Uses direct evidence on downstream impact analysis for data-quality incidents.",
+        "source_ids": [
+          "paper-data-quality-impact"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "PostgreSQL"
+        ],
+        "ranking": {
+          "score": 0.896,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.7,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.70.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Owner Notification Priority Queue",
+        "problem_statement": "Data platform teams need to prioritize which owners and consumers to notify after a data-quality incident.",
+        "target_user": "Data platform teams",
+        "core_workflow": [
+          "Load impacted datasets and dashboards.",
+          "Join assets with owner and consumer metadata.",
+          "Rank owners by affected asset count and severity."
+        ],
+        "mvp_scope": [
+          "Create owner and dashboard dependency fixtures.",
+          "Join affected assets to accountable owners.",
+          "Compute a transparent notification priority score.",
+          "Export a prioritized owner action queue."
+        ],
+        "success_metrics": [
+          "Number of owners prioritized for notification.",
+          "Number of impacted assets covered by owner assignments."
+        ],
+        "evidence_relationship": "Uses owner-aware lineage evidence for incident response.",
+        "source_ids": [
+          "paper-owner-aware-lineage"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "PostgreSQL"
+        ],
+        "ranking": {
+          "score": 0.896,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.7,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.70.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Dashboard Blast Radius Review",
+        "problem_statement": "Analytics teams need a practical review view that shows the dashboard blast radius of a known upstream quality failure.",
+        "target_user": "Analytics engineers",
+        "core_workflow": [
+          "Load dashboard dependency fixtures.",
+          "Mark one upstream data-quality event.",
+          "Generate a dashboard impact report."
+        ],
+        "mvp_scope": [
+          "Create sample dashboard dependency records.",
+          "Map dashboards to upstream datasets and owners.",
+          "Filter dashboards affected by one incident.",
+          "Generate a review report for affected business views."
+        ],
+        "success_metrics": [
+          "Number of affected dashboards surfaced.",
+          "Time to produce a dashboard impact report."
+        ],
+        "evidence_relationship": "Uses implementation context for dashboard impact review workflows.",
+        "source_ids": [
+          "repo-dashboard-impact"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ],
+        "ranking": {
+          "score": 0.841,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.425,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.42.",
+            "Completeness score: 1.00."
+          ]
+        }
+      }
+    ],
+    "generation_metadata": {
+      "prompt_version": "v1",
+      "prompt_content_hash": "a0ace671cc9092983d3e2fafeb3dc2af64b3795778e2e7f3cc02277dcc115f66",
+      "execution_mode": "fixture",
+      "provider_name": "MockCandidateGenerationProvider",
+      "model": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      }
+    },
+    "diagnostics": {
+      "generated_candidate_count": 3,
+      "valid_candidate_count": 3,
+      "selected_candidate_count": 3,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "provider_called": true,
+      "prompt_content_hash": "a0ace671cc9092983d3e2fafeb3dc2af64b3795778e2e7f3cc02277dcc115f66"
+    },
+    "shadow_readiness": {
+      "status": "ready",
+      "reasons": [
+        "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+      ],
+      "signals": {
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "provider_called": true,
+        "coverage_warnings": [],
+        "validation_errors": [],
+        "validation_warnings": []
+      }
+    },
+    "semantic_goal_relevance": [],
+    "cross_encoder_goal_relevance": [],
+    "semantic_candidate_diversity": null,
+    "evidence_support": [],
+    "grounding_adequacy": [],
+    "candidate_source_relevance": [
+      {
+        "candidate_title": "Data Quality Incident Impact Map",
+        "source_id": "paper-data-quality-impact",
+        "source_type": "research_paper",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "dashboards",
+          "datasets",
+          "downstream",
+          "impact",
+          "owners",
+          "quality"
+        ],
+        "goal_source_shared_terms": [
+          "dashboards",
+          "downstream",
+          "helps",
+          "owners",
+          "quality"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: dashboards, datasets, downstream, impact, owners."
+      },
+      {
+        "candidate_title": "Owner Notification Priority Queue",
+        "source_id": "paper-owner-aware-lineage",
+        "source_type": "research_paper",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "affected",
+          "after",
+          "assets",
+          "consumers",
+          "impacted",
+          "incident",
+          "metadata",
+          "owner"
+        ],
+        "goal_source_shared_terms": [
+          "affected",
+          "after",
+          "incident"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: affected, after, assets, consumers, impacted."
+      },
+      {
+        "candidate_title": "Dashboard Blast Radius Review",
+        "source_id": "repo-dashboard-impact",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "dashboard",
+          "generate",
+          "impact",
+          "quality",
+          "review",
+          "upstream"
+        ],
+        "goal_source_shared_terms": [
+          "affected",
+          "incident",
+          "owners",
+          "quality"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: dashboard, generate, impact, quality, review."
+      }
+    ],
+    "quality_warnings": {
+      "warnings": [],
+      "signals": {
+        "coverage_warning_count": 0,
+        "goal_trace_count": 0,
+        "grounding_trace_count": 0,
+        "diversity_pair_count": 0,
+        "source_relevance_trace_count": 3,
+        "quality_warning_count": 0
+      }
+    },
+    "promotion_eligibility": {
+      "status": "not_assessed",
+      "candidate_assessments": [],
+      "summary": {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0
+      },
+      "reason": "Evidence-support shadow was not enabled, so promotion eligibility could not assess direct grounding."
+    },
+    "semantic_diversification_repair": {
+      "status": "no_repair_needed",
+      "directives": [],
+      "signals": {
+        "candidate_count": 3,
+        "similarity_threshold": 0.78,
+        "close_cluster_count": 0,
+        "replacement_count": 0
+      }
+    },
+    "raw_candidates": [
+      {
+        "title": "Data Quality Incident Impact Map",
+        "problem_statement": "Data engineers need to identify which dashboards, datasets, and owners are affected after a known data-quality incident.",
+        "target_user": "Data engineers and analytics engineers",
+        "core_workflow": [
+          "Load a known data-quality incident.",
+          "Traverse downstream dataset and dashboard dependencies.",
+          "List affected owners and business views."
+        ],
+        "mvp_scope": [
+          "Create fixture tables for incidents, datasets, dashboards, and owners.",
+          "Represent lineage edges between upstream and downstream assets.",
+          "Traverse dependencies from one known incident source.",
+          "Show impacted dashboards, owners, and severity notes."
+        ],
+        "success_metrics": [
+          "Number of affected dashboards identified.",
+          "Percentage of affected assets with owner metadata."
+        ],
+        "evidence_relationship": "Uses direct evidence on downstream impact analysis for data-quality incidents.",
+        "source_ids": [
+          "paper-data-quality-impact"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "PostgreSQL"
+        ]
+      },
+      {
+        "title": "Owner Notification Priority Queue",
+        "problem_statement": "Data platform teams need to prioritize which owners and consumers to notify after a data-quality incident.",
+        "target_user": "Data platform teams",
+        "core_workflow": [
+          "Load impacted datasets and dashboards.",
+          "Join assets with owner and consumer metadata.",
+          "Rank owners by affected asset count and severity."
+        ],
+        "mvp_scope": [
+          "Create owner and dashboard dependency fixtures.",
+          "Join affected assets to accountable owners.",
+          "Compute a transparent notification priority score.",
+          "Export a prioritized owner action queue."
+        ],
+        "success_metrics": [
+          "Number of owners prioritized for notification.",
+          "Number of impacted assets covered by owner assignments."
+        ],
+        "evidence_relationship": "Uses owner-aware lineage evidence for incident response.",
+        "source_ids": [
+          "paper-owner-aware-lineage"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "PostgreSQL"
+        ]
+      },
+      {
+        "title": "Dashboard Blast Radius Review",
+        "problem_statement": "Analytics teams need a practical review view that shows the dashboard blast radius of a known upstream quality failure.",
+        "target_user": "Analytics engineers",
+        "core_workflow": [
+          "Load dashboard dependency fixtures.",
+          "Mark one upstream data-quality event.",
+          "Generate a dashboard impact report."
+        ],
+        "mvp_scope": [
+          "Create sample dashboard dependency records.",
+          "Map dashboards to upstream datasets and owners.",
+          "Filter dashboards affected by one incident.",
+          "Generate a review report for affected business views."
+        ],
+        "success_metrics": [
+          "Number of affected dashboards surfaced.",
+          "Time to produce a dashboard impact report."
+        ],
+        "evidence_relationship": "Uses implementation context for dashboard impact review workflows.",
+        "source_ids": [
+          "repo-dashboard-impact"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ]
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Data Quality Incident Impact Map",
+          "idea_angle": "Data engineers need to identify which dashboards, datasets, and owners are affected after a known data-quality incident. Built for Data engineers and analytics engineers.",
+          "detected_domain": "data_engineering",
+          "evidence_buildable_gap": "Data engineers need to identify which dashboards, datasets, and owners are affected after a known data-quality incident.",
+          "evidence_focus_statement": "Uses direct evidence on downstream impact analysis for data-quality incidents.",
+          "evidence_driven_angle": "Uses direct evidence on downstream impact analysis for data-quality incidents.",
+          "evidence_project_opportunity": "Data engineers need to identify which dashboards, datasets, and owners are affected after a known data-quality incident.",
+          "research_motivation": "Uses direct evidence on downstream impact analysis for data-quality incidents.",
+          "mvp_scope": [
+            "Create fixture tables for incidents, datasets, dashboards, and owners.",
+            "Represent lineage edges between upstream and downstream assets.",
+            "Traverse dependencies from one known incident source.",
+            "Show impacted dashboards, owners, and severity notes.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of affected dashboards identified.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Backend Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-data-quality-impact",
+              "title": "Downstream Impact Analysis for Data Quality Incidents",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-data-quality-impact"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of affected dashboards identified.",
+            "Percentage of affected assets with owner metadata."
+          ],
+          "planner_candidate_workflow": [
+            "Load a known data-quality incident.",
+            "Traverse downstream dataset and dashboard dependencies.",
+            "List affected owners and business views."
+          ],
+          "evidence_title": "Downstream Impact Analysis for Data Quality Incidents",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.DB",
+          "based_on_paper": "Downstream Impact Analysis for Data Quality Incidents",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Data Quality Incident Impact Map scores 8.2/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Python, PostgreSQL. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer, Backend Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, PostgreSQL where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Owner Notification Priority Queue",
+          "idea_angle": "Data platform teams need to prioritize which owners and consumers to notify after a data-quality incident. Built for Data platform teams.",
+          "detected_domain": "data_engineering",
+          "evidence_buildable_gap": "Data platform teams need to prioritize which owners and consumers to notify after a data-quality incident.",
+          "evidence_focus_statement": "Uses owner-aware lineage evidence for incident response.",
+          "evidence_driven_angle": "Uses owner-aware lineage evidence for incident response.",
+          "evidence_project_opportunity": "Data platform teams need to prioritize which owners and consumers to notify after a data-quality incident.",
+          "research_motivation": "Uses owner-aware lineage evidence for incident response.",
+          "mvp_scope": [
+            "Create owner and dashboard dependency fixtures.",
+            "Join affected assets to accountable owners.",
+            "Compute a transparent notification priority score.",
+            "Export a prioritized owner action queue.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of owners prioritized for notification.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Backend Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-owner-aware-lineage",
+              "title": "Owner-Aware Dataset Lineage for Incident Response",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-owner-aware-lineage"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of owners prioritized for notification.",
+            "Number of impacted assets covered by owner assignments."
+          ],
+          "planner_candidate_workflow": [
+            "Load impacted datasets and dashboards.",
+            "Join assets with owner and consumer metadata.",
+            "Rank owners by affected asset count and severity."
+          ],
+          "evidence_title": "Owner-Aware Dataset Lineage for Incident Response",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.DB",
+          "based_on_paper": "Owner-Aware Dataset Lineage for Incident Response",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Owner Notification Priority Queue scores 8.2/10 with a strong career signal because it is grounded in research paper, fits the data_engineering domain, and demonstrates skills such as Python, PostgreSQL. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer, Backend Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, PostgreSQL where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Dashboard Blast Radius Review",
+          "idea_angle": "Analytics teams need a practical review view that shows the dashboard blast radius of a known upstream quality failure. Built for Analytics engineers.",
+          "detected_domain": "data_engineering",
+          "evidence_buildable_gap": "Analytics teams need a practical review view that shows the dashboard blast radius of a known upstream quality failure.",
+          "evidence_focus_statement": "Uses implementation context for dashboard impact review workflows.",
+          "evidence_driven_angle": "Uses implementation context for dashboard impact review workflows.",
+          "evidence_project_opportunity": "Analytics teams need a practical review view that shows the dashboard blast radius of a known upstream quality failure.",
+          "research_motivation": "Uses implementation context for dashboard impact review workflows.",
+          "mvp_scope": [
+            "Create sample dashboard dependency records.",
+            "Map dashboards to upstream datasets and owners.",
+            "Filter dashboards affected by one incident.",
+            "Generate a review report for affected business views.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of affected dashboards surfaced.",
+            "Add a failure-case review workflow and document the prototype's known limitations.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "React",
+            "PostgreSQL"
+          ],
+          "target_roles": [
+            "Data Engineer",
+            "Backend Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "React"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-dashboard-impact",
+              "title": "Dashboard Impact Review Toolkit",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-dashboard-impact"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of affected dashboards surfaced.",
+            "Time to produce a dashboard impact report."
+          ],
+          "planner_candidate_workflow": [
+            "Load dashboard dependency fixtures.",
+            "Mark one upstream data-quality event.",
+            "Generate a dashboard impact report."
+          ],
+          "evidence_title": "Dashboard Impact Review Toolkit",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "Dashboard Impact Review Toolkit",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.0,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Dashboard Blast Radius Review scores 8.0/10 with a strong career signal because it is grounded in github repository, fits the data_engineering domain, and demonstrates skills such as Python, React, PostgreSQL. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Data Engineer, Backend Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Data Engineer, Backend Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, PostgreSQL where it fits the project. Assumes an intermediate starting level."
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    },
+    "shadow_vs_deterministic_comparison": {
+      "schema_version": "1.0",
+      "case_id": null,
+      "user_goal": "Build a project that helps support engineers understand which downstream dashboards and owners are affected after a known data-quality incident.",
+      "query_fingerprint": "c10a5a3c58c032dd",
+      "deterministic_candidates": [
+        {
+          "title": "Data Pipeline Quality Monitor",
+          "comparison_text": "Data Pipeline Quality Monitor Monitor ETL pipelines for freshness, schema drift, missing values, anomalies, and broken transformations. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        },
+        {
+          "title": "Data Lineage and Dependency Visualizer",
+          "comparison_text": "Data Lineage and Dependency Visualizer Map pipeline dependencies, upstream/downstream tables, transformations, and failure impact across data systems. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        },
+        {
+          "title": "Warehouse Query and Cost Intelligence Dashboard",
+          "comparison_text": "Warehouse Query and Cost Intelligence Dashboard Analyze SQL usage, expensive queries, warehouse cost patterns, and optimization opportunities. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs. Ingest a small source dataset into a staged raw table or file layer. Apply transformations and create a clean analytics-ready output table. Validate schema, freshness, null rates, duplicate records, and key business rules. Track pipeline status, row counts, failures, and transformation lineage. Build a monitoring view with failed checks and recommended remediation actions. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        }
+      ],
+      "openai_candidates": [
+        {
+          "title": "Data Quality Incident Impact Map",
+          "comparison_text": "Data Quality Incident Impact Map Data engineers need to identify which dashboards, datasets, and owners are affected after a known data-quality incident. Data engineers and analytics engineers Load a known data-quality incident. Traverse downstream dataset and dashboard dependencies. List affected owners and business views. Create fixture tables for incidents, datasets, dashboards, and owners. Represent lineage edges between upstream and downstream assets. Traverse dependencies from one known incident source. Show impacted dashboards, owners, and severity notes."
+        },
+        {
+          "title": "Owner Notification Priority Queue",
+          "comparison_text": "Owner Notification Priority Queue Data platform teams need to prioritize which owners and consumers to notify after a data-quality incident. Data platform teams Load impacted datasets and dashboards. Join assets with owner and consumer metadata. Rank owners by affected asset count and severity. Create owner and dashboard dependency fixtures. Join affected assets to accountable owners. Compute a transparent notification priority score. Export a prioritized owner action queue."
+        },
+        {
+          "title": "Dashboard Blast Radius Review",
+          "comparison_text": "Dashboard Blast Radius Review Analytics teams need a practical review view that shows the dashboard blast radius of a known upstream quality failure. Analytics engineers Load dashboard dependency fixtures. Mark one upstream data-quality event. Generate a dashboard impact report. Create sample dashboard dependency records. Map dashboards to upstream datasets and owners. Filter dashboards affected by one incident. Generate a review report for affected business views."
+        }
+      ],
+      "deterministic_grounding_classes": [
+        {
+          "candidate_title": "Data Pipeline Quality Monitor",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Data Lineage and Dependency Visualizer",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Warehouse Query and Cost Intelligence Dashboard",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "openai_grounding_classes": [
+        {
+          "candidate_title": "Data Quality Incident Impact Map",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Owner Notification Priority Queue",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Dashboard Blast Radius Review",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "deterministic_enrichment": [
+        {
+          "title": "Data Pipeline Quality Monitor",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Data Lineage and Dependency Visualizer",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Warehouse Query and Cost Intelligence Dashboard",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        }
+      ],
+      "openai_enrichment": [
+        {
+          "title": "Data Quality Incident Impact Map",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Owner Notification Priority Queue",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Dashboard Blast Radius Review",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        }
+      ],
+      "set_similarity_score": null,
+      "unique_angle_count": 0,
+      "unique_openai_titles": [],
+      "pairwise_similarity": [],
+      "manual_preference": null,
+      "manual_preference_reason": null,
+      "manual_reviewer_notes": null,
+      "notes": [
+        "Cross-set semantic similarity is a difference signal, not a quality score.",
+        "Portfolio tiers are preserved for review but are assigned by candidate order and must not be interpreted as quality labels.",
+        "Deterministic grounding is not assessed by this contract yet; only shadow grounding traces are currently comparable."
+      ]
+    },
+    "manual_review_template": {
+      "rubric_version": "v1",
+      "query_fingerprint": "c10a5a3c58c032dd",
+      "deterministic_review": {
+        "planner_path": "deterministic",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Data Pipeline Quality Monitor",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Data Lineage and Dependency Visualizer",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Warehouse Query and Cost Intelligence Dashboard",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "openai_review": {
+        "planner_path": "openai",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Data Quality Incident Impact Map",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Owner Notification Priority Queue",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Dashboard Blast Radius Review",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "overall_preference": null,
+      "overall_preference_reason": "",
+      "response_quality": null,
+      "response_quality_reason": "",
+      "unique_angle_quality": null,
+      "unique_angle_quality_reason": "",
+      "reviewer_notes": ""
+    }
+  }
+}
