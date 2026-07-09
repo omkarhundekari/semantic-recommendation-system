@@ -433,6 +433,167 @@ def fixture_specifications() -> Tuple[ShadowFixtureSpecification, ...]:
             ),
         ),
         ShadowFixtureSpecification(
+            case=_case("developer_productivity_flaky_tests"),
+            evidence_payload={
+                "inference": {
+                    "inferred_focus": "developer_tools",
+                },
+                "merged_results": [
+                    {
+                        "document_id": "paper-flaky-test-detection",
+                        "source_type": "research_paper",
+                        "title": (
+                            "Detecting and Prioritizing Flaky Tests in "
+                            "Continuous Integration"
+                        ),
+                        "abstract": (
+                            "Flaky tests reduce developer productivity by "
+                            "causing nondeterministic CI failures. Detection "
+                            "uses repeated test outcomes, historical failure "
+                            "patterns, and prioritization signals."
+                        ),
+                        "category": "cs.SE",
+                        "retrieval_rank": 1,
+                    },
+                    {
+                        "document_id": "paper-change-failure-correlation",
+                        "source_type": "research_paper",
+                        "title": (
+                            "Connecting Test Failures with Code Changes for "
+                            "Root Cause Analysis"
+                        ),
+                        "abstract": (
+                            "Linking failing tests with recent code changes, "
+                            "changed files, ownership, and commit metadata can "
+                            "support root cause analysis in software testing."
+                        ),
+                        "category": "cs.SE",
+                        "retrieval_rank": 2,
+                    },
+                    {
+                        "repository_id": "repo-ci-failure-triage",
+                        "source_type": "github_repository",
+                        "title": "CI Failure Triage Dashboard",
+                        "readme_excerpt": (
+                            "Collect CI runs, failed tests, changed files, "
+                            "commit authors, flaky-test labels, and failure "
+                            "history to prioritize likely root causes."
+                        ),
+                        "retrieval_rank": 3,
+                    },
+                ],
+            },
+            mock_response={
+                "candidates": [
+                    {
+                        "title": "Flaky Test Detection Dashboard",
+                        "problem_statement": (
+                            "Developer tools teams need to identify tests "
+                            "whose failures are likely nondeterministic rather "
+                            "than caused by the latest code change."
+                        ),
+                        "target_user": "Developer Tools Engineers",
+                        "core_workflow": [
+                            "Load historical CI test outcomes.",
+                            "Detect tests with inconsistent pass/fail history.",
+                            "Rank likely flaky tests for triage.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample CI run and test result records.",
+                            "Compute pass/fail variance per test.",
+                            "Flag tests with repeated nondeterministic outcomes.",
+                            "Show flaky-test candidates in a dashboard.",
+                        ],
+                        "success_metrics": [
+                            "Number of likely flaky tests identified.",
+                            "Precision of flaky-test labels on sample data.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses direct evidence on flaky-test detection and "
+                            "prioritization in continuous integration."
+                        ),
+                        "source_ids": ["paper-flaky-test-detection"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "React"],
+                    },
+                    {
+                        "title": "Code Change Failure Correlator",
+                        "problem_statement": (
+                            "Engineers need to understand whether failing "
+                            "tests are related to recent commits, changed "
+                            "files, or ownership signals."
+                        ),
+                        "target_user": "Software Engineers",
+                        "core_workflow": [
+                            "Load failed tests and recent commits.",
+                            "Map changed files to failed test areas.",
+                            "Show likely change-to-failure links.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample commit, changed-file, and failed-test data.",
+                            "Create simple file-to-test ownership mappings.",
+                            "Rank commits that may explain a test failure.",
+                            "Show linked changes beside each failed test.",
+                        ],
+                        "success_metrics": [
+                            "Number of failures linked to candidate changes.",
+                            "Time saved during failure triage.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses direct evidence on connecting test failures "
+                            "with code changes for root cause analysis."
+                        ),
+                        "source_ids": ["paper-change-failure-correlation"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "FastAPI"],
+                    },
+                    {
+                        "title": "CI Root Cause Prioritization Queue",
+                        "problem_statement": (
+                            "Teams need a practical queue that combines flaky "
+                            "test history, failed CI runs, changed files, and "
+                            "ownership to prioritize likely root causes."
+                        ),
+                        "target_user": "Developer Tools Engineers",
+                        "core_workflow": [
+                            "Load CI runs, failed tests, and changed files.",
+                            "Combine flaky-test and code-change signals.",
+                            "Prioritize failures for engineer review.",
+                        ],
+                        "mvp_scope": [
+                            "Load sample CI failure records.",
+                            "Join failures with commits and changed files.",
+                            "Add flaky-test history as a prioritization signal.",
+                            "Show a ranked triage queue with explanations.",
+                        ],
+                        "success_metrics": [
+                            "Number of CI failures prioritized.",
+                            "Percentage of failures with an explainable root-cause hint.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses implementation context for CI failure triage "
+                            "and direct signals from flaky-test and code-change "
+                            "evidence."
+                        ),
+                        "source_ids": [
+                            "repo-ci-failure-triage",
+                            "paper-flaky-test-detection",
+                            "paper-change-failure-correlation",
+                        ],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "React"],
+                    },
+                ],
+            },
+            reviewability_requirements=(
+                "The fixture has direct flaky-test and code-change evidence.",
+                "The combined detection, correlation, and prioritization goal remains visible.",
+                "Candidate source IDs map to exact brief sources.",
+                "Manual review can distinguish generic CI dashboards from root-cause triage tools.",
+                "An unscored manual review template is present.",
+            ),
+        ),
+        ShadowFixtureSpecification(
             case=_case("adversarial_cloud_incident_health_near_miss"),
             evidence_payload={
                 "inference": {

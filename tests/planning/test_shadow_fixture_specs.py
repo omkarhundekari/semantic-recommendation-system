@@ -18,6 +18,7 @@ def test_first_fixture_specs_are_valid_and_match_registry_cases():
     assert [spec.case.case_id for spec in specs] == [
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
+        "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
         "sparse_evidence_cloud_cost",
     ]
@@ -37,6 +38,7 @@ def test_fixture_spec_rejects_unknown_case():
     [
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
+        "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
         "sparse_evidence_cloud_cost",
     ],
@@ -213,5 +215,45 @@ def test_rag_fixture_has_predeclared_oracle_and_qa_specific_evidence():
     assert "RAG QA Citation Quality Workbench" in serialized_artifact
     assert "RAG Retrieval Failure Analyzer" in serialized_artifact
     assert "Question-Level RAG Evaluation Dashboard" in serialized_artifact
+    assert "expected_overall_preference" not in serialized_artifact
+    assert "expected_response_quality" not in serialized_artifact
+
+
+
+def test_flaky_tests_fixture_has_predeclared_oracle_and_multi_anchor_evidence():
+    import json
+
+    from planning.fixture_review_oracles import (
+        get_fixture_review_oracle,
+    )
+
+    spec = get_fixture_specification("developer_productivity_flaky_tests")
+    oracle = get_fixture_review_oracle(spec.case.case_id)
+
+    source_titles = {
+        item["title"]
+        for item in spec.evidence_payload["merged_results"]
+    }
+
+    assert oracle.expected_overall_preference == "openai"
+    assert oracle.expected_response_quality == "standard"
+    assert any("Flaky Tests" in title for title in source_titles)
+    assert any("Code Changes" in title for title in source_titles)
+    assert any("CI Failure" in title for title in source_titles)
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload=spec.evidence_payload,
+        user_goal=spec.case.user_goal,
+        constraints=spec.case.constraints,
+        provider=MockCandidateGenerationProvider(
+            response=spec.mock_response
+        ),
+    )
+
+    serialized_artifact = json.dumps(artifact)
+
+    assert "Flaky Test Detection Dashboard" in serialized_artifact
+    assert "Code Change Failure Correlator" in serialized_artifact
+    assert "CI Root Cause Prioritization Queue" in serialized_artifact
     assert "expected_overall_preference" not in serialized_artifact
     assert "expected_response_quality" not in serialized_artifact

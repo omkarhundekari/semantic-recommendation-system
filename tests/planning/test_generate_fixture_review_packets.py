@@ -13,6 +13,7 @@ def test_selects_all_initial_fixture_specs_by_default():
     assert [spec.case.case_id for spec in specs] == [
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
+        "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
         "sparse_evidence_cloud_cost",
     ]
@@ -92,6 +93,7 @@ def test_available_fixture_ids_match_selectable_specs():
     assert available_fixture_ids() == (
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
+        "developer_productivity_flaky_tests",
         "adversarial_cloud_incident_health_near_miss",
         "sparse_evidence_cloud_cost",
     )
@@ -152,5 +154,27 @@ def test_rag_fixture_review_packet_uses_predeclared_oracle_but_hides_it():
     assert "Question-Level RAG Evaluation Dashboard" in packet
     assert "Citation Grounding" in packet
     assert "Question Answering" in packet
+    assert "expected_overall_preference" not in packet
+    assert "expected_response_quality" not in packet
+
+
+
+def test_flaky_tests_review_packet_uses_predeclared_oracle_but_hides_it():
+    spec = select_fixture_specifications(
+        ["developer_productivity_flaky_tests"]
+    )[0]
+    artifact = build_fixture_artifact(spec)
+    packet = render_review_packet(
+        artifact=artifact,
+        specification=spec,
+    )
+
+    assert "developer_productivity_flaky_tests" in packet
+    assert "Flaky Test Detection Dashboard" in packet
+    assert "Code Change Failure Correlator" in packet
+    assert "CI Root Cause Prioritization Queue" in packet
+    assert "flaky tests" in packet.lower()
+    assert "code changes" in packet.lower()
+    assert "root cause" in packet.lower()
     assert "expected_overall_preference" not in packet
     assert "expected_response_quality" not in packet
