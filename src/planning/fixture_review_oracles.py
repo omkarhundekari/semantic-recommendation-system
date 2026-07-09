@@ -146,6 +146,28 @@ def fixture_review_oracles() -> Tuple[FixtureReviewOracle, ...]:
                 "cause prioritization rather than generic testing dashboards."
             ),
         ),
+        FixtureReviewOracle(
+            fixture_id="adversarial_cloud_incident_health_near_miss",
+            expected_overall_preference="openai",
+            expected_response_quality="limited",
+            reviewer_expectations=(
+                "Reviewers should prefer the shadow path over the deterministic "
+                "path because the deterministic candidates are off-goal "
+                "meta-planning outputs.",
+                "Reviewers should downgrade response quality because one "
+                "shadow candidate cites only adjacent health-event evidence.",
+                "The artifact should surface the grounding failure through "
+                "candidate-to-source relevance diagnostics and quality warnings.",
+            ),
+            rationale=(
+                "This adversarial case intentionally mixes direct cloud "
+                "incident evidence with an adjacent personal-health source. "
+                "The expected outcome is an openai preference because the "
+                "shadow set contains useful cloud-incident workflows, but "
+                "limited response quality because the selected set still "
+                "includes an adjacent-only candidate."
+            ),
+        ),
     )
 
 
