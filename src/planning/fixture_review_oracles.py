@@ -168,6 +168,26 @@ def fixture_review_oracles() -> Tuple[FixtureReviewOracle, ...]:
                 "includes an adjacent-only candidate."
             ),
         ),
+        FixtureReviewOracle(
+            fixture_id="strict_weekend_scope",
+            expected_overall_preference="tie",
+            expected_response_quality="limited",
+            reviewer_expectations=(
+                "Reviewers should treat this as a deterministic-competitive "
+                "case rather than a shadow-favored case.",
+                "Both planner paths should stay focused on lineage-aware impact "
+                "analysis for data incidents.",
+                "Response quality should be downgraded if either path proposes "
+                "more than a realistic weekend MVP."
+            ),
+            rationale=(
+                "This controlled case is intended to reduce selection bias by "
+                "giving the deterministic planner a narrow, familiar "
+                "data-engineering problem. A tie is expected if both paths stay "
+                "aligned and grounded, but limited quality is expected because "
+                "the weekend constraint makes scope realism difficult."
+            ),
+        ),
     )
 
 
