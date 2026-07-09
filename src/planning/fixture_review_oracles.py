@@ -104,6 +104,27 @@ def fixture_review_oracles() -> Tuple[FixtureReviewOracle, ...]:
                 "stay grounded in evaluation and citation quality."
             ),
         ),
+        FixtureReviewOracle(
+            fixture_id="developer_productivity_flaky_tests",
+            expected_overall_preference="openai",
+            expected_response_quality="standard",
+            reviewer_expectations=(
+                "Reviewers should expect direct evidence for flaky-test "
+                "detection, CI failure triage, and code-change correlation.",
+                "Candidate directions should address the combined problem of "
+                "identifying flaky tests, linking failures to changes, and "
+                "prioritizing likely root causes.",
+                "The stronger path should separate detection, correlation, "
+                "and prioritization into distinct developer-tool workflows.",
+            ),
+            rationale=(
+                "This controlled case is intended to test a multi-anchor "
+                "developer-productivity goal with strong direct evidence. A "
+                "standard quality outcome is expected only if directions stay "
+                "focused on flaky tests, CI failures, code changes, and root "
+                "cause prioritization rather than generic testing dashboards."
+            ),
+        ),
     )
 
 
