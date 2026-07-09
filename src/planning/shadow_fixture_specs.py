@@ -433,6 +433,171 @@ def fixture_specifications() -> Tuple[ShadowFixtureSpecification, ...]:
             ),
         ),
         ShadowFixtureSpecification(
+            case=_case("incident_investigation_broad"),
+            evidence_payload={
+                "inference": {
+                    "inferred_focus": "incident_investigation",
+                },
+                "merged_results": [
+                    {
+                        "document_id": "paper-incident-timeline",
+                        "source_type": "research_paper",
+                        "title": "Timeline Reconstruction for Software Incidents",
+                        "abstract": (
+                            "Incident investigations often require reconstructing "
+                            "ordered timelines from logs, deployments, alerts, and "
+                            "operator notes to identify plausible contributing events."
+                        ),
+                        "category": "cs.SE",
+                        "retrieval_rank": 1,
+                    },
+                    {
+                        "document_id": "paper-observability-correlation",
+                        "source_type": "research_paper",
+                        "title": (
+                            "Correlating Observability Signals During Production "
+                            "Failures"
+                        ),
+                        "abstract": (
+                            "Production failure analysis can combine logs, metrics, "
+                            "traces, and deployment events to find correlated signals "
+                            "that help engineers narrow investigation scope."
+                        ),
+                        "category": "cs.SE",
+                        "retrieval_rank": 2,
+                    },
+                    {
+                        "repository_id": "repo-incident-review",
+                        "source_type": "github_repository",
+                        "title": "Incident Review Evidence Collector",
+                        "readme_excerpt": (
+                            "Collect alerts, deployment records, logs, ownership "
+                            "metadata, and investigation notes into a structured "
+                            "incident review packet."
+                        ),
+                        "retrieval_rank": 3,
+                    },
+                ],
+            },
+            mock_response={
+                "candidates": [
+                    {
+                        "title": "Incident Timeline Reconstruction Assistant",
+                        "problem_statement": (
+                            "Support engineers need a way to assemble alerts, "
+                            "deployments, logs, and notes into a coherent incident "
+                            "timeline."
+                        ),
+                        "target_user": "Support engineers and SREs",
+                        "core_workflow": [
+                            "Load incident events from small structured fixtures.",
+                            "Normalize timestamps across alerts, logs, and deployments.",
+                            "Group events into a readable investigation timeline.",
+                        ],
+                        "mvp_scope": [
+                            "Create sample alert, log, deployment, and note fixtures.",
+                            "Normalize timestamps and event types.",
+                            "Sort and group events into an incident timeline.",
+                            "Show likely contributing events with source labels.",
+                        ],
+                        "success_metrics": [
+                            "Number of relevant events included in the timeline.",
+                            "Time saved assembling an initial investigation packet.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses direct incident timeline reconstruction evidence."
+                        ),
+                        "source_ids": ["paper-incident-timeline"],
+                        "assumptions": [
+                            (
+                                "Assumes the broad incident investigation request can "
+                                "be scoped to timeline reconstruction."
+                            )
+                        ],
+                        "suggested_stack": ["Python", "PostgreSQL"],
+                    },
+                    {
+                        "title": "Observability Signal Correlation Board",
+                        "problem_statement": (
+                            "Engineers investigating a production failure need to "
+                            "compare logs, metrics, traces, and deployments to find "
+                            "correlated signals."
+                        ),
+                        "target_user": "Backend engineers and SREs",
+                        "core_workflow": [
+                            "Load simplified observability signal fixtures.",
+                            "Join signals by service, timestamp window, and event type.",
+                            "Surface suspicious correlations for review.",
+                        ],
+                        "mvp_scope": [
+                            "Create fixture data for metrics, logs, traces, and deploys.",
+                            "Compute simple time-window correlations.",
+                            "Rank correlated signals with transparent rules.",
+                            "Render a board of candidate investigation leads.",
+                        ],
+                        "success_metrics": [
+                            "Number of correlated signals surfaced.",
+                            "Reviewer agreement with top investigation leads.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses direct observability correlation evidence for "
+                            "production failure analysis."
+                        ),
+                        "source_ids": ["paper-observability-correlation"],
+                        "assumptions": [
+                            (
+                                "Assumes the broad request can be scoped to signal "
+                                "correlation rather than full root-cause automation."
+                            )
+                        ],
+                        "suggested_stack": ["Python", "React"],
+                    },
+                    {
+                        "title": "Incident Review Evidence Packet Builder",
+                        "problem_statement": (
+                            "Support teams need a structured packet that collects "
+                            "incident evidence before a postmortem or escalation."
+                        ),
+                        "target_user": "Support engineers",
+                        "core_workflow": [
+                            "Collect incident metadata and evidence links.",
+                            "Attach alerts, deploys, logs, owners, and notes.",
+                            "Generate a structured review packet.",
+                        ],
+                        "mvp_scope": [
+                            "Create forms or fixtures for incident evidence.",
+                            "Store evidence items with type, owner, and timestamp.",
+                            "Generate a Markdown or JSON review packet.",
+                            "Highlight missing evidence sections before review.",
+                        ],
+                        "success_metrics": [
+                            "Percentage of required evidence sections completed.",
+                            "Reduction in missing context during review.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses implementation context for structured incident "
+                            "review evidence collection."
+                        ),
+                        "source_ids": ["repo-incident-review"],
+                        "assumptions": [
+                            (
+                                "Assumes the broad investigation request can be scoped "
+                                "to evidence collection and review preparation."
+                            )
+                        ],
+                        "suggested_stack": ["Python", "React"],
+                    },
+                ],
+            },
+            reviewability_requirements=(
+                "The fixture represents a broad incident investigation request.",
+                "Candidates should make the broad goal concrete without claiming full root-cause automation.",
+                "The packet should expose assumptions that narrow the broad request.",
+                "Manual review can reward useful scoping while limiting quality for breadth.",
+                "An unscored manual review template is present.",
+            ),
+        ),
+        ShadowFixtureSpecification(
             case=_case("developer_productivity_flaky_tests"),
             evidence_payload={
                 "inference": {

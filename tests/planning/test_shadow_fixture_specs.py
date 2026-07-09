@@ -18,6 +18,7 @@ def test_first_fixture_specs_are_valid_and_match_registry_cases():
     assert [spec.case.case_id for spec in specs] == [
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
+        "incident_investigation_broad",
         "developer_productivity_flaky_tests",
         "ambiguous_ai_student_project",
         "adversarial_cloud_incident_health_near_miss",
@@ -42,6 +43,7 @@ def test_fixture_spec_rejects_unknown_case():
     [
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
+        "incident_investigation_broad",
         "developer_productivity_flaky_tests",
         "ambiguous_ai_student_project",
         "adversarial_cloud_incident_health_near_miss",
@@ -414,5 +416,37 @@ def test_deterministic_template_risk_fixture_has_predeclared_oracle_and_direct_e
     assert "Data Quality Incident Impact Map" in serialized_artifact
     assert "Owner Notification Priority Queue" in serialized_artifact
     assert "Dashboard Blast Radius Review" in serialized_artifact
+    assert "expected_overall_preference" not in serialized_artifact
+    assert "expected_response_quality" not in serialized_artifact
+
+
+
+def test_incident_investigation_broad_fixture_has_predeclared_oracle_and_reviewable_scope():
+    import json
+
+    from planning.fixture_review_oracles import (
+        get_fixture_review_oracle,
+    )
+
+    spec = get_fixture_specification("incident_investigation_broad")
+    oracle = get_fixture_review_oracle(spec.case.case_id)
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload=spec.evidence_payload,
+        user_goal=spec.case.user_goal,
+        constraints=spec.case.constraints,
+        provider=MockCandidateGenerationProvider(
+            response=spec.mock_response
+        ),
+    )
+
+    serialized_artifact = json.dumps(artifact)
+
+    assert oracle.expected_overall_preference == "openai"
+    assert oracle.expected_response_quality == "limited"
+    assert "Incident Timeline Reconstruction Assistant" in serialized_artifact
+    assert "Observability Signal Correlation Board" in serialized_artifact
+    assert "Incident Review Evidence Packet Builder" in serialized_artifact
+    assert "root-cause automation" in serialized_artifact
     assert "expected_overall_preference" not in serialized_artifact
     assert "expected_response_quality" not in serialized_artifact

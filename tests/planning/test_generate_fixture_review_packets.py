@@ -13,6 +13,7 @@ def test_selects_all_initial_fixture_specs_by_default():
     assert [spec.case.case_id for spec in specs] == [
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
+        "incident_investigation_broad",
         "developer_productivity_flaky_tests",
         "ambiguous_ai_student_project",
         "adversarial_cloud_incident_health_near_miss",
@@ -97,6 +98,7 @@ def test_available_fixture_ids_match_selectable_specs():
     assert available_fixture_ids() == (
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
+        "incident_investigation_broad",
         "developer_productivity_flaky_tests",
         "ambiguous_ai_student_project",
         "adversarial_cloud_incident_health_near_miss",
@@ -264,5 +266,24 @@ def test_deterministic_template_risk_review_packet_uses_predeclared_oracle_but_h
     assert "Dashboard Blast Radius Review" in packet
     assert "downstream" in packet.lower()
     assert "owner" in packet.lower()
+    assert "expected_overall_preference" not in packet
+    assert "expected_response_quality" not in packet
+
+
+
+def test_incident_investigation_broad_review_packet_uses_predeclared_oracle_but_hides_it():
+    spec = select_fixture_specifications(["incident_investigation_broad"])[0]
+    artifact = build_fixture_artifact(spec)
+    packet = render_review_packet(
+        artifact=artifact,
+        specification=spec,
+    )
+
+    assert "incident_investigation_broad" in packet
+    assert "Incident Timeline Reconstruction Assistant" in packet
+    assert "Observability Signal Correlation Board" in packet
+    assert "Incident Review Evidence Packet Builder" in packet
+    assert "adjacent_context_only_candidate" in packet
+    assert "Does each direction solve a concrete investigation workflow" in packet
     assert "expected_overall_preference" not in packet
     assert "expected_response_quality" not in packet
