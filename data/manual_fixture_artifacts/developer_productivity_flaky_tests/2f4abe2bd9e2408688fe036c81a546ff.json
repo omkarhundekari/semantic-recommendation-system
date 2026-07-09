@@ -1,0 +1,2218 @@
+{
+  "schema_version": "1.1",
+  "artifact_identity": {
+    "artifact_id": "2f4abe2bd9e2408688fe036c81a546ff",
+    "generation_timestamp_utc": "20260709T022223Z",
+    "fixture_id": "developer_productivity_flaky_tests"
+  },
+  "generated_at_utc": "20260709T022223Z",
+  "query": "Build a developer productivity project that helps engineers identify flaky tests, connect failures with code changes, and prioritize likely root causes.",
+  "constraints": {
+    "skill_level": "intermediate",
+    "time_available": "3 weeks",
+    "target_roles": [
+      "Developer Tools Engineer"
+    ],
+    "preferred_stack": [
+      "Python",
+      "React"
+    ]
+  },
+  "retrieval": {
+    "selected_route": null,
+    "expanded_query": null,
+    "focused_query": null,
+    "inference": {
+      "inferred_focus": "developer_tools"
+    },
+    "merged_evidence_count": 3
+  },
+  "legacy_planner": {
+    "direction_count": 3,
+    "directions": [
+      {
+        "title": "Repository Health Intelligence Dashboard",
+        "evidence_title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "developer_tools"
+      },
+      {
+        "title": "Code Review Risk Assistant",
+        "evidence_title": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "developer_tools"
+      },
+      {
+        "title": "Technical Debt Prioritization Engine",
+        "evidence_title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "developer_tools"
+      }
+    ],
+    "raw_ideas": [
+      {
+        "project_title": "Repository Health Intelligence Dashboard",
+        "based_on_paper": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+        "evidence_title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.SE",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "developer_tools",
+        "detected_intent": "project_building",
+        "idea_angle": "Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.",
+        "opportunity_area": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_focus_type": "buildable_gap",
+        "evidence_focus_statement": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+        "evidence_driven_angle": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+        "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "CI Failure Triage Dashboard",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Developer Tools",
+          "Monitoring"
+        ],
+        "extracted_skills": [
+          "GitHub APIs",
+          "Repository Analytics",
+          "Code Quality Metrics",
+          "Maintenance Risk Scoring",
+          "Dashboards",
+          "Automation",
+          "Developer Tools"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Detecting and Prioritizing Flaky Tests in Continuous Integration'. The paper provides evidence related to: Flaky tests reduce developer productivity by causing nondeterministic CI failures. Detection uses repeated test outcomes, historical failure patterns, and prioritization signals.... The generated project 'Repository Health Intelligence Dashboard' turns that research direction into a buildable software prototype focused on Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations..",
+        "mvp_scope": [
+          "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+          "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+          "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+          "Show drill-down evidence for each recommendation, including affected files or teams.",
+          "Validate one scoring rule against a curated set of known risky and healthy examples.",
+          "Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add GitHub API integration for repository metrics.",
+          "Add pull-request risk scoring and technical debt trend tracking."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "GitHub APIs",
+          "Code Analysis",
+          "Automation",
+          "Repository Analytics",
+          "Code Quality Metrics",
+          "Maintenance Risk Scoring",
+          "Dashboards",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Repository Health Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Developer Tools Engineer",
+          "Software Engineer",
+          "Platform Engineer",
+          "Engineering Productivity Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Developer Tools Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Code Review Risk Assistant",
+        "based_on_paper": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+        "evidence_title": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.SE",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "developer_tools",
+        "detected_intent": "project_building",
+        "idea_angle": "Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.",
+        "opportunity_area": "Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+        "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "CI Failure Triage Dashboard",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Developer Tools",
+          "Monitoring"
+        ],
+        "extracted_skills": [
+          "Code Analysis",
+          "Pull Request Analytics",
+          "Risk Scoring",
+          "Testing Signals",
+          "GitHub APIs",
+          "Developer Tools",
+          "Automation"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Connecting Test Failures with Code Changes for Root Cause Analysis'. The paper provides evidence related to: Linking failing tests with recent code changes, changed files, ownership, and commit metadata can support root cause analysis in software testing.... The generated project 'Code Review Risk Assistant' turns that research direction into a buildable software prototype focused on Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks..",
+        "mvp_scope": [
+          "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+          "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+          "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+          "Show drill-down evidence for each recommendation, including affected files or teams.",
+          "Validate one scoring rule against a curated set of known risky and healthy examples."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add GitHub API integration for repository metrics.",
+          "Add pull-request risk scoring and technical debt trend tracking."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "GitHub APIs",
+          "Code Analysis",
+          "Automation",
+          "Pull Request Analytics",
+          "Risk Scoring",
+          "Testing Signals",
+          "Developer Tools",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Code Review Risk Assistant that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Developer Tools Engineer",
+          "Software Engineer",
+          "Platform Engineer",
+          "Engineering Productivity Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Developer Tools Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Technical Debt Prioritization Engine",
+        "based_on_paper": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+        "evidence_title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.SE",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "developer_tools",
+        "detected_intent": "project_building",
+        "idea_angle": "Identify technical debt areas and rank them by impact, frequency, complexity, and developer pain.",
+        "opportunity_area": "Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+        "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "CI Failure Triage Dashboard",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Developer Tools",
+          "Monitoring"
+        ],
+        "extracted_skills": [
+          "Code Metrics",
+          "Technical Debt Analysis",
+          "Prioritization",
+          "Architecture Signals",
+          "Dashboards",
+          "Developer Tools",
+          "Automation"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Detecting and Prioritizing Flaky Tests in Continuous Integration'. The paper provides evidence related to: Flaky tests reduce developer productivity by causing nondeterministic CI failures. Detection uses repeated test outcomes, historical failure patterns, and prioritization signals.... The generated project 'Technical Debt Prioritization Engine' turns that research direction into a buildable software prototype focused on Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact..",
+        "mvp_scope": [
+          "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+          "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+          "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+          "Show drill-down evidence for each recommendation, including affected files or teams.",
+          "Validate one scoring rule against a curated set of known risky and healthy examples."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add GitHub API integration for repository metrics.",
+          "Add pull-request risk scoring and technical debt trend tracking."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "GitHub APIs",
+          "Code Analysis",
+          "Automation",
+          "Code Metrics",
+          "Technical Debt Analysis",
+          "Prioritization",
+          "Architecture Signals",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Technical Debt Prioritization Engine that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Developer Tools Engineer",
+          "Software Engineer",
+          "Platform Engineer",
+          "Engineering Productivity Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Developer Tools Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Repository Health Intelligence Dashboard",
+          "based_on_paper": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+          "evidence_title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.SE",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "developer_tools",
+          "detected_intent": "project_building",
+          "idea_angle": "Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.",
+          "opportunity_area": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_focus_type": "buildable_gap",
+          "evidence_focus_statement": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+          "evidence_driven_angle": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+          "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "CI Failure Triage Dashboard",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Developer Tools",
+            "Monitoring"
+          ],
+          "extracted_skills": [
+            "GitHub APIs",
+            "Repository Analytics",
+            "Code Quality Metrics",
+            "Maintenance Risk Scoring",
+            "Dashboards",
+            "Automation",
+            "Developer Tools"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Detecting and Prioritizing Flaky Tests in Continuous Integration'. The paper provides evidence related to: Flaky tests reduce developer productivity by causing nondeterministic CI failures. Detection uses repeated test outcomes, historical failure patterns, and prioritization signals.... The generated project 'Repository Health Intelligence Dashboard' turns that research direction into a buildable software prototype focused on Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations..",
+          "mvp_scope": [
+            "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+            "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+            "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+            "Show drill-down evidence for each recommendation, including affected files or teams.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add GitHub API integration for repository metrics.",
+            "Add pull-request risk scoring and technical debt trend tracking."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "GitHub APIs",
+            "Code Analysis",
+            "Automation",
+            "Repository Analytics",
+            "Code Quality Metrics",
+            "Maintenance Risk Scoring",
+            "Dashboards",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Repository Health Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Developer Tools Engineer",
+            "Software Engineer",
+            "Platform Engineer",
+            "Engineering Productivity Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Developer Tools Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.4,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Repository Health Intelligence Dashboard scores 8.4/10 with a strong career signal because it is grounded in research paper, fits the developer_tools domain, and demonstrates skills such as GitHub APIs, Repository Analytics, Code Quality Metrics, Maintenance Risk Scoring, Dashboards, Automation. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          }
+        },
+        {
+          "project_title": "Code Review Risk Assistant",
+          "based_on_paper": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+          "evidence_title": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.SE",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "developer_tools",
+          "detected_intent": "project_building",
+          "idea_angle": "Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.",
+          "opportunity_area": "Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+          "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "CI Failure Triage Dashboard",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Developer Tools",
+            "Monitoring"
+          ],
+          "extracted_skills": [
+            "Code Analysis",
+            "Pull Request Analytics",
+            "Risk Scoring",
+            "Testing Signals",
+            "GitHub APIs",
+            "Developer Tools",
+            "Automation"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Connecting Test Failures with Code Changes for Root Cause Analysis'. The paper provides evidence related to: Linking failing tests with recent code changes, changed files, ownership, and commit metadata can support root cause analysis in software testing.... The generated project 'Code Review Risk Assistant' turns that research direction into a buildable software prototype focused on Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks..",
+          "mvp_scope": [
+            "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+            "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+            "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+            "Show drill-down evidence for each recommendation, including affected files or teams.",
+            "Validate one scoring rule against a curated set of known risky and healthy examples.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add GitHub API integration for repository metrics.",
+            "Add pull-request risk scoring and technical debt trend tracking."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "GitHub APIs",
+            "Code Analysis",
+            "Automation",
+            "Pull Request Analytics",
+            "Risk Scoring",
+            "Testing Signals",
+            "Developer Tools",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Code Review Risk Assistant that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Developer Tools Engineer",
+            "Software Engineer",
+            "Platform Engineer",
+            "Engineering Productivity Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Developer Tools Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.6,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Code Review Risk Assistant scores 8.6/10 with a strong career signal because it is grounded in research paper, fits the developer_tools domain, and demonstrates skills such as Code Analysis, Pull Request Analytics, Risk Scoring, Testing Signals, GitHub APIs, Developer Tools. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          }
+        },
+        {
+          "project_title": "Technical Debt Prioritization Engine",
+          "based_on_paper": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+          "evidence_title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.SE",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "developer_tools",
+          "detected_intent": "project_building",
+          "idea_angle": "Identify technical debt areas and rank them by impact, frequency, complexity, and developer pain.",
+          "opportunity_area": "Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+          "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "CI Failure Triage Dashboard",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Developer Tools",
+            "Monitoring"
+          ],
+          "extracted_skills": [
+            "Code Metrics",
+            "Technical Debt Analysis",
+            "Prioritization",
+            "Architecture Signals",
+            "Dashboards",
+            "Developer Tools",
+            "Automation"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Detecting and Prioritizing Flaky Tests in Continuous Integration'. The paper provides evidence related to: Flaky tests reduce developer productivity by causing nondeterministic CI failures. Detection uses repeated test outcomes, historical failure patterns, and prioritization signals.... The generated project 'Technical Debt Prioritization Engine' turns that research direction into a buildable software prototype focused on Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact..",
+          "mvp_scope": [
+            "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+            "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+            "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+            "Show drill-down evidence for each recommendation, including affected files or teams.",
+            "Validate one scoring rule against a curated set of known risky and healthy examples.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add GitHub API integration for repository metrics.",
+            "Add pull-request risk scoring and technical debt trend tracking.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "GitHub APIs",
+            "Code Analysis",
+            "Automation",
+            "Code Metrics",
+            "Technical Debt Analysis",
+            "Prioritization",
+            "Architecture Signals",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Technical Debt Prioritization Engine that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Developer Tools Engineer",
+            "Software Engineer",
+            "Platform Engineer",
+            "Engineering Productivity Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Developer Tools Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.6,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Technical Debt Prioritization Engine scores 8.6/10 with a strong career signal because it is grounded in research paper, fits the developer_tools domain, and demonstrates skills such as Code Metrics, Technical Debt Analysis, Prioritization, Architecture Signals, Dashboards, Developer Tools. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          }
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    }
+  },
+  "v2_shadow": {
+    "status": "fixture_evaluated",
+    "report": {
+      "evidence_brief": {
+        "query": "Build a developer productivity project that helps engineers identify flaky tests, connect failures with code changes, and prioritize likely root causes.",
+        "sources": [
+          {
+            "source_id": "repo-ci-failure-triage",
+            "source_type": "github_repository",
+            "title": "CI Failure Triage Dashboard",
+            "excerpt": "CI Failure Triage Dashboard Collect CI runs, failed tests, changed files, commit authors, flaky-test labels, and failure history to prioritize likely root causes.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 3,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "paper-flaky-test-detection",
+            "source_type": "research_paper",
+            "title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+            "excerpt": "Detecting and Prioritizing Flaky Tests in Continuous Integration Flaky tests reduce developer productivity by causing nondeterministic CI failures. Detection uses repeated test outcomes, historical failure patterns, and prioritization signals.",
+            "category": "cs.SE",
+            "url": null,
+            "retrieval_rank": 1,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "paper-change-failure-correlation",
+            "source_type": "research_paper",
+            "title": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+            "excerpt": "Connecting Test Failures with Code Changes for Root Cause Analysis Linking failing tests with recent code changes, changed files, ownership, and commit metadata can support root cause analysis in software testing.",
+            "category": "cs.SE",
+            "url": null,
+            "retrieval_rank": 2,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          }
+        ],
+        "source_counts": {
+          "github_repository": 1,
+          "research_paper": 2
+        },
+        "recurring_concepts": [
+          "tests",
+          "changed",
+          "commit",
+          "failure",
+          "failures",
+          "files",
+          "root",
+          "test"
+        ],
+        "coverage_warnings": []
+      },
+      "evidence_curation": {
+        "required_anchor_terms": [],
+        "retained": [
+          {
+            "item": {
+              "repository_id": "repo-ci-failure-triage",
+              "source_type": "github_repository",
+              "title": "CI Failure Triage Dashboard",
+              "readme_excerpt": "Collect CI runs, failed tests, changed files, commit authors, flaky-test labels, and failure history to prioritize likely root causes.",
+              "retrieval_rank": 3
+            },
+            "relevance_score": 12.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "causes",
+              "flaky",
+              "likely",
+              "prioritize",
+              "root",
+              "tests"
+            ],
+            "query_term_document_frequencies": {
+              "causes": 1,
+              "flaky": 2,
+              "likely": 1,
+              "prioritize": 1,
+              "root": 2,
+              "tests": 3
+            },
+            "unique_query_terms": [
+              "causes",
+              "likely",
+              "prioritize"
+            ],
+            "matched_query_phrases": [
+              "prioritize likely",
+              "likely root",
+              "root causes",
+              "prioritize likely root",
+              "likely root causes"
+            ],
+            "unique_query_phrases": [
+              "prioritize likely",
+              "likely root",
+              "root causes",
+              "prioritize likely root",
+              "likely root causes"
+            ],
+            "query_phrase_document_frequencies": {
+              "prioritize likely": 1,
+              "likely root": 1,
+              "root causes": 1,
+              "prioritize likely root": 1,
+              "likely root causes": 1
+            },
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "document_id": "paper-flaky-test-detection",
+              "source_type": "research_paper",
+              "title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+              "abstract": "Flaky tests reduce developer productivity by causing nondeterministic CI failures. Detection uses repeated test outcomes, historical failure patterns, and prioritization signals.",
+              "category": "cs.SE",
+              "retrieval_rank": 1
+            },
+            "relevance_score": 10.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "developer",
+              "failures",
+              "flaky",
+              "productivity",
+              "tests"
+            ],
+            "query_term_document_frequencies": {
+              "developer": 1,
+              "failures": 2,
+              "flaky": 2,
+              "productivity": 1,
+              "tests": 3
+            },
+            "unique_query_terms": [
+              "developer",
+              "productivity"
+            ],
+            "matched_query_phrases": [
+              "developer productivity",
+              "flaky tests"
+            ],
+            "unique_query_phrases": [
+              "developer productivity",
+              "flaky tests"
+            ],
+            "query_phrase_document_frequencies": {
+              "developer productivity": 1,
+              "flaky tests": 1
+            },
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "document_id": "paper-change-failure-correlation",
+              "source_type": "research_paper",
+              "title": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+              "abstract": "Linking failing tests with recent code changes, changed files, ownership, and commit metadata can support root cause analysis in software testing.",
+              "category": "cs.SE",
+              "retrieval_rank": 2
+            },
+            "relevance_score": 10.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "changes",
+              "code",
+              "failures",
+              "root",
+              "tests"
+            ],
+            "query_term_document_frequencies": {
+              "changes": 1,
+              "code": 1,
+              "failures": 2,
+              "root": 2,
+              "tests": 3
+            },
+            "unique_query_terms": [
+              "changes",
+              "code"
+            ],
+            "matched_query_phrases": [
+              "code changes"
+            ],
+            "unique_query_phrases": [
+              "code changes"
+            ],
+            "query_phrase_document_frequencies": {
+              "code changes": 1
+            },
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          }
+        ],
+        "dropped": [],
+        "retained_source_counts": {
+          "github_repository": 1,
+          "research_paper": 2
+        }
+      },
+      "planning_diagnostics": {
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "provider_called": true,
+        "prompt_content_hash": "6bf217c216980cc9307f96b2f91544d0f9fcb27f3fa864257efc03fd17cf8584"
+      },
+      "selected_titles": [
+        "CI Root Cause Prioritization Queue",
+        "Flaky Test Detection Dashboard",
+        "Code Change Failure Correlator"
+      ],
+      "selected_candidates": [
+        {
+          "title": "CI Root Cause Prioritization Queue",
+          "problem_statement": "Teams need a practical queue that combines flaky test history, failed CI runs, changed files, and ownership to prioritize likely root causes.",
+          "target_user": "Developer Tools Engineers",
+          "core_workflow": [
+            "Load CI runs, failed tests, and changed files.",
+            "Combine flaky-test and code-change signals.",
+            "Prioritize failures for engineer review."
+          ],
+          "mvp_scope": [
+            "Load sample CI failure records.",
+            "Join failures with commits and changed files.",
+            "Add flaky-test history as a prioritization signal.",
+            "Show a ranked triage queue with explanations."
+          ],
+          "success_metrics": [
+            "Number of CI failures prioritized.",
+            "Percentage of failures with an explainable root-cause hint."
+          ],
+          "evidence_relationship": "Uses implementation context for CI failure triage and direct signals from flaky-test and code-change evidence.",
+          "source_ids": [
+            "repo-ci-failure-triage",
+            "paper-flaky-test-detection",
+            "paper-change-failure-correlation"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "React"
+          ],
+          "ranking": {
+            "score": 1.0,
+            "score_breakdown": {
+              "evidence_support": 1.0,
+              "feasibility": 1.0,
+              "constraint_alignment": 1.0,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 1.00.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 1.00.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Flaky Test Detection Dashboard",
+          "problem_statement": "Developer tools teams need to identify tests whose failures are likely nondeterministic rather than caused by the latest code change.",
+          "target_user": "Developer Tools Engineers",
+          "core_workflow": [
+            "Load historical CI test outcomes.",
+            "Detect tests with inconsistent pass/fail history.",
+            "Rank likely flaky tests for triage."
+          ],
+          "mvp_scope": [
+            "Load sample CI run and test result records.",
+            "Compute pass/fail variance per test.",
+            "Flag tests with repeated nondeterministic outcomes.",
+            "Show flaky-test candidates in a dashboard."
+          ],
+          "success_metrics": [
+            "Number of likely flaky tests identified.",
+            "Precision of flaky-test labels on sample data."
+          ],
+          "evidence_relationship": "Uses direct evidence on flaky-test detection and prioritization in continuous integration.",
+          "source_ids": [
+            "paper-flaky-test-detection"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "React"
+          ],
+          "ranking": {
+            "score": 0.926,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.85,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.85.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Code Change Failure Correlator",
+          "problem_statement": "Engineers need to understand whether failing tests are related to recent commits, changed files, or ownership signals.",
+          "target_user": "Software Engineers",
+          "core_workflow": [
+            "Load failed tests and recent commits.",
+            "Map changed files to failed test areas.",
+            "Show likely change-to-failure links."
+          ],
+          "mvp_scope": [
+            "Load sample commit, changed-file, and failed-test data.",
+            "Create simple file-to-test ownership mappings.",
+            "Rank commits that may explain a test failure.",
+            "Show linked changes beside each failed test."
+          ],
+          "success_metrics": [
+            "Number of failures linked to candidate changes.",
+            "Time saved during failure triage."
+          ],
+          "evidence_relationship": "Uses direct evidence on connecting test failures with code changes for root cause analysis.",
+          "source_ids": [
+            "paper-change-failure-correlation"
+          ],
+          "assumptions": [],
+          "suggested_stack": [
+            "Python",
+            "FastAPI"
+          ],
+          "ranking": {
+            "score": 0.811,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.275,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.28.",
+              "Completeness score: 1.00."
+            ]
+          }
+        }
+      ],
+      "legacy_titles": [
+        "Repository Health Intelligence Dashboard",
+        "Code Review Risk Assistant",
+        "Technical Debt Prioritization Engine"
+      ],
+      "comparison": {
+        "legacy_direction_count": 3,
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "v2_generated_candidate_count": 3,
+        "v2_valid_candidate_count": 3,
+        "v2_selected_candidate_count": 3,
+        "v2_selected_titles": [
+          "CI Root Cause Prioritization Queue",
+          "Flaky Test Detection Dashboard",
+          "Code Change Failure Correlator"
+        ],
+        "provider_called": true,
+        "coverage_warnings": []
+      },
+      "shadow_readiness": {
+        "status": "ready",
+        "reasons": [
+          "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+        ],
+        "signals": {
+          "raw_evidence_count": 3,
+          "curated_evidence_count": 3,
+          "dropped_evidence_count": 0,
+          "generated_candidate_count": 3,
+          "valid_candidate_count": 3,
+          "selected_candidate_count": 3,
+          "provider_called": true,
+          "coverage_warnings": [],
+          "validation_errors": [],
+          "validation_warnings": []
+        }
+      },
+      "prompt_content_hash": "6bf217c216980cc9307f96b2f91544d0f9fcb27f3fa864257efc03fd17cf8584"
+    },
+    "evidence_quality": {
+      "status": "not_routed_pending_calibration",
+      "metrics": {
+        "curation_pool_size": 3,
+        "retained_source_count": 3,
+        "final_brief_source_count": 3,
+        "direct_source_count": 3,
+        "adjacent_source_count": 0,
+        "required_anchor_count": 0,
+        "matched_required_anchor_count": 0,
+        "query_anchor_coverage": null,
+        "unique_query_term_count": 7,
+        "unique_query_phrase_count": 8,
+        "source_type_count": 2,
+        "dominant_source_type": "research_paper",
+        "dominant_source_type_fraction": 0.6666666666666666,
+        "top_direct_relevance_margin": 2.0,
+        "coverage_warnings": []
+      },
+      "thresholds": {
+        "version": "v1",
+        "calibration_status": "unresolved",
+        "sparse_direct_source_threshold": null,
+        "ambiguity_top_margin_threshold": null,
+        "low_diversity_fraction_threshold": null
+      },
+      "evidence_sparse": null,
+      "evidence_ambiguous": null,
+      "source_diversity_low": null,
+      "unresolved_signal_names": [
+        "evidence_sparse",
+        "evidence_ambiguous",
+        "source_diversity_low"
+      ],
+      "routing_ready": false
+    },
+    "selected_candidates": [
+      {
+        "title": "CI Root Cause Prioritization Queue",
+        "problem_statement": "Teams need a practical queue that combines flaky test history, failed CI runs, changed files, and ownership to prioritize likely root causes.",
+        "target_user": "Developer Tools Engineers",
+        "core_workflow": [
+          "Load CI runs, failed tests, and changed files.",
+          "Combine flaky-test and code-change signals.",
+          "Prioritize failures for engineer review."
+        ],
+        "mvp_scope": [
+          "Load sample CI failure records.",
+          "Join failures with commits and changed files.",
+          "Add flaky-test history as a prioritization signal.",
+          "Show a ranked triage queue with explanations."
+        ],
+        "success_metrics": [
+          "Number of CI failures prioritized.",
+          "Percentage of failures with an explainable root-cause hint."
+        ],
+        "evidence_relationship": "Uses implementation context for CI failure triage and direct signals from flaky-test and code-change evidence.",
+        "source_ids": [
+          "repo-ci-failure-triage",
+          "paper-flaky-test-detection",
+          "paper-change-failure-correlation"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ],
+        "ranking": {
+          "score": 1.0,
+          "score_breakdown": {
+            "evidence_support": 1.0,
+            "feasibility": 1.0,
+            "constraint_alignment": 1.0,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 1.00.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 1.00.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Flaky Test Detection Dashboard",
+        "problem_statement": "Developer tools teams need to identify tests whose failures are likely nondeterministic rather than caused by the latest code change.",
+        "target_user": "Developer Tools Engineers",
+        "core_workflow": [
+          "Load historical CI test outcomes.",
+          "Detect tests with inconsistent pass/fail history.",
+          "Rank likely flaky tests for triage."
+        ],
+        "mvp_scope": [
+          "Load sample CI run and test result records.",
+          "Compute pass/fail variance per test.",
+          "Flag tests with repeated nondeterministic outcomes.",
+          "Show flaky-test candidates in a dashboard."
+        ],
+        "success_metrics": [
+          "Number of likely flaky tests identified.",
+          "Precision of flaky-test labels on sample data."
+        ],
+        "evidence_relationship": "Uses direct evidence on flaky-test detection and prioritization in continuous integration.",
+        "source_ids": [
+          "paper-flaky-test-detection"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ],
+        "ranking": {
+          "score": 0.926,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.85,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.85.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Code Change Failure Correlator",
+        "problem_statement": "Engineers need to understand whether failing tests are related to recent commits, changed files, or ownership signals.",
+        "target_user": "Software Engineers",
+        "core_workflow": [
+          "Load failed tests and recent commits.",
+          "Map changed files to failed test areas.",
+          "Show likely change-to-failure links."
+        ],
+        "mvp_scope": [
+          "Load sample commit, changed-file, and failed-test data.",
+          "Create simple file-to-test ownership mappings.",
+          "Rank commits that may explain a test failure.",
+          "Show linked changes beside each failed test."
+        ],
+        "success_metrics": [
+          "Number of failures linked to candidate changes.",
+          "Time saved during failure triage."
+        ],
+        "evidence_relationship": "Uses direct evidence on connecting test failures with code changes for root cause analysis.",
+        "source_ids": [
+          "paper-change-failure-correlation"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ],
+        "ranking": {
+          "score": 0.811,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.275,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.28.",
+            "Completeness score: 1.00."
+          ]
+        }
+      }
+    ],
+    "generation_metadata": {
+      "prompt_version": "v1",
+      "prompt_content_hash": "6bf217c216980cc9307f96b2f91544d0f9fcb27f3fa864257efc03fd17cf8584",
+      "execution_mode": "fixture",
+      "provider_name": "MockCandidateGenerationProvider",
+      "model": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      }
+    },
+    "diagnostics": {
+      "generated_candidate_count": 3,
+      "valid_candidate_count": 3,
+      "selected_candidate_count": 3,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "provider_called": true,
+      "prompt_content_hash": "6bf217c216980cc9307f96b2f91544d0f9fcb27f3fa864257efc03fd17cf8584"
+    },
+    "shadow_readiness": {
+      "status": "ready",
+      "reasons": [
+        "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+      ],
+      "signals": {
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "provider_called": true,
+        "coverage_warnings": [],
+        "validation_errors": [],
+        "validation_warnings": []
+      }
+    },
+    "semantic_goal_relevance": [],
+    "cross_encoder_goal_relevance": [],
+    "semantic_candidate_diversity": null,
+    "evidence_support": [],
+    "grounding_adequacy": [],
+    "candidate_source_relevance": [
+      {
+        "candidate_title": "CI Root Cause Prioritization Queue",
+        "source_id": "repo-ci-failure-triage",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "causes",
+          "changed",
+          "failed",
+          "files",
+          "flaky",
+          "history",
+          "likely",
+          "prioritize",
+          "root",
+          "runs",
+          "test",
+          "tests"
+        ],
+        "goal_source_shared_terms": [
+          "causes",
+          "flaky",
+          "likely",
+          "prioritize",
+          "root",
+          "tests"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: causes, changed, failed, files, flaky."
+      },
+      {
+        "candidate_title": "CI Root Cause Prioritization Queue",
+        "source_id": "paper-flaky-test-detection",
+        "source_type": "research_paper",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "developer",
+          "failures",
+          "flaky",
+          "prioritization",
+          "signals",
+          "test",
+          "tests"
+        ],
+        "goal_source_shared_terms": [
+          "developer",
+          "failures",
+          "flaky",
+          "productivity",
+          "tests"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: developer, failures, flaky, prioritization, signals."
+      },
+      {
+        "candidate_title": "CI Root Cause Prioritization Queue",
+        "source_id": "paper-change-failure-correlation",
+        "source_type": "research_paper",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "cause",
+          "changed",
+          "code",
+          "failures",
+          "files",
+          "ownership",
+          "root",
+          "test",
+          "tests"
+        ],
+        "goal_source_shared_terms": [
+          "changes",
+          "code",
+          "failures",
+          "root",
+          "tests"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: cause, changed, code, failures, files."
+      },
+      {
+        "candidate_title": "Flaky Test Detection Dashboard",
+        "source_id": "paper-flaky-test-detection",
+        "source_type": "research_paper",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "detection",
+          "developer",
+          "failures",
+          "flaky",
+          "historical",
+          "nondeterministic",
+          "outcomes",
+          "test",
+          "tests"
+        ],
+        "goal_source_shared_terms": [
+          "developer",
+          "failures",
+          "flaky",
+          "productivity",
+          "tests"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: detection, developer, failures, flaky, historical."
+      },
+      {
+        "candidate_title": "Code Change Failure Correlator",
+        "source_id": "paper-change-failure-correlation",
+        "source_type": "research_paper",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "changed",
+          "code",
+          "failing",
+          "files",
+          "ownership",
+          "recent",
+          "software",
+          "test",
+          "tests"
+        ],
+        "goal_source_shared_terms": [
+          "changes",
+          "code",
+          "failures",
+          "root",
+          "tests"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: changed, code, failing, files, ownership."
+      }
+    ],
+    "quality_warnings": {
+      "warnings": [],
+      "signals": {
+        "coverage_warning_count": 0,
+        "goal_trace_count": 0,
+        "grounding_trace_count": 0,
+        "diversity_pair_count": 0,
+        "source_relevance_trace_count": 5,
+        "quality_warning_count": 0
+      }
+    },
+    "promotion_eligibility": {
+      "status": "not_assessed",
+      "candidate_assessments": [],
+      "summary": {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0
+      },
+      "reason": "Evidence-support shadow was not enabled, so promotion eligibility could not assess direct grounding."
+    },
+    "semantic_diversification_repair": {
+      "status": "no_repair_needed",
+      "directives": [],
+      "signals": {
+        "candidate_count": 3,
+        "similarity_threshold": 0.78,
+        "close_cluster_count": 0,
+        "replacement_count": 0
+      }
+    },
+    "raw_candidates": [
+      {
+        "title": "CI Root Cause Prioritization Queue",
+        "problem_statement": "Teams need a practical queue that combines flaky test history, failed CI runs, changed files, and ownership to prioritize likely root causes.",
+        "target_user": "Developer Tools Engineers",
+        "core_workflow": [
+          "Load CI runs, failed tests, and changed files.",
+          "Combine flaky-test and code-change signals.",
+          "Prioritize failures for engineer review."
+        ],
+        "mvp_scope": [
+          "Load sample CI failure records.",
+          "Join failures with commits and changed files.",
+          "Add flaky-test history as a prioritization signal.",
+          "Show a ranked triage queue with explanations."
+        ],
+        "success_metrics": [
+          "Number of CI failures prioritized.",
+          "Percentage of failures with an explainable root-cause hint."
+        ],
+        "evidence_relationship": "Uses implementation context for CI failure triage and direct signals from flaky-test and code-change evidence.",
+        "source_ids": [
+          "repo-ci-failure-triage",
+          "paper-flaky-test-detection",
+          "paper-change-failure-correlation"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ]
+      },
+      {
+        "title": "Flaky Test Detection Dashboard",
+        "problem_statement": "Developer tools teams need to identify tests whose failures are likely nondeterministic rather than caused by the latest code change.",
+        "target_user": "Developer Tools Engineers",
+        "core_workflow": [
+          "Load historical CI test outcomes.",
+          "Detect tests with inconsistent pass/fail history.",
+          "Rank likely flaky tests for triage."
+        ],
+        "mvp_scope": [
+          "Load sample CI run and test result records.",
+          "Compute pass/fail variance per test.",
+          "Flag tests with repeated nondeterministic outcomes.",
+          "Show flaky-test candidates in a dashboard."
+        ],
+        "success_metrics": [
+          "Number of likely flaky tests identified.",
+          "Precision of flaky-test labels on sample data."
+        ],
+        "evidence_relationship": "Uses direct evidence on flaky-test detection and prioritization in continuous integration.",
+        "source_ids": [
+          "paper-flaky-test-detection"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ]
+      },
+      {
+        "title": "Code Change Failure Correlator",
+        "problem_statement": "Engineers need to understand whether failing tests are related to recent commits, changed files, or ownership signals.",
+        "target_user": "Software Engineers",
+        "core_workflow": [
+          "Load failed tests and recent commits.",
+          "Map changed files to failed test areas.",
+          "Show likely change-to-failure links."
+        ],
+        "mvp_scope": [
+          "Load sample commit, changed-file, and failed-test data.",
+          "Create simple file-to-test ownership mappings.",
+          "Rank commits that may explain a test failure.",
+          "Show linked changes beside each failed test."
+        ],
+        "success_metrics": [
+          "Number of failures linked to candidate changes.",
+          "Time saved during failure triage."
+        ],
+        "evidence_relationship": "Uses direct evidence on connecting test failures with code changes for root cause analysis.",
+        "source_ids": [
+          "paper-change-failure-correlation"
+        ],
+        "assumptions": [],
+        "suggested_stack": [
+          "Python",
+          "FastAPI"
+        ]
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "CI Root Cause Prioritization Queue",
+          "idea_angle": "Teams need a practical queue that combines flaky test history, failed CI runs, changed files, and ownership to prioritize likely root causes. Built for Developer Tools Engineers.",
+          "detected_domain": "developer_tools",
+          "evidence_buildable_gap": "Teams need a practical queue that combines flaky test history, failed CI runs, changed files, and ownership to prioritize likely root causes.",
+          "evidence_focus_statement": "Uses implementation context for CI failure triage and direct signals from flaky-test and code-change evidence.",
+          "evidence_driven_angle": "Uses implementation context for CI failure triage and direct signals from flaky-test and code-change evidence.",
+          "evidence_project_opportunity": "Teams need a practical queue that combines flaky test history, failed CI runs, changed files, and ownership to prioritize likely root causes.",
+          "research_motivation": "Uses implementation context for CI failure triage and direct signals from flaky-test and code-change evidence.",
+          "mvp_scope": [
+            "Load sample CI failure records.",
+            "Join failures with commits and changed files.",
+            "Add flaky-test history as a prioritization signal.",
+            "Show a ranked triage queue with explanations.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of CI failures prioritized.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "React"
+          ],
+          "target_roles": [
+            "Developer Tools Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "React"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-ci-failure-triage",
+              "title": "CI Failure Triage Dashboard",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            },
+            {
+              "source_id": "paper-flaky-test-detection",
+              "title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            },
+            {
+              "source_id": "paper-change-failure-correlation",
+              "title": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-ci-failure-triage",
+            "paper-flaky-test-detection",
+            "paper-change-failure-correlation"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of CI failures prioritized.",
+            "Percentage of failures with an explainable root-cause hint."
+          ],
+          "planner_candidate_workflow": [
+            "Load CI runs, failed tests, and changed files.",
+            "Combine flaky-test and code-change signals.",
+            "Prioritize failures for engineer review."
+          ],
+          "evidence_title": "CI Failure Triage Dashboard",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "CI Failure Triage Dashboard",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.0,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "CI Root Cause Prioritization Queue scores 8.0/10 with a strong career signal because it is grounded in github repository, fits the developer_tools domain, and demonstrates skills such as Python, React. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Developer Tools Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Developer Tools Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Flaky Test Detection Dashboard",
+          "idea_angle": "Developer tools teams need to identify tests whose failures are likely nondeterministic rather than caused by the latest code change. Built for Developer Tools Engineers.",
+          "detected_domain": "developer_tools",
+          "evidence_buildable_gap": "Developer tools teams need to identify tests whose failures are likely nondeterministic rather than caused by the latest code change.",
+          "evidence_focus_statement": "Uses direct evidence on flaky-test detection and prioritization in continuous integration.",
+          "evidence_driven_angle": "Uses direct evidence on flaky-test detection and prioritization in continuous integration.",
+          "evidence_project_opportunity": "Developer tools teams need to identify tests whose failures are likely nondeterministic rather than caused by the latest code change.",
+          "research_motivation": "Uses direct evidence on flaky-test detection and prioritization in continuous integration.",
+          "mvp_scope": [
+            "Load sample CI run and test result records.",
+            "Compute pass/fail variance per test.",
+            "Flag tests with repeated nondeterministic outcomes.",
+            "Show flaky-test candidates in a dashboard.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of likely flaky tests identified.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "React"
+          ],
+          "target_roles": [
+            "Developer Tools Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "React"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-flaky-test-detection",
+              "title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-flaky-test-detection"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of likely flaky tests identified.",
+            "Precision of flaky-test labels on sample data."
+          ],
+          "planner_candidate_workflow": [
+            "Load historical CI test outcomes.",
+            "Detect tests with inconsistent pass/fail history.",
+            "Rank likely flaky tests for triage."
+          ],
+          "evidence_title": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.SE",
+          "based_on_paper": "Detecting and Prioritizing Flaky Tests in Continuous Integration",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.3,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Flaky Test Detection Dashboard scores 8.3/10 with a strong career signal because it is grounded in research paper, fits the developer_tools domain, and demonstrates skills such as Python, React. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Developer Tools Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Developer Tools Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Code Change Failure Correlator",
+          "idea_angle": "Engineers need to understand whether failing tests are related to recent commits, changed files, or ownership signals. Built for Software Engineers.",
+          "detected_domain": "developer_tools",
+          "evidence_buildable_gap": "Engineers need to understand whether failing tests are related to recent commits, changed files, or ownership signals.",
+          "evidence_focus_statement": "Uses direct evidence on connecting test failures with code changes for root cause analysis.",
+          "evidence_driven_angle": "Uses direct evidence on connecting test failures with code changes for root cause analysis.",
+          "evidence_project_opportunity": "Engineers need to understand whether failing tests are related to recent commits, changed files, or ownership signals.",
+          "research_motivation": "Uses direct evidence on connecting test failures with code changes for root cause analysis.",
+          "mvp_scope": [
+            "Load sample commit, changed-file, and failed-test data.",
+            "Create simple file-to-test ownership mappings.",
+            "Rank commits that may explain a test failure.",
+            "Show linked changes beside each failed test.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of failures linked to candidate changes.",
+            "Add a failure-case review workflow and document the prototype's known limitations.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "React"
+          ],
+          "target_roles": [
+            "Developer Tools Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "FastAPI"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-change-failure-correlation",
+              "title": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+              "source_type": "research_paper",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-change-failure-correlation"
+          ],
+          "planner_candidate_assumptions": [],
+          "planner_candidate_success_metrics": [
+            "Number of failures linked to candidate changes.",
+            "Time saved during failure triage."
+          ],
+          "planner_candidate_workflow": [
+            "Load failed tests and recent commits.",
+            "Map changed files to failed test areas.",
+            "Show likely change-to-failure links."
+          ],
+          "evidence_title": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.SE",
+          "based_on_paper": "Connecting Test Failures with Code Changes for Root Cause Analysis",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.6,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Code Change Failure Correlator scores 8.6/10 with a strong career signal because it is grounded in research paper, fits the developer_tools domain, and demonstrates skills such as Python, FastAPI, React. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Developer Tools Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Developer Tools Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    },
+    "shadow_vs_deterministic_comparison": {
+      "schema_version": "1.0",
+      "case_id": null,
+      "user_goal": "Build a developer productivity project that helps engineers identify flaky tests, connect failures with code changes, and prioritize likely root causes.",
+      "query_fingerprint": "2fde291e90748a9e",
+      "deterministic_candidates": [
+        {
+          "title": "Repository Health Intelligence Dashboard",
+          "comparison_text": "Repository Health Intelligence Dashboard Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        },
+        {
+          "title": "Code Review Risk Assistant",
+          "comparison_text": "Code Review Risk Assistant Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples."
+        },
+        {
+          "title": "Technical Debt Prioritization Engine",
+          "comparison_text": "Technical Debt Prioritization Engine Identify technical debt areas and rank them by impact, frequency, complexity, and developer pain. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples."
+        }
+      ],
+      "openai_candidates": [
+        {
+          "title": "CI Root Cause Prioritization Queue",
+          "comparison_text": "CI Root Cause Prioritization Queue Teams need a practical queue that combines flaky test history, failed CI runs, changed files, and ownership to prioritize likely root causes. Developer Tools Engineers Load CI runs, failed tests, and changed files. Combine flaky-test and code-change signals. Prioritize failures for engineer review. Load sample CI failure records. Join failures with commits and changed files. Add flaky-test history as a prioritization signal. Show a ranked triage queue with explanations."
+        },
+        {
+          "title": "Flaky Test Detection Dashboard",
+          "comparison_text": "Flaky Test Detection Dashboard Developer tools teams need to identify tests whose failures are likely nondeterministic rather than caused by the latest code change. Developer Tools Engineers Load historical CI test outcomes. Detect tests with inconsistent pass/fail history. Rank likely flaky tests for triage. Load sample CI run and test result records. Compute pass/fail variance per test. Flag tests with repeated nondeterministic outcomes. Show flaky-test candidates in a dashboard."
+        },
+        {
+          "title": "Code Change Failure Correlator",
+          "comparison_text": "Code Change Failure Correlator Engineers need to understand whether failing tests are related to recent commits, changed files, or ownership signals. Software Engineers Load failed tests and recent commits. Map changed files to failed test areas. Show likely change-to-failure links. Load sample commit, changed-file, and failed-test data. Create simple file-to-test ownership mappings. Rank commits that may explain a test failure. Show linked changes beside each failed test."
+        }
+      ],
+      "deterministic_grounding_classes": [
+        {
+          "candidate_title": "Repository Health Intelligence Dashboard",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Code Review Risk Assistant",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Technical Debt Prioritization Engine",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "openai_grounding_classes": [
+        {
+          "candidate_title": "CI Root Cause Prioritization Queue",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Flaky Test Detection Dashboard",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Code Change Failure Correlator",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "deterministic_enrichment": [
+        {
+          "title": "Repository Health Intelligence Dashboard",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Code Review Risk Assistant",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Technical Debt Prioritization Engine",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        }
+      ],
+      "openai_enrichment": [
+        {
+          "title": "CI Root Cause Prioritization Queue",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Flaky Test Detection Dashboard",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Code Change Failure Correlator",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        }
+      ],
+      "set_similarity_score": null,
+      "unique_angle_count": 0,
+      "unique_openai_titles": [],
+      "pairwise_similarity": [],
+      "manual_preference": null,
+      "manual_preference_reason": null,
+      "manual_reviewer_notes": null,
+      "notes": [
+        "Cross-set semantic similarity is a difference signal, not a quality score.",
+        "Portfolio tiers are preserved for review but are assigned by candidate order and must not be interpreted as quality labels.",
+        "Deterministic grounding is not assessed by this contract yet; only shadow grounding traces are currently comparable."
+      ]
+    },
+    "manual_review_template": {
+      "rubric_version": "v1",
+      "query_fingerprint": "2fde291e90748a9e",
+      "deterministic_review": {
+        "planner_path": "deterministic",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Repository Health Intelligence Dashboard",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Code Review Risk Assistant",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Technical Debt Prioritization Engine",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "openai_review": {
+        "planner_path": "openai",
+        "candidate_reviews": [
+          {
+            "candidate_title": "CI Root Cause Prioritization Queue",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Flaky Test Detection Dashboard",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Code Change Failure Correlator",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "overall_preference": null,
+      "overall_preference_reason": "",
+      "response_quality": null,
+      "response_quality_reason": "",
+      "unique_angle_quality": null,
+      "unique_angle_quality_reason": "",
+      "reviewer_notes": ""
+    }
+  }
+}
