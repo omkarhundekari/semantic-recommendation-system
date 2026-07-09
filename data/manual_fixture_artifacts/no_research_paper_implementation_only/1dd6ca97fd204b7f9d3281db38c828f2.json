@@ -1,0 +1,2264 @@
+{
+  "schema_version": "1.1",
+  "artifact_identity": {
+    "artifact_id": "1dd6ca97fd204b7f9d3281db38c828f2",
+    "generation_timestamp_utc": "20260709T043424Z",
+    "fixture_id": "no_research_paper_implementation_only"
+  },
+  "generated_at_utc": "20260709T043424Z",
+  "query": "Build a practical repository health tool that helps teams spot risky code ownership and dependency patterns.",
+  "constraints": {
+    "skill_level": "intermediate",
+    "time_available": "2 weeks",
+    "target_roles": [
+      "Backend Engineer"
+    ],
+    "preferred_stack": [
+      "Python"
+    ]
+  },
+  "retrieval": {
+    "selected_route": null,
+    "expanded_query": null,
+    "focused_query": null,
+    "inference": {
+      "inferred_focus": "developer_tools"
+    },
+    "merged_evidence_count": 3
+  },
+  "legacy_planner": {
+    "direction_count": 3,
+    "directions": [
+      {
+        "title": "Repository Health Intelligence Dashboard",
+        "evidence_title": "Repository Risk Dashboard",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "developer_tools"
+      },
+      {
+        "title": "Code Review Risk Assistant",
+        "evidence_title": "Repository Ownership Mapper",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "developer_tools"
+      },
+      {
+        "title": "Technical Debt Prioritization Engine",
+        "evidence_title": "Repository Ownership Mapper",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "developer_tools"
+      }
+    ],
+    "raw_ideas": [
+      {
+        "project_title": "Repository Health Intelligence Dashboard",
+        "based_on_paper": "Repository Risk Dashboard",
+        "evidence_title": "Repository Risk Dashboard",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "developer_tools",
+        "detected_intent": "project_building",
+        "idea_angle": "Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.",
+        "opportunity_area": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_focus_type": "buildable_gap",
+        "evidence_focus_statement": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+        "evidence_driven_angle": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+        "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Repository Ownership Mapper",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          },
+          {
+            "title": "Dependency Health Scanner",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          },
+          {
+            "title": "Repository Risk Dashboard",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Developer Tools",
+          "Evaluation",
+          "Monitoring",
+          "Security"
+        ],
+        "extracted_skills": [
+          "GitHub APIs",
+          "Repository Analytics",
+          "Code Quality Metrics",
+          "Maintenance Risk Scoring",
+          "Dashboards",
+          "Automation",
+          "Developer Tools"
+        ],
+        "research_motivation": "This idea uses 'Repository Risk Dashboard' as a real implementation reference. It informs a buildable direction for Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+          "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+          "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+          "Show drill-down evidence for each recommendation, including affected files or teams.",
+          "Validate one scoring rule against a curated set of known risky and healthy examples.",
+          "Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add GitHub API integration for repository metrics.",
+          "Add pull-request risk scoring and technical debt trend tracking."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "GitHub APIs",
+          "Code Analysis",
+          "Automation",
+          "Repository Analytics",
+          "Code Quality Metrics",
+          "Maintenance Risk Scoring",
+          "Dashboards",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Repository Health Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Developer Tools Engineer",
+          "Software Engineer",
+          "Platform Engineer",
+          "Engineering Productivity Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Code Review Risk Assistant",
+        "based_on_paper": "Repository Ownership Mapper",
+        "evidence_title": "Repository Ownership Mapper",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "developer_tools",
+        "detected_intent": "project_building",
+        "idea_angle": "Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.",
+        "opportunity_area": "Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+        "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Repository Ownership Mapper",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          },
+          {
+            "title": "Dependency Health Scanner",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          },
+          {
+            "title": "Repository Risk Dashboard",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Developer Tools",
+          "Evaluation",
+          "Monitoring",
+          "Security"
+        ],
+        "extracted_skills": [
+          "Code Analysis",
+          "Pull Request Analytics",
+          "Risk Scoring",
+          "Testing Signals",
+          "GitHub APIs",
+          "Developer Tools",
+          "Automation"
+        ],
+        "research_motivation": "This idea uses 'Repository Ownership Mapper' as a real implementation reference. It informs a buildable direction for Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+          "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+          "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+          "Show drill-down evidence for each recommendation, including affected files or teams.",
+          "Validate one scoring rule against a curated set of known risky and healthy examples."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add GitHub API integration for repository metrics.",
+          "Add pull-request risk scoring and technical debt trend tracking."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "GitHub APIs",
+          "Code Analysis",
+          "Automation",
+          "Pull Request Analytics",
+          "Risk Scoring",
+          "Testing Signals",
+          "Developer Tools",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Code Review Risk Assistant that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Developer Tools Engineer",
+          "Software Engineer",
+          "Platform Engineer",
+          "Engineering Productivity Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Technical Debt Prioritization Engine",
+        "based_on_paper": "Repository Ownership Mapper",
+        "evidence_title": "Repository Ownership Mapper",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "developer_tools",
+        "detected_intent": "project_building",
+        "idea_angle": "Identify technical debt areas and rank them by impact, frequency, complexity, and developer pain.",
+        "opportunity_area": "Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.",
+        "evidence_focus_type": "evidence_extension",
+        "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+        "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+        "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+        "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Repository Ownership Mapper",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          },
+          {
+            "title": "Dependency Health Scanner",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          },
+          {
+            "title": "Repository Risk Dashboard",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Developer Tools",
+          "Evaluation",
+          "Monitoring",
+          "Security"
+        ],
+        "extracted_skills": [
+          "Code Metrics",
+          "Technical Debt Analysis",
+          "Prioritization",
+          "Architecture Signals",
+          "Dashboards",
+          "Developer Tools",
+          "Automation"
+        ],
+        "research_motivation": "This idea uses 'Repository Ownership Mapper' as a real implementation reference. It informs a buildable direction for Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+          "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+          "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+          "Show drill-down evidence for each recommendation, including affected files or teams.",
+          "Validate one scoring rule against a curated set of known risky and healthy examples."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced.",
+          "Add GitHub API integration for repository metrics.",
+          "Add pull-request risk scoring and technical debt trend tracking."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "GitHub APIs",
+          "Code Analysis",
+          "Automation",
+          "Code Metrics",
+          "Technical Debt Analysis",
+          "Prioritization",
+          "Architecture Signals",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Technical Debt Prioritization Engine that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Developer Tools Engineer",
+          "Software Engineer",
+          "Platform Engineer",
+          "Engineering Productivity Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Repository Health Intelligence Dashboard",
+          "based_on_paper": "Repository Risk Dashboard",
+          "evidence_title": "Repository Risk Dashboard",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "developer_tools",
+          "detected_intent": "project_building",
+          "idea_angle": "Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.",
+          "opportunity_area": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_focus_type": "buildable_gap",
+          "evidence_focus_statement": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+          "evidence_driven_angle": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+          "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Repository Ownership Mapper",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            },
+            {
+              "title": "Dependency Health Scanner",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            },
+            {
+              "title": "Repository Risk Dashboard",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Developer Tools",
+            "Evaluation",
+            "Monitoring",
+            "Security"
+          ],
+          "extracted_skills": [
+            "GitHub APIs",
+            "Repository Analytics",
+            "Code Quality Metrics",
+            "Maintenance Risk Scoring",
+            "Dashboards",
+            "Automation",
+            "Developer Tools"
+          ],
+          "research_motivation": "This idea uses 'Repository Risk Dashboard' as a real implementation reference. It informs a buildable direction for Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+            "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+            "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+            "Show drill-down evidence for each recommendation, including affected files or teams.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add GitHub API integration for repository metrics.",
+            "Add pull-request risk scoring and technical debt trend tracking."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "GitHub APIs",
+            "Code Analysis",
+            "Automation",
+            "Repository Analytics",
+            "Code Quality Metrics",
+            "Maintenance Risk Scoring",
+            "Dashboards",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Repository Health Intelligence Dashboard that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Developer Tools Engineer",
+            "Software Engineer",
+            "Platform Engineer",
+            "Engineering Productivity Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.4,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Repository Health Intelligence Dashboard scores 8.4/10 with a strong career signal because it is grounded in github repository, fits the developer_tools domain, and demonstrates skills such as GitHub APIs, Repository Analytics, Code Quality Metrics, Maintenance Risk Scoring, Dashboards, Automation. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          }
+        },
+        {
+          "project_title": "Code Review Risk Assistant",
+          "based_on_paper": "Repository Ownership Mapper",
+          "evidence_title": "Repository Ownership Mapper",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "developer_tools",
+          "detected_intent": "project_building",
+          "idea_angle": "Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.",
+          "opportunity_area": "Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+          "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Repository Ownership Mapper",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            },
+            {
+              "title": "Dependency Health Scanner",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            },
+            {
+              "title": "Repository Risk Dashboard",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Developer Tools",
+            "Evaluation",
+            "Monitoring",
+            "Security"
+          ],
+          "extracted_skills": [
+            "Code Analysis",
+            "Pull Request Analytics",
+            "Risk Scoring",
+            "Testing Signals",
+            "GitHub APIs",
+            "Developer Tools",
+            "Automation"
+          ],
+          "research_motivation": "This idea uses 'Repository Ownership Mapper' as a real implementation reference. It informs a buildable direction for Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+            "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+            "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+            "Show drill-down evidence for each recommendation, including affected files or teams.",
+            "Validate one scoring rule against a curated set of known risky and healthy examples.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add GitHub API integration for repository metrics.",
+            "Add pull-request risk scoring and technical debt trend tracking."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "GitHub APIs",
+            "Code Analysis",
+            "Automation",
+            "Pull Request Analytics",
+            "Risk Scoring",
+            "Testing Signals",
+            "Developer Tools",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Code Review Risk Assistant that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Developer Tools Engineer",
+            "Software Engineer",
+            "Platform Engineer",
+            "Engineering Productivity Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.6,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Code Review Risk Assistant scores 8.6/10 with a strong career signal because it is grounded in github repository, fits the developer_tools domain, and demonstrates skills such as Code Analysis, Pull Request Analytics, Risk Scoring, Testing Signals, GitHub APIs, Developer Tools. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          }
+        },
+        {
+          "project_title": "Technical Debt Prioritization Engine",
+          "based_on_paper": "Repository Ownership Mapper",
+          "evidence_title": "Repository Ownership Mapper",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "developer_tools",
+          "detected_intent": "project_building",
+          "idea_angle": "Identify technical debt areas and rank them by impact, frequency, complexity, and developer pain.",
+          "opportunity_area": "Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.",
+          "evidence_focus_type": "evidence_extension",
+          "evidence_focus_statement": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_driven_angle": "Use the available evidence to create a practical extension beyond the base project workflow.",
+          "evidence_buildable_gap": "Small teams need lightweight developer-productivity insights without building a full engineering analytics platform.",
+          "evidence_project_opportunity": "Build a repository intelligence dashboard that surfaces engineering activity, code-risk clues, and actionable workflow recommendations.",
+          "evidence_summary": "The opportunity is based on the retrieved multi-source evidence.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Repository Ownership Mapper",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            },
+            {
+              "title": "Dependency Health Scanner",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            },
+            {
+              "title": "Repository Risk Dashboard",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Developer Tools",
+            "Evaluation",
+            "Monitoring",
+            "Security"
+          ],
+          "extracted_skills": [
+            "Code Metrics",
+            "Technical Debt Analysis",
+            "Prioritization",
+            "Architecture Signals",
+            "Dashboards",
+            "Developer Tools",
+            "Automation"
+          ],
+          "research_motivation": "This idea uses 'Repository Ownership Mapper' as a real implementation reference. It informs a buildable direction for Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture.",
+            "Compute maintainability, ownership, review-risk, or technical-debt signals.",
+            "Rank repositories, modules, or pull requests by impact and remediation urgency.",
+            "Show drill-down evidence for each recommendation, including affected files or teams.",
+            "Validate one scoring rule against a curated set of known risky and healthy examples.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add GitHub API integration for repository metrics.",
+            "Add pull-request risk scoring and technical debt trend tracking.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "GitHub APIs",
+            "Code Analysis",
+            "Automation",
+            "Code Metrics",
+            "Technical Debt Analysis",
+            "Prioritization",
+            "Architecture Signals",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Technical Debt Prioritization Engine that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, GitHub APIs, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Developer Tools Engineer",
+            "Software Engineer",
+            "Platform Engineer",
+            "Engineering Productivity Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 8.6,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Technical Debt Prioritization Engine scores 8.6/10 with a strong career signal because it is grounded in github repository, fits the developer_tools domain, and demonstrates skills such as Code Metrics, Technical Debt Analysis, Prioritization, Architecture Signals, Dashboards, Developer Tools. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Developer Tools Engineer, Software Engineer, Platform Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          }
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 5,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role.",
+            "The estimated effort exceeds the stated timeline."
+          ]
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    }
+  },
+  "v2_shadow": {
+    "status": "fixture_evaluated",
+    "report": {
+      "evidence_brief": {
+        "query": "Build a practical repository health tool that helps teams spot risky code ownership and dependency patterns.",
+        "sources": [
+          {
+            "source_id": "repo-ownership-map",
+            "source_type": "github_repository",
+            "title": "Repository Ownership Mapper",
+            "excerpt": "Repository Ownership Mapper Parse repository files, CODEOWNERS metadata, commit history, and directory ownership to show which teams maintain each part of a codebase.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 1,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "repo-dependency-health",
+            "source_type": "github_repository",
+            "title": "Dependency Health Scanner",
+            "excerpt": "Dependency Health Scanner Inspect dependency manifests, stale packages, transitive dependency depth, and risky outdated libraries for backend services.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 2,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "repo-risk-dashboard",
+            "source_type": "github_repository",
+            "title": "Repository Risk Dashboard",
+            "excerpt": "Repository Risk Dashboard Combine ownership, churn, dependency age, and hotspot files into a dashboard for engineering maintenance planning.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 3,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          }
+        ],
+        "source_counts": {
+          "github_repository": 3
+        },
+        "recurring_concepts": [
+          "dependency",
+          "files",
+          "ownership",
+          "repository"
+        ],
+        "coverage_warnings": [
+          "No research-paper evidence was included in this brief."
+        ]
+      },
+      "evidence_curation": {
+        "required_anchor_terms": [],
+        "retained": [
+          {
+            "item": {
+              "repository_id": "repo-ownership-map",
+              "source_type": "github_repository",
+              "title": "Repository Ownership Mapper",
+              "readme_excerpt": "Parse repository files, CODEOWNERS metadata, commit history, and directory ownership to show which teams maintain each part of a codebase.",
+              "retrieval_rank": 1
+            },
+            "relevance_score": 6.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "ownership",
+              "repository",
+              "teams"
+            ],
+            "query_term_document_frequencies": {
+              "ownership": 2,
+              "repository": 2,
+              "teams": 1
+            },
+            "unique_query_terms": [
+              "teams"
+            ],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "repository_id": "repo-dependency-health",
+              "source_type": "github_repository",
+              "title": "Dependency Health Scanner",
+              "readme_excerpt": "Inspect dependency manifests, stale packages, transitive dependency depth, and risky outdated libraries for backend services.",
+              "retrieval_rank": 2
+            },
+            "relevance_score": 6.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "dependency",
+              "health",
+              "risky"
+            ],
+            "query_term_document_frequencies": {
+              "dependency": 2,
+              "health": 1,
+              "risky": 1
+            },
+            "unique_query_terms": [
+              "health",
+              "risky"
+            ],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "repository_id": "repo-risk-dashboard",
+              "source_type": "github_repository",
+              "title": "Repository Risk Dashboard",
+              "readme_excerpt": "Combine ownership, churn, dependency age, and hotspot files into a dashboard for engineering maintenance planning.",
+              "retrieval_rank": 3
+            },
+            "relevance_score": 6.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "dependency",
+              "ownership",
+              "repository"
+            ],
+            "query_term_document_frequencies": {
+              "dependency": 2,
+              "ownership": 2,
+              "repository": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          }
+        ],
+        "dropped": [],
+        "retained_source_counts": {
+          "github_repository": 3
+        }
+      },
+      "planning_diagnostics": {
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "provider_called": true,
+        "prompt_content_hash": "83d49c84b45d44d3fa0b24d814baf16078cc74036a512d64e42071691c5229fd"
+      },
+      "selected_titles": [
+        "Repository Health Maintenance Dashboard",
+        "Repository Ownership Risk Map",
+        "Dependency Staleness and Risk Scanner"
+      ],
+      "selected_candidates": [
+        {
+          "title": "Repository Health Maintenance Dashboard",
+          "problem_statement": "Engineering teams need a single view of ownership, churn, dependency age, and hotspot files to plan repository maintenance.",
+          "target_user": "Backend engineers and engineering leads",
+          "core_workflow": [
+            "Load ownership, churn, and dependency fixtures.",
+            "Compute simple repository health indicators.",
+            "Show the highest-risk areas for maintenance."
+          ],
+          "mvp_scope": [
+            "Create small ownership, churn, and dependency fixtures.",
+            "Compute transparent risk scores.",
+            "Show top risky directories and dependencies.",
+            "Write a README explaining that evidence is implementation context only."
+          ],
+          "success_metrics": [
+            "Number of risky repository areas ranked.",
+            "Number of maintenance actions suggested."
+          ],
+          "evidence_relationship": "Combines implementation context from repository ownership, dependency health, and risk dashboard sources while avoiding research-backed claims.",
+          "source_ids": [
+            "repo-ownership-map",
+            "repo-dependency-health",
+            "repo-risk-dashboard"
+          ],
+          "assumptions": [
+            "Risk scoring is heuristic and should be presented as implementation guidance, not research validation."
+          ],
+          "suggested_stack": [
+            "Python",
+            "React"
+          ],
+          "ranking": {
+            "score": 0.955,
+            "score_breakdown": {
+              "evidence_support": 1.0,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 1.00.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Repository Ownership Risk Map",
+          "problem_statement": "Backend teams need to spot parts of a repository that have unclear ownership and high maintenance risk.",
+          "target_user": "Backend engineers",
+          "core_workflow": [
+            "Load repository file paths and ownership metadata.",
+            "Join owners with recent commit activity.",
+            "Flag directories with missing or stale ownership."
+          ],
+          "mvp_scope": [
+            "Parse a small CODEOWNERS-style fixture.",
+            "Load sample commit metadata by directory.",
+            "Calculate files or directories without clear owners.",
+            "Show ownership-risk findings in a simple report."
+          ],
+          "success_metrics": [
+            "Number of files or directories with missing ownership.",
+            "Number of stale ownership areas surfaced."
+          ],
+          "evidence_relationship": "Uses repository implementation context for ownership mapping, not direct research evidence.",
+          "source_ids": [
+            "repo-ownership-map"
+          ],
+          "assumptions": [
+            "Repository metadata is available as local fixtures."
+          ],
+          "suggested_stack": [
+            "Python"
+          ],
+          "ranking": {
+            "score": 0.911,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Dependency Staleness and Risk Scanner",
+          "problem_statement": "Backend engineers need a practical way to identify outdated or risky dependencies before they become maintenance problems.",
+          "target_user": "Backend engineers",
+          "core_workflow": [
+            "Load dependency manifest fixtures.",
+            "Compare package versions and dependency depth.",
+            "Rank stale or risky dependencies."
+          ],
+          "mvp_scope": [
+            "Parse one Python or Node dependency manifest.",
+            "Load mocked latest-version metadata.",
+            "Compute dependency age and transitive depth.",
+            "Export a ranked dependency risk list."
+          ],
+          "success_metrics": [
+            "Number of stale dependencies detected.",
+            "Number of high-depth dependency risks surfaced."
+          ],
+          "evidence_relationship": "Uses implementation context for dependency health scanning rather than research-paper grounding.",
+          "source_ids": [
+            "repo-dependency-health"
+          ],
+          "assumptions": [
+            "Latest-version data can be mocked for the fixture."
+          ],
+          "suggested_stack": [
+            "Python"
+          ],
+          "ranking": {
+            "score": 0.911,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.775,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.78.",
+              "Completeness score: 1.00."
+            ]
+          }
+        }
+      ],
+      "legacy_titles": [
+        "Repository Health Intelligence Dashboard",
+        "Code Review Risk Assistant",
+        "Technical Debt Prioritization Engine"
+      ],
+      "comparison": {
+        "legacy_direction_count": 3,
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "v2_generated_candidate_count": 3,
+        "v2_valid_candidate_count": 3,
+        "v2_selected_candidate_count": 3,
+        "v2_selected_titles": [
+          "Repository Health Maintenance Dashboard",
+          "Repository Ownership Risk Map",
+          "Dependency Staleness and Risk Scanner"
+        ],
+        "provider_called": true,
+        "coverage_warnings": [
+          "No research-paper evidence was included in this brief."
+        ]
+      },
+      "shadow_readiness": {
+        "status": "needs_review",
+        "reasons": [
+          "No research-paper evidence was included in this brief."
+        ],
+        "signals": {
+          "raw_evidence_count": 3,
+          "curated_evidence_count": 3,
+          "dropped_evidence_count": 0,
+          "generated_candidate_count": 3,
+          "valid_candidate_count": 3,
+          "selected_candidate_count": 3,
+          "provider_called": true,
+          "coverage_warnings": [
+            "No research-paper evidence was included in this brief."
+          ],
+          "validation_errors": [],
+          "validation_warnings": []
+        }
+      },
+      "prompt_content_hash": "83d49c84b45d44d3fa0b24d814baf16078cc74036a512d64e42071691c5229fd"
+    },
+    "evidence_quality": {
+      "status": "not_routed_pending_calibration",
+      "metrics": {
+        "curation_pool_size": 3,
+        "retained_source_count": 3,
+        "final_brief_source_count": 3,
+        "direct_source_count": 3,
+        "adjacent_source_count": 0,
+        "required_anchor_count": 0,
+        "matched_required_anchor_count": 0,
+        "query_anchor_coverage": null,
+        "unique_query_term_count": 3,
+        "unique_query_phrase_count": 0,
+        "source_type_count": 1,
+        "dominant_source_type": "github_repository",
+        "dominant_source_type_fraction": 1.0,
+        "top_direct_relevance_margin": 0.0,
+        "coverage_warnings": [
+          "No research-paper evidence was included in this brief."
+        ]
+      },
+      "thresholds": {
+        "version": "v1",
+        "calibration_status": "unresolved",
+        "sparse_direct_source_threshold": null,
+        "ambiguity_top_margin_threshold": null,
+        "low_diversity_fraction_threshold": null
+      },
+      "evidence_sparse": null,
+      "evidence_ambiguous": null,
+      "source_diversity_low": null,
+      "unresolved_signal_names": [
+        "evidence_sparse",
+        "evidence_ambiguous",
+        "source_diversity_low"
+      ],
+      "routing_ready": false
+    },
+    "selected_candidates": [
+      {
+        "title": "Repository Health Maintenance Dashboard",
+        "problem_statement": "Engineering teams need a single view of ownership, churn, dependency age, and hotspot files to plan repository maintenance.",
+        "target_user": "Backend engineers and engineering leads",
+        "core_workflow": [
+          "Load ownership, churn, and dependency fixtures.",
+          "Compute simple repository health indicators.",
+          "Show the highest-risk areas for maintenance."
+        ],
+        "mvp_scope": [
+          "Create small ownership, churn, and dependency fixtures.",
+          "Compute transparent risk scores.",
+          "Show top risky directories and dependencies.",
+          "Write a README explaining that evidence is implementation context only."
+        ],
+        "success_metrics": [
+          "Number of risky repository areas ranked.",
+          "Number of maintenance actions suggested."
+        ],
+        "evidence_relationship": "Combines implementation context from repository ownership, dependency health, and risk dashboard sources while avoiding research-backed claims.",
+        "source_ids": [
+          "repo-ownership-map",
+          "repo-dependency-health",
+          "repo-risk-dashboard"
+        ],
+        "assumptions": [
+          "Risk scoring is heuristic and should be presented as implementation guidance, not research validation."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ],
+        "ranking": {
+          "score": 0.955,
+          "score_breakdown": {
+            "evidence_support": 1.0,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 1.00.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Repository Ownership Risk Map",
+        "problem_statement": "Backend teams need to spot parts of a repository that have unclear ownership and high maintenance risk.",
+        "target_user": "Backend engineers",
+        "core_workflow": [
+          "Load repository file paths and ownership metadata.",
+          "Join owners with recent commit activity.",
+          "Flag directories with missing or stale ownership."
+        ],
+        "mvp_scope": [
+          "Parse a small CODEOWNERS-style fixture.",
+          "Load sample commit metadata by directory.",
+          "Calculate files or directories without clear owners.",
+          "Show ownership-risk findings in a simple report."
+        ],
+        "success_metrics": [
+          "Number of files or directories with missing ownership.",
+          "Number of stale ownership areas surfaced."
+        ],
+        "evidence_relationship": "Uses repository implementation context for ownership mapping, not direct research evidence.",
+        "source_ids": [
+          "repo-ownership-map"
+        ],
+        "assumptions": [
+          "Repository metadata is available as local fixtures."
+        ],
+        "suggested_stack": [
+          "Python"
+        ],
+        "ranking": {
+          "score": 0.911,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Dependency Staleness and Risk Scanner",
+        "problem_statement": "Backend engineers need a practical way to identify outdated or risky dependencies before they become maintenance problems.",
+        "target_user": "Backend engineers",
+        "core_workflow": [
+          "Load dependency manifest fixtures.",
+          "Compare package versions and dependency depth.",
+          "Rank stale or risky dependencies."
+        ],
+        "mvp_scope": [
+          "Parse one Python or Node dependency manifest.",
+          "Load mocked latest-version metadata.",
+          "Compute dependency age and transitive depth.",
+          "Export a ranked dependency risk list."
+        ],
+        "success_metrics": [
+          "Number of stale dependencies detected.",
+          "Number of high-depth dependency risks surfaced."
+        ],
+        "evidence_relationship": "Uses implementation context for dependency health scanning rather than research-paper grounding.",
+        "source_ids": [
+          "repo-dependency-health"
+        ],
+        "assumptions": [
+          "Latest-version data can be mocked for the fixture."
+        ],
+        "suggested_stack": [
+          "Python"
+        ],
+        "ranking": {
+          "score": 0.911,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.775,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.78.",
+            "Completeness score: 1.00."
+          ]
+        }
+      }
+    ],
+    "generation_metadata": {
+      "prompt_version": "v1",
+      "prompt_content_hash": "83d49c84b45d44d3fa0b24d814baf16078cc74036a512d64e42071691c5229fd",
+      "execution_mode": "fixture",
+      "provider_name": "MockCandidateGenerationProvider",
+      "model": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      }
+    },
+    "diagnostics": {
+      "generated_candidate_count": 3,
+      "valid_candidate_count": 3,
+      "selected_candidate_count": 3,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "provider_called": true,
+      "prompt_content_hash": "83d49c84b45d44d3fa0b24d814baf16078cc74036a512d64e42071691c5229fd"
+    },
+    "shadow_readiness": {
+      "status": "needs_review",
+      "reasons": [
+        "No research-paper evidence was included in this brief."
+      ],
+      "signals": {
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "provider_called": true,
+        "coverage_warnings": [
+          "No research-paper evidence was included in this brief."
+        ],
+        "validation_errors": [],
+        "validation_warnings": []
+      }
+    },
+    "semantic_goal_relevance": [],
+    "cross_encoder_goal_relevance": [],
+    "semantic_candidate_diversity": null,
+    "evidence_support": [],
+    "grounding_adequacy": [],
+    "candidate_source_relevance": [
+      {
+        "candidate_title": "Repository Health Maintenance Dashboard",
+        "source_id": "repo-ownership-map",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "files",
+          "ownership",
+          "repository"
+        ],
+        "goal_source_shared_terms": [
+          "ownership",
+          "repository"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: files, ownership, repository."
+      },
+      {
+        "candidate_title": "Repository Health Maintenance Dashboard",
+        "source_id": "repo-dependency-health",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "backend",
+          "dependency",
+          "health"
+        ],
+        "goal_source_shared_terms": [
+          "dependency",
+          "health",
+          "risky"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: backend, dependency, health."
+      },
+      {
+        "candidate_title": "Repository Health Maintenance Dashboard",
+        "source_id": "repo-risk-dashboard",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "churn",
+          "dashboard",
+          "dependency",
+          "files",
+          "hotspot",
+          "maintenance",
+          "ownership",
+          "repository",
+          "risk"
+        ],
+        "goal_source_shared_terms": [
+          "dependency",
+          "ownership",
+          "repository"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: churn, dashboard, dependency, files, hotspot."
+      },
+      {
+        "candidate_title": "Repository Ownership Risk Map",
+        "source_id": "repo-ownership-map",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "commit",
+          "metadata",
+          "ownership",
+          "repository"
+        ],
+        "goal_source_shared_terms": [
+          "ownership",
+          "repository"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: commit, metadata, ownership, repository."
+      },
+      {
+        "candidate_title": "Dependency Staleness and Risk Scanner",
+        "source_id": "repo-dependency-health",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "backend",
+          "dependency",
+          "depth",
+          "outdated",
+          "risky",
+          "scanner",
+          "stale"
+        ],
+        "goal_source_shared_terms": [
+          "dependency",
+          "health",
+          "risky"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: backend, dependency, depth, outdated, risky."
+      }
+    ],
+    "quality_warnings": {
+      "warnings": [
+        {
+          "code": "missing_direct_research_evidence",
+          "message": "The evidence brief has no research-paper evidence, so research grounding should be reviewed manually.",
+          "details": {}
+        }
+      ],
+      "signals": {
+        "coverage_warning_count": 1,
+        "goal_trace_count": 0,
+        "grounding_trace_count": 0,
+        "diversity_pair_count": 0,
+        "source_relevance_trace_count": 5,
+        "quality_warning_count": 1
+      }
+    },
+    "promotion_eligibility": {
+      "status": "not_assessed",
+      "candidate_assessments": [],
+      "summary": {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0
+      },
+      "reason": "Evidence-support shadow was not enabled, so promotion eligibility could not assess direct grounding."
+    },
+    "semantic_diversification_repair": {
+      "status": "no_repair_needed",
+      "directives": [],
+      "signals": {
+        "candidate_count": 3,
+        "similarity_threshold": 0.78,
+        "close_cluster_count": 0,
+        "replacement_count": 0
+      }
+    },
+    "raw_candidates": [
+      {
+        "title": "Repository Health Maintenance Dashboard",
+        "problem_statement": "Engineering teams need a single view of ownership, churn, dependency age, and hotspot files to plan repository maintenance.",
+        "target_user": "Backend engineers and engineering leads",
+        "core_workflow": [
+          "Load ownership, churn, and dependency fixtures.",
+          "Compute simple repository health indicators.",
+          "Show the highest-risk areas for maintenance."
+        ],
+        "mvp_scope": [
+          "Create small ownership, churn, and dependency fixtures.",
+          "Compute transparent risk scores.",
+          "Show top risky directories and dependencies.",
+          "Write a README explaining that evidence is implementation context only."
+        ],
+        "success_metrics": [
+          "Number of risky repository areas ranked.",
+          "Number of maintenance actions suggested."
+        ],
+        "evidence_relationship": "Combines implementation context from repository ownership, dependency health, and risk dashboard sources while avoiding research-backed claims.",
+        "source_ids": [
+          "repo-ownership-map",
+          "repo-dependency-health",
+          "repo-risk-dashboard"
+        ],
+        "assumptions": [
+          "Risk scoring is heuristic and should be presented as implementation guidance, not research validation."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ]
+      },
+      {
+        "title": "Repository Ownership Risk Map",
+        "problem_statement": "Backend teams need to spot parts of a repository that have unclear ownership and high maintenance risk.",
+        "target_user": "Backend engineers",
+        "core_workflow": [
+          "Load repository file paths and ownership metadata.",
+          "Join owners with recent commit activity.",
+          "Flag directories with missing or stale ownership."
+        ],
+        "mvp_scope": [
+          "Parse a small CODEOWNERS-style fixture.",
+          "Load sample commit metadata by directory.",
+          "Calculate files or directories without clear owners.",
+          "Show ownership-risk findings in a simple report."
+        ],
+        "success_metrics": [
+          "Number of files or directories with missing ownership.",
+          "Number of stale ownership areas surfaced."
+        ],
+        "evidence_relationship": "Uses repository implementation context for ownership mapping, not direct research evidence.",
+        "source_ids": [
+          "repo-ownership-map"
+        ],
+        "assumptions": [
+          "Repository metadata is available as local fixtures."
+        ],
+        "suggested_stack": [
+          "Python"
+        ]
+      },
+      {
+        "title": "Dependency Staleness and Risk Scanner",
+        "problem_statement": "Backend engineers need a practical way to identify outdated or risky dependencies before they become maintenance problems.",
+        "target_user": "Backend engineers",
+        "core_workflow": [
+          "Load dependency manifest fixtures.",
+          "Compare package versions and dependency depth.",
+          "Rank stale or risky dependencies."
+        ],
+        "mvp_scope": [
+          "Parse one Python or Node dependency manifest.",
+          "Load mocked latest-version metadata.",
+          "Compute dependency age and transitive depth.",
+          "Export a ranked dependency risk list."
+        ],
+        "success_metrics": [
+          "Number of stale dependencies detected.",
+          "Number of high-depth dependency risks surfaced."
+        ],
+        "evidence_relationship": "Uses implementation context for dependency health scanning rather than research-paper grounding.",
+        "source_ids": [
+          "repo-dependency-health"
+        ],
+        "assumptions": [
+          "Latest-version data can be mocked for the fixture."
+        ],
+        "suggested_stack": [
+          "Python"
+        ]
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Repository Health Maintenance Dashboard",
+          "idea_angle": "Engineering teams need a single view of ownership, churn, dependency age, and hotspot files to plan repository maintenance. Built for Backend engineers and engineering leads.",
+          "detected_domain": "developer_tools",
+          "evidence_buildable_gap": "Engineering teams need a single view of ownership, churn, dependency age, and hotspot files to plan repository maintenance.",
+          "evidence_focus_statement": "Combines implementation context from repository ownership, dependency health, and risk dashboard sources while avoiding research-backed claims.",
+          "evidence_driven_angle": "Combines implementation context from repository ownership, dependency health, and risk dashboard sources while avoiding research-backed claims.",
+          "evidence_project_opportunity": "Engineering teams need a single view of ownership, churn, dependency age, and hotspot files to plan repository maintenance.",
+          "research_motivation": "Combines implementation context from repository ownership, dependency health, and risk dashboard sources while avoiding research-backed claims.",
+          "mvp_scope": [
+            "Create small ownership, churn, and dependency fixtures.",
+            "Compute transparent risk scores.",
+            "Show top risky directories and dependencies.",
+            "Write a README explaining that evidence is implementation context only.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of risky repository areas ranked.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "React"
+          ],
+          "target_roles": [
+            "Backend Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "React"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-ownership-map",
+              "title": "Repository Ownership Mapper",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            },
+            {
+              "source_id": "repo-dependency-health",
+              "title": "Dependency Health Scanner",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            },
+            {
+              "source_id": "repo-risk-dashboard",
+              "title": "Repository Risk Dashboard",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-ownership-map",
+            "repo-dependency-health",
+            "repo-risk-dashboard"
+          ],
+          "planner_candidate_assumptions": [
+            "Risk scoring is heuristic and should be presented as implementation guidance, not research validation."
+          ],
+          "planner_candidate_success_metrics": [
+            "Number of risky repository areas ranked.",
+            "Number of maintenance actions suggested."
+          ],
+          "planner_candidate_workflow": [
+            "Load ownership, churn, and dependency fixtures.",
+            "Compute simple repository health indicators.",
+            "Show the highest-risk areas for maintenance."
+          ],
+          "evidence_title": "Repository Ownership Mapper",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "Repository Ownership Mapper",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 7.8,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Repository Health Maintenance Dashboard scores 7.8/10 with a strong career signal because it is grounded in github repository, fits the developer_tools domain, and demonstrates skills such as Python, React. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Backend Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Repository Ownership Risk Map",
+          "idea_angle": "Backend teams need to spot parts of a repository that have unclear ownership and high maintenance risk. Built for Backend engineers.",
+          "detected_domain": "developer_tools",
+          "evidence_buildable_gap": "Backend teams need to spot parts of a repository that have unclear ownership and high maintenance risk.",
+          "evidence_focus_statement": "Uses repository implementation context for ownership mapping, not direct research evidence.",
+          "evidence_driven_angle": "Uses repository implementation context for ownership mapping, not direct research evidence.",
+          "evidence_project_opportunity": "Backend teams need to spot parts of a repository that have unclear ownership and high maintenance risk.",
+          "research_motivation": "Uses repository implementation context for ownership mapping, not direct research evidence.",
+          "mvp_scope": [
+            "Parse a small CODEOWNERS-style fixture.",
+            "Load sample commit metadata by directory.",
+            "Calculate files or directories without clear owners.",
+            "Show ownership-risk findings in a simple report.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of files or directories with missing ownership.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python"
+          ],
+          "target_roles": [
+            "Backend Engineer"
+          ],
+          "extracted_skills": [
+            "Python"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-ownership-map",
+              "title": "Repository Ownership Mapper",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-ownership-map"
+          ],
+          "planner_candidate_assumptions": [
+            "Repository metadata is available as local fixtures."
+          ],
+          "planner_candidate_success_metrics": [
+            "Number of files or directories with missing ownership.",
+            "Number of stale ownership areas surfaced."
+          ],
+          "planner_candidate_workflow": [
+            "Load repository file paths and ownership metadata.",
+            "Join owners with recent commit activity.",
+            "Flag directories with missing or stale ownership."
+          ],
+          "evidence_title": "Repository Ownership Mapper",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "Repository Ownership Mapper",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Repository Ownership Risk Map scores 8.2/10 with a strong career signal because it is grounded in github repository, fits the developer_tools domain, and demonstrates skills such as Python. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Backend Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Dependency Staleness and Risk Scanner",
+          "idea_angle": "Backend engineers need a practical way to identify outdated or risky dependencies before they become maintenance problems. Built for Backend engineers.",
+          "detected_domain": "developer_tools",
+          "evidence_buildable_gap": "Backend engineers need a practical way to identify outdated or risky dependencies before they become maintenance problems.",
+          "evidence_focus_statement": "Uses implementation context for dependency health scanning rather than research-paper grounding.",
+          "evidence_driven_angle": "Uses implementation context for dependency health scanning rather than research-paper grounding.",
+          "evidence_project_opportunity": "Backend engineers need a practical way to identify outdated or risky dependencies before they become maintenance problems.",
+          "research_motivation": "Uses implementation context for dependency health scanning rather than research-paper grounding.",
+          "mvp_scope": [
+            "Parse one Python or Node dependency manifest.",
+            "Load mocked latest-version metadata.",
+            "Compute dependency age and transitive depth.",
+            "Export a ranked dependency risk list.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of stale dependencies detected.",
+            "Add a failure-case review workflow and document the prototype's known limitations.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python"
+          ],
+          "target_roles": [
+            "Backend Engineer"
+          ],
+          "extracted_skills": [
+            "Python"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-dependency-health",
+              "title": "Dependency Health Scanner",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-dependency-health"
+          ],
+          "planner_candidate_assumptions": [
+            "Latest-version data can be mocked for the fixture."
+          ],
+          "planner_candidate_success_metrics": [
+            "Number of stale dependencies detected.",
+            "Number of high-depth dependency risks surfaced."
+          ],
+          "planner_candidate_workflow": [
+            "Load dependency manifest fixtures.",
+            "Compare package versions and dependency depth.",
+            "Rank stale or risky dependencies."
+          ],
+          "evidence_title": "Dependency Health Scanner",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "Dependency Health Scanner",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.2,
+            "complexity": "High",
+            "estimated_build_time": "8\u201314 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Dependency Staleness and Risk Scanner scores 8.2/10 with a strong career signal because it is grounded in github repository, fits the developer_tools domain, and demonstrates skills such as Python. The estimated complexity is high with a build time of 8\u201314 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Backend Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer. Scoped for the stated 2 weeks timeline. Prioritizes Python where it fits the project. Assumes an intermediate starting level."
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": false,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The estimated effort exceeds the stated timeline."
+          ]
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    },
+    "shadow_vs_deterministic_comparison": {
+      "schema_version": "1.0",
+      "case_id": null,
+      "user_goal": "Build a practical repository health tool that helps teams spot risky code ownership and dependency patterns.",
+      "query_fingerprint": "143250c2dcd747e6",
+      "deterministic_candidates": [
+        {
+          "title": "Repository Health Intelligence Dashboard",
+          "comparison_text": "Repository Health Intelligence Dashboard Analyze repository activity, code quality signals, issue patterns, pull requests, and maintenance risks. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        },
+        {
+          "title": "Code Review Risk Assistant",
+          "comparison_text": "Code Review Risk Assistant Score pull requests for risky changes, missing tests, unclear ownership, and architectural impact. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples."
+        },
+        {
+          "title": "Technical Debt Prioritization Engine",
+          "comparison_text": "Technical Debt Prioritization Engine Identify technical debt areas and rank them by impact, frequency, complexity, and developer pain. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples. Load repository, pull-request, issue, or code-quality metadata through a sample export or API fixture. Compute maintainability, ownership, review-risk, or technical-debt signals. Rank repositories, modules, or pull requests by impact and remediation urgency. Show drill-down evidence for each recommendation, including affected files or teams. Validate one scoring rule against a curated set of known risky and healthy examples."
+        }
+      ],
+      "openai_candidates": [
+        {
+          "title": "Repository Health Maintenance Dashboard",
+          "comparison_text": "Repository Health Maintenance Dashboard Engineering teams need a single view of ownership, churn, dependency age, and hotspot files to plan repository maintenance. Backend engineers and engineering leads Load ownership, churn, and dependency fixtures. Compute simple repository health indicators. Show the highest-risk areas for maintenance. Create small ownership, churn, and dependency fixtures. Compute transparent risk scores. Show top risky directories and dependencies. Write a README explaining that evidence is implementation context only."
+        },
+        {
+          "title": "Repository Ownership Risk Map",
+          "comparison_text": "Repository Ownership Risk Map Backend teams need to spot parts of a repository that have unclear ownership and high maintenance risk. Backend engineers Load repository file paths and ownership metadata. Join owners with recent commit activity. Flag directories with missing or stale ownership. Parse a small CODEOWNERS-style fixture. Load sample commit metadata by directory. Calculate files or directories without clear owners. Show ownership-risk findings in a simple report."
+        },
+        {
+          "title": "Dependency Staleness and Risk Scanner",
+          "comparison_text": "Dependency Staleness and Risk Scanner Backend engineers need a practical way to identify outdated or risky dependencies before they become maintenance problems. Backend engineers Load dependency manifest fixtures. Compare package versions and dependency depth. Rank stale or risky dependencies. Parse one Python or Node dependency manifest. Load mocked latest-version metadata. Compute dependency age and transitive depth. Export a ranked dependency risk list."
+        }
+      ],
+      "deterministic_grounding_classes": [
+        {
+          "candidate_title": "Repository Health Intelligence Dashboard",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Code Review Risk Assistant",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Technical Debt Prioritization Engine",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "openai_grounding_classes": [
+        {
+          "candidate_title": "Repository Health Maintenance Dashboard",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Repository Ownership Risk Map",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Dependency Staleness and Risk Scanner",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "deterministic_enrichment": [
+        {
+          "title": "Repository Health Intelligence Dashboard",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Code Review Risk Assistant",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Technical Debt Prioritization Engine",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        }
+      ],
+      "openai_enrichment": [
+        {
+          "title": "Repository Health Maintenance Dashboard",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Repository Ownership Risk Map",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Dependency Staleness and Risk Scanner",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        }
+      ],
+      "set_similarity_score": null,
+      "unique_angle_count": 0,
+      "unique_openai_titles": [],
+      "pairwise_similarity": [],
+      "manual_preference": null,
+      "manual_preference_reason": null,
+      "manual_reviewer_notes": null,
+      "notes": [
+        "Cross-set semantic similarity is a difference signal, not a quality score.",
+        "Portfolio tiers are preserved for review but are assigned by candidate order and must not be interpreted as quality labels.",
+        "Deterministic grounding is not assessed by this contract yet; only shadow grounding traces are currently comparable."
+      ]
+    },
+    "manual_review_template": {
+      "rubric_version": "v1",
+      "query_fingerprint": "143250c2dcd747e6",
+      "deterministic_review": {
+        "planner_path": "deterministic",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Repository Health Intelligence Dashboard",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Code Review Risk Assistant",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Technical Debt Prioritization Engine",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "openai_review": {
+        "planner_path": "openai",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Repository Health Maintenance Dashboard",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Repository Ownership Risk Map",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Dependency Staleness and Risk Scanner",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "overall_preference": null,
+      "overall_preference_reason": "",
+      "response_quality": null,
+      "response_quality_reason": "",
+      "unique_angle_quality": null,
+      "unique_angle_quality_reason": "",
+      "reviewer_notes": ""
+    }
+  }
+}
