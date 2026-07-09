@@ -11,15 +11,15 @@ from planning.shadow_reviewer_report import (
 def test_shadow_reviewer_report_uses_latest_reviewed_artifacts():
     report = build_shadow_reviewer_report()
 
-    assert report["reviewed_fixtures"] == 3
-    assert report["unreviewed_fixtures"] == 7
-    assert report["total_review_records"] == 5
+    assert report["reviewed_fixtures"] == 4
+    assert report["unreviewed_fixtures"] == 6
+    assert report["total_review_records"] == 6
     assert report["data_sufficiency_warning"]
 
     assert report["outcome_distribution"] == {
         "both_weak/exploratory": 1,
         "openai/limited": 1,
-        "openai/standard": 1,
+        "openai/standard": 2,
     }
 
     adversarial_status = next(
@@ -84,4 +84,4 @@ def test_shadow_reviewer_report_writes_markdown_and_json(tmp_path):
     assert paths["json_path"].exists()
 
     payload = json.loads(paths["json_path"].read_text())
-    assert payload["reviewed_fixtures"] == 3
+    assert payload["reviewed_fixtures"] == 4
