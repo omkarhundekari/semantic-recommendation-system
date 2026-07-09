@@ -594,6 +594,161 @@ def fixture_specifications() -> Tuple[ShadowFixtureSpecification, ...]:
             ),
         ),
         ShadowFixtureSpecification(
+            case=_case("ambiguous_ai_student_project"),
+            evidence_payload={
+                "inference": {
+                    "inferred_focus": "ai_ml",
+                },
+                "merged_results": [
+                    {
+                        "document_id": "paper-llm-agents",
+                        "source_type": "research_paper",
+                        "title": "LLM Agents for Task Planning and Tool Use",
+                        "abstract": (
+                            "Large language model agents can plan tasks, call "
+                            "tools, track intermediate state, and support "
+                            "interactive workflows across domains."
+                        ),
+                        "category": "cs.AI",
+                        "retrieval_rank": 1,
+                    },
+                    {
+                        "document_id": "paper-rag-learning",
+                        "source_type": "research_paper",
+                        "title": "Retrieval Augmented Generation for Learning Support",
+                        "abstract": (
+                            "Retrieval augmented generation can support student "
+                            "learning workflows by grounding answers in course "
+                            "materials and retrieved knowledge."
+                        ),
+                        "category": "cs.CL",
+                        "retrieval_rank": 2,
+                    },
+                    {
+                        "repository_id": "repo-ai-portfolio-apps",
+                        "source_type": "github_repository",
+                        "title": "AI Student Portfolio App Examples",
+                        "readme_excerpt": (
+                            "Example AI portfolio apps include chat assistants, "
+                            "summarizers, recommendation tools, study helpers, "
+                            "and dashboards built with Python and React."
+                        ),
+                        "retrieval_rank": 3,
+                    },
+                ],
+            },
+            mock_response={
+                "candidates": [
+                    {
+                        "title": "AI Study Assistant with Course-Grounded Answers",
+                        "problem_statement": (
+                            "Students may need a tool that answers study "
+                            "questions using uploaded notes or course material."
+                        ),
+                        "target_user": "Students",
+                        "core_workflow": [
+                            "Upload small course-note fixtures.",
+                            "Ask natural-language study questions.",
+                            "Retrieve relevant notes and generate grounded answers.",
+                        ],
+                        "mvp_scope": [
+                            "Load a small local note collection.",
+                            "Implement keyword or embedding retrieval.",
+                            "Return answers with cited source snippets.",
+                            "Show a basic React or Streamlit interface.",
+                        ],
+                        "success_metrics": [
+                            "Number of answered study questions with citations.",
+                            "Share of answers linked to retrieved notes.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses RAG learning-support evidence, but the user "
+                            "did not explicitly ask for an education or study app."
+                        ),
+                        "source_ids": ["paper-rag-learning"],
+                        "assumptions": [
+                            "Assumes the broad AI project request should be "
+                            "narrowed to student learning support."
+                        ],
+                        "suggested_stack": ["Python", "React"],
+                    },
+                    {
+                        "title": "AI Internship Project Recommender",
+                        "problem_statement": (
+                            "Students may need help choosing portfolio projects "
+                            "that match skills, interests, and target roles."
+                        ),
+                        "target_user": "Software engineering students",
+                        "core_workflow": [
+                            "Collect student skills and role preferences.",
+                            "Rank project ideas by fit.",
+                            "Explain why each idea may help internship positioning.",
+                        ],
+                        "mvp_scope": [
+                            "Create a small catalog of AI project ideas.",
+                            "Collect skills and target-role inputs.",
+                            "Rank projects with transparent scoring rules.",
+                            "Show explanations for each recommendation.",
+                        ],
+                        "success_metrics": [
+                            "Number of project ideas ranked.",
+                            "Number of explanations with clear skill-role mapping.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses portfolio app implementation context, but lacks "
+                            "direct research evidence for career outcomes."
+                        ),
+                        "source_ids": ["repo-ai-portfolio-apps"],
+                        "assumptions": [
+                            "Assumes the user's main need is project selection "
+                            "for internships rather than a specific AI domain."
+                        ],
+                        "suggested_stack": ["Python", "React"],
+                    },
+                    {
+                        "title": "LLM Task Planner for Student Workflows",
+                        "problem_statement": (
+                            "Students may benefit from an AI planner that breaks "
+                            "large academic or job-search tasks into steps."
+                        ),
+                        "target_user": "Students",
+                        "core_workflow": [
+                            "Enter a broad student task.",
+                            "Generate a step-by-step plan.",
+                            "Track progress and revise next actions.",
+                        ],
+                        "mvp_scope": [
+                            "Create task and subtask data models.",
+                            "Generate deterministic or mocked planning steps.",
+                            "Show editable task plans in a simple UI.",
+                            "Add progress tracking for each step.",
+                        ],
+                        "success_metrics": [
+                            "Number of plans generated.",
+                            "Number of completed subtasks tracked.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses LLM agent planning evidence, but the user did "
+                            "not specify planning, productivity, or agentic workflows."
+                        ),
+                        "source_ids": ["paper-llm-agents"],
+                        "assumptions": [
+                            "Assumes the vague AI project request should become "
+                            "a student productivity agent."
+                        ],
+                        "suggested_stack": ["Python", "React"],
+                    },
+                ],
+            },
+            reviewability_requirements=(
+                "The fixture keeps the user goal intentionally broad.",
+                "Evidence is plausible but does not resolve the user's true intent.",
+                "Candidate assumptions remain visible for ambiguity review.",
+                "Manual review can penalize overconfident narrowing.",
+                "An unscored manual review template is present.",
+            ),
+        ),
+        ShadowFixtureSpecification(
             case=_case("adversarial_cloud_incident_health_near_miss"),
             evidence_payload={
                 "inference": {

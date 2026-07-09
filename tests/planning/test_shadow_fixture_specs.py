@@ -19,6 +19,7 @@ def test_first_fixture_specs_are_valid_and_match_registry_cases():
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
+        "ambiguous_ai_student_project",
         "adversarial_cloud_incident_health_near_miss",
         "no_research_paper_implementation_only",
         "strict_weekend_scope",
@@ -41,6 +42,7 @@ def test_fixture_spec_rejects_unknown_case():
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
+        "ambiguous_ai_student_project",
         "adversarial_cloud_incident_health_near_miss",
         "no_research_paper_implementation_only",
         "strict_weekend_scope",
@@ -337,5 +339,38 @@ def test_implementation_only_fixture_has_predeclared_oracle_and_no_research_pape
     assert "Dependency Staleness and Risk Scanner" in serialized_artifact
     assert "Repository Health Maintenance Dashboard" in serialized_artifact
     assert "research_paper" not in serialized_artifact
+    assert "expected_overall_preference" not in serialized_artifact
+    assert "expected_response_quality" not in serialized_artifact
+
+
+
+def test_ambiguous_ai_fixture_has_predeclared_oracle_and_visible_assumptions():
+    import json
+
+    from planning.fixture_review_oracles import (
+        get_fixture_review_oracle,
+    )
+
+    spec = get_fixture_specification("ambiguous_ai_student_project")
+    oracle = get_fixture_review_oracle(spec.case.case_id)
+
+    assert oracle.expected_overall_preference == "both_weak"
+    assert oracle.expected_response_quality == "exploratory"
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload=spec.evidence_payload,
+        user_goal=spec.case.user_goal,
+        constraints=spec.case.constraints,
+        provider=MockCandidateGenerationProvider(
+            response=spec.mock_response
+        ),
+    )
+
+    serialized_artifact = json.dumps(artifact)
+
+    assert "AI Study Assistant with Course-Grounded Answers" in serialized_artifact
+    assert "AI Internship Project Recommender" in serialized_artifact
+    assert "LLM Task Planner for Student Workflows" in serialized_artifact
+    assert "Assumes the broad AI project request" in serialized_artifact
     assert "expected_overall_preference" not in serialized_artifact
     assert "expected_response_quality" not in serialized_artifact

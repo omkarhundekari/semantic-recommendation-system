@@ -14,6 +14,7 @@ def test_selects_all_initial_fixture_specs_by_default():
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
+        "ambiguous_ai_student_project",
         "adversarial_cloud_incident_health_near_miss",
         "no_research_paper_implementation_only",
         "strict_weekend_scope",
@@ -96,6 +97,7 @@ def test_available_fixture_ids_match_selectable_specs():
         "data_quality_strong_direct",
         "rag_qa_strong_direct",
         "developer_productivity_flaky_tests",
+        "ambiguous_ai_student_project",
         "adversarial_cloud_incident_health_near_miss",
         "no_research_paper_implementation_only",
         "strict_weekend_scope",
@@ -221,5 +223,25 @@ def test_implementation_only_review_packet_uses_predeclared_oracle_but_hides_it(
     assert "github_repository" in packet
     assert "- Type: research_paper" not in packet
     assert "\"source_type\": \"research_paper\"" not in packet
+    assert "expected_overall_preference" not in packet
+    assert "expected_response_quality" not in packet
+
+
+
+def test_ambiguous_ai_review_packet_uses_predeclared_oracle_but_hides_it():
+    spec = select_fixture_specifications(["ambiguous_ai_student_project"])[0]
+    artifact = build_fixture_artifact(spec)
+    packet = render_review_packet(
+        artifact=artifact,
+        specification=spec,
+    )
+
+    assert "ambiguous_ai_student_project" in packet
+    assert "AI Study Assistant with Course-Grounded Answers" in packet
+    assert "AI Internship Project Recommender" in packet
+    assert "LLM Task Planner for Student Workflows" in packet
+    assert "did not explicitly ask" in packet
+    assert "did not specify planning" in packet
+    assert "adjacent_context_only" in packet
     assert "expected_overall_preference" not in packet
     assert "expected_response_quality" not in packet
