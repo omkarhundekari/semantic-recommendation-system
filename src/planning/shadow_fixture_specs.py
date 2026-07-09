@@ -1200,6 +1200,158 @@ def fixture_specifications() -> Tuple[ShadowFixtureSpecification, ...]:
             ),
         ),
         ShadowFixtureSpecification(
+            case=_case("deterministic_template_risk"),
+            evidence_payload={
+                "inference": {
+                    "inferred_focus": "data_engineering",
+                },
+                "merged_results": [
+                    {
+                        "document_id": "paper-data-quality-impact",
+                        "source_type": "research_paper",
+                        "title": (
+                            "Downstream Impact Analysis for Data Quality "
+                            "Incidents"
+                        ),
+                        "abstract": (
+                            "Data-quality incidents can affect downstream "
+                            "dashboards, owners, reports, and dependent "
+                            "datasets. Impact analysis helps teams prioritize "
+                            "communication and remediation."
+                        ),
+                        "category": "cs.DB",
+                        "retrieval_rank": 1,
+                    },
+                    {
+                        "document_id": "paper-owner-aware-lineage",
+                        "source_type": "research_paper",
+                        "title": (
+                            "Owner-Aware Dataset Lineage for Incident Response"
+                        ),
+                        "abstract": (
+                            "Dataset lineage enriched with owner metadata can "
+                            "identify accountable teams, impacted assets, and "
+                            "affected analytics consumers after upstream failures."
+                        ),
+                        "category": "cs.DB",
+                        "retrieval_rank": 2,
+                    },
+                    {
+                        "repository_id": "repo-dashboard-impact",
+                        "source_type": "github_repository",
+                        "title": "Dashboard Impact Review Toolkit",
+                        "readme_excerpt": (
+                            "Load dashboard dependencies, upstream data quality "
+                            "events, dataset owners, and affected business views "
+                            "to generate incident impact reports."
+                        ),
+                        "retrieval_rank": 3,
+                    },
+                ],
+            },
+            mock_response={
+                "candidates": [
+                    {
+                        "title": "Data Quality Incident Impact Map",
+                        "problem_statement": (
+                            "Data engineers need to identify which dashboards, "
+                            "datasets, and owners are affected after a known "
+                            "data-quality incident."
+                        ),
+                        "target_user": "Data engineers and analytics engineers",
+                        "core_workflow": [
+                            "Load a known data-quality incident.",
+                            "Traverse downstream dataset and dashboard dependencies.",
+                            "List affected owners and business views.",
+                        ],
+                        "mvp_scope": [
+                            "Create fixture tables for incidents, datasets, dashboards, and owners.",
+                            "Represent lineage edges between upstream and downstream assets.",
+                            "Traverse dependencies from one known incident source.",
+                            "Show impacted dashboards, owners, and severity notes.",
+                        ],
+                        "success_metrics": [
+                            "Number of affected dashboards identified.",
+                            "Percentage of affected assets with owner metadata.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses direct evidence on downstream impact analysis "
+                            "for data-quality incidents."
+                        ),
+                        "source_ids": ["paper-data-quality-impact"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "PostgreSQL"],
+                    },
+                    {
+                        "title": "Owner Notification Priority Queue",
+                        "problem_statement": (
+                            "Data platform teams need to prioritize which owners "
+                            "and consumers to notify after a data-quality incident."
+                        ),
+                        "target_user": "Data platform teams",
+                        "core_workflow": [
+                            "Load impacted datasets and dashboards.",
+                            "Join assets with owner and consumer metadata.",
+                            "Rank owners by affected asset count and severity.",
+                        ],
+                        "mvp_scope": [
+                            "Create owner and dashboard dependency fixtures.",
+                            "Join affected assets to accountable owners.",
+                            "Compute a transparent notification priority score.",
+                            "Export a prioritized owner action queue.",
+                        ],
+                        "success_metrics": [
+                            "Number of owners prioritized for notification.",
+                            "Number of impacted assets covered by owner assignments.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses owner-aware lineage evidence for incident response."
+                        ),
+                        "source_ids": ["paper-owner-aware-lineage"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "PostgreSQL"],
+                    },
+                    {
+                        "title": "Dashboard Blast Radius Review",
+                        "problem_statement": (
+                            "Analytics teams need a practical review view that "
+                            "shows the dashboard blast radius of a known upstream "
+                            "quality failure."
+                        ),
+                        "target_user": "Analytics engineers",
+                        "core_workflow": [
+                            "Load dashboard dependency fixtures.",
+                            "Mark one upstream data-quality event.",
+                            "Generate a dashboard impact report.",
+                        ],
+                        "mvp_scope": [
+                            "Create sample dashboard dependency records.",
+                            "Map dashboards to upstream datasets and owners.",
+                            "Filter dashboards affected by one incident.",
+                            "Generate a review report for affected business views.",
+                        ],
+                        "success_metrics": [
+                            "Number of affected dashboards surfaced.",
+                            "Time to produce a dashboard impact report.",
+                        ],
+                        "evidence_relationship": (
+                            "Uses implementation context for dashboard impact review workflows."
+                        ),
+                        "source_ids": ["repo-dashboard-impact"],
+                        "assumptions": [],
+                        "suggested_stack": ["Python", "React"],
+                    },
+                ],
+            },
+            reviewability_requirements=(
+                "The fixture has direct data-quality incident impact evidence.",
+                "Candidates must stay specific to downstream dashboard and owner impact.",
+                "Candidate source IDs map to exact brief sources.",
+                "Manual review can detect generic deterministic template behavior.",
+                "An unscored manual review template is present.",
+            ),
+        ),
+        ShadowFixtureSpecification(
             case=_case("sparse_evidence_cloud_cost"),
             evidence_payload={
                 "inference": {

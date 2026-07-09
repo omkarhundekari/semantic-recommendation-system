@@ -23,6 +23,7 @@ def test_first_fixture_specs_are_valid_and_match_registry_cases():
         "adversarial_cloud_incident_health_near_miss",
         "no_research_paper_implementation_only",
         "strict_weekend_scope",
+        "deterministic_template_risk",
         "sparse_evidence_cloud_cost",
     ]
 
@@ -46,6 +47,7 @@ def test_fixture_spec_rejects_unknown_case():
         "adversarial_cloud_incident_health_near_miss",
         "no_research_paper_implementation_only",
         "strict_weekend_scope",
+        "deterministic_template_risk",
         "sparse_evidence_cloud_cost",
     ],
 )
@@ -372,5 +374,45 @@ def test_ambiguous_ai_fixture_has_predeclared_oracle_and_visible_assumptions():
     assert "AI Internship Project Recommender" in serialized_artifact
     assert "LLM Task Planner for Student Workflows" in serialized_artifact
     assert "Assumes the broad AI project request" in serialized_artifact
+    assert "expected_overall_preference" not in serialized_artifact
+    assert "expected_response_quality" not in serialized_artifact
+
+
+
+def test_deterministic_template_risk_fixture_has_predeclared_oracle_and_direct_evidence():
+    import json
+
+    from planning.fixture_review_oracles import (
+        get_fixture_review_oracle,
+    )
+
+    spec = get_fixture_specification("deterministic_template_risk")
+    oracle = get_fixture_review_oracle(spec.case.case_id)
+
+    source_titles = {
+        item["title"]
+        for item in spec.evidence_payload["merged_results"]
+    }
+
+    assert oracle.expected_overall_preference == "openai"
+    assert oracle.expected_response_quality == "standard"
+    assert any("Downstream Impact Analysis" in title for title in source_titles)
+    assert any("Owner-Aware Dataset Lineage" in title for title in source_titles)
+    assert any("Dashboard Impact" in title for title in source_titles)
+
+    artifact = build_shadow_comparison_artifact(
+        evidence_payload=spec.evidence_payload,
+        user_goal=spec.case.user_goal,
+        constraints=spec.case.constraints,
+        provider=MockCandidateGenerationProvider(
+            response=spec.mock_response
+        ),
+    )
+
+    serialized_artifact = json.dumps(artifact)
+
+    assert "Data Quality Incident Impact Map" in serialized_artifact
+    assert "Owner Notification Priority Queue" in serialized_artifact
+    assert "Dashboard Blast Radius Review" in serialized_artifact
     assert "expected_overall_preference" not in serialized_artifact
     assert "expected_response_quality" not in serialized_artifact
