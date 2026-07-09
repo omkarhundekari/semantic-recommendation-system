@@ -229,6 +229,26 @@ def fixture_review_oracles() -> Tuple[FixtureReviewOracle, ...]:
                 "domain, or evidence constraints."
             ),
         ),
+        FixtureReviewOracle(
+            fixture_id="deterministic_template_risk",
+            expected_overall_preference="openai",
+            expected_response_quality="standard",
+            reviewer_expectations=(
+                "Reviewers should check whether deterministic candidates reuse "
+                "generic data-engineering templates instead of addressing the "
+                "specific downstream dashboard and owner-impact problem.",
+                "The stronger planner path should produce distinct candidates "
+                "around incident impact, ownership, and downstream dependency review.",
+                "Response quality can be standard only if candidates are grounded, "
+                "specific, and feasible for the stated three-week scope."
+            ),
+            rationale=(
+                "This case directly targets deterministic template drift. The "
+                "expected outcome favors the shadow path if it creates specific "
+                "data-quality incident impact directions rather than broad pipeline "
+                "monitoring or generic dashboard ideas."
+            ),
+        ),
     )
 
 
