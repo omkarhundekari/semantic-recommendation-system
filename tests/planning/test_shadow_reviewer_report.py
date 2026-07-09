@@ -11,30 +11,29 @@ from planning.shadow_reviewer_report import (
 def test_shadow_reviewer_report_uses_latest_reviewed_artifacts():
     report = build_shadow_reviewer_report()
 
-    assert report["reviewed_fixtures"] == 9
-    assert report["unreviewed_fixtures"] == 1
-    assert report["total_review_records"] == 11
-    assert report["review_annotation_count"] == 9
-    assert report["latest_review_annotation_count"] == 9
+    assert report["reviewed_fixtures"] == 10
+    assert report["unreviewed_fixtures"] == 0
+    assert report["total_review_records"] == 12
+    assert report["review_annotation_count"] == 10
+    assert report["latest_review_annotation_count"] == 10
     assert report["data_sufficiency_warning"]
 
     assert report["outcome_distribution"] == {
         "both_weak/exploratory": 2,
-        "openai/limited": 3,
+        "openai/limited": 4,
         "openai/standard": 4,
     }
     assert report["oracle_comparison_counts"] == {
-        "matched": 8,
+        "matched": 9,
         "mismatch": 1,
-        "missing_review": 1,
     }
-    assert report["reviewer_confidence_counts"] == {"high": 9}
+    assert report["reviewer_confidence_counts"] == {"high": 10}
     assert report["both_weak_diagnosis_counts"] == {
         "evidence_sparse": 1,
         "query_underspecified": 1,
     }
     assert report["relevance_trace_assessment_counts"] == {
-        "traces_match_reviewer_judgment": 9,
+        "traces_match_reviewer_judgment": 10,
     }
 
     adversarial_status = next(
@@ -59,7 +58,7 @@ def test_shadow_reviewer_report_summarizes_warning_and_relevance_trace():
     report = build_shadow_reviewer_report()
 
     warnings = report["quality_warning_summary"]
-    assert len(warnings) == 4
+    assert len(warnings) == 5
 
     warnings_by_fixture = {
         warning["fixture_id"]: warning
@@ -92,6 +91,15 @@ def test_shadow_reviewer_report_summarizes_warning_and_relevance_trace():
         "AI Study Assistant with Course-Grounded Answers",
         "LLM Task Planner for Student Workflows",
     ]
+    assert warnings_by_fixture[
+        "incident_investigation_broad"
+    ]["warning_code"] == "adjacent_context_only_candidate"
+    assert warnings_by_fixture[
+        "incident_investigation_broad"
+    ]["candidate_titles"] == [
+        "Observability Signal Correlation Board",
+        "Incident Timeline Reconstruction Assistant",
+    ]
 
     suspicious = [
         trace
@@ -99,7 +107,7 @@ def test_shadow_reviewer_report_summarizes_warning_and_relevance_trace():
         if trace["was_flagged"]
     ]
 
-    assert len(suspicious) == 5
+    assert len(suspicious) == 7
 
     suspicious_by_candidate = {
         trace["candidate_title"]: trace
@@ -127,6 +135,12 @@ def test_shadow_reviewer_report_summarizes_warning_and_relevance_trace():
     assert suspicious_by_candidate[
         "LLM Task Planner for Student Workflows"
     ]["source_id"] == "paper-llm-agents"
+    assert suspicious_by_candidate[
+        "Observability Signal Correlation Board"
+    ]["source_id"] == "paper-observability-correlation"
+    assert suspicious_by_candidate[
+        "Incident Timeline Reconstruction Assistant"
+    ]["source_id"] == "paper-incident-timeline"
 
 
 def test_shadow_reviewer_report_markdown_contains_key_sections():
@@ -137,14 +151,13 @@ def test_shadow_reviewer_report_markdown_contains_key_sections():
     assert "## Data Sufficiency Warning" in markdown
     assert "## Outcome Distribution" in markdown
     assert "## Oracle Comparison Summary" in markdown
-    assert "`matched`: 8" in markdown
+    assert "`matched`: 9" in markdown
     assert "`mismatch`: 1" in markdown
-    assert "`missing_review`: 1" in markdown
     assert "## Review Annotation Summary" in markdown
-    assert "`high`: 9" in markdown
+    assert "`high`: 10" in markdown
     assert "`evidence_sparse`: 1" in markdown
     assert "`query_underspecified`: 1" in markdown
-    assert "`traces_match_reviewer_judgment`: 9" in markdown
+    assert "`traces_match_reviewer_judgment`: 10" in markdown
     assert "## Quality Warnings Needing Attention" in markdown
     assert "## Suspicious Candidate-to-Source Relevance Traces" in markdown
     assert "adjacent_context_only_candidate" in markdown
@@ -160,10 +173,9 @@ def test_shadow_reviewer_report_writes_markdown_and_json(tmp_path):
     assert paths["json_path"].exists()
 
     payload = json.loads(paths["json_path"].read_text())
-    assert payload["reviewed_fixtures"] == 9
-    assert payload["review_annotation_count"] == 9
+    assert payload["reviewed_fixtures"] == 10
+    assert payload["review_annotation_count"] == 10
     assert payload["oracle_comparison_counts"] == {
-        "matched": 8,
+        "matched": 9,
         "mismatch": 1,
-        "missing_review": 1,
     }

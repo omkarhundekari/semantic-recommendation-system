@@ -1,0 +1,2112 @@
+{
+  "schema_version": "1.1",
+  "artifact_identity": {
+    "artifact_id": "f737ba1de33a41fcab8ff5663795ce5f",
+    "generation_timestamp_utc": "20260709T052120Z",
+    "fixture_id": "incident_investigation_broad"
+  },
+  "generated_at_utc": "20260709T052120Z",
+  "query": "Build a platform engineering project for incident investigation in three weeks.",
+  "constraints": {
+    "skill_level": "intermediate",
+    "time_available": "3 weeks",
+    "target_roles": [
+      "Backend Engineer",
+      "Platform Engineer"
+    ],
+    "preferred_stack": [
+      "Python",
+      "React"
+    ]
+  },
+  "retrieval": {
+    "selected_route": null,
+    "expanded_query": null,
+    "focused_query": null,
+    "inference": {
+      "inferred_focus": "incident_investigation"
+    },
+    "merged_evidence_count": 3
+  },
+  "legacy_planner": {
+    "direction_count": 3,
+    "directions": [
+      {
+        "title": "Project Opportunity Discovery Engine",
+        "evidence_title": "Incident Review Evidence Collector",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "incident_investigation"
+      },
+      {
+        "title": "Technical Roadmap Recommendation System",
+        "evidence_title": "Timeline Reconstruction for Software Incidents",
+        "evidence_source_type": "research_paper",
+        "detected_domain": "incident_investigation"
+      },
+      {
+        "title": "Evidence-Grounded Portfolio Planner",
+        "evidence_title": "Incident Review Evidence Collector",
+        "evidence_source_type": "github_repository",
+        "detected_domain": "incident_investigation"
+      }
+    ],
+    "raw_ideas": [
+      {
+        "project_title": "Project Opportunity Discovery Engine",
+        "based_on_paper": "Incident Review Evidence Collector",
+        "evidence_title": "Incident Review Evidence Collector",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "incident_investigation",
+        "detected_intent": "project_building",
+        "idea_angle": "Turn technical evidence into buildable project opportunities with scope, risks, and career signal.",
+        "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_focus_type": "buildable_gap",
+        "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research concerns observed: deployment reliability.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Incident Review Evidence Collector",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Incident Investigation",
+          "Evaluation",
+          "Monitoring",
+          "Explainability"
+        ],
+        "extracted_skills": [
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics"
+        ],
+        "research_motivation": "This idea uses 'Incident Review Evidence Collector' as a real implementation reference. It informs a buildable direction for Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Define one narrow, measurable workflow for Project Opportunity Discovery Engine.",
+          "Create a small reproducible input dataset or sample scenario.",
+          "Implement a transparent scoring, recommendation, or analysis pipeline.",
+          "Show outputs with explanations, confidence signals, and known limitations.",
+          "Validate the workflow against representative expected outcomes.",
+          "Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Project Opportunity Discovery Engine that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Software Engineer",
+          "Full-Stack Engineer",
+          "Product Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer, Platform Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Technical Roadmap Recommendation System",
+        "based_on_paper": "Timeline Reconstruction for Software Incidents",
+        "evidence_title": "Timeline Reconstruction for Software Incidents",
+        "evidence_url": "",
+        "evidence_source_type": "research_paper",
+        "research_category": "cs.SE",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "incident_investigation",
+        "detected_intent": "project_building",
+        "idea_angle": "Generate learning paths, project roadmaps, and role alignment from user goals.",
+        "opportunity_area": "Turn technical evidence into buildable project opportunities with scope, risks, and career signal.",
+        "evidence_focus_type": "research_or_reliability_gap",
+        "evidence_focus_statement": "Address evidence-related concerns around: deployment reliability.",
+        "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research concerns observed: deployment reliability.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Incident Review Evidence Collector",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Incident Investigation",
+          "Evaluation",
+          "Monitoring",
+          "Explainability"
+        ],
+        "extracted_skills": [
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics"
+        ],
+        "research_motivation": "This idea is grounded in the research paper 'Timeline Reconstruction for Software Incidents'. The paper provides evidence related to: Incident investigations often require reconstructing ordered timelines from logs, deployments, alerts, and operator notes to identify plausible contributing events.... The generated project 'Technical Roadmap Recommendation System' turns that research direction into a buildable software prototype focused on Turn technical evidence into buildable project opportunities with scope, risks, and career signal..",
+        "mvp_scope": [
+          "Define one narrow, measurable workflow for Technical Roadmap Recommendation System.",
+          "Create a small reproducible input dataset or sample scenario.",
+          "Implement a transparent scoring, recommendation, or analysis pipeline.",
+          "Show outputs with explanations, confidence signals, and known limitations.",
+          "Validate the workflow against representative expected outcomes.",
+          "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built a Technical Roadmap Recommendation System that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Software Engineer",
+          "Full-Stack Engineer",
+          "Product Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer, Platform Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+      },
+      {
+        "project_title": "Evidence-Grounded Portfolio Planner",
+        "based_on_paper": "Incident Review Evidence Collector",
+        "evidence_title": "Incident Review Evidence Collector",
+        "evidence_url": "",
+        "evidence_source_type": "github_repository",
+        "research_category": "general",
+        "implementation_signals": [],
+        "implementation_technologies": [],
+        "github_selection_reason": "",
+        "detected_domain": "incident_investigation",
+        "detected_intent": "project_building",
+        "idea_angle": "Recommend portfolio projects grounded in evidence, skills, and target roles.",
+        "opportunity_area": "Generate learning paths, project roadmaps, and role alignment from user goals.",
+        "evidence_focus_type": "research_or_reliability_gap",
+        "evidence_focus_statement": "Address evidence-related concerns around: deployment reliability.",
+        "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+        "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+        "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+        "evidence_summary": "Research concerns observed: deployment reliability.",
+        "evidence_confidence": {
+          "level": "medium",
+          "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+        },
+        "domain_relevant_technologies": [],
+        "source_contributions": [
+          {
+            "title": "Incident Review Evidence Collector",
+            "source_type": "github_repository",
+            "architecture_signals": [],
+            "technology_signals": [],
+            "trusted": false
+          }
+        ],
+        "extracted_themes": [
+          "Incident Investigation",
+          "Evaluation",
+          "Monitoring",
+          "Explainability"
+        ],
+        "extracted_skills": [
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics"
+        ],
+        "research_motivation": "This idea uses 'Incident Review Evidence Collector' as a real implementation reference. It informs a buildable direction for Generate learning paths, project roadmaps, and role alignment from user goals.. See the implementation-reference section below for the specific architecture and technology signals.",
+        "mvp_scope": [
+          "Define one narrow, measurable workflow for Evidence-Grounded Portfolio Planner.",
+          "Create a small reproducible input dataset or sample scenario.",
+          "Implement a transparent scoring, recommendation, or analysis pipeline.",
+          "Show outputs with explanations, confidence signals, and known limitations.",
+          "Validate the workflow against representative expected outcomes.",
+          "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        ],
+        "advanced_extensions": [
+          "Add user feedback loops to improve ranking and recommendations.",
+          "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+          "Add historical analytics so users can compare runs over time.",
+          "Add explainability notes showing why each recommendation was produced."
+        ],
+        "suggested_tech_stack": [
+          "Python",
+          "FastAPI",
+          "PostgreSQL",
+          "Docker",
+          "Full-Stack Development",
+          "Project Planning",
+          "APIs",
+          "Dashboards",
+          "Analytics",
+          "React"
+        ],
+        "resume_bullets": [
+          "Built an Evidence-Grounded Portfolio Planner that converts retrieved technical evidence into a buildable, career-aligned software project.",
+          "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+          "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+          "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+        ],
+        "target_roles": [
+          "Software Engineer",
+          "Full-Stack Engineer",
+          "Product Engineer"
+        ],
+        "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer, Platform Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Project Opportunity Discovery Engine",
+          "based_on_paper": "Incident Review Evidence Collector",
+          "evidence_title": "Incident Review Evidence Collector",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "incident_investigation",
+          "detected_intent": "project_building",
+          "idea_angle": "Turn technical evidence into buildable project opportunities with scope, risks, and career signal.",
+          "opportunity_area": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_focus_type": "buildable_gap",
+          "evidence_focus_statement": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_driven_angle": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research concerns observed: deployment reliability.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Incident Review Evidence Collector",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Incident Investigation",
+            "Evaluation",
+            "Monitoring",
+            "Explainability"
+          ],
+          "extracted_skills": [
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics"
+          ],
+          "research_motivation": "This idea uses 'Incident Review Evidence Collector' as a real implementation reference. It informs a buildable direction for Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Define one narrow, measurable workflow for Project Opportunity Discovery Engine.",
+            "Create a small reproducible input dataset or sample scenario.",
+            "Implement a transparent scoring, recommendation, or analysis pipeline.",
+            "Show outputs with explanations, confidence signals, and known limitations.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Project Opportunity Discovery Engine that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Software Engineer",
+            "Full-Stack Engineer",
+            "Product Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer, Platform Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 7.9,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Project Opportunity Discovery Engine scores 7.9/10 with a strong career signal because it is grounded in github repository, fits the incident_investigation domain, and demonstrates skills such as Full-Stack Development, Project Planning, APIs, Dashboards, Analytics, Python. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          }
+        },
+        {
+          "project_title": "Technical Roadmap Recommendation System",
+          "based_on_paper": "Timeline Reconstruction for Software Incidents",
+          "evidence_title": "Timeline Reconstruction for Software Incidents",
+          "evidence_url": "",
+          "evidence_source_type": "research_paper",
+          "research_category": "cs.SE",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "incident_investigation",
+          "detected_intent": "project_building",
+          "idea_angle": "Generate learning paths, project roadmaps, and role alignment from user goals.",
+          "opportunity_area": "Turn technical evidence into buildable project opportunities with scope, risks, and career signal.",
+          "evidence_focus_type": "research_or_reliability_gap",
+          "evidence_focus_statement": "Address evidence-related concerns around: deployment reliability.",
+          "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research concerns observed: deployment reliability.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Incident Review Evidence Collector",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Incident Investigation",
+            "Evaluation",
+            "Monitoring",
+            "Explainability"
+          ],
+          "extracted_skills": [
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics"
+          ],
+          "research_motivation": "This idea is grounded in the research paper 'Timeline Reconstruction for Software Incidents'. The paper provides evidence related to: Incident investigations often require reconstructing ordered timelines from logs, deployments, alerts, and operator notes to identify plausible contributing events.... The generated project 'Technical Roadmap Recommendation System' turns that research direction into a buildable software prototype focused on Turn technical evidence into buildable project opportunities with scope, risks, and career signal..",
+          "mvp_scope": [
+            "Define one narrow, measurable workflow for Technical Roadmap Recommendation System.",
+            "Create a small reproducible input dataset or sample scenario.",
+            "Implement a transparent scoring, recommendation, or analysis pipeline.",
+            "Show outputs with explanations, confidence signals, and known limitations.",
+            "Validate the workflow against representative expected outcomes.",
+            "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built a Technical Roadmap Recommendation System that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Software Engineer",
+            "Full-Stack Engineer",
+            "Product Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer, Platform Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 7.9,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Technical Roadmap Recommendation System scores 7.9/10 with a strong career signal because it is grounded in research paper, fits the incident_investigation domain, and demonstrates skills such as Full-Stack Development, Project Planning, APIs, Dashboards, Analytics, Python. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          }
+        },
+        {
+          "project_title": "Evidence-Grounded Portfolio Planner",
+          "based_on_paper": "Incident Review Evidence Collector",
+          "evidence_title": "Incident Review Evidence Collector",
+          "evidence_url": "",
+          "evidence_source_type": "github_repository",
+          "research_category": "general",
+          "implementation_signals": [],
+          "implementation_technologies": [],
+          "github_selection_reason": "",
+          "detected_domain": "incident_investigation",
+          "detected_intent": "project_building",
+          "idea_angle": "Recommend portfolio projects grounded in evidence, skills, and target roles.",
+          "opportunity_area": "Generate learning paths, project roadmaps, and role alignment from user goals.",
+          "evidence_focus_type": "research_or_reliability_gap",
+          "evidence_focus_statement": "Address evidence-related concerns around: deployment reliability.",
+          "evidence_driven_angle": "Build a project that makes these quality or reliability concerns visible and actionable.",
+          "evidence_buildable_gap": "The strongest evidence needs to be turned into one constrained, testable workflow with clear inputs, outputs, and validation.",
+          "evidence_project_opportunity": "Build an evidence-grounded project planning tool with a focused MVP and explainable recommendations.",
+          "evidence_summary": "Research concerns observed: deployment reliability.",
+          "evidence_confidence": {
+            "level": "medium",
+            "reason": "The recommendation has relevant evidence, but the available sources do not yet provide broad cross-source coverage."
+          },
+          "domain_relevant_technologies": [],
+          "source_contributions": [
+            {
+              "title": "Incident Review Evidence Collector",
+              "source_type": "github_repository",
+              "architecture_signals": [],
+              "technology_signals": [],
+              "trusted": false
+            }
+          ],
+          "extracted_themes": [
+            "Incident Investigation",
+            "Evaluation",
+            "Monitoring",
+            "Explainability"
+          ],
+          "extracted_skills": [
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics"
+          ],
+          "research_motivation": "This idea uses 'Incident Review Evidence Collector' as a real implementation reference. It informs a buildable direction for Generate learning paths, project roadmaps, and role alignment from user goals.. See the implementation-reference section below for the specific architecture and technology signals.",
+          "mvp_scope": [
+            "Define one narrow, measurable workflow for Evidence-Grounded Portfolio Planner.",
+            "Create a small reproducible input dataset or sample scenario.",
+            "Implement a transparent scoring, recommendation, or analysis pipeline.",
+            "Show outputs with explanations, confidence signals, and known limitations.",
+            "Validate the workflow against representative expected outcomes.",
+            "Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add user feedback loops to improve ranking and recommendations.",
+            "Add export to JSON for GitHub, resume, or LinkedIn documentation.",
+            "Add historical analytics so users can compare runs over time.",
+            "Add explainability notes showing why each recommendation was produced.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "FastAPI",
+            "PostgreSQL",
+            "Docker",
+            "Full-Stack Development",
+            "Project Planning",
+            "APIs",
+            "Dashboards",
+            "Analytics",
+            "React"
+          ],
+          "resume_bullets": [
+            "Built an Evidence-Grounded Portfolio Planner that converts retrieved technical evidence into a buildable, career-aligned software project.",
+            "Implemented core workflows using Python, FastAPI, Streamlit, PostgreSQL, Docker, Full-Stack Development, with emphasis on evidence grounding, project planning, and explainable recommendations.",
+            "Designed MVP scope, advanced extensions, skill mapping, and target-role alignment for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "Created a structured project intelligence pipeline covering evidence retrieval, idea generation, feasibility scoring, and resume-ready output."
+          ],
+          "target_roles": [
+            "Software Engineer",
+            "Full-Stack Engineer",
+            "Product Engineer"
+          ],
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer, Platform Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level.",
+          "feasibility_analysis": {
+            "feasibility_score": 7.9,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Evidence-Grounded Portfolio Planner scores 7.9/10 with a strong career signal because it is grounded in github repository, fits the incident_investigation domain, and demonstrates skills such as Full-Stack Development, Project Planning, APIs, Dashboards, Analytics, Python. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Software Engineer, Full-Stack Engineer, Product Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          }
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        },
+        {
+          "status": "needs_review",
+          "score": 6,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": false,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": [
+            "The direction does not clearly match the requested target role."
+          ]
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    }
+  },
+  "v2_shadow": {
+    "status": "fixture_evaluated",
+    "report": {
+      "evidence_brief": {
+        "query": "Build a platform engineering project for incident investigation in three weeks.",
+        "sources": [
+          {
+            "source_id": "repo-incident-review",
+            "source_type": "github_repository",
+            "title": "Incident Review Evidence Collector",
+            "excerpt": "Incident Review Evidence Collector Collect alerts, deployment records, logs, ownership metadata, and investigation notes into a structured incident review packet.",
+            "category": null,
+            "url": null,
+            "retrieval_rank": 3,
+            "retrieval_signals": {},
+            "support_scope": "direct",
+            "retention_reason": "Matched multiple meaningful query terms."
+          },
+          {
+            "source_id": "paper-incident-timeline",
+            "source_type": "research_paper",
+            "title": "Timeline Reconstruction for Software Incidents",
+            "excerpt": "Timeline Reconstruction for Software Incidents Incident investigations often require reconstructing ordered timelines from logs, deployments, alerts, and operator notes to identify plausible contributing events.",
+            "category": "cs.SE",
+            "url": null,
+            "retrieval_rank": 1,
+            "retrieval_signals": {},
+            "support_scope": "adjacent_planning",
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage."
+          },
+          {
+            "source_id": "paper-observability-correlation",
+            "source_type": "research_paper",
+            "title": "Correlating Observability Signals During Production Failures",
+            "excerpt": "Correlating Observability Signals During Production Failures Production failure analysis can combine logs, metrics, traces, and deployment events to find correlated signals that help engineers narrow investigation scope.",
+            "category": "cs.SE",
+            "url": null,
+            "retrieval_rank": 2,
+            "retrieval_signals": {},
+            "support_scope": "adjacent_planning",
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage."
+          }
+        ],
+        "source_counts": {
+          "github_repository": 1,
+          "research_paper": 2
+        },
+        "recurring_concepts": [
+          "logs",
+          "alerts",
+          "deployment",
+          "events",
+          "incident",
+          "investigation",
+          "notes"
+        ],
+        "coverage_warnings": []
+      },
+      "evidence_curation": {
+        "required_anchor_terms": [],
+        "retained": [
+          {
+            "item": {
+              "repository_id": "repo-incident-review",
+              "source_type": "github_repository",
+              "title": "Incident Review Evidence Collector",
+              "readme_excerpt": "Collect alerts, deployment records, logs, ownership metadata, and investigation notes into a structured incident review packet.",
+              "retrieval_rank": 3
+            },
+            "relevance_score": 4.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "incident",
+              "investigation"
+            ],
+            "query_term_document_frequencies": {
+              "incident": 2,
+              "investigation": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Matched multiple meaningful query terms.",
+            "support_scope": "direct"
+          },
+          {
+            "item": {
+              "document_id": "paper-incident-timeline",
+              "source_type": "research_paper",
+              "title": "Timeline Reconstruction for Software Incidents",
+              "abstract": "Incident investigations often require reconstructing ordered timelines from logs, deployments, alerts, and operator notes to identify plausible contributing events.",
+              "category": "cs.SE",
+              "retrieval_rank": 1
+            },
+            "relevance_score": 2.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "incident"
+            ],
+            "query_term_document_frequencies": {
+              "incident": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [
+              "incident investigation"
+            ],
+            "unique_query_phrases": [
+              "incident investigation"
+            ],
+            "query_phrase_document_frequencies": {
+              "incident investigation": 1
+            },
+            "curation_pool_size": 3,
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage.",
+            "support_scope": "adjacent_planning"
+          },
+          {
+            "item": {
+              "document_id": "paper-observability-correlation",
+              "source_type": "research_paper",
+              "title": "Correlating Observability Signals During Production Failures",
+              "abstract": "Production failure analysis can combine logs, metrics, traces, and deployment events to find correlated signals that help engineers narrow investigation scope.",
+              "category": "cs.SE",
+              "retrieval_rank": 2
+            },
+            "relevance_score": 2.0,
+            "matched_anchor_terms": [],
+            "matched_query_terms": [
+              "investigation"
+            ],
+            "query_term_document_frequencies": {
+              "investigation": 2
+            },
+            "unique_query_terms": [],
+            "matched_query_phrases": [],
+            "unique_query_phrases": [],
+            "query_phrase_document_frequencies": {},
+            "curation_pool_size": 3,
+            "retention_reason": "Retained as retrieval-ranked adjacent evidence because the broad query did not provide enough lexical coverage.",
+            "support_scope": "adjacent_planning"
+          }
+        ],
+        "dropped": [],
+        "retained_source_counts": {
+          "github_repository": 1,
+          "research_paper": 2
+        }
+      },
+      "planning_diagnostics": {
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "validation_errors": [],
+        "validation_warnings": [],
+        "provider_called": true,
+        "prompt_content_hash": "6f6e60778986f5f3586891ce7a31e14eb1cc4eb6a76520b88ad72002b2cb61fc"
+      },
+      "selected_titles": [
+        "Observability Signal Correlation Board",
+        "Incident Review Evidence Packet Builder",
+        "Incident Timeline Reconstruction Assistant"
+      ],
+      "selected_candidates": [
+        {
+          "title": "Observability Signal Correlation Board",
+          "problem_statement": "Engineers investigating a production failure need to compare logs, metrics, traces, and deployments to find correlated signals.",
+          "target_user": "Backend engineers and SREs",
+          "core_workflow": [
+            "Load simplified observability signal fixtures.",
+            "Join signals by service, timestamp window, and event type.",
+            "Surface suspicious correlations for review."
+          ],
+          "mvp_scope": [
+            "Create fixture data for metrics, logs, traces, and deploys.",
+            "Compute simple time-window correlations.",
+            "Rank correlated signals with transparent rules.",
+            "Render a board of candidate investigation leads."
+          ],
+          "success_metrics": [
+            "Number of correlated signals surfaced.",
+            "Reviewer agreement with top investigation leads."
+          ],
+          "evidence_relationship": "Uses direct observability correlation evidence for production failure analysis.",
+          "source_ids": [
+            "paper-observability-correlation"
+          ],
+          "assumptions": [
+            "Assumes the broad request can be scoped to signal correlation rather than full root-cause automation."
+          ],
+          "suggested_stack": [
+            "Python",
+            "React"
+          ],
+          "ranking": {
+            "score": 0.896,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.7,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.70.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Incident Review Evidence Packet Builder",
+          "problem_statement": "Support teams need a structured packet that collects incident evidence before a postmortem or escalation.",
+          "target_user": "Support engineers",
+          "core_workflow": [
+            "Collect incident metadata and evidence links.",
+            "Attach alerts, deploys, logs, owners, and notes.",
+            "Generate a structured review packet."
+          ],
+          "mvp_scope": [
+            "Create forms or fixtures for incident evidence.",
+            "Store evidence items with type, owner, and timestamp.",
+            "Generate a Markdown or JSON review packet.",
+            "Highlight missing evidence sections before review."
+          ],
+          "success_metrics": [
+            "Percentage of required evidence sections completed.",
+            "Reduction in missing context during review."
+          ],
+          "evidence_relationship": "Uses implementation context for structured incident review evidence collection.",
+          "source_ids": [
+            "repo-incident-review"
+          ],
+          "assumptions": [
+            "Assumes the broad investigation request can be scoped to evidence collection and review preparation."
+          ],
+          "suggested_stack": [
+            "Python",
+            "React"
+          ],
+          "ranking": {
+            "score": 0.866,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.55,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.55.",
+              "Completeness score: 1.00."
+            ]
+          }
+        },
+        {
+          "title": "Incident Timeline Reconstruction Assistant",
+          "problem_statement": "Support engineers need a way to assemble alerts, deployments, logs, and notes into a coherent incident timeline.",
+          "target_user": "Support engineers and SREs",
+          "core_workflow": [
+            "Load incident events from small structured fixtures.",
+            "Normalize timestamps across alerts, logs, and deployments.",
+            "Group events into a readable investigation timeline."
+          ],
+          "mvp_scope": [
+            "Create sample alert, log, deployment, and note fixtures.",
+            "Normalize timestamps and event types.",
+            "Sort and group events into an incident timeline.",
+            "Show likely contributing events with source labels."
+          ],
+          "success_metrics": [
+            "Number of relevant events included in the timeline.",
+            "Time saved assembling an initial investigation packet."
+          ],
+          "evidence_relationship": "Uses direct incident timeline reconstruction evidence.",
+          "source_ids": [
+            "paper-incident-timeline"
+          ],
+          "assumptions": [
+            "Assumes the broad incident investigation request can be scoped to timeline reconstruction."
+          ],
+          "suggested_stack": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "ranking": {
+            "score": 0.811,
+            "score_breakdown": {
+              "evidence_support": 0.875,
+              "feasibility": 1.0,
+              "constraint_alignment": 0.275,
+              "clarity": 1.0
+            },
+            "reasons": [
+              "Evidence support score: 0.88.",
+              "Feasibility score: 1.00.",
+              "Constraint alignment score: 0.28.",
+              "Completeness score: 1.00."
+            ]
+          }
+        }
+      ],
+      "legacy_titles": [
+        "Project Opportunity Discovery Engine",
+        "Technical Roadmap Recommendation System",
+        "Evidence-Grounded Portfolio Planner"
+      ],
+      "comparison": {
+        "legacy_direction_count": 3,
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "v2_generated_candidate_count": 3,
+        "v2_valid_candidate_count": 3,
+        "v2_selected_candidate_count": 3,
+        "v2_selected_titles": [
+          "Observability Signal Correlation Board",
+          "Incident Review Evidence Packet Builder",
+          "Incident Timeline Reconstruction Assistant"
+        ],
+        "provider_called": true,
+        "coverage_warnings": []
+      },
+      "shadow_readiness": {
+        "status": "ready",
+        "reasons": [
+          "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+        ],
+        "signals": {
+          "raw_evidence_count": 3,
+          "curated_evidence_count": 3,
+          "dropped_evidence_count": 0,
+          "generated_candidate_count": 3,
+          "valid_candidate_count": 3,
+          "selected_candidate_count": 3,
+          "provider_called": true,
+          "coverage_warnings": [],
+          "validation_errors": [],
+          "validation_warnings": []
+        }
+      },
+      "prompt_content_hash": "6f6e60778986f5f3586891ce7a31e14eb1cc4eb6a76520b88ad72002b2cb61fc"
+    },
+    "evidence_quality": {
+      "status": "not_routed_pending_calibration",
+      "metrics": {
+        "curation_pool_size": 3,
+        "retained_source_count": 3,
+        "final_brief_source_count": 3,
+        "direct_source_count": 1,
+        "adjacent_source_count": 2,
+        "required_anchor_count": 0,
+        "matched_required_anchor_count": 0,
+        "query_anchor_coverage": null,
+        "unique_query_term_count": 0,
+        "unique_query_phrase_count": 1,
+        "source_type_count": 2,
+        "dominant_source_type": "research_paper",
+        "dominant_source_type_fraction": 0.6666666666666666,
+        "top_direct_relevance_margin": null,
+        "coverage_warnings": []
+      },
+      "thresholds": {
+        "version": "v1",
+        "calibration_status": "unresolved",
+        "sparse_direct_source_threshold": null,
+        "ambiguity_top_margin_threshold": null,
+        "low_diversity_fraction_threshold": null
+      },
+      "evidence_sparse": null,
+      "evidence_ambiguous": null,
+      "source_diversity_low": null,
+      "unresolved_signal_names": [
+        "evidence_sparse",
+        "evidence_ambiguous",
+        "source_diversity_low"
+      ],
+      "routing_ready": false
+    },
+    "selected_candidates": [
+      {
+        "title": "Observability Signal Correlation Board",
+        "problem_statement": "Engineers investigating a production failure need to compare logs, metrics, traces, and deployments to find correlated signals.",
+        "target_user": "Backend engineers and SREs",
+        "core_workflow": [
+          "Load simplified observability signal fixtures.",
+          "Join signals by service, timestamp window, and event type.",
+          "Surface suspicious correlations for review."
+        ],
+        "mvp_scope": [
+          "Create fixture data for metrics, logs, traces, and deploys.",
+          "Compute simple time-window correlations.",
+          "Rank correlated signals with transparent rules.",
+          "Render a board of candidate investigation leads."
+        ],
+        "success_metrics": [
+          "Number of correlated signals surfaced.",
+          "Reviewer agreement with top investigation leads."
+        ],
+        "evidence_relationship": "Uses direct observability correlation evidence for production failure analysis.",
+        "source_ids": [
+          "paper-observability-correlation"
+        ],
+        "assumptions": [
+          "Assumes the broad request can be scoped to signal correlation rather than full root-cause automation."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ],
+        "ranking": {
+          "score": 0.896,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.7,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.70.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Incident Review Evidence Packet Builder",
+        "problem_statement": "Support teams need a structured packet that collects incident evidence before a postmortem or escalation.",
+        "target_user": "Support engineers",
+        "core_workflow": [
+          "Collect incident metadata and evidence links.",
+          "Attach alerts, deploys, logs, owners, and notes.",
+          "Generate a structured review packet."
+        ],
+        "mvp_scope": [
+          "Create forms or fixtures for incident evidence.",
+          "Store evidence items with type, owner, and timestamp.",
+          "Generate a Markdown or JSON review packet.",
+          "Highlight missing evidence sections before review."
+        ],
+        "success_metrics": [
+          "Percentage of required evidence sections completed.",
+          "Reduction in missing context during review."
+        ],
+        "evidence_relationship": "Uses implementation context for structured incident review evidence collection.",
+        "source_ids": [
+          "repo-incident-review"
+        ],
+        "assumptions": [
+          "Assumes the broad investigation request can be scoped to evidence collection and review preparation."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ],
+        "ranking": {
+          "score": 0.866,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.55,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.55.",
+            "Completeness score: 1.00."
+          ]
+        }
+      },
+      {
+        "title": "Incident Timeline Reconstruction Assistant",
+        "problem_statement": "Support engineers need a way to assemble alerts, deployments, logs, and notes into a coherent incident timeline.",
+        "target_user": "Support engineers and SREs",
+        "core_workflow": [
+          "Load incident events from small structured fixtures.",
+          "Normalize timestamps across alerts, logs, and deployments.",
+          "Group events into a readable investigation timeline."
+        ],
+        "mvp_scope": [
+          "Create sample alert, log, deployment, and note fixtures.",
+          "Normalize timestamps and event types.",
+          "Sort and group events into an incident timeline.",
+          "Show likely contributing events with source labels."
+        ],
+        "success_metrics": [
+          "Number of relevant events included in the timeline.",
+          "Time saved assembling an initial investigation packet."
+        ],
+        "evidence_relationship": "Uses direct incident timeline reconstruction evidence.",
+        "source_ids": [
+          "paper-incident-timeline"
+        ],
+        "assumptions": [
+          "Assumes the broad incident investigation request can be scoped to timeline reconstruction."
+        ],
+        "suggested_stack": [
+          "Python",
+          "PostgreSQL"
+        ],
+        "ranking": {
+          "score": 0.811,
+          "score_breakdown": {
+            "evidence_support": 0.875,
+            "feasibility": 1.0,
+            "constraint_alignment": 0.275,
+            "clarity": 1.0
+          },
+          "reasons": [
+            "Evidence support score: 0.88.",
+            "Feasibility score: 1.00.",
+            "Constraint alignment score: 0.28.",
+            "Completeness score: 1.00."
+          ]
+        }
+      }
+    ],
+    "generation_metadata": {
+      "prompt_version": "v1",
+      "prompt_content_hash": "6f6e60778986f5f3586891ce7a31e14eb1cc4eb6a76520b88ad72002b2cb61fc",
+      "execution_mode": "fixture",
+      "provider_name": "MockCandidateGenerationProvider",
+      "model": null,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null
+      }
+    },
+    "diagnostics": {
+      "generated_candidate_count": 3,
+      "valid_candidate_count": 3,
+      "selected_candidate_count": 3,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "provider_called": true,
+      "prompt_content_hash": "6f6e60778986f5f3586891ce7a31e14eb1cc4eb6a76520b88ad72002b2cb61fc"
+    },
+    "shadow_readiness": {
+      "status": "ready",
+      "reasons": [
+        "Curated evidence, validated candidates, and selected directions are available without coverage or validation warnings."
+      ],
+      "signals": {
+        "raw_evidence_count": 3,
+        "curated_evidence_count": 3,
+        "dropped_evidence_count": 0,
+        "generated_candidate_count": 3,
+        "valid_candidate_count": 3,
+        "selected_candidate_count": 3,
+        "provider_called": true,
+        "coverage_warnings": [],
+        "validation_errors": [],
+        "validation_warnings": []
+      }
+    },
+    "semantic_goal_relevance": [],
+    "cross_encoder_goal_relevance": [],
+    "semantic_candidate_diversity": null,
+    "evidence_support": [],
+    "grounding_adequacy": [],
+    "candidate_source_relevance": [
+      {
+        "candidate_title": "Observability Signal Correlation Board",
+        "source_id": "paper-observability-correlation",
+        "source_type": "research_paper",
+        "support_scope": "adjacent_planning",
+        "candidate_source_shared_terms": [
+          "correlated",
+          "failure",
+          "find",
+          "logs",
+          "metrics",
+          "observability",
+          "production",
+          "signals",
+          "traces"
+        ],
+        "goal_source_shared_terms": [
+          "investigation"
+        ],
+        "relevance_status": "adjacent_context_only",
+        "relevance_reason": "The cited source is retained only as adjacent planning context and should not be treated as core grounding."
+      },
+      {
+        "candidate_title": "Incident Review Evidence Packet Builder",
+        "source_id": "repo-incident-review",
+        "source_type": "github_repository",
+        "support_scope": "direct",
+        "candidate_source_shared_terms": [
+          "alerts",
+          "collect",
+          "evidence",
+          "incident",
+          "logs",
+          "metadata",
+          "notes",
+          "packet",
+          "review",
+          "structured"
+        ],
+        "goal_source_shared_terms": [
+          "incident",
+          "investigation"
+        ],
+        "relevance_status": "lexically_supported",
+        "relevance_reason": "Candidate and source share content terms: alerts, collect, evidence, incident, logs."
+      },
+      {
+        "candidate_title": "Incident Timeline Reconstruction Assistant",
+        "source_id": "paper-incident-timeline",
+        "source_type": "research_paper",
+        "support_scope": "adjacent_planning",
+        "candidate_source_shared_terms": [
+          "alerts",
+          "deployments",
+          "events",
+          "incident",
+          "logs",
+          "notes",
+          "reconstruction",
+          "timeline"
+        ],
+        "goal_source_shared_terms": [
+          "incident"
+        ],
+        "relevance_status": "adjacent_context_only",
+        "relevance_reason": "The cited source is retained only as adjacent planning context and should not be treated as core grounding."
+      }
+    ],
+    "quality_warnings": {
+      "warnings": [
+        {
+          "code": "adjacent_context_only_candidate",
+          "message": "One or more candidates cite only adjacent-context sources and should not be treated as strongly grounded.",
+          "details": {
+            "candidates": [
+              {
+                "candidate_title": "Observability Signal Correlation Board",
+                "source_ids": [
+                  "paper-observability-correlation"
+                ],
+                "relevance_statuses": [
+                  "adjacent_context_only"
+                ]
+              },
+              {
+                "candidate_title": "Incident Timeline Reconstruction Assistant",
+                "source_ids": [
+                  "paper-incident-timeline"
+                ],
+                "relevance_statuses": [
+                  "adjacent_context_only"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "signals": {
+        "coverage_warning_count": 0,
+        "goal_trace_count": 0,
+        "grounding_trace_count": 0,
+        "diversity_pair_count": 0,
+        "source_relevance_trace_count": 3,
+        "quality_warning_count": 1
+      }
+    },
+    "promotion_eligibility": {
+      "status": "not_assessed",
+      "candidate_assessments": [],
+      "summary": {
+        "eligible_count": 0,
+        "needs_review_count": 0,
+        "ineligible_count": 0
+      },
+      "reason": "Evidence-support shadow was not enabled, so promotion eligibility could not assess direct grounding."
+    },
+    "semantic_diversification_repair": {
+      "status": "no_repair_needed",
+      "directives": [],
+      "signals": {
+        "candidate_count": 3,
+        "similarity_threshold": 0.78,
+        "close_cluster_count": 0,
+        "replacement_count": 0
+      }
+    },
+    "raw_candidates": [
+      {
+        "title": "Observability Signal Correlation Board",
+        "problem_statement": "Engineers investigating a production failure need to compare logs, metrics, traces, and deployments to find correlated signals.",
+        "target_user": "Backend engineers and SREs",
+        "core_workflow": [
+          "Load simplified observability signal fixtures.",
+          "Join signals by service, timestamp window, and event type.",
+          "Surface suspicious correlations for review."
+        ],
+        "mvp_scope": [
+          "Create fixture data for metrics, logs, traces, and deploys.",
+          "Compute simple time-window correlations.",
+          "Rank correlated signals with transparent rules.",
+          "Render a board of candidate investigation leads."
+        ],
+        "success_metrics": [
+          "Number of correlated signals surfaced.",
+          "Reviewer agreement with top investigation leads."
+        ],
+        "evidence_relationship": "Uses direct observability correlation evidence for production failure analysis.",
+        "source_ids": [
+          "paper-observability-correlation"
+        ],
+        "assumptions": [
+          "Assumes the broad request can be scoped to signal correlation rather than full root-cause automation."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ]
+      },
+      {
+        "title": "Incident Review Evidence Packet Builder",
+        "problem_statement": "Support teams need a structured packet that collects incident evidence before a postmortem or escalation.",
+        "target_user": "Support engineers",
+        "core_workflow": [
+          "Collect incident metadata and evidence links.",
+          "Attach alerts, deploys, logs, owners, and notes.",
+          "Generate a structured review packet."
+        ],
+        "mvp_scope": [
+          "Create forms or fixtures for incident evidence.",
+          "Store evidence items with type, owner, and timestamp.",
+          "Generate a Markdown or JSON review packet.",
+          "Highlight missing evidence sections before review."
+        ],
+        "success_metrics": [
+          "Percentage of required evidence sections completed.",
+          "Reduction in missing context during review."
+        ],
+        "evidence_relationship": "Uses implementation context for structured incident review evidence collection.",
+        "source_ids": [
+          "repo-incident-review"
+        ],
+        "assumptions": [
+          "Assumes the broad investigation request can be scoped to evidence collection and review preparation."
+        ],
+        "suggested_stack": [
+          "Python",
+          "React"
+        ]
+      },
+      {
+        "title": "Incident Timeline Reconstruction Assistant",
+        "problem_statement": "Support engineers need a way to assemble alerts, deployments, logs, and notes into a coherent incident timeline.",
+        "target_user": "Support engineers and SREs",
+        "core_workflow": [
+          "Load incident events from small structured fixtures.",
+          "Normalize timestamps across alerts, logs, and deployments.",
+          "Group events into a readable investigation timeline."
+        ],
+        "mvp_scope": [
+          "Create sample alert, log, deployment, and note fixtures.",
+          "Normalize timestamps and event types.",
+          "Sort and group events into an incident timeline.",
+          "Show likely contributing events with source labels."
+        ],
+        "success_metrics": [
+          "Number of relevant events included in the timeline.",
+          "Time saved assembling an initial investigation packet."
+        ],
+        "evidence_relationship": "Uses direct incident timeline reconstruction evidence.",
+        "source_ids": [
+          "paper-incident-timeline"
+        ],
+        "assumptions": [
+          "Assumes the broad incident investigation request can be scoped to timeline reconstruction."
+        ],
+        "suggested_stack": [
+          "Python",
+          "PostgreSQL"
+        ]
+      }
+    ],
+    "enrichment": {
+      "ideas": [
+        {
+          "project_title": "Observability Signal Correlation Board",
+          "idea_angle": "Engineers investigating a production failure need to compare logs, metrics, traces, and deployments to find correlated signals. Built for Backend engineers and SREs.",
+          "detected_domain": "incident_investigation",
+          "evidence_buildable_gap": "Engineers investigating a production failure need to compare logs, metrics, traces, and deployments to find correlated signals.",
+          "evidence_focus_statement": "Uses direct observability correlation evidence for production failure analysis.",
+          "evidence_driven_angle": "Uses direct observability correlation evidence for production failure analysis.",
+          "evidence_project_opportunity": "Engineers investigating a production failure need to compare logs, metrics, traces, and deployments to find correlated signals.",
+          "research_motivation": "Uses direct observability correlation evidence for production failure analysis.",
+          "mvp_scope": [
+            "Create fixture data for metrics, logs, traces, and deploys.",
+            "Compute simple time-window correlations.",
+            "Rank correlated signals with transparent rules.",
+            "Render a board of candidate investigation leads.",
+            "Run the end-to-end workflow on representative sample data and document one domain-relevant success metric."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of correlated signals surfaced.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "React"
+          ],
+          "target_roles": [
+            "Backend Engineer",
+            "Platform Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "React"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-observability-correlation",
+              "title": "Correlating Observability Signals During Production Failures",
+              "source_type": "research_paper",
+              "support_scope": "adjacent_planning"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-observability-correlation"
+          ],
+          "planner_candidate_assumptions": [
+            "Assumes the broad request can be scoped to signal correlation rather than full root-cause automation."
+          ],
+          "planner_candidate_success_metrics": [
+            "Number of correlated signals surfaced.",
+            "Reviewer agreement with top investigation leads."
+          ],
+          "planner_candidate_workflow": [
+            "Load simplified observability signal fixtures.",
+            "Join signals by service, timestamp window, and event type.",
+            "Surface suspicious correlations for review."
+          ],
+          "evidence_title": "Correlating Observability Signals During Production Failures",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.SE",
+          "based_on_paper": "Correlating Observability Signals During Production Failures",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.0,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Observability Signal Correlation Board scores 8.0/10 with a strong career signal because it is grounded in research paper, fits the incident_investigation domain, and demonstrates skills such as Python, React. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Backend Engineer, Platform Engineer.",
+            "build_profile": {
+              "tier": "Quick Win",
+              "difficulty": "Easy",
+              "scope": "Focused",
+              "estimated_effort": "3\u20135 days",
+              "reason": "A narrow, polished workflow that is fast to finish, demo, and explain clearly in an interview."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer, Platform Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Incident Review Evidence Packet Builder",
+          "idea_angle": "Support teams need a structured packet that collects incident evidence before a postmortem or escalation. Built for Support engineers.",
+          "detected_domain": "incident_investigation",
+          "evidence_buildable_gap": "Support teams need a structured packet that collects incident evidence before a postmortem or escalation.",
+          "evidence_focus_statement": "Uses implementation context for structured incident review evidence collection.",
+          "evidence_driven_angle": "Uses implementation context for structured incident review evidence collection.",
+          "evidence_project_opportunity": "Support teams need a structured packet that collects incident evidence before a postmortem or escalation.",
+          "research_motivation": "Uses implementation context for structured incident review evidence collection.",
+          "mvp_scope": [
+            "Create forms or fixtures for incident evidence.",
+            "Store evidence items with type, owner, and timestamp.",
+            "Generate a Markdown or JSON review packet.",
+            "Highlight missing evidence sections before review.",
+            "Add automated tests for one critical domain workflow and one invalid-input or failure case."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Percentage of required evidence sections completed.",
+            "Add a failure-case review workflow and document the prototype's known limitations."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "React"
+          ],
+          "target_roles": [
+            "Backend Engineer",
+            "Platform Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "React"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "repo-incident-review",
+              "title": "Incident Review Evidence Collector",
+              "source_type": "github_repository",
+              "support_scope": "direct"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "repo-incident-review"
+          ],
+          "planner_candidate_assumptions": [
+            "Assumes the broad investigation request can be scoped to evidence collection and review preparation."
+          ],
+          "planner_candidate_success_metrics": [
+            "Percentage of required evidence sections completed.",
+            "Reduction in missing context during review."
+          ],
+          "planner_candidate_workflow": [
+            "Collect incident metadata and evidence links.",
+            "Attach alerts, deploys, logs, owners, and notes.",
+            "Generate a structured review packet."
+          ],
+          "evidence_title": "Incident Review Evidence Collector",
+          "evidence_source_type": "github_repository",
+          "evidence_url": null,
+          "research_category": null,
+          "based_on_paper": "Incident Review Evidence Collector",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 7.7,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Incident Review Evidence Packet Builder scores 7.7/10 with a strong career signal because it is grounded in github repository, fits the incident_investigation domain, and demonstrates skills such as Python, React. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Backend Engineer, Platform Engineer.",
+            "build_profile": {
+              "tier": "Portfolio Build",
+              "difficulty": "Medium",
+              "scope": "Balanced",
+              "estimated_effort": "7\u201310 days",
+              "reason": "A complete end-to-end project with validation, stronger engineering signals, and meaningful portfolio polish."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer, Platform Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+        },
+        {
+          "project_title": "Incident Timeline Reconstruction Assistant",
+          "idea_angle": "Support engineers need a way to assemble alerts, deployments, logs, and notes into a coherent incident timeline. Built for Support engineers and SREs.",
+          "detected_domain": "incident_investigation",
+          "evidence_buildable_gap": "Support engineers need a way to assemble alerts, deployments, logs, and notes into a coherent incident timeline.",
+          "evidence_focus_statement": "Uses direct incident timeline reconstruction evidence.",
+          "evidence_driven_angle": "Uses direct incident timeline reconstruction evidence.",
+          "evidence_project_opportunity": "Support engineers need a way to assemble alerts, deployments, logs, and notes into a coherent incident timeline.",
+          "research_motivation": "Uses direct incident timeline reconstruction evidence.",
+          "mvp_scope": [
+            "Create sample alert, log, deployment, and note fixtures.",
+            "Normalize timestamps and event types.",
+            "Sort and group events into an incident timeline.",
+            "Show likely contributing events with source labels.",
+            "Add automated tests for core workflows, invalid inputs, and expected failure cases.",
+            "Containerize the application with a reproducible local setup.",
+            "Add an evaluation, monitoring, or reliability view that demonstrates system quality."
+          ],
+          "advanced_extensions": [
+            "Add an evaluation view for: Number of relevant events included in the timeline.",
+            "Add a failure-case review workflow and document the prototype's known limitations.",
+            "Add historical run comparison, version tracking, or observability after the core workflow is stable."
+          ],
+          "suggested_tech_stack": [
+            "Python",
+            "PostgreSQL",
+            "React"
+          ],
+          "target_roles": [
+            "Backend Engineer",
+            "Platform Engineer"
+          ],
+          "extracted_skills": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "source_contributions": [
+            {
+              "source_id": "paper-incident-timeline",
+              "title": "Timeline Reconstruction for Software Incidents",
+              "source_type": "research_paper",
+              "support_scope": "adjacent_planning"
+            }
+          ],
+          "planner_candidate_source_ids": [
+            "paper-incident-timeline"
+          ],
+          "planner_candidate_assumptions": [
+            "Assumes the broad incident investigation request can be scoped to timeline reconstruction."
+          ],
+          "planner_candidate_success_metrics": [
+            "Number of relevant events included in the timeline.",
+            "Time saved assembling an initial investigation packet."
+          ],
+          "planner_candidate_workflow": [
+            "Load incident events from small structured fixtures.",
+            "Normalize timestamps across alerts, logs, and deployments.",
+            "Group events into a readable investigation timeline."
+          ],
+          "evidence_title": "Timeline Reconstruction for Software Incidents",
+          "evidence_source_type": "research_paper",
+          "evidence_url": null,
+          "research_category": "cs.SE",
+          "based_on_paper": "Timeline Reconstruction for Software Incidents",
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          },
+          "feasibility_analysis": {
+            "feasibility_score": 8.0,
+            "complexity": "Medium",
+            "estimated_build_time": "6\u201312 days",
+            "skill_signal": "Strong",
+            "why_worth_building": "Incident Timeline Reconstruction Assistant scores 8.0/10 with a strong career signal because it is grounded in research paper, fits the incident_investigation domain, and demonstrates skills such as Python, PostgreSQL, React. The estimated complexity is medium with a build time of 6\u201312 days. The score is limited by implementation risk, scope size, and how clearly the project can be demonstrated for roles such as Backend Engineer, Platform Engineer.",
+            "build_profile": {
+              "tier": "Flagship Challenge",
+              "difficulty": "Hard",
+              "scope": "Ambitious",
+              "estimated_effort": "12\u201318 days",
+              "reason": "A deeper system with stronger evaluation, reliability, architecture, and deployment-ready signals."
+            }
+          },
+          "constraint_summary": "Designed to demonstrate skills relevant to Backend Engineer, Platform Engineer. Scoped for the stated 3 weeks timeline. Prioritizes Python, React where it fits the project. Assumes an intermediate starting level."
+        }
+      ],
+      "initial_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "final_verification_results": [
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        },
+        {
+          "status": "passed",
+          "score": 7,
+          "max_score": 7,
+          "checks": {
+            "role_alignment": true,
+            "preferred_stack_alignment": true,
+            "evidence_present": true,
+            "no_banned_stack": true,
+            "specific_mvp_language": true,
+            "time_feasibility": true,
+            "direction_is_distinct": true
+          },
+          "warnings": []
+        }
+      ],
+      "repairs_by_index": [
+        [],
+        [],
+        []
+      ]
+    },
+    "shadow_vs_deterministic_comparison": {
+      "schema_version": "1.0",
+      "case_id": null,
+      "user_goal": "Build a platform engineering project for incident investigation in three weeks.",
+      "query_fingerprint": "2c21043a4a0f5ec0",
+      "deterministic_candidates": [
+        {
+          "title": "Project Opportunity Discovery Engine",
+          "comparison_text": "Project Opportunity Discovery Engine Turn technical evidence into buildable project opportunities with scope, risks, and career signal. Define one narrow, measurable workflow for Project Opportunity Discovery Engine. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence. Define one narrow, measurable workflow for Project Opportunity Discovery Engine. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Define a measurable success metric that proves the project reduces the specific user problem identified in the evidence."
+        },
+        {
+          "title": "Technical Roadmap Recommendation System",
+          "comparison_text": "Technical Roadmap Recommendation System Generate learning paths, project roadmaps, and role alignment from user goals. Define one narrow, measurable workflow for Technical Roadmap Recommendation System. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs. Define one narrow, measurable workflow for Technical Roadmap Recommendation System. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        },
+        {
+          "title": "Evidence-Grounded Portfolio Planner",
+          "comparison_text": "Evidence-Grounded Portfolio Planner Recommend portfolio projects grounded in evidence, skills, and target roles. Define one narrow, measurable workflow for Evidence-Grounded Portfolio Planner. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs. Define one narrow, measurable workflow for Evidence-Grounded Portfolio Planner. Create a small reproducible input dataset or sample scenario. Implement a transparent scoring, recommendation, or analysis pipeline. Show outputs with explanations, confidence signals, and known limitations. Validate the workflow against representative expected outcomes. Add reliability checks, warning states, and evidence-based quality indicators for risky or low-confidence outputs."
+        }
+      ],
+      "openai_candidates": [
+        {
+          "title": "Observability Signal Correlation Board",
+          "comparison_text": "Observability Signal Correlation Board Engineers investigating a production failure need to compare logs, metrics, traces, and deployments to find correlated signals. Backend engineers and SREs Load simplified observability signal fixtures. Join signals by service, timestamp window, and event type. Surface suspicious correlations for review. Create fixture data for metrics, logs, traces, and deploys. Compute simple time-window correlations. Rank correlated signals with transparent rules. Render a board of candidate investigation leads."
+        },
+        {
+          "title": "Incident Review Evidence Packet Builder",
+          "comparison_text": "Incident Review Evidence Packet Builder Support teams need a structured packet that collects incident evidence before a postmortem or escalation. Support engineers Collect incident metadata and evidence links. Attach alerts, deploys, logs, owners, and notes. Generate a structured review packet. Create forms or fixtures for incident evidence. Store evidence items with type, owner, and timestamp. Generate a Markdown or JSON review packet. Highlight missing evidence sections before review."
+        },
+        {
+          "title": "Incident Timeline Reconstruction Assistant",
+          "comparison_text": "Incident Timeline Reconstruction Assistant Support engineers need a way to assemble alerts, deployments, logs, and notes into a coherent incident timeline. Support engineers and SREs Load incident events from small structured fixtures. Normalize timestamps across alerts, logs, and deployments. Group events into a readable investigation timeline. Create sample alert, log, deployment, and note fixtures. Normalize timestamps and event types. Sort and group events into an incident timeline. Show likely contributing events with source labels."
+        }
+      ],
+      "deterministic_grounding_classes": [
+        {
+          "candidate_title": "Project Opportunity Discovery Engine",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Technical Roadmap Recommendation System",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Evidence-Grounded Portfolio Planner",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "openai_grounding_classes": [
+        {
+          "candidate_title": "Observability Signal Correlation Board",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Incident Review Evidence Packet Builder",
+          "adequacy_class": "not_assessed"
+        },
+        {
+          "candidate_title": "Incident Timeline Reconstruction Assistant",
+          "adequacy_class": "not_assessed"
+        }
+      ],
+      "deterministic_enrichment": [
+        {
+          "title": "Project Opportunity Discovery Engine",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Technical Roadmap Recommendation System",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        },
+        {
+          "title": "Evidence-Grounded Portfolio Planner",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": null
+        }
+      ],
+      "openai_enrichment": [
+        {
+          "title": "Observability Signal Correlation Board",
+          "scope": "Focused",
+          "estimated_effort": "3\u20135 days",
+          "portfolio_tier": "Quick Win",
+          "difficulty": "Easy",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Incident Review Evidence Packet Builder",
+          "scope": "Balanced",
+          "estimated_effort": "7\u201310 days",
+          "portfolio_tier": "Portfolio Build",
+          "difficulty": "Medium",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        },
+        {
+          "title": "Incident Timeline Reconstruction Assistant",
+          "scope": "Ambitious",
+          "estimated_effort": "12\u201318 days",
+          "portfolio_tier": "Flagship Challenge",
+          "difficulty": "Hard",
+          "verification_status": null,
+          "verification_score": null,
+          "verification_max_score": null,
+          "planner_provenance": {
+            "planning_source": "openai",
+            "prompt_version": "v1",
+            "generation_attempt": 1,
+            "rejected_alternatives": 0,
+            "regeneration_attempts": []
+          }
+        }
+      ],
+      "set_similarity_score": null,
+      "unique_angle_count": 0,
+      "unique_openai_titles": [],
+      "pairwise_similarity": [],
+      "manual_preference": null,
+      "manual_preference_reason": null,
+      "manual_reviewer_notes": null,
+      "notes": [
+        "Cross-set semantic similarity is a difference signal, not a quality score.",
+        "Portfolio tiers are preserved for review but are assigned by candidate order and must not be interpreted as quality labels.",
+        "Deterministic grounding is not assessed by this contract yet; only shadow grounding traces are currently comparable."
+      ]
+    },
+    "manual_review_template": {
+      "rubric_version": "v1",
+      "query_fingerprint": "2c21043a4a0f5ec0",
+      "deterministic_review": {
+        "planner_path": "deterministic",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Project Opportunity Discovery Engine",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Technical Roadmap Recommendation System",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Evidence-Grounded Portfolio Planner",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "openai_review": {
+        "planner_path": "openai",
+        "candidate_reviews": [
+          {
+            "candidate_title": "Observability Signal Correlation Board",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Incident Review Evidence Packet Builder",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          },
+          {
+            "candidate_title": "Incident Timeline Reconstruction Assistant",
+            "goal_alignment": null,
+            "grounding": null,
+            "scope_realism": null,
+            "notes": ""
+          }
+        ],
+        "distinctiveness": null,
+        "notes": ""
+      },
+      "overall_preference": null,
+      "overall_preference_reason": "",
+      "response_quality": null,
+      "response_quality_reason": "",
+      "unique_angle_quality": null,
+      "unique_angle_quality_reason": "",
+      "reviewer_notes": ""
+    }
+  }
+}
