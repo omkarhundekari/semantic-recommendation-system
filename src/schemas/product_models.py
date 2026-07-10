@@ -127,6 +127,7 @@ class ProjectIntelligenceResponse(BaseModel):
 
     research_evidence_assessment: Optional[Dict[str, Any]] = None
     product_plan_readiness: Optional[Dict[str, Any]] = None
+    synthesis_status: Optional[Dict[str, Any]] = None
 
     directions: List[ProjectDirection] = Field(default_factory=list)
     pipeline: List[PipelineStep] = Field(default_factory=list)

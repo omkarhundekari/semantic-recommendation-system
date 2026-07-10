@@ -226,6 +226,22 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
     return options
 
 
+def build_project_intelligence_synthesis_status() -> Dict:
+    return {
+        "available": False,
+        "reason": (
+            "artifact_backed_synthesis_not_enabled_for_project_intelligence"
+        ),
+        "safe_inspection_endpoint": "/v1/synthesis-demo",
+        "current_planning_source": "deterministic_product_pipeline",
+        "safety_pipeline": {
+            "raw_output_validation": True,
+            "deterministic_fallback": True,
+            "final_synthesis_validation": True,
+        },
+    }
+
+
 @app.get("/health")
 def health() -> Dict:
     return {
@@ -657,6 +673,7 @@ def generate_project_intelligence(
         },
         research_evidence_assessment=research_evidence_assessment,
         product_plan_readiness=product_plan_readiness.to_dict(),
+        synthesis_status=build_project_intelligence_synthesis_status(),
         clarification_required=False,
         inferred_domain_family=inference.get(
             "inferred_domain_family"

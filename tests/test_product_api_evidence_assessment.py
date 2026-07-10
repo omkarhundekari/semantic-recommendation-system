@@ -140,3 +140,30 @@ def test_ready_api_response_exposes_resolved_rag_planning_domain():
     assert response.product_plan_readiness["signals"][
         "portfolio_difficulties"
     ] == ["Easy", "Medium", "Hard"]
+
+
+def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal=(
+                "Build a retrieval augmented generation project for "
+                "question answering for ML engineer roles in 3 weeks"
+            ),
+            selected_direction="AI / ML",
+        )
+    )
+
+    assert response.status == "ready"
+    assert response.synthesis_status is not None
+    assert response.synthesis_status["available"] is False
+    assert response.synthesis_status[
+        "safe_inspection_endpoint"
+    ] == "/v1/synthesis-demo"
+    assert response.synthesis_status[
+        "current_planning_source"
+    ] == "deterministic_product_pipeline"
+    assert response.synthesis_status["safety_pipeline"] == {
+        "raw_output_validation": True,
+        "deterministic_fallback": True,
+        "final_synthesis_validation": True,
+    }
