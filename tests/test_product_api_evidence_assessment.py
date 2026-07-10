@@ -270,3 +270,43 @@ def test_project_intelligence_synthesis_status_serializes_for_frontend():
     assert validation["is_valid"] is True
     assert validation["invented_source_ids"] == ()
     assert validation["failure_categories"] == ()
+
+
+def test_project_intelligence_synthesis_status_contract_keys():
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal=(
+                "Build a retrieval augmented generation project for "
+                "question answering for ML engineer roles in 3 weeks"
+            ),
+            selected_direction="AI / ML",
+        )
+    )
+
+    synthesis_status = response.model_dump()["synthesis_status"]
+
+    assert set(synthesis_status) == {
+        "available",
+        "reason",
+        "safe_inspection_endpoint",
+        "current_planning_source",
+        "synthesis_summary",
+        "live_evidence_cards",
+        "routing_preview",
+        "token_estimate",
+        "live_final_synthesis_preview",
+        "live_final_synthesis_preview_validation",
+        "safety_pipeline",
+    }
+
+    assert set(synthesis_status["synthesis_summary"]) == {
+        "status",
+        "source",
+        "can_run_llm",
+        "routing_reason",
+        "card_count",
+        "validated",
+        "grounded_direction_count",
+        "invented_source_count",
+        "estimated_tokens",
+    }
