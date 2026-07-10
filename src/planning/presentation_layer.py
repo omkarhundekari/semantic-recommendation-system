@@ -120,29 +120,56 @@ def _derive_level(direction: dict[str, Any]) -> str:
 
 
 def _derive_what_you_will_build(direction: dict[str, Any]) -> str:
+    title = _derive_presentation_title(direction)
     mvp_scope = direction.get("mvp_scope", [])
+
     if isinstance(mvp_scope, list) and mvp_scope:
-        steps = [str(step) for step in mvp_scope[:3]]
-        return "You will build " + "; ".join(steps) + "."
+        steps = [str(step).strip() for step in mvp_scope[:3] if str(step).strip()]
+        if steps:
+            return (
+                f"You will build {title.lower()}: "
+                + "; ".join(steps)
+                + "."
+            )
 
     problem_statement = direction.get("problem_statement")
     if problem_statement:
-        return str(problem_statement)
+        return (
+            f"You will build {title.lower()} to solve this problem: "
+            f"{str(problem_statement).strip()}"
+        )
 
     return (
-        "You will build a focused, evidence-grounded project that can be "
-        "shown in a portfolio and discussed in interviews."
+        f"You will build {title.lower()}, a focused project that turns "
+        "research or implementation evidence into something concrete enough "
+        "to demo, explain, and improve."
     )
 
 
 def _derive_why_it_matters(direction: dict[str, Any]) -> str:
     grounded_reason = direction.get("why_this_is_grounded")
     if grounded_reason:
-        return str(grounded_reason)
+        return (
+            "This is stronger than a generic tutorial project because "
+            f"{str(grounded_reason).strip()}"
+        )
+
+    confidence = direction.get("evidence_confidence")
+    if confidence == "Strong":
+        return (
+            "This project is backed by strong evidence, so it gives the "
+            "student a clearer story about why the project is worth building."
+        )
+
+    if confidence == "Limited":
+        return (
+            "This project is useful because it turns a partially supported "
+            "idea into a prototype where the riskiest assumptions can be tested."
+        )
 
     return (
-        "This project is connected to real research or implementation signals, "
-        "so it is stronger than a generic tutorial project."
+        "This project is useful because it explores an open-ended area where "
+        "the student can define the problem, test assumptions, and show judgment."
     )
 
 

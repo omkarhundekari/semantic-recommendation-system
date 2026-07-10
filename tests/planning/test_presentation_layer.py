@@ -160,3 +160,43 @@ def test_presentation_talking_point_hides_invalid_llm_output_phrasing():
         "I built a project that turns evidence into actionable "
         "recommendations while validating the quality of the output."
     )
+
+
+def test_what_you_will_build_uses_clean_title_and_mvp_scope():
+    result = to_presentation_project_direction(
+        direction={
+            **_direction(),
+            "title": "Evidence-Grounded MVP: RAG Evaluation Dashboard",
+            "mvp_scope": [
+                "a retrieval pipeline",
+                "an evaluation dashboard",
+                "a grounding checker",
+            ],
+        },
+        evidence_cards=[_card()],
+    )
+
+    assert result.what_you_will_build == (
+        "You will build rag evaluation dashboard mvp: "
+        "a retrieval pipeline; an evaluation dashboard; "
+        "a grounding checker."
+    )
+
+
+def test_why_it_matters_explains_grounding_without_raw_internal_language():
+    result = to_presentation_project_direction(
+        direction={
+            **_direction(),
+            "why_this_is_grounded": (
+                "it is supported by research and implementation evidence."
+            ),
+        },
+        evidence_cards=[_card()],
+    )
+
+    assert result.why_it_matters == (
+        "This is stronger than a generic tutorial project because "
+        "it is supported by research and implementation evidence."
+    )
+    assert "source_ids" not in result.why_it_matters
+    assert "token" not in result.why_it_matters.lower()
