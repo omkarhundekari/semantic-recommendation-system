@@ -41,6 +41,11 @@ def test_batch_synthesis_evaluation_runs_fake_dry_run(tmp_path):
     assert summary["invented_source_output_count"] == 0
     assert summary["grounded_direction_count"] == 0
     assert summary["ungrounded_direction_count"] == 3
+    assert summary["final_valid_count"] == 1
+    assert summary["final_invalid_count"] == 0
+    assert summary["fallback_used_count"] == 1
+    assert summary["final_grounded_direction_count"] == 3
+    assert summary["final_ungrounded_direction_count"] == 0
     assert summary["failure_category_counts"] == {
         "grounding_failure": 1,
     }
@@ -77,6 +82,14 @@ def test_summarize_batch_synthesis_results_counts_validation_outcomes():
                     {"is_grounded": False},
                 ],
             },
+            "final_synthesis": {"fallback_used": False},
+            "final_synthesis_validation": {
+                "is_valid": True,
+                "direction_grounding_traces": [
+                    {"is_grounded": True},
+                    {"is_grounded": True},
+                ],
+            },
             "validation_report_output_path": "valid.md",
         },
         {
@@ -93,6 +106,15 @@ def test_summarize_batch_synthesis_results_counts_validation_outcomes():
                     {"is_grounded": False},
                 ],
             },
+            "final_synthesis": {"fallback_used": True},
+            "final_synthesis_validation": {
+                "is_valid": True,
+                "direction_grounding_traces": [
+                    {"is_grounded": True},
+                    {"is_grounded": True},
+                    {"is_grounded": True},
+                ],
+            },
             "validation_report_output_path": "invalid.md",
         },
     ]
@@ -107,6 +129,11 @@ def test_summarize_batch_synthesis_results_counts_validation_outcomes():
     assert summary.invented_source_output_count == 1
     assert summary.grounded_direction_count == 1
     assert summary.ungrounded_direction_count == 2
+    assert summary.final_valid_count == 2
+    assert summary.final_invalid_count == 0
+    assert summary.fallback_used_count == 1
+    assert summary.final_grounded_direction_count == 5
+    assert summary.final_ungrounded_direction_count == 0
     assert summary.failure_category_counts == {
         "citation_failure": 1,
         "grounding_failure": 1,
@@ -128,12 +155,16 @@ def test_render_batch_synthesis_report_includes_summary_and_fixture_results(tmp_
     assert "# LLM Synthesis Batch Evaluation" in report
     assert "- Artifacts: 1" in report
     assert "- Routed: 1" in report
-    assert "- Invalid outputs: 1" in report
+    assert "- Raw invalid outputs: 1" in report
+    assert "- Final valid outputs: 1" in report
+    assert "- Fallback used: 1" in report
     assert "## Failure Categories" in report
     assert "`grounding_failure`: 1" in report
     assert "## Fixture Results" in report
     assert "### deterministic_template_risk" in report
     assert "project_direction_0_missing_source_ids" in report
+    assert "- Final validation: `valid`" in report
+    assert "- Final grounded directions: `3/3`" in report
 
 
 def test_write_batch_synthesis_report(tmp_path):

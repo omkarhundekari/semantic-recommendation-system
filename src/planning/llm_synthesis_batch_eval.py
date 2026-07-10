@@ -24,6 +24,11 @@ class BatchSynthesisEvaluationSummary:
     invented_source_output_count: int
     grounded_direction_count: int
     ungrounded_direction_count: int
+    final_valid_count: int
+    final_invalid_count: int
+    fallback_used_count: int
+    final_grounded_direction_count: int
+    final_ungrounded_direction_count: int
     failure_category_counts: dict[str, int]
     output_paths: tuple[str, ...]
     validation_report_paths: tuple[str, ...]
@@ -102,6 +107,11 @@ def summarize_batch_synthesis_results(
     invented_source_output_count = 0
     grounded_direction_count = 0
     ungrounded_direction_count = 0
+    final_valid_count = 0
+    final_invalid_count = 0
+    fallback_used_count = 0
+    final_grounded_direction_count = 0
+    final_ungrounded_direction_count = 0
     failure_category_counts = {}
     output_paths = []
     validation_report_paths = []
@@ -138,6 +148,23 @@ def summarize_batch_synthesis_results(
             if output_path:
                 output_paths.append(output_path)
 
+        final_synthesis = result.get("final_synthesis", {})
+        if final_synthesis.get("fallback_used"):
+            fallback_used_count += 1
+
+        final_validation = result.get("final_synthesis_validation")
+        if final_validation:
+            if final_validation.get("is_valid"):
+                final_valid_count += 1
+            else:
+                final_invalid_count += 1
+
+            for trace in final_validation.get("direction_grounding_traces", []):
+                if trace.get("is_grounded"):
+                    final_grounded_direction_count += 1
+                else:
+                    final_ungrounded_direction_count += 1
+
         validation_report_output_path = result.get("validation_report_output_path")
         if validation_report_output_path:
             validation_report_paths.append(validation_report_output_path)
@@ -151,6 +178,11 @@ def summarize_batch_synthesis_results(
         invented_source_output_count=invented_source_output_count,
         grounded_direction_count=grounded_direction_count,
         ungrounded_direction_count=ungrounded_direction_count,
+        final_valid_count=final_valid_count,
+        final_invalid_count=final_invalid_count,
+        fallback_used_count=fallback_used_count,
+        final_grounded_direction_count=final_grounded_direction_count,
+        final_ungrounded_direction_count=final_ungrounded_direction_count,
         failure_category_counts=dict(sorted(failure_category_counts.items())),
         output_paths=tuple(output_paths),
         validation_report_paths=tuple(validation_report_paths),
@@ -171,11 +203,16 @@ def render_batch_synthesis_report(
         f"- Artifacts: {summary['artifact_count']}",
         f"- Routed: {summary['routed_count']}",
         f"- Blocked: {summary['blocked_count']}",
-        f"- Valid outputs: {summary['valid_count']}",
-        f"- Invalid outputs: {summary['invalid_count']}",
+        f"- Raw valid outputs: {summary['valid_count']}",
+        f"- Raw invalid outputs: {summary['invalid_count']}",
+        f"- Final valid outputs: {summary['final_valid_count']}",
+        f"- Final invalid outputs: {summary['final_invalid_count']}",
+        f"- Fallback used: {summary['fallback_used_count']}",
         f"- Outputs with invented sources: {summary['invented_source_output_count']}",
-        f"- Grounded directions: {summary['grounded_direction_count']}",
-        f"- Ungrounded directions: {summary['ungrounded_direction_count']}",
+        f"- Raw grounded directions: {summary['grounded_direction_count']}",
+        f"- Raw ungrounded directions: {summary['ungrounded_direction_count']}",
+        f"- Final grounded directions: {summary['final_grounded_direction_count']}",
+        f"- Final ungrounded directions: {summary['final_ungrounded_direction_count']}",
         "",
         "## Failure Categories",
         "",
@@ -203,11 +240,16 @@ def render_batch_synthesis_report(
         artifact_id = result.get("artifact_id", "unknown_artifact")
         routing = result.get("routing_decision", {})
         validation = result.get("saved_output_validation", {})
+        final_synthesis = result.get("final_synthesis", {})
+        final_validation = result.get("final_synthesis_validation", {})
 
         routed = "routed" if routing.get("should_route") else "blocked"
         routing_reason = routing.get("reason", "unknown_reason")
         valid = validation.get("is_valid")
         valid_label = "valid" if valid else "invalid"
+        final_valid = final_validation.get("is_valid")
+        final_valid_label = "valid" if final_valid else "invalid"
+        fallback_used = str(bool(final_synthesis.get("fallback_used"))).lower()
 
         lines.extend(
             [
@@ -216,7 +258,9 @@ def render_batch_synthesis_report(
                 f"- Artifact ID: `{artifact_id}`",
                 f"- Routing: `{routed}`",
                 f"- Routing reason: `{routing_reason}`",
-                f"- Validation: `{valid_label}`",
+                f"- Raw validation: `{valid_label}`",
+                f"- Final validation: `{final_valid_label}`",
+                f"- Fallback used: `{fallback_used}`",
             ]
         )
 
@@ -238,7 +282,19 @@ def render_batch_synthesis_report(
         traces = validation.get("direction_grounding_traces", [])
         if traces:
             grounded_count = sum(1 for trace in traces if trace.get("is_grounded"))
-            lines.append(f"- Grounded directions: `{grounded_count}/{len(traces)}`")
+            lines.append(
+                f"- Raw grounded directions: `{grounded_count}/{len(traces)}`"
+            )
+
+        final_traces = final_validation.get("direction_grounding_traces", [])
+        if final_traces:
+            final_grounded_count = sum(
+                1 for trace in final_traces if trace.get("is_grounded")
+            )
+            lines.append(
+                "- Final grounded directions: "
+                f"`{final_grounded_count}/{len(final_traces)}`"
+            )
 
         output_path = validation.get("output_path")
         if output_path:
