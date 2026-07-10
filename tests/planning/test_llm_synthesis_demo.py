@@ -172,7 +172,10 @@ def test_llm_synthesis_demo_writes_validation_report(tmp_path):
     assert output_path.exists()
     assert report_path.exists()
     assert result["validation_report_output_path"] == str(report_path)
-    assert "LLM Synthesis Validation Report" in report_path.read_text()
+    report_text = report_path.read_text()
+    assert "LLM Synthesis Run Validation Report" in report_text
+    assert "## Final Synthesis Validation" in report_text
+    assert "Source: `deterministic_fallback`" in report_text
 
 
 def test_llm_synthesis_demo_uses_deterministic_fallback_for_invalid_saved_output(tmp_path):

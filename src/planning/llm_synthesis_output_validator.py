@@ -296,6 +296,99 @@ def render_synthesis_validation_report(
     return "\n".join(lines).rstrip() + "\n"
 
 
+def render_synthesis_run_validation_report(
+    run_output: dict[str, Any],
+) -> str:
+    raw_validation = run_output.get("saved_output_validation", {})
+    final_synthesis = run_output.get("final_synthesis", {})
+    final_validation = run_output.get("final_synthesis_validation", {})
+
+    lines = [
+        "# LLM Synthesis Run Validation Report",
+        "",
+        f"Fixture: `{run_output.get('fixture_id')}`",
+        f"Artifact ID: `{run_output.get('artifact_id')}`",
+        f"Provider: `{run_output.get('provider')}`",
+        f"Model: `{run_output.get('model')}`",
+        f"Mode: `{run_output.get('mode')}`",
+        "",
+        "## Raw Output Validation",
+        "",
+        f"- Valid: `{str(bool(raw_validation.get('is_valid'))).lower()}`",
+        f"- Errors: {len(raw_validation.get('errors', []))}",
+        f"- Failure categories: {len(raw_validation.get('failure_categories', []))}",
+        f"- Invented sources: {len(raw_validation.get('invented_source_ids', []))}",
+        "",
+        "## Final Synthesis",
+        "",
+        f"- Source: `{final_synthesis.get('source', 'unknown')}`",
+        f"- Fallback used: `{str(bool(final_synthesis.get('fallback_used'))).lower()}`",
+        f"- Fallback reason: `{final_synthesis.get('fallback_reason', '')}`",
+        "",
+        "## Final Synthesis Validation",
+        "",
+        f"- Valid: `{str(bool(final_validation.get('is_valid'))).lower()}`",
+        f"- Errors: {len(final_validation.get('errors', []))}",
+        f"- Warnings: {len(final_validation.get('warnings', []))}",
+        f"- Failure categories: {len(final_validation.get('failure_categories', []))}",
+        f"- Invented sources: {len(final_validation.get('invented_source_ids', []))}",
+        "",
+    ]
+
+    raw_categories = raw_validation.get("failure_categories", [])
+    if raw_categories:
+        lines.extend(["## Raw Failure Categories", ""])
+        lines.extend(f"- `{category}`" for category in raw_categories)
+        lines.append("")
+
+    raw_errors = raw_validation.get("errors", [])
+    if raw_errors:
+        lines.extend(["## Raw Errors", ""])
+        lines.extend(f"- `{error}`" for error in raw_errors)
+        lines.append("")
+
+    final_errors = final_validation.get("errors", [])
+    if final_errors:
+        lines.extend(["## Final Errors", ""])
+        lines.extend(f"- `{error}`" for error in final_errors)
+        lines.append("")
+
+    final_traces = final_validation.get("direction_grounding_traces", [])
+    lines.extend(["## Final Direction Grounding", ""])
+
+    if not final_traces:
+        lines.extend(["No final direction grounding traces were produced.", ""])
+        return "\n".join(lines).rstrip() + "\n"
+
+    for trace in final_traces:
+        grounded = "yes" if trace.get("is_grounded") else "no"
+        title = trace.get("title") or "Untitled direction"
+        scope = trace.get("scope_level") or "unknown"
+
+        lines.extend(
+            [
+                f"### {scope.title()}: {title}",
+                "",
+                f"- Grounded: `{grounded}`",
+                f"- Evidence confidence: `{trace.get('evidence_confidence')}`",
+                f"- Cited sources: {len(trace.get('cited_source_ids', []))}",
+                "",
+            ]
+        )
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_synthesis_run_validation_report(
+    *,
+    run_output: dict[str, Any],
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_synthesis_run_validation_report(run_output))
+    return output_path
+
+
 def write_synthesis_validation_report(
     *,
     validation: LLMSynthesisOutputValidation,

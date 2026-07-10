@@ -27,7 +27,7 @@ from planning.llm_synthesis_client import (
 from planning.llm_synthesis_output_validator import (
     validate_saved_synthesis_output,
     validate_synthesis_parsed_response,
-    write_synthesis_validation_report,
+    write_synthesis_run_validation_report,
 )
 from planning.openai_synthesis_provider import OpenAISynthesisProvider
 from planning.token_estimation import estimate_tokens_for_prompt
@@ -225,8 +225,8 @@ def run_llm_synthesis_demo(
         result["final_synthesis_validation"] = final_validation.to_dict()
 
         if validation_report_output_path is not None:
-            write_synthesis_validation_report(
-                validation=validation,
+            write_synthesis_run_validation_report(
+                run_output=result,
                 output_path=validation_report_output_path,
             )
             result["validation_report_output_path"] = str(
