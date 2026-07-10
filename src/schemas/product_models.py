@@ -36,6 +36,20 @@ class ProjectIntelligenceRequest(BaseModel):
     constraints: UserConstraints = Field(default_factory=UserConstraints)
 
 
+class SynthesisDemoRequest(BaseModel):
+    artifact_path: str = Field(
+        description=(
+            "Path to a reviewed fixture artifact used for synthesis safety "
+            "pipeline inspection."
+        ),
+    )
+    mode: str = Field(default="deep")
+    provider: str = Field(default="fake")
+    dry_run: bool = Field(default=True)
+    calls_remaining: int = Field(default=5)
+    tokens_remaining: int = Field(default=10000)
+
+
 class EvidenceReference(BaseModel):
     title: str
     source_type: str

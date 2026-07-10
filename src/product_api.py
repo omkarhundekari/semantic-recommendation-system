@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Dict, List
 
 from fastapi import FastAPI
@@ -16,6 +17,11 @@ from research_evidence_assessment import build_evidence_assessment
 from research_query_anchors import extract_required_anchor_terms
 from product_plan_readiness import assess_product_plan_readiness
 from planning.product_enrichment import enrich_product_ideas
+from planning.llm_synthesis_demo import (
+    build_default_output_path,
+    build_default_validation_report_path,
+    run_llm_synthesis_demo,
+)
 from schemas.product_models import (
     EvidenceReference,
     PipelineStep,
@@ -24,6 +30,7 @@ from schemas.product_models import (
     ProjectIntelligenceResponse,
     RoadmapStage,
     VerificationResult,
+    SynthesisDemoRequest,
 )
 from source_router import retrieve_evidence
 
@@ -225,6 +232,55 @@ def health() -> Dict:
         "status": "healthy",
         "service": "research-to-prototype-intelligence-api",
         "version": "2.1.0",
+    }
+
+
+@app.post("/v1/synthesis-demo")
+def run_synthesis_demo_endpoint(request: SynthesisDemoRequest) -> Dict:
+    artifact_path = Path(request.artifact_path)
+
+    output_path = build_default_output_path(
+        fixture_id=artifact_path.parent.name,
+        artifact_id=artifact_path.stem,
+        mode=request.mode,
+        provider=request.provider,
+        dry_run=request.dry_run,
+        output_dir=Path("outputs/api_synthesis_runs"),
+    )
+    validation_report_output_path = build_default_validation_report_path(
+        synthesis_output_path=output_path,
+        report_dir=Path("outputs/reports"),
+    )
+
+    result = run_llm_synthesis_demo(
+        artifact_path=artifact_path,
+        mode=request.mode,
+        provider_name=request.provider,
+        dry_run=request.dry_run,
+        calls_remaining=request.calls_remaining,
+        tokens_remaining=request.tokens_remaining,
+        output_path=output_path,
+        validation_report_output_path=validation_report_output_path,
+    )
+
+    return {
+        "status": "ready",
+        "fixture_id": result.get("fixture_id"),
+        "artifact_id": result.get("artifact_id"),
+        "mode": result.get("mode"),
+        "provider": result.get("provider"),
+        "model": result.get("model"),
+        "dry_run": result.get("dry_run"),
+        "api_call_attempted": result.get("api_call_attempted"),
+        "routing_decision": result.get("routing_decision"),
+        "saved_output_validation": result.get("saved_output_validation"),
+        "final_synthesis": result.get("final_synthesis"),
+        "final_synthesis_validation": result.get(
+            "final_synthesis_validation"
+        ),
+        "validation_report_output_path": result.get(
+            "validation_report_output_path"
+        ),
     }
 
 
