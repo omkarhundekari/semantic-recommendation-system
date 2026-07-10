@@ -230,3 +230,56 @@ def test_validator_rejects_wrong_scoped_direction_sequence(tmp_path):
 
     assert not validation.is_valid
     assert "project_direction_0_invalid_scope_level" in validation.errors
+
+
+
+def test_validator_builds_grounding_trace_for_valid_sample_output():
+    validation = validate_saved_synthesis_output(
+        output_path=SAMPLE_VALID_OUTPUT,
+    )
+
+    traces = validation.direction_grounding_traces
+
+    assert len(traces) == 3
+    assert [trace["scope_level"] for trace in traces] == [
+        "easy",
+        "medium",
+        "hard",
+    ]
+    assert all(trace["is_grounded"] for trace in traces)
+    assert all(trace["invented_source_ids"] == [] for trace in traces)
+    assert traces[0]["valid_cited_source_ids"] == [
+        "paper-data-quality-impact",
+        "paper-owner-aware-lineage",
+        "repo-dashboard-impact",
+    ]
+    assert traces[0]["supporting_evidence_cards"][0]["source_id"] == (
+        "paper-data-quality-impact"
+    )
+
+
+def test_validator_grounding_trace_exposes_invented_source_ids(tmp_path):
+    output_path = tmp_path / "invented_source.json"
+
+    result = run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+    )
+    parsed = result["response"]["parsed_response"]
+    parsed["project_directions"] = _make_scoped_directions(
+        source_ids=["made-up-source"]
+    )
+    parsed["overall_confidence"] = "Strong"
+    result["response"]["raw_response_text"] = json.dumps(parsed)
+    output_path.write_text(json.dumps(result, indent=2))
+
+    validation = validate_saved_synthesis_output(
+        output_path=output_path,
+    )
+
+    traces = validation.direction_grounding_traces
+
+    assert not validation.is_valid
+    assert traces[0]["is_grounded"] is False
+    assert traces[0]["invented_source_ids"] == ["made-up-source"]
+    assert traces[0]["valid_cited_source_ids"] == []

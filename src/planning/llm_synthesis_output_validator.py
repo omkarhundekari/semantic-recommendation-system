@@ -32,6 +32,7 @@ class LLMSynthesisOutputValidation:
     cited_source_ids: tuple[str, ...]
     valid_source_ids: tuple[str, ...]
     invented_source_ids: tuple[str, ...]
+    direction_grounding_traces: tuple[dict[str, Any], ...]
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -45,7 +46,8 @@ def validate_saved_synthesis_output(
     output = json.loads(output_path.read_text())
 
     resolved_artifact_path = artifact_path or _artifact_path_from_output(output)
-    valid_source_ids = _load_valid_source_ids(resolved_artifact_path)
+    evidence_card_map = _load_evidence_card_map(resolved_artifact_path)
+    valid_source_ids = set(evidence_card_map)
 
     errors = []
     warnings = []
@@ -89,6 +91,11 @@ def validate_saved_synthesis_output(
             warnings=warnings,
         )
 
+    direction_grounding_traces = _build_direction_grounding_traces(
+        parsed_response=parsed_response,
+        evidence_card_map=evidence_card_map,
+    )
+
     return LLMSynthesisOutputValidation(
         output_path=str(output_path),
         artifact_path=str(resolved_artifact_path) if resolved_artifact_path else None,
@@ -98,6 +105,7 @@ def validate_saved_synthesis_output(
         cited_source_ids=cited_source_ids,
         valid_source_ids=tuple(sorted(valid_source_ids)),
         invented_source_ids=invented_source_ids,
+        direction_grounding_traces=tuple(direction_grounding_traces),
     )
 
 
@@ -109,16 +117,87 @@ def _artifact_path_from_output(output: dict[str, Any]) -> Path | None:
     return path if path.exists() else None
 
 
-def _load_valid_source_ids(artifact_path: Path | None) -> set[str]:
+def _load_evidence_card_map(artifact_path: Path | None) -> dict[str, Any]:
     if artifact_path is None:
-        return set()
+        return {}
 
     artifact = json.loads(artifact_path.read_text())
     cards = build_evidence_cards_from_artifact(artifact)
 
     return {
-        card.source_id
+        card.source_id: card
         for card in cards
+    }
+
+
+def _build_direction_grounding_traces(
+    *,
+    parsed_response: Any,
+    evidence_card_map: dict[str, Any],
+) -> list[dict[str, Any]]:
+    if not isinstance(parsed_response, dict):
+        return []
+
+    traces = []
+    project_directions = parsed_response.get("project_directions", [])
+
+    for index, direction in enumerate(project_directions):
+        if not isinstance(direction, dict):
+            traces.append(
+                {
+                    "direction_index": index,
+                    "is_grounded": False,
+                    "error": "direction_not_object",
+                }
+            )
+            continue
+
+        cited_source_ids = [
+            str(source_id)
+            for source_id in direction.get("source_ids", [])
+        ]
+        valid_cited_source_ids = [
+            source_id
+            for source_id in cited_source_ids
+            if source_id in evidence_card_map
+        ]
+        invented_source_ids = [
+            source_id
+            for source_id in cited_source_ids
+            if source_id not in evidence_card_map
+        ]
+
+        traces.append(
+            {
+                "direction_index": index,
+                "scope_level": direction.get("scope_level"),
+                "build_type": direction.get("build_type"),
+                "estimated_time": direction.get("estimated_time"),
+                "title": direction.get("title"),
+                "evidence_confidence": direction.get("evidence_confidence"),
+                "is_grounded": bool(cited_source_ids) and not invented_source_ids,
+                "cited_source_ids": cited_source_ids,
+                "valid_cited_source_ids": valid_cited_source_ids,
+                "invented_source_ids": invented_source_ids,
+                "grounding_warnings": direction.get("grounding_warnings", []),
+                "supporting_evidence_cards": [
+                    _evidence_card_trace(evidence_card_map[source_id])
+                    for source_id in valid_cited_source_ids
+                ],
+            }
+        )
+
+    return traces
+
+
+def _evidence_card_trace(card: Any) -> dict[str, Any]:
+    return {
+        "source_id": card.source_id,
+        "source_type": card.source_type,
+        "title": card.title,
+        "support_scope": card.support_scope,
+        "evidence_confidence": card.evidence_confidence,
+        "grounding_warning": card.grounding_warning,
     }
 
 
