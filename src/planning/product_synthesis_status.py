@@ -13,6 +13,7 @@ from planning.llm_routing_policy import (
 from planning.llm_synthesis_fallback import (
     build_deterministic_synthesis_fallback,
 )
+from planning.presentation_layer import build_presentation_project_directions
 from planning.llm_synthesis_output_validator import (
     validate_synthesis_parsed_response_against_cards,
 )
@@ -160,6 +161,12 @@ def build_project_intelligence_synthesis_status(
         preview_validation=preview_validation,
     )
 
+    presentation_project_directions = build_presentation_project_directions(
+        parsed_response=deterministic_preview,
+        evidence_cards=evidence_cards,
+        preview_validation=preview_validation,
+    )
+
     return {
         "available": False,
         "reason": (
@@ -169,6 +176,7 @@ def build_project_intelligence_synthesis_status(
         "current_planning_source": "deterministic_product_pipeline",
         "synthesis_summary": synthesis_summary,
         "validated_project_directions": validated_project_directions,
+        "presentation_project_directions": presentation_project_directions,
         "live_evidence_cards": {
             "card_count": len(evidence_cards),
             **confidence_counts,

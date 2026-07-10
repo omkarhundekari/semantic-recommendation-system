@@ -292,6 +292,7 @@ def test_project_intelligence_synthesis_status_contract_keys():
         "current_planning_source",
         "synthesis_summary",
         "validated_project_directions",
+        "presentation_project_directions",
         "live_evidence_cards",
         "routing_preview",
         "token_estimate",
@@ -323,6 +324,25 @@ def test_project_intelligence_synthesis_status_contract_keys():
         "source_ids",
         "grounding_warnings",
     }
+
+    presentation_directions = synthesis_status[
+        "presentation_project_directions"
+    ]
+    assert len(presentation_directions) == 3
+    assert set(presentation_directions[0]) == {
+        "title",
+        "level",
+        "estimated_time",
+        "what_you_will_build",
+        "why_it_matters",
+        "skills_shown",
+        "interview_talking_point",
+        "evidence_badge",
+        "confidence_explanation",
+        "open_questions",
+        "evidence_summary",
+    }
+    assert "source_ids" not in presentation_directions[0]
 
 
 def test_synthesis_summary_marks_invalid_preview_when_sources_are_invented():

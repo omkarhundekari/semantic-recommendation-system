@@ -123,6 +123,20 @@ class ValidatedProjectDirection(BaseModel):
     grounding_warnings: List[str] = Field(default_factory=list)
 
 
+class PresentationProjectDirection(BaseModel):
+    title: str
+    level: str
+    estimated_time: str
+    what_you_will_build: str
+    why_it_matters: str
+    skills_shown: List[str] = Field(default_factory=list)
+    interview_talking_point: str
+    evidence_badge: str
+    confidence_explanation: str
+    open_questions: List[str] = Field(default_factory=list)
+    evidence_summary: str
+
+
 class SynthesisStatus(BaseModel):
     available: bool
     reason: str
@@ -131,6 +145,9 @@ class SynthesisStatus(BaseModel):
     synthesis_summary: SynthesisSummary
     validated_project_directions: List[
         ValidatedProjectDirection
+    ] = Field(default_factory=list)
+    presentation_project_directions: List[
+        PresentationProjectDirection
     ] = Field(default_factory=list)
     live_evidence_cards: Dict[str, Any] = Field(default_factory=dict)
     routing_preview: Dict[str, Any] = Field(default_factory=dict)
