@@ -121,3 +121,22 @@ def test_llm_synthesis_demo_dry_run_uses_scoped_three_direction_schema():
         "3-5 days",
         "1-2 weeks",
     ]
+
+
+
+def test_llm_synthesis_demo_records_saved_output_validation(tmp_path):
+    output_path = tmp_path / "synthesis_output.json"
+
+    result = run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+    )
+
+    validation = result["saved_output_validation"]
+
+    assert output_path.exists()
+    assert "is_valid" in validation
+    assert "errors" in validation
+    assert "invented_source_ids" in validation
+    assert not validation["is_valid"]
+    assert "project_direction_0_missing_source_ids" in validation["errors"]

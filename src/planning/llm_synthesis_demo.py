@@ -20,6 +20,7 @@ from planning.llm_synthesis_client import (
     LLMSynthesisRequest,
     synthesize_project_directions,
 )
+from planning.llm_synthesis_output_validator import validate_saved_synthesis_output
 from planning.openai_synthesis_provider import OpenAISynthesisProvider
 from planning.token_estimation import estimate_tokens_for_prompt
 
@@ -180,6 +181,12 @@ def run_llm_synthesis_demo(
     }
 
     if output_path is not None:
+        write_synthesis_demo_output(result, output_path)
+        validation = validate_saved_synthesis_output(
+            output_path=output_path,
+            artifact_path=artifact_path,
+        )
+        result["saved_output_validation"] = validation.to_dict()
         write_synthesis_demo_output(result, output_path)
 
     return result
