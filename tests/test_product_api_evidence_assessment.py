@@ -155,29 +155,31 @@ def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
 
     assert response.status == "ready"
     assert response.synthesis_status is not None
-    assert response.synthesis_status["available"] is False
-    assert response.synthesis_status[
-        "safe_inspection_endpoint"
-    ] == "/v1/synthesis-demo"
-    assert response.synthesis_status[
-        "current_planning_source"
-    ] == "deterministic_product_pipeline"
-    assert response.synthesis_status["reason"] == (
+    assert response.synthesis_status.available is False
+    assert (
+        response.synthesis_status.safe_inspection_endpoint
+        == "/v1/synthesis-demo"
+    )
+    assert (
+        response.synthesis_status.current_planning_source
+        == "deterministic_product_pipeline"
+    )
+    assert response.synthesis_status.reason == (
         "live_synthesis_execution_not_enabled_for_project_intelligence"
     )
 
-    summary = response.synthesis_status["synthesis_summary"]
-    assert summary["status"] == "preview_valid"
-    assert summary["source"] == "deterministic_fallback_preview"
-    assert "can_run_llm" in summary
-    assert "routing_reason" in summary
-    assert summary["card_count"] > 0
-    assert summary["validated"] is True
-    assert summary["grounded_direction_count"] == 3
-    assert summary["invented_source_count"] == 0
-    assert summary["estimated_tokens"] > 0
+    summary = response.synthesis_status.synthesis_summary
+    assert summary.status == "preview_valid"
+    assert summary.source == "deterministic_fallback_preview"
+    assert isinstance(summary.can_run_llm, bool)
+    assert summary.routing_reason
+    assert summary.card_count > 0
+    assert summary.validated is True
+    assert summary.grounded_direction_count == 3
+    assert summary.invented_source_count == 0
+    assert summary.estimated_tokens > 0
 
-    live_cards = response.synthesis_status["live_evidence_cards"]
+    live_cards = response.synthesis_status.live_evidence_cards
     assert live_cards["card_count"] > 0
     assert live_cards["query_aligned_card_count"] >= 0
     assert {
@@ -188,16 +190,16 @@ def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
         "suspicious_card_count",
     }.issubset(live_cards)
 
-    routing_preview = response.synthesis_status["routing_preview"]
+    routing_preview = response.synthesis_status.routing_preview
     assert "should_route" in routing_preview
     assert "reason" in routing_preview
     assert routing_preview["mode"] == "deep"
 
-    token_estimate = response.synthesis_status["token_estimate"]
+    token_estimate = response.synthesis_status.token_estimate
     assert token_estimate["estimated_tokens"] > 0
     assert "evidence_cards" in token_estimate["section_token_estimates"]
 
-    preview = response.synthesis_status["live_final_synthesis_preview"]
+    preview = response.synthesis_status.live_final_synthesis_preview
     assert preview["source"] == "deterministic_fallback_preview"
     assert preview["fallback_used"] is True
 
@@ -211,9 +213,9 @@ def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
         for direction in parsed_preview["project_directions"]
     )
 
-    preview_validation = response.synthesis_status[
-        "live_final_synthesis_preview_validation"
-    ]
+    preview_validation = (
+        response.synthesis_status.live_final_synthesis_preview_validation
+    )
     assert preview_validation["is_valid"] is True
     assert preview_validation["output_path"] == (
         "live_final_synthesis_preview"
@@ -225,7 +227,7 @@ def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
         for trace in preview_validation["direction_grounding_traces"]
     )
 
-    assert response.synthesis_status["safety_pipeline"] == {
+    assert response.synthesis_status.safety_pipeline == {
         "raw_output_validation": True,
         "deterministic_fallback": True,
         "final_synthesis_validation": True,

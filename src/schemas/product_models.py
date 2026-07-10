@@ -101,6 +101,34 @@ class PipelineStep(BaseModel):
     detail: str
 
 
+class SynthesisSummary(BaseModel):
+    status: str
+    source: str
+    can_run_llm: bool
+    routing_reason: str
+    card_count: int
+    validated: bool
+    grounded_direction_count: int
+    invented_source_count: int
+    estimated_tokens: int
+
+
+class SynthesisStatus(BaseModel):
+    available: bool
+    reason: str
+    safe_inspection_endpoint: str
+    current_planning_source: str
+    synthesis_summary: SynthesisSummary
+    live_evidence_cards: Dict[str, Any] = Field(default_factory=dict)
+    routing_preview: Dict[str, Any] = Field(default_factory=dict)
+    token_estimate: Dict[str, Any] = Field(default_factory=dict)
+    live_final_synthesis_preview: Dict[str, Any] = Field(default_factory=dict)
+    live_final_synthesis_preview_validation: Dict[str, Any] = Field(
+        default_factory=dict
+    )
+    safety_pipeline: Dict[str, bool] = Field(default_factory=dict)
+
+
 class ProjectIntelligenceResponse(BaseModel):
     status: str
     query: str
@@ -127,7 +155,7 @@ class ProjectIntelligenceResponse(BaseModel):
 
     research_evidence_assessment: Optional[Dict[str, Any]] = None
     product_plan_readiness: Optional[Dict[str, Any]] = None
-    synthesis_status: Optional[Dict[str, Any]] = None
+    synthesis_status: Optional[SynthesisStatus] = None
 
     directions: List[ProjectDirection] = Field(default_factory=list)
     pipeline: List[PipelineStep] = Field(default_factory=list)
