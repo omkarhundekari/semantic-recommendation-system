@@ -329,12 +329,12 @@ def _derive_confidence_explanation(
     confidence: str,
     cited_cards: list[Any],
 ) -> str:
-    evidence_summary = _derive_evidence_summary(cited_cards)
+    evidence_phrase = _derive_evidence_phrase(cited_cards)
 
     if confidence == "Strong":
         return (
-            f"This direction is well supported by available evidence: "
-            f"{evidence_summary.lower()}."
+            "This direction is well supported by available evidence: "
+            f"{evidence_phrase}."
         )
 
     if confidence == "Limited":
