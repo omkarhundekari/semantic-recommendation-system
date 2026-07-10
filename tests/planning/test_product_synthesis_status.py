@@ -64,3 +64,84 @@ def test_build_synthesis_summary_reports_invalid_preview():
     assert summary["validated"] is False
     assert summary["grounded_direction_count"] == 0
     assert summary["invented_source_count"] == 1
+
+
+def test_build_project_intelligence_synthesis_status_returns_valid_preview_contract():
+    from planning.product_synthesis_status import (
+        build_project_intelligence_synthesis_status,
+    )
+
+    evidence_items = [
+        {
+            "title": "Knowledge Graph-extended Retrieval Augmented Generation for Question Answering",
+            "source_type": "research_paper",
+            "source_id": "arxiv:2504.08893",
+            "support_scope": "direct",
+            "relevance_signal": "plausible",
+            "summary": (
+                "Retrieval augmented generation for question answering using "
+                "knowledge graph enhanced retrieval."
+            ),
+        },
+        {
+            "title": "infiniflow/ragflow",
+            "source_type": "github_repository",
+            "source_id": "https://github.com/infiniflow/ragflow",
+            "support_scope": "direct",
+            "relevance_signal": "plausible",
+            "summary": (
+                "Open-source RAG engine for retrieval augmented generation."
+            ),
+        },
+    ]
+
+    status = build_project_intelligence_synthesis_status(
+        query=(
+            "Build a retrieval augmented generation project for "
+            "question answering"
+        ),
+        constraints={
+            "skill_level": "intermediate",
+            "time_available": "3 weeks",
+            "target_roles": ["ML Engineer"],
+            "preferred_stack": ["Python"],
+        },
+        evidence_items=evidence_items,
+    )
+
+    assert status["available"] is False
+    assert status["reason"] == (
+        "live_synthesis_execution_not_enabled_for_project_intelligence"
+    )
+    assert status["safe_inspection_endpoint"] == "/v1/synthesis-demo"
+    assert status["current_planning_source"] == (
+        "deterministic_product_pipeline"
+    )
+
+    summary = status["synthesis_summary"]
+    assert summary["status"] == "preview_valid"
+    assert summary["source"] == "deterministic_fallback_preview"
+    assert summary["validated"] is True
+    assert summary["grounded_direction_count"] == 3
+    assert summary["invented_source_count"] == 0
+    assert summary["estimated_tokens"] > 0
+
+    assert status["live_evidence_cards"]["card_count"] == 2
+    assert status["routing_preview"]["mode"] == "deep"
+    assert status["token_estimate"]["estimated_tokens"] > 0
+
+    preview = status["live_final_synthesis_preview"]
+    assert preview["source"] == "deterministic_fallback_preview"
+    assert preview["fallback_used"] is True
+    assert len(preview["parsed_response"]["project_directions"]) == 3
+
+    validation = status["live_final_synthesis_preview_validation"]
+    assert validation["is_valid"] is True
+    assert validation["invented_source_ids"] == ()
+    assert validation["failure_categories"] == ()
+
+    assert status["safety_pipeline"] == {
+        "raw_output_validation": True,
+        "deterministic_fallback": True,
+        "final_synthesis_validation": True,
+    }
