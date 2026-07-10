@@ -96,3 +96,28 @@ def test_default_output_path_includes_run_identity():
     assert output_path.parent == Path("outputs/llm_synthesis_runs")
     assert "fixture_artifact_deep_openai_real_" in output_path.name
     assert output_path.suffix == ".json"
+
+
+
+def test_llm_synthesis_demo_dry_run_uses_scoped_three_direction_schema():
+    result = run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+    )
+
+    directions = result["response"]["parsed_response"]["project_directions"]
+
+    assert [direction["scope_level"] for direction in directions] == [
+        "easy",
+        "medium",
+        "hard",
+    ]
+    assert [direction["build_type"] for direction in directions] == [
+        "quick_build",
+        "resume_mvp",
+        "flagship_extension",
+    ]
+    assert [direction["estimated_time"] for direction in directions] == [
+        "1-2 days",
+        "3-5 days",
+        "1-2 weeks",
+    ]

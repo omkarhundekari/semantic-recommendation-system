@@ -27,24 +27,74 @@ from planning.token_estimation import estimate_tokens_for_prompt
 DEFAULT_FAKE_RESPONSE = {
     "project_directions": [
         {
-            "title": "Dry Run Grounded Project Direction",
+            "scope_level": "easy",
+            "build_type": "quick_build",
+            "estimated_time": "1-2 days",
+            "title": "Dry Run Quick Build Direction",
             "problem_statement": (
-                "This is a dry-run response generated without calling an API."
+                "This is a dry-run quick-build response generated without "
+                "calling an API."
             ),
             "target_user": "students and early-career engineers",
             "why_this_is_grounded": (
-                "The real provider was not called. This verifies the synthesis "
-                "pipeline wiring only."
+                "The real provider was not called. This verifies the scoped "
+                "synthesis pipeline wiring only."
             ),
             "source_ids": [],
             "evidence_confidence": "Limited",
             "grounding_warnings": ["dry_run_fake_response"],
-            "mvp_scope": [],
-            "advanced_extensions": [],
-            "skills_demonstrated": [],
-            "resume_bullet": "",
-            "interview_talking_points": [],
-        }
+            "mvp_scope": ["Verify routing, prompt, and response parsing."],
+            "advanced_extensions": ["Replace fake provider with OpenAI provider."],
+            "skills_demonstrated": ["LLM pipeline wiring"],
+            "resume_bullet": "Built a dry-run path for scoped LLM synthesis validation.",
+            "interview_talking_points": ["Explain safe dry-run provider testing."],
+        },
+        {
+            "scope_level": "medium",
+            "build_type": "resume_mvp",
+            "estimated_time": "3-5 days",
+            "title": "Dry Run Resume MVP Direction",
+            "problem_statement": (
+                "This is a dry-run resume-MVP response generated without "
+                "calling an API."
+            ),
+            "target_user": "students and early-career engineers",
+            "why_this_is_grounded": (
+                "The real provider was not called. This verifies that the "
+                "medium scoped output contract is present."
+            ),
+            "source_ids": [],
+            "evidence_confidence": "Limited",
+            "grounding_warnings": ["dry_run_fake_response"],
+            "mvp_scope": ["Verify scoped fields and JSON structure."],
+            "advanced_extensions": ["Add validator coverage for saved outputs."],
+            "skills_demonstrated": ["Structured output validation"],
+            "resume_bullet": "Built a scoped synthesis contract with dry-run validation.",
+            "interview_talking_points": ["Explain schema-first LLM integration."],
+        },
+        {
+            "scope_level": "hard",
+            "build_type": "flagship_extension",
+            "estimated_time": "1-2 weeks",
+            "title": "Dry Run Flagship Extension Direction",
+            "problem_statement": (
+                "This is a dry-run flagship-extension response generated "
+                "without calling an API."
+            ),
+            "target_user": "students and early-career engineers",
+            "why_this_is_grounded": (
+                "The real provider was not called. This verifies that the "
+                "hard scoped output contract is present."
+            ),
+            "source_ids": [],
+            "evidence_confidence": "Limited",
+            "grounding_warnings": ["dry_run_fake_response"],
+            "mvp_scope": ["Verify end-to-end synthesis demo behavior."],
+            "advanced_extensions": ["Run one real provider smoke test."],
+            "skills_demonstrated": ["Provider abstraction", "LLM readiness reporting"],
+            "resume_bullet": "Implemented a provider-safe LLM synthesis demo path.",
+            "interview_talking_points": ["Explain fake-provider testing before paid calls."],
+        },
     ],
     "overall_confidence": "Limited",
     "assumptions": ["Dry run mode was used."],
