@@ -244,3 +244,23 @@ def test_presentation_build_text_filters_internal_fallback_scope():
         "generic tutorials" in result.why_it_matters
         or "well supported" in result.why_it_matters
     )
+
+
+def test_evidence_summary_uses_human_readable_list_format():
+    result = to_presentation_project_direction(
+        direction={
+            **_direction(),
+            "source_ids": ["source-1", "source-2", "source-3"],
+        },
+        evidence_cards=[
+            _card("source-1", "research_paper"),
+            _card("source-2", "github_repository"),
+            _card("source-3", "project_pattern"),
+        ],
+    )
+
+    assert result.evidence_summary == (
+        "Supported by 1 research paper, "
+        "1 GitHub implementation, and 1 project pattern"
+    )
+    assert " and 1 GitHub implementation and " not in result.evidence_summary

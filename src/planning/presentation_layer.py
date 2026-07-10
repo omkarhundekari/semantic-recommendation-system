@@ -378,8 +378,18 @@ def _derive_evidence_phrase(cited_cards: list[Any]) -> str:
     summary = _derive_evidence_summary(cited_cards)
     prefix = "Supported by "
     if summary.startswith(prefix):
-        return summary.replace(prefix, "", 1).lower()
-    return summary.lower()
+        return summary.replace(prefix, "", 1)
+    return summary
+
+
+def _join_human_readable_list(parts: list[str]) -> str:
+    if len(parts) <= 1:
+        return "".join(parts)
+
+    if len(parts) == 2:
+        return " and ".join(parts)
+
+    return ", ".join(parts[:-1]) + f", and {parts[-1]}"
 
 
 def _derive_evidence_summary(cited_cards: list[Any]) -> str:
@@ -421,4 +431,4 @@ def _derive_evidence_summary(cited_cards: list[Any]) -> str:
         label = "evidence source" if len(cited_cards) == 1 else "evidence sources"
         return f"Supported by {len(cited_cards)} {label}"
 
-    return "Supported by " + " and ".join(parts)
+    return "Supported by " + _join_human_readable_list(parts)
