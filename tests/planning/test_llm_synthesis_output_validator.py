@@ -433,3 +433,155 @@ def test_limited_direction_without_grounding_warning_gets_warning():
 
     assert validation.is_valid
     assert "project_direction_0_missing_grounding_warnings" in validation.warnings
+
+
+def test_validate_synthesis_parsed_response_against_live_cards_accepts_grounded_response():
+    from planning.evidence_cards import EvidenceCard
+    from planning.llm_synthesis_output_validator import (
+        validate_synthesis_parsed_response_against_cards,
+    )
+
+    cards = [
+        EvidenceCard(
+            source_id="paper-rag-eval",
+            source_type="research_paper",
+            title="RAG Evaluation",
+            support_scope="direct",
+            evidence_confidence="Strong",
+            key_excerpt="RAG systems need retrieval and answer evaluation.",
+            specific_method_or_technique="evaluation",
+            specific_dataset_or_benchmark=None,
+            specific_implementation_signal=None,
+            grounding_warning=None,
+            relevance_signal="plausible",
+            relevance_statuses=("lexically_supported",),
+            linked_candidate_titles=(),
+            user_facing_explanation="Direct evidence.",
+        )
+    ]
+
+    parsed_response = {
+        "project_directions": [
+            {
+                "scope_level": "easy",
+                "build_type": "quick_build",
+                "estimated_time": "1-2 days",
+                "title": "RAG Evaluation Checklist",
+                "source_ids": ["paper-rag-eval"],
+                "evidence_confidence": "Strong",
+                "grounding_warnings": [],
+                "resume_bullet": "Built a grounded RAG evaluation checklist.",
+            },
+            {
+                "scope_level": "medium",
+                "build_type": "resume_mvp",
+                "estimated_time": "3-5 days",
+                "title": "RAG Evaluation Dashboard",
+                "source_ids": ["paper-rag-eval"],
+                "evidence_confidence": "Strong",
+                "grounding_warnings": [],
+                "resume_bullet": "Built a RAG evaluation dashboard.",
+            },
+            {
+                "scope_level": "hard",
+                "build_type": "flagship_extension",
+                "estimated_time": "1-2 weeks",
+                "title": "RAG Evaluation Studio",
+                "source_ids": ["paper-rag-eval"],
+                "evidence_confidence": "Strong",
+                "grounding_warnings": [],
+                "resume_bullet": "Built a full RAG evaluation studio.",
+            },
+        ],
+        "overall_confidence": "Strong",
+        "assumptions": [],
+        "warnings": [],
+    }
+
+    validation = validate_synthesis_parsed_response_against_cards(
+        parsed_response=parsed_response,
+        evidence_cards=cards,
+    )
+
+    assert validation.is_valid is True
+    assert validation.output_path == "live_final_synthesis_preview"
+    assert validation.valid_source_ids == ("paper-rag-eval",)
+    assert validation.invented_source_ids == ()
+    assert all(
+        trace["is_grounded"]
+        for trace in validation.direction_grounding_traces
+    )
+
+
+def test_validate_synthesis_parsed_response_against_live_cards_rejects_invented_sources():
+    from planning.evidence_cards import EvidenceCard
+    from planning.llm_synthesis_output_validator import (
+        validate_synthesis_parsed_response_against_cards,
+    )
+
+    cards = [
+        EvidenceCard(
+            source_id="paper-known",
+            source_type="research_paper",
+            title="Known Paper",
+            support_scope="direct",
+            evidence_confidence="Strong",
+            key_excerpt="Known evidence.",
+            specific_method_or_technique=None,
+            specific_dataset_or_benchmark=None,
+            specific_implementation_signal=None,
+            grounding_warning=None,
+            relevance_signal="plausible",
+            relevance_statuses=("lexically_supported",),
+            linked_candidate_titles=(),
+            user_facing_explanation="Direct evidence.",
+        )
+    ]
+
+    parsed_response = {
+        "project_directions": [
+            {
+                "scope_level": "easy",
+                "build_type": "quick_build",
+                "estimated_time": "1-2 days",
+                "title": "Invented Source Direction",
+                "source_ids": ["paper-invented"],
+                "evidence_confidence": "Strong",
+                "grounding_warnings": [],
+                "resume_bullet": "Built something.",
+            },
+            {
+                "scope_level": "medium",
+                "build_type": "resume_mvp",
+                "estimated_time": "3-5 days",
+                "title": "Invented Source Direction",
+                "source_ids": ["paper-invented"],
+                "evidence_confidence": "Strong",
+                "grounding_warnings": [],
+                "resume_bullet": "Built something.",
+            },
+            {
+                "scope_level": "hard",
+                "build_type": "flagship_extension",
+                "estimated_time": "1-2 weeks",
+                "title": "Invented Source Direction",
+                "source_ids": ["paper-invented"],
+                "evidence_confidence": "Strong",
+                "grounding_warnings": [],
+                "resume_bullet": "Built something.",
+            },
+        ],
+        "overall_confidence": "Strong",
+        "assumptions": [],
+        "warnings": [],
+    }
+
+    validation = validate_synthesis_parsed_response_against_cards(
+        parsed_response=parsed_response,
+        evidence_cards=cards,
+    )
+
+    assert validation.is_valid is False
+    assert validation.errors == ("invented_source_ids",)
+    assert validation.failure_categories == ("citation_failure",)
+    assert validation.invented_source_ids == ("paper-invented",)

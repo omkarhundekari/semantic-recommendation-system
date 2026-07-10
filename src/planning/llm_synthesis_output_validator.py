@@ -93,6 +93,64 @@ def validate_synthesis_parsed_response(
     )
 
 
+def validate_synthesis_parsed_response_against_cards(
+    *,
+    parsed_response: Any,
+    evidence_cards: list[Any],
+    output_path: str = "live_final_synthesis_preview",
+) -> LLMSynthesisOutputValidation:
+    evidence_card_map = {
+        _get_card_source_id(card): card
+        for card in evidence_cards
+        if _get_card_source_id(card)
+    }
+    valid_source_ids = set(evidence_card_map)
+
+    errors = []
+    warnings = []
+
+    if parsed_response is None:
+        errors.append("missing_parsed_response")
+    elif not isinstance(parsed_response, dict):
+        errors.append("parsed_response_not_object")
+    else:
+        _validate_parsed_response(
+            parsed_response=parsed_response,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    cited_source_ids = tuple(sorted(_collect_cited_source_ids(parsed_response)))
+    invented_source_ids = tuple(
+        source_id
+        for source_id in cited_source_ids
+        if source_id not in valid_source_ids
+    )
+
+    if invented_source_ids:
+        errors.append("invented_source_ids")
+
+    failure_categories = classify_validation_failures(errors)
+
+    direction_grounding_traces = _build_direction_grounding_traces(
+        parsed_response=parsed_response,
+        evidence_card_map=evidence_card_map,
+    )
+
+    return LLMSynthesisOutputValidation(
+        output_path=output_path,
+        artifact_path=None,
+        is_valid=not errors,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+        cited_source_ids=cited_source_ids,
+        valid_source_ids=tuple(sorted(valid_source_ids)),
+        invented_source_ids=invented_source_ids,
+        failure_categories=tuple(failure_categories),
+        direction_grounding_traces=tuple(direction_grounding_traces),
+    )
+
+
 def validate_saved_synthesis_output(
     *,
     output_path: Path,
@@ -397,6 +455,12 @@ def write_synthesis_validation_report(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(render_synthesis_validation_report(validation))
     return output_path
+
+
+def _get_card_source_id(card: Any) -> str:
+    if isinstance(card, dict):
+        return str(card.get("source_id", "")).strip()
+    return str(getattr(card, "source_id", "")).strip()
 
 
 def _artifact_path_from_output(output: dict[str, Any]) -> Path | None:
