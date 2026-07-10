@@ -1,5 +1,11 @@
 import argparse
 import json
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message="urllib3 v2 only supports OpenSSL.*",
+)
 
 from product_api import generate_project_intelligence
 from schemas.product_models import ProjectIntelligenceRequest
