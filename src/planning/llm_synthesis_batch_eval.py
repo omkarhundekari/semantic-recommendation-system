@@ -311,16 +311,23 @@ def _main() -> None:
     )
 
     if not args.no_save:
+        summary_output_path = Path(args.summary_output_path)
+        summary_report_output_path = Path(args.summary_report_output_path)
+
         write_batch_synthesis_summary(
             batch_result=batch_result,
-            output_path=Path(args.summary_output_path),
+            output_path=summary_output_path,
         )
         write_batch_synthesis_report(
             batch_result=batch_result,
-            output_path=Path(args.summary_report_output_path),
+            output_path=summary_report_output_path,
         )
 
     print(json.dumps(batch_result["summary"], indent=2))
+
+    if not args.no_save:
+        print(f"\nSaved batch summary: {summary_output_path}")
+        print(f"Saved batch report: {summary_report_output_path}")
 
 
 if __name__ == "__main__":
