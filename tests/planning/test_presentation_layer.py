@@ -123,3 +123,40 @@ def test_presentation_title_removes_internal_fallback_prefixes():
     )
 
     assert result.title == "RAG Evaluation Dashboard Starter"
+
+
+def test_presentation_skills_hide_backend_internal_phrasing():
+    result = to_presentation_project_direction(
+        direction={
+            **_direction(),
+            "skills_demonstrated": [
+                "evidence-grounded planning",
+                "validation-driven LLM safety",
+                "deterministic fallback design",
+            ],
+        },
+        evidence_cards=[_card()],
+    )
+
+    assert result.skills_shown == [
+        "Product-minded ML planning",
+        "Evaluation and validation",
+        "Reliable system design",
+    ]
+
+
+def test_presentation_talking_point_hides_invalid_llm_output_phrasing():
+    result = to_presentation_project_direction(
+        direction={
+            **_direction(),
+            "interview_talking_points": [
+                "Explain why invalid LLM output should not be shown directly."
+            ],
+        },
+        evidence_cards=[_card()],
+    )
+
+    assert result.interview_talking_point == (
+        "I built a project that turns evidence into actionable "
+        "recommendations while validating the quality of the output."
+    )

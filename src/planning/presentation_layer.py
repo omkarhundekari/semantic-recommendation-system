@@ -149,10 +149,14 @@ def _derive_why_it_matters(direction: dict[str, Any]) -> str:
 def _derive_skills_shown(direction: dict[str, Any]) -> list[str]:
     skills = direction.get("skills_demonstrated", [])
     if isinstance(skills, list) and skills:
-        return [str(skill) for skill in skills[:5]]
+        cleaned_skills = [
+            _clean_user_facing_skill(str(skill))
+            for skill in skills
+        ]
+        return _dedupe_preserving_order(cleaned_skills)[:5]
 
     return [
-        "Evidence-grounded product planning",
+        "Product-minded ML engineering",
         "Backend API design",
         "Evaluation and validation",
     ]
@@ -161,16 +165,60 @@ def _derive_skills_shown(direction: dict[str, Any]) -> list[str]:
 def _derive_interview_talking_point(direction: dict[str, Any]) -> str:
     talking_points = direction.get("interview_talking_points", [])
     if isinstance(talking_points, list) and talking_points:
-        return str(talking_points[0])
+        return _clean_interview_talking_point(str(talking_points[0]))
 
     resume_bullet = direction.get("resume_bullet")
     if resume_bullet:
-        return str(resume_bullet)
+        return _clean_interview_talking_point(str(resume_bullet))
 
     return (
-        "I built this project by turning evidence from research and real "
-        "implementation patterns into a validated product direction."
+        "I built this project by turning research and implementation evidence "
+        "into a working product that solves a focused user problem."
     )
+
+
+def _clean_user_facing_skill(skill: str) -> str:
+    normalized = skill.strip()
+    lowered = normalized.lower()
+
+    replacements = {
+        "evidence-grounded planning": "Product-minded ML planning",
+        "validation-driven llm safety": "Evaluation and validation",
+        "deterministic fallback design": "Reliable system design",
+    }
+
+    return replacements.get(lowered, normalized)
+
+
+def _clean_interview_talking_point(talking_point: str) -> str:
+    lowered = talking_point.lower()
+
+    if "invalid llm output" in lowered:
+        return (
+            "I built a project that turns evidence into actionable "
+            "recommendations while validating the quality of the output."
+        )
+
+    if "deterministic fallback" in lowered:
+        return (
+            "I designed the project to remain useful even when generated "
+            "outputs need extra validation."
+        )
+
+    return talking_point.strip()
+
+
+def _dedupe_preserving_order(values: list[str]) -> list[str]:
+    seen = set()
+    result = []
+
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+
+    return result
 
 
 def _derive_evidence_badge(
