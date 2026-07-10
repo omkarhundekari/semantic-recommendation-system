@@ -200,6 +200,20 @@ def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
         for direction in parsed_preview["project_directions"]
     )
 
+    preview_validation = response.synthesis_status[
+        "live_final_synthesis_preview_validation"
+    ]
+    assert preview_validation["is_valid"] is True
+    assert preview_validation["output_path"] == (
+        "live_final_synthesis_preview"
+    )
+    assert preview_validation["invented_source_ids"] == ()
+    assert preview_validation["failure_categories"] == ()
+    assert all(
+        trace["is_grounded"]
+        for trace in preview_validation["direction_grounding_traces"]
+    )
+
     assert response.synthesis_status["safety_pipeline"] == {
         "raw_output_validation": True,
         "deterministic_fallback": True,

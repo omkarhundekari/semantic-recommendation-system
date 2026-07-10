@@ -22,6 +22,9 @@ from planning.llm_prompt_builder import build_llm_synthesis_prompt
 from planning.llm_synthesis_fallback import (
     build_deterministic_synthesis_fallback,
 )
+from planning.llm_synthesis_output_validator import (
+    validate_synthesis_parsed_response_against_cards,
+)
 from planning.llm_routing_policy import (
     DEEP_MODE,
     SessionBudgetState,
@@ -293,6 +296,12 @@ def build_project_intelligence_synthesis_status(
         "deterministic_fallback_preview"
     )
 
+    preview_validation = validate_synthesis_parsed_response_against_cards(
+        parsed_response=deterministic_preview,
+        evidence_cards=evidence_cards,
+        output_path="live_final_synthesis_preview",
+    )
+
     return {
         "available": False,
         "reason": (
@@ -318,6 +327,9 @@ def build_project_intelligence_synthesis_status(
             "fallback_used": True,
             "parsed_response": deterministic_preview,
         },
+        "live_final_synthesis_preview_validation": (
+            preview_validation.to_dict()
+        ),
         "safety_pipeline": {
             "raw_output_validation": True,
             "deterministic_fallback": True,
