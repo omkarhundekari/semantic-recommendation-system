@@ -113,12 +113,25 @@ class SynthesisSummary(BaseModel):
     estimated_tokens: int
 
 
+class ValidatedProjectDirection(BaseModel):
+    scope_level: str
+    build_type: str
+    estimated_time: str
+    title: str
+    evidence_confidence: str
+    source_ids: List[str] = Field(default_factory=list)
+    grounding_warnings: List[str] = Field(default_factory=list)
+
+
 class SynthesisStatus(BaseModel):
     available: bool
     reason: str
     safe_inspection_endpoint: str
     current_planning_source: str
     synthesis_summary: SynthesisSummary
+    validated_project_directions: List[
+        ValidatedProjectDirection
+    ] = Field(default_factory=list)
     live_evidence_cards: Dict[str, Any] = Field(default_factory=dict)
     routing_preview: Dict[str, Any] = Field(default_factory=dict)
     token_estimate: Dict[str, Any] = Field(default_factory=dict)

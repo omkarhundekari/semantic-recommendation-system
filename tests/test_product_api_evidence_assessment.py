@@ -291,6 +291,7 @@ def test_project_intelligence_synthesis_status_contract_keys():
         "safe_inspection_endpoint",
         "current_planning_source",
         "synthesis_summary",
+        "validated_project_directions",
         "live_evidence_cards",
         "routing_preview",
         "token_estimate",
@@ -309,6 +310,18 @@ def test_project_intelligence_synthesis_status_contract_keys():
         "grounded_direction_count",
         "invented_source_count",
         "estimated_tokens",
+    }
+
+    validated_directions = synthesis_status["validated_project_directions"]
+    assert len(validated_directions) == 3
+    assert set(validated_directions[0]) == {
+        "scope_level",
+        "build_type",
+        "estimated_time",
+        "title",
+        "evidence_confidence",
+        "source_ids",
+        "grounding_warnings",
     }
 
 

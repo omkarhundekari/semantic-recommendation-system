@@ -50,6 +50,43 @@ def build_synthesis_summary(
     }
 
 
+def build_validated_project_directions(
+    *,
+    parsed_response: dict[str, Any],
+    preview_validation: Any,
+) -> list[dict[str, Any]]:
+    if not preview_validation.is_valid:
+        return []
+
+    project_directions = parsed_response.get("project_directions", [])
+    if not isinstance(project_directions, list):
+        return []
+
+    validated_directions = []
+    for direction in project_directions:
+        if not isinstance(direction, dict):
+            continue
+
+        validated_directions.append(
+            {
+                "scope_level": direction.get("scope_level"),
+                "build_type": direction.get("build_type"),
+                "estimated_time": direction.get("estimated_time"),
+                "title": direction.get("title"),
+                "evidence_confidence": direction.get(
+                    "evidence_confidence"
+                ),
+                "source_ids": direction.get("source_ids", []),
+                "grounding_warnings": direction.get(
+                    "grounding_warnings",
+                    [],
+                ),
+            }
+        )
+
+    return validated_directions
+
+
 def build_project_intelligence_synthesis_status(
     *,
     query: str,
@@ -118,6 +155,11 @@ def build_project_intelligence_synthesis_status(
         preview_validation=preview_validation,
     )
 
+    validated_project_directions = build_validated_project_directions(
+        parsed_response=deterministic_preview,
+        preview_validation=preview_validation,
+    )
+
     return {
         "available": False,
         "reason": (
@@ -126,6 +168,7 @@ def build_project_intelligence_synthesis_status(
         "safe_inspection_endpoint": "/v1/synthesis-demo",
         "current_planning_source": "deterministic_product_pipeline",
         "synthesis_summary": synthesis_summary,
+        "validated_project_directions": validated_project_directions,
         "live_evidence_cards": {
             "card_count": len(evidence_cards),
             **confidence_counts,

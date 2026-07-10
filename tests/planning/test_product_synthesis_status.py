@@ -145,3 +145,71 @@ def test_build_project_intelligence_synthesis_status_returns_valid_preview_contr
         "deterministic_fallback": True,
         "final_synthesis_validation": True,
     }
+
+
+def test_build_validated_project_directions_returns_compact_safe_fields():
+    from types import SimpleNamespace
+
+    from planning.product_synthesis_status import (
+        build_validated_project_directions,
+    )
+
+    parsed_response = {
+        "project_directions": [
+            {
+                "scope_level": "easy",
+                "build_type": "quick_build",
+                "estimated_time": "1-2 days",
+                "title": "Compact Direction",
+                "evidence_confidence": "Strong",
+                "source_ids": ["source-1"],
+                "grounding_warnings": [],
+                "resume_bullet": "Should not be exposed here.",
+                "interview_talking_points": ["Should not be exposed here."],
+            }
+        ]
+    }
+
+    directions = build_validated_project_directions(
+        parsed_response=parsed_response,
+        preview_validation=SimpleNamespace(is_valid=True),
+    )
+
+    assert directions == [
+        {
+            "scope_level": "easy",
+            "build_type": "quick_build",
+            "estimated_time": "1-2 days",
+            "title": "Compact Direction",
+            "evidence_confidence": "Strong",
+            "source_ids": ["source-1"],
+            "grounding_warnings": [],
+        }
+    ]
+
+
+def test_build_validated_project_directions_hides_invalid_preview():
+    from types import SimpleNamespace
+
+    from planning.product_synthesis_status import (
+        build_validated_project_directions,
+    )
+
+    directions = build_validated_project_directions(
+        parsed_response={
+            "project_directions": [
+                {
+                    "scope_level": "easy",
+                    "build_type": "quick_build",
+                    "estimated_time": "1-2 days",
+                    "title": "Invalid Direction",
+                    "evidence_confidence": "Strong",
+                    "source_ids": ["invented-source"],
+                    "grounding_warnings": [],
+                }
+            ]
+        },
+        preview_validation=SimpleNamespace(is_valid=False),
+    )
+
+    assert directions == []
