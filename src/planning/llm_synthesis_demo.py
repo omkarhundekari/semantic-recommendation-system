@@ -20,7 +20,10 @@ from planning.llm_synthesis_client import (
     LLMSynthesisRequest,
     synthesize_project_directions,
 )
-from planning.llm_synthesis_output_validator import validate_saved_synthesis_output
+from planning.llm_synthesis_output_validator import (
+    validate_saved_synthesis_output,
+    write_synthesis_validation_report,
+)
 from planning.openai_synthesis_provider import OpenAISynthesisProvider
 from planning.token_estimation import estimate_tokens_for_prompt
 
@@ -144,6 +147,7 @@ def run_llm_synthesis_demo(
     calls_remaining: int = 5,
     tokens_remaining: int = 10_000,
     output_path: Path | None = None,
+    validation_report_output_path: Path | None = None,
 ) -> dict[str, Any]:
     artifact = json.loads(artifact_path.read_text())
     request = build_synthesis_request_from_artifact(
@@ -187,6 +191,16 @@ def run_llm_synthesis_demo(
             artifact_path=artifact_path,
         )
         result["saved_output_validation"] = validation.to_dict()
+
+        if validation_report_output_path is not None:
+            write_synthesis_validation_report(
+                validation=validation,
+                output_path=validation_report_output_path,
+            )
+            result["validation_report_output_path"] = str(
+                validation_report_output_path
+            )
+
         write_synthesis_demo_output(result, output_path)
 
     return result
@@ -217,6 +231,14 @@ def build_default_output_path(
         f"{timestamp}.json"
     )
     return output_dir / filename
+
+
+def build_default_validation_report_path(
+    *,
+    synthesis_output_path: Path,
+    report_dir: Path = Path("outputs/reports"),
+) -> Path:
+    return report_dir / f"{synthesis_output_path.stem}_validation_report.md"
 
 
 def _select_provider(
@@ -268,6 +290,17 @@ def _main() -> None:
         default="outputs/llm_synthesis_runs",
     )
     parser.add_argument(
+        "--validation-report-output-path",
+    )
+    parser.add_argument(
+        "--validation-report-dir",
+        default="outputs/reports",
+    )
+    parser.add_argument(
+        "--no-validation-report",
+        action="store_true",
+    )
+    parser.add_argument(
         "--no-save",
         action="store_true",
     )
@@ -275,6 +308,7 @@ def _main() -> None:
 
     artifact = json.loads(Path(args.artifact_path).read_text())
     output_path = None
+    validation_report_output_path = None
 
     if not args.no_save:
         output_path = (
@@ -290,6 +324,16 @@ def _main() -> None:
             )
         )
 
+        if not args.no_validation_report:
+            validation_report_output_path = (
+                Path(args.validation_report_output_path)
+                if args.validation_report_output_path
+                else build_default_validation_report_path(
+                    synthesis_output_path=output_path,
+                    report_dir=Path(args.validation_report_dir),
+                )
+            )
+
     result = run_llm_synthesis_demo(
         artifact_path=Path(args.artifact_path),
         mode=args.mode,
@@ -298,12 +342,16 @@ def _main() -> None:
         calls_remaining=args.calls_remaining,
         tokens_remaining=args.tokens_remaining,
         output_path=output_path,
+        validation_report_output_path=validation_report_output_path,
     )
 
     print(json.dumps(result, indent=2))
 
     if output_path is not None:
         print(f"\nSaved synthesis output: {output_path}")
+
+    if validation_report_output_path is not None:
+        print(f"Saved validation report: {validation_report_output_path}")
 
 
 if __name__ == "__main__":

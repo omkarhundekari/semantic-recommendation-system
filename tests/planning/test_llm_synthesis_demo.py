@@ -7,6 +7,7 @@ from planning.llm_routing_policy import (
 )
 from planning.llm_synthesis_demo import (
     build_default_output_path,
+    build_default_validation_report_path,
     run_llm_synthesis_demo,
     write_synthesis_demo_output,
 )
@@ -140,3 +141,35 @@ def test_llm_synthesis_demo_records_saved_output_validation(tmp_path):
     assert "invented_source_ids" in validation
     assert not validation["is_valid"]
     assert "project_direction_0_missing_source_ids" in validation["errors"]
+
+
+
+def test_build_default_validation_report_path():
+    synthesis_output_path = Path(
+        "outputs/llm_synthesis_runs/sample_output.json"
+    )
+
+    report_path = build_default_validation_report_path(
+        synthesis_output_path=synthesis_output_path,
+        report_dir=Path("outputs/reports"),
+    )
+
+    assert report_path == Path(
+        "outputs/reports/sample_output_validation_report.md"
+    )
+
+
+def test_llm_synthesis_demo_writes_validation_report(tmp_path):
+    output_path = tmp_path / "synthesis_output.json"
+    report_path = tmp_path / "validation_report.md"
+
+    result = run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+        validation_report_output_path=report_path,
+    )
+
+    assert output_path.exists()
+    assert report_path.exists()
+    assert result["validation_report_output_path"] == str(report_path)
+    assert "LLM Synthesis Validation Report" in report_path.read_text()
