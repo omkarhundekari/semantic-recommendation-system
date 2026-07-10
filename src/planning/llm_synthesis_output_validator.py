@@ -32,6 +32,7 @@ class LLMSynthesisOutputValidation:
     cited_source_ids: tuple[str, ...]
     valid_source_ids: tuple[str, ...]
     invented_source_ids: tuple[str, ...]
+    failure_categories: tuple[str, ...]
     direction_grounding_traces: tuple[dict[str, Any], ...]
 
     def to_dict(self) -> dict[str, Any]:
@@ -91,6 +92,8 @@ def validate_saved_synthesis_output(
             warnings=warnings,
         )
 
+    failure_categories = classify_validation_failures(errors)
+
     direction_grounding_traces = _build_direction_grounding_traces(
         parsed_response=parsed_response,
         evidence_card_map=evidence_card_map,
@@ -105,8 +108,44 @@ def validate_saved_synthesis_output(
         cited_source_ids=cited_source_ids,
         valid_source_ids=tuple(sorted(valid_source_ids)),
         invented_source_ids=invented_source_ids,
+        failure_categories=tuple(failure_categories),
         direction_grounding_traces=tuple(direction_grounding_traces),
     )
+
+
+def classify_validation_failures(
+    errors: list[str] | tuple[str, ...],
+) -> tuple[str, ...]:
+    categories = set()
+
+    for error in errors:
+        if error in {
+            "missing_parsed_response",
+            "response_contains_warnings",
+        }:
+            categories.add("parse_failure")
+        elif error in {
+            "missing_routing_decision",
+            "missing_token_estimate",
+            "missing_provider",
+            "missing_model",
+        }:
+            categories.add("metadata_failure")
+        elif error == "invented_source_ids":
+            categories.add("citation_failure")
+        elif "missing_source_ids" in error:
+            categories.add("grounding_failure")
+        elif (
+            error == "missing_project_directions"
+            or error == "invalid_project_direction_count"
+            or error.startswith("project_direction_")
+            or error == "invalid_overall_confidence"
+        ):
+            categories.add("schema_failure")
+        else:
+            categories.add("unknown_failure")
+
+    return tuple(sorted(categories))
 
 
 def render_synthesis_validation_report(
@@ -125,8 +164,16 @@ def render_synthesis_validation_report(
         f"- Warnings: {len(validation.warnings)}",
         f"- Cited sources: {len(validation.cited_source_ids)}",
         f"- Invented sources: {len(validation.invented_source_ids)}",
+        f"- Failure categories: {len(validation.failure_categories)}",
         "",
     ]
+
+    if validation.failure_categories:
+        lines.extend(["## Failure Categories", ""])
+        lines.extend(
+            f"- `{category}`" for category in validation.failure_categories
+        )
+        lines.append("")
 
     if validation.errors:
         lines.extend(["## Errors", ""])

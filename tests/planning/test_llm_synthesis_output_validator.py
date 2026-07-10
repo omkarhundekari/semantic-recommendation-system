@@ -3,6 +3,7 @@ from pathlib import Path
 
 from planning.llm_synthesis_demo import run_llm_synthesis_demo
 from planning.llm_synthesis_output_validator import (
+    classify_validation_failures,
     render_synthesis_validation_report,
     validate_saved_synthesis_output,
     write_synthesis_validation_report,
@@ -213,28 +214,6 @@ def test_validator_rejects_wrong_scoped_direction_sequence(tmp_path):
 
 
 
-def test_validator_rejects_wrong_scoped_direction_sequence(tmp_path):
-    output_path = tmp_path / "wrong_scope.json"
-
-    result = run_llm_synthesis_demo(
-        artifact_path=ARTIFACT_PATH,
-        output_path=output_path,
-    )
-    parsed = result["response"]["parsed_response"]
-    parsed["project_directions"] = _make_scoped_directions()
-    parsed["project_directions"][0]["scope_level"] = "hard"
-    parsed["overall_confidence"] = "Strong"
-    output_path.write_text(json.dumps(result, indent=2))
-
-    validation = validate_saved_synthesis_output(
-        output_path=output_path,
-    )
-
-    assert not validation.is_valid
-    assert "project_direction_0_invalid_scope_level" in validation.errors
-
-
-
 def test_validator_builds_grounding_trace_for_valid_sample_output():
     validation = validate_saved_synthesis_output(
         output_path=SAMPLE_VALID_OUTPUT,
@@ -318,3 +297,44 @@ def test_write_synthesis_validation_report(tmp_path):
     assert written_path == report_path
     assert report_path.exists()
     assert "LLM Synthesis Validation Report" in report_path.read_text()
+
+
+
+def test_classify_validation_failures_groups_errors_by_taxonomy():
+    categories = classify_validation_failures(
+        [
+            "missing_parsed_response",
+            "response_contains_warnings",
+            "missing_provider",
+            "invented_source_ids",
+            "project_direction_0_missing_source_ids",
+            "invalid_project_direction_count",
+        ]
+    )
+
+    assert categories == (
+        "citation_failure",
+        "grounding_failure",
+        "metadata_failure",
+        "parse_failure",
+        "schema_failure",
+    )
+
+
+def test_validation_output_includes_failure_categories_for_invalid_sample():
+    validation = validate_saved_synthesis_output(
+        output_path=SAMPLE_INVALID_TRUNCATED_OUTPUT,
+    )
+
+    assert validation.failure_categories == ("parse_failure",)
+
+
+def test_validation_report_includes_failure_categories_for_invalid_sample():
+    validation = validate_saved_synthesis_output(
+        output_path=SAMPLE_INVALID_TRUNCATED_OUTPUT,
+    )
+
+    report = render_synthesis_validation_report(validation)
+
+    assert "## Failure Categories" in report
+    assert "`parse_failure`" in report
