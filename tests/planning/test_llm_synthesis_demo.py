@@ -173,3 +173,43 @@ def test_llm_synthesis_demo_writes_validation_report(tmp_path):
     assert report_path.exists()
     assert result["validation_report_output_path"] == str(report_path)
     assert "LLM Synthesis Validation Report" in report_path.read_text()
+
+
+def test_llm_synthesis_demo_uses_deterministic_fallback_for_invalid_saved_output(tmp_path):
+    output_path = tmp_path / "synthesis_output.json"
+
+    result = run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+    )
+
+    final_synthesis = result["final_synthesis"]
+
+    assert result["saved_output_validation"]["is_valid"] is False
+    assert final_synthesis["source"] == "deterministic_fallback"
+    assert final_synthesis["fallback_used"] is True
+    assert final_synthesis["fallback_reason"] == "saved_output_validation_failed"
+
+    parsed = final_synthesis["parsed_response"]
+    assert parsed["synthesis_source"] == "deterministic_fallback"
+    assert len(parsed["project_directions"]) == 3
+    assert parsed["project_directions"][0]["source_ids"] == [
+        "paper-data-quality-impact",
+        "paper-owner-aware-lineage",
+        "repo-dashboard-impact",
+    ]
+
+
+def test_saved_demo_output_contains_final_synthesis_after_fallback(tmp_path):
+    output_path = tmp_path / "synthesis_output.json"
+
+    run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+    )
+
+    saved_text = output_path.read_text()
+
+    assert '"final_synthesis"' in saved_text
+    assert '"source": "deterministic_fallback"' in saved_text
+    assert '"fallback_used": true' in saved_text

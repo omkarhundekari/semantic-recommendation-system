@@ -8,6 +8,10 @@ from typing import Any
 
 from planning.evidence_cards import build_evidence_cards_from_artifact
 from planning.llm_prompt_builder import build_llm_synthesis_prompt
+from planning.llm_synthesis_fallback import (
+    build_deterministic_synthesis_fallback,
+    should_use_deterministic_fallback,
+)
 from planning.llm_routing_policy import (
     DEEP_MODE,
     FAST_MODE,
@@ -190,7 +194,27 @@ def run_llm_synthesis_demo(
             output_path=output_path,
             artifact_path=artifact_path,
         )
-        result["saved_output_validation"] = validation.to_dict()
+        validation_dict = validation.to_dict()
+        result["saved_output_validation"] = validation_dict
+
+        if should_use_deterministic_fallback(validation_dict):
+            fallback = build_deterministic_synthesis_fallback(
+                evidence_cards=build_evidence_cards_from_artifact(artifact),
+                validation=validation_dict,
+            )
+            result["final_synthesis"] = {
+                "source": "deterministic_fallback",
+                "parsed_response": fallback,
+                "fallback_used": True,
+                "fallback_reason": "saved_output_validation_failed",
+            }
+        else:
+            result["final_synthesis"] = {
+                "source": "llm",
+                "parsed_response": result["response"]["parsed_response"],
+                "fallback_used": False,
+                "fallback_reason": "",
+            }
 
         if validation_report_output_path is not None:
             write_synthesis_validation_report(
