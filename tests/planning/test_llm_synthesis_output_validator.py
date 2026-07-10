@@ -108,3 +108,38 @@ def test_validator_rejects_invalid_confidence_labels(tmp_path):
         "project_direction_0_invalid_evidence_confidence"
         in validation.errors
     )
+
+
+
+SAMPLE_VALID_OUTPUT = Path(
+    "data/sample_llm_synthesis_outputs/valid_synthesis_sample.json"
+)
+
+SAMPLE_INVALID_TRUNCATED_OUTPUT = Path(
+    "data/sample_llm_synthesis_outputs/invalid_truncated_sample.json"
+)
+
+
+def test_validator_accepts_committed_valid_sample_output():
+    validation = validate_saved_synthesis_output(
+        output_path=SAMPLE_VALID_OUTPUT,
+    )
+
+    assert validation.is_valid
+    assert validation.errors == ()
+    assert validation.invented_source_ids == ()
+    assert validation.cited_source_ids == (
+        "paper-data-quality-impact",
+        "paper-owner-aware-lineage",
+        "repo-dashboard-impact",
+    )
+
+
+def test_validator_rejects_committed_invalid_truncated_sample_output():
+    validation = validate_saved_synthesis_output(
+        output_path=SAMPLE_INVALID_TRUNCATED_OUTPUT,
+    )
+
+    assert not validation.is_valid
+    assert "missing_parsed_response" in validation.errors
+    assert "response_contains_warnings" in validation.errors

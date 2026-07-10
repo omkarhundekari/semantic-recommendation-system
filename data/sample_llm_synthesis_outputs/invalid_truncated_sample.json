@@ -1,0 +1,81 @@
+{
+  "run_metadata": {
+    "created_at_utc": "sanitized_sample",
+    "artifact_path": "data/manual_fixture_artifacts/deterministic_template_risk/1bc94b0f56984302922f13d42dcb2a2e.json",
+    "sample_note": "Curated sample fixture derived from a local synthesis run. Raw runtime outputs are not committed."
+  },
+  "fixture_id": "deterministic_template_risk",
+  "artifact_id": "1bc94b0f56984302922f13d42dcb2a2e",
+  "mode": "deep",
+  "provider": "openai",
+  "model": "gpt-5.4-mini",
+  "dry_run": false,
+  "api_call_attempted": true,
+  "routing_decision": {
+    "should_route": true,
+    "reason": "routing_approved",
+    "mode": "deep",
+    "evidence_confidence": "Strong",
+    "query_aligned_card_count": 3,
+    "weak_card_count": 0,
+    "suspicious_card_count": 0,
+    "estimated_tokens": 961
+  },
+  "token_estimate": {
+    "estimated_tokens": 961,
+    "raw_character_count": 3331,
+    "chars_per_token": 4,
+    "safety_multiplier": 1.15,
+    "section_token_estimates": {
+      "prompt_version": 7,
+      "system_instruction": 93,
+      "user_goal": 42,
+      "constraints": 44,
+      "evidence_cards": 633,
+      "output_schema": 142
+    },
+    "largest_sections": [
+      "evidence_cards",
+      "output_schema",
+      "system_instruction"
+    ]
+  },
+  "response": {
+    "provider_name": "openai",
+    "model_name": "gpt-5.4-mini",
+    "raw_response_text": "{\n  \"assumptions\": [\n    \"The project will focus on incident response for known data-quality issues, not on detecting incidents automatically.\",\n    \"The primary users are support engineers who need to understand downstream blast radius: affected dashboards, owners, reports, and dependent datasets.\",\n    \"A Python + PostgreSQL implementation is acceptable for storing lineage, ownership, and incident-impact records.\",\n    \"The system can start with manually loaded or pre-existing metadata/lineage inputs; the evidence does not require a specific ingestion method.\"\n  ],\n  \"overall_confidence\": \"Strong\",\n  \"project_directions\": [\n    {\n      \"advanced_extensions\": [\n        \"Add a notification queue that ranks impacted owners by dependency depth or dashboard criticality.\",\n        \"Generate incident summaries that group affected dashboards by business domain or team.\",\n        \"Add a lightweight UI for filtering by incident, owner, or downstream asset.\",\n        \"Track remediation status so support engineers can see which impacted assets have been acknowledged.\"\n      ],\n      \"evidence_confidence\": \"Strong\",\n      \"grounding_warnings\": [\n        \"The evidence supports impact analysis and owner-aware lineage, but does not specify a particular schema, UI design, or ranking algorithm.\",\n        \"Any prioritization logic for owners would be an implementation choice rather than a directly supported claim.\"\n      ],\n      \"interview_talking_points\": [\n        \"How downstream impact analysis helps teams prioritize communication and remediation after data-quality incidents.\",\n        \"How owner metadata attached to lineage can identify accountable teams and affected analytics consumers.\",\n        \"How loading dashboard dependencies and upstream events can produce incident impact reports.\"\n      ],\n      \"mvp_scope\": [\n        \"Store datasets, dashboards, owners, and lineage relationships in PostgreSQL.\",\n        \"Record known data-quality incidents against upstream datasets.\",\n        \"Traverse downstream dependencies to identify affected dashboards and reports.\",\n        \"Attach owner metadata to impacted assets and produce an incident impact report.\",\n        \"Expose a Python service or CLI that returns the blast radius for a given incident.\"\n      ],\n      \"problem_statement\": \"Support engineers need a fast way to see which downstream dashboards, owners, reports, and dependent datasets are affected after a known data-quality incident so they can communicate and remediate efficiently.\",\n      \"resume_bullet\": \"Built a Python/PostgreSQL incident impact analysis tool that maps known data-quality incidents to downstream dashboards, owners, reports, and dependent datasets, helping support engineers generate blast-radius reports for communication and remediation.\",\n      \"skills_demonstrated\": [\n        \"Data modeling in PostgreSQL\",\n        \"Python backend development\",\n        \"Lineage and dependency traversal\",\n        \"Incident impact reporting\",\n        \"Metadata-driven ownership mapping\"\n      ],\n      \"source_ids\": [\n        \"paper-data-quality-impact\",\n        \"paper-owner-aware-lineage\",\n        \"repo-dashboard-impact\"\n      ],\n      \"target_user\": \"Support engineers responding to known data-quality incidents\",\n      \"title\": \"Data Quality Incident Impact Map\",\n      \"why_this_is_grounded\": \"This direction is directly supported by evidence that data-quality incidents affect downstream dashboards, owners, reports, and dependent datasets, that owner-aware lineage can identify accountable teams and impacted assets, and that dashboard dependencies plus upstream events can be used to generate incident impact reports.\"\n    },\n    {\n      \"advanced_extensions\": [\n        \"Add SLA-aware prioritization for owners based on dashboard criticality or business view importance.\",\n        \"Create automated email or Slack-ready summaries for each impacted owner.\",\n        \"Add historical incident comparisons to show recurring blast-radius patterns.\",\n        \"Support partial lineage confidence scores when metadata is incomplete.\"\n      ],\n      \"evidence_confidence\": \"Strong\",\n      \"grounding_warnings\": [\n        \"The evidence supports identifying accountable teams and affected analytics consumers, but does not describe notification channels or SLA logic.\",\n        \"Historical comparisons and confidence scoring are plausible extensions, but not directly evidenced.\"\n      ],\n      \"interview_talking_points\": [\n        \"How owner-aware lineage helps route incident communication to the right teams.\",\n        \"How impacted assets and analytics consumers can be surfaced from metadata-enriched lineage.\",\n        \"How a support workflow can turn upstream failures into actionable owner notifications.\"\n      ],\n      \"mvp_scope\": [\n        \"Model datasets, owners, dashboards, and lineage in PostgreSQL.\",\n        \"Ingest a known incident and resolve all downstream impacted assets.\",\n        \"Map each impacted asset to an accountable owner or team.\",\n        \"Produce a prioritized owner notification list for support engineers.\",\n        \"Provide a Python API endpoint to query impacted owners for an incident.\"\n      ],\n      \"problem_statement\": \"When a data-quality incident occurs, support engineers need to quickly identify which owners and teams should be notified based on the downstream assets affected by upstream failures.\",\n      \"resume_bullet\": \"Developed a Python/PostgreSQL owner-aware lineage service that resolves downstream impact from data-quality incidents and produces a prioritized list of accountable teams for support communication.\",\n      \"skills_demonstrated\": [\n        \"Backend API design\",\n        \"Relational data modeling\",\n        \"Graph-style dependency resolution\",\n        \"Operational incident workflows\",\n        \"Metadata enrichment\"\n      ],\n      \"source_ids\": [\n        \"paper-owner-aware-lineage\",\n        \"paper-data-quality-impact\"\n      ],\n      \"target_user\": \"Support engineers coordinating incident communication with accountable teams\",\n      \"title\": \"Owner Notification Priority Queue\",\n      \"why_this_is_grounded\": \"The evidence directly states that owner-aware lineage can identify accountable teams, impacted assets, and affected analytics consumers after upstream failures, and that impact analysis helps prioritize communication and remediation.\"\n    },\n    {\n      \"advanced_extensions\": [\n        \"Add a dashboard dependency explorer for manual review before sending incident summaries.\",\n        \"Support tagging dashboards by business owner, criticality, or consumer group.\",\n        \"Generate a downloadable incident report with affected dashboards and upstream causes.\",\n        \"Add a review workflow for support engineers to confirm or override inferred",
+    "parsed_response": null,
+    "warnings": [
+      "invalid_json_response"
+    ],
+    "routing_metadata": {
+      "should_route": true,
+      "reason": "routing_approved",
+      "mode": "deep",
+      "evidence_confidence": "Strong",
+      "query_aligned_card_count": 3,
+      "weak_card_count": 0,
+      "suspicious_card_count": 0,
+      "estimated_tokens": 961
+    },
+    "token_estimate": {
+      "estimated_tokens": 961,
+      "raw_character_count": 3331,
+      "chars_per_token": 4,
+      "safety_multiplier": 1.15,
+      "section_token_estimates": {
+        "prompt_version": 7,
+        "system_instruction": 93,
+        "user_goal": 42,
+        "constraints": 44,
+        "evidence_cards": 633,
+        "output_schema": 142
+      },
+      "largest_sections": [
+        "evidence_cards",
+        "output_schema",
+        "system_instruction"
+      ]
+    }
+  }
+}

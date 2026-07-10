@@ -1,0 +1,130 @@
+{
+  "run_metadata": {
+    "created_at_utc": "sanitized_sample",
+    "artifact_path": "data/manual_fixture_artifacts/deterministic_template_risk/1bc94b0f56984302922f13d42dcb2a2e.json",
+    "sample_note": "Curated sample fixture derived from a local synthesis run. Raw runtime outputs are not committed."
+  },
+  "fixture_id": "deterministic_template_risk",
+  "artifact_id": "1bc94b0f56984302922f13d42dcb2a2e",
+  "mode": "deep",
+  "provider": "openai",
+  "model": "gpt-5.4-mini",
+  "dry_run": false,
+  "api_call_attempted": true,
+  "routing_decision": {
+    "should_route": true,
+    "reason": "routing_approved",
+    "mode": "deep",
+    "evidence_confidence": "Strong",
+    "query_aligned_card_count": 3,
+    "weak_card_count": 0,
+    "suspicious_card_count": 0,
+    "estimated_tokens": 990
+  },
+  "token_estimate": {
+    "estimated_tokens": 990,
+    "raw_character_count": 3432,
+    "chars_per_token": 4,
+    "safety_multiplier": 1.15,
+    "section_token_estimates": {
+      "prompt_version": 7,
+      "system_instruction": 122,
+      "user_goal": 42,
+      "constraints": 44,
+      "evidence_cards": 633,
+      "output_schema": 142
+    },
+    "largest_sections": [
+      "evidence_cards",
+      "output_schema",
+      "system_instruction"
+    ]
+  },
+  "response": {
+    "provider_name": "openai",
+    "model_name": "gpt-5.4-mini",
+    "raw_response_text": "{\n  \"assumptions\": [\n    \"The project will focus on known data-quality incidents and their downstream blast radius, not on detecting incidents from raw telemetry.\",\n    \"Dashboard ownership and dataset owner metadata are available or can be ingested into PostgreSQL.\",\n    \"Support engineers need a fast way to answer: which dashboards, owners, and business views are affected?\"\n  ],\n  \"overall_confidence\": \"Strong\",\n  \"project_directions\": [\n    {\n      \"advanced_extensions\": [\n        \"Add incident severity scoring based on number of impacted dashboards and owners\",\n        \"Generate notification drafts for affected owners and support teams\",\n        \"Add a timeline view of upstream failure to downstream impact propagation\"\n      ],\n      \"evidence_confidence\": \"Strong\",\n      \"grounding_warnings\": [\n        \"Evidence supports impact analysis and owner-aware lineage, but not a specific production architecture.\",\n        \"No evidence for automated root-cause detection; keep scope to impact mapping and reporting.\"\n      ],\n      \"interview_talking_points\": [\n        \"How lineage plus owner metadata can turn an incident into an actionable impact report\",\n        \"How to model dashboard dependencies and upstream data-quality events in PostgreSQL\",\n        \"How to prioritize communication by identifying affected dashboards, owners, and business views\"\n      ],\n      \"mvp_scope\": [\n        \"Ingest dashboard dependencies, upstream data-quality events, dataset owners, and business-view mappings into PostgreSQL\",\n        \"Compute impacted downstream dashboards and owners for a known incident\",\n        \"Expose a simple Python API or CLI that returns an incident impact report\"\n      ],\n      \"problem_statement\": \"Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.\",\n      \"resume_bullet\": \"Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.\",\n      \"skills_demonstrated\": [\n        \"Python backend development\",\n        \"PostgreSQL data modeling\",\n        \"Lineage and dependency analysis\",\n        \"Incident impact reporting\"\n      ],\n      \"source_ids\": [\n        \"paper-data-quality-impact\",\n        \"paper-owner-aware-lineage\",\n        \"repo-dashboard-impact\"\n      ],\n      \"target_user\": \"Support engineers handling data-quality incidents\",\n      \"title\": \"Data Quality Incident Impact Map\",\n      \"why_this_is_grounded\": \"The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures.\"\n    }\n  ],\n  \"warnings\": [\n    \"Evidence is strong for impact analysis, but limited for implementation details beyond loading dependencies and metadata.\",\n    \"No benchmark, dataset name, or production system constraints were provided in the evidence cards.\"\n  ]\n}",
+    "parsed_response": {
+      "assumptions": [
+        "The project will focus on known data-quality incidents and their downstream blast radius, not on detecting incidents from raw telemetry.",
+        "Dashboard ownership and dataset owner metadata are available or can be ingested into PostgreSQL.",
+        "Support engineers need a fast way to answer: which dashboards, owners, and business views are affected?"
+      ],
+      "overall_confidence": "Strong",
+      "project_directions": [
+        {
+          "advanced_extensions": [
+            "Add incident severity scoring based on number of impacted dashboards and owners",
+            "Generate notification drafts for affected owners and support teams",
+            "Add a timeline view of upstream failure to downstream impact propagation"
+          ],
+          "evidence_confidence": "Strong",
+          "grounding_warnings": [
+            "Evidence supports impact analysis and owner-aware lineage, but not a specific production architecture.",
+            "No evidence for automated root-cause detection; keep scope to impact mapping and reporting."
+          ],
+          "interview_talking_points": [
+            "How lineage plus owner metadata can turn an incident into an actionable impact report",
+            "How to model dashboard dependencies and upstream data-quality events in PostgreSQL",
+            "How to prioritize communication by identifying affected dashboards, owners, and business views"
+          ],
+          "mvp_scope": [
+            "Ingest dashboard dependencies, upstream data-quality events, dataset owners, and business-view mappings into PostgreSQL",
+            "Compute impacted downstream dashboards and owners for a known incident",
+            "Expose a simple Python API or CLI that returns an incident impact report"
+          ],
+          "problem_statement": "Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.",
+          "resume_bullet": "Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.",
+          "skills_demonstrated": [
+            "Python backend development",
+            "PostgreSQL data modeling",
+            "Lineage and dependency analysis",
+            "Incident impact reporting"
+          ],
+          "source_ids": [
+            "paper-data-quality-impact",
+            "paper-owner-aware-lineage",
+            "repo-dashboard-impact"
+          ],
+          "target_user": "Support engineers handling data-quality incidents",
+          "title": "Data Quality Incident Impact Map",
+          "why_this_is_grounded": "The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures."
+        }
+      ],
+      "warnings": [
+        "Evidence is strong for impact analysis, but limited for implementation details beyond loading dependencies and metadata.",
+        "No benchmark, dataset name, or production system constraints were provided in the evidence cards."
+      ]
+    },
+    "warnings": [],
+    "routing_metadata": {
+      "should_route": true,
+      "reason": "routing_approved",
+      "mode": "deep",
+      "evidence_confidence": "Strong",
+      "query_aligned_card_count": 3,
+      "weak_card_count": 0,
+      "suspicious_card_count": 0,
+      "estimated_tokens": 990
+    },
+    "token_estimate": {
+      "estimated_tokens": 990,
+      "raw_character_count": 3432,
+      "chars_per_token": 4,
+      "safety_multiplier": 1.15,
+      "section_token_estimates": {
+        "prompt_version": 7,
+        "system_instruction": 122,
+        "user_goal": 42,
+        "constraints": 44,
+        "evidence_cards": 633,
+        "output_schema": 142
+      },
+      "largest_sections": [
+        "evidence_cards",
+        "output_schema",
+        "system_instruction"
+      ]
+    }
+  }
+}
