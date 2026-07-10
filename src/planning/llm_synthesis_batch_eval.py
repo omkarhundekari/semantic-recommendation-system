@@ -24,6 +24,7 @@ class BatchSynthesisEvaluationSummary:
     invented_source_output_count: int
     grounded_direction_count: int
     ungrounded_direction_count: int
+    failure_category_counts: dict[str, int]
     output_paths: tuple[str, ...]
     validation_report_paths: tuple[str, ...]
 
@@ -101,6 +102,7 @@ def summarize_batch_synthesis_results(
     invented_source_output_count = 0
     grounded_direction_count = 0
     ungrounded_direction_count = 0
+    failure_category_counts = {}
     output_paths = []
     validation_report_paths = []
 
@@ -120,6 +122,11 @@ def summarize_batch_synthesis_results(
 
             if validation.get("invented_source_ids"):
                 invented_source_output_count += 1
+
+            for category in validation.get("failure_categories", []):
+                failure_category_counts[category] = (
+                    failure_category_counts.get(category, 0) + 1
+                )
 
             for trace in validation.get("direction_grounding_traces", []):
                 if trace.get("is_grounded"):
@@ -144,6 +151,7 @@ def summarize_batch_synthesis_results(
         invented_source_output_count=invented_source_output_count,
         grounded_direction_count=grounded_direction_count,
         ungrounded_direction_count=ungrounded_direction_count,
+        failure_category_counts=dict(sorted(failure_category_counts.items())),
         output_paths=tuple(output_paths),
         validation_report_paths=tuple(validation_report_paths),
     )
@@ -169,9 +177,26 @@ def render_batch_synthesis_report(
         f"- Grounded directions: {summary['grounded_direction_count']}",
         f"- Ungrounded directions: {summary['ungrounded_direction_count']}",
         "",
-        "## Fixture Results",
+        "## Failure Categories",
         "",
     ]
+
+    failure_category_counts = summary.get("failure_category_counts", {})
+    if failure_category_counts:
+        lines.extend(
+            f"- `{category}`: {count}"
+            for category, count in failure_category_counts.items()
+        )
+    else:
+        lines.append("- None")
+
+    lines.extend(
+        [
+            "",
+            "## Fixture Results",
+            "",
+        ]
+    )
 
     for result in results:
         fixture_id = result.get("fixture_id", "unknown_fixture")
@@ -194,6 +219,11 @@ def render_batch_synthesis_report(
                 f"- Validation: `{valid_label}`",
             ]
         )
+
+        failure_categories = validation.get("failure_categories", [])
+        if failure_categories:
+            lines.append("- Failure categories:")
+            lines.extend(f"  - `{category}`" for category in failure_categories)
 
         errors = validation.get("errors", [])
         if errors:

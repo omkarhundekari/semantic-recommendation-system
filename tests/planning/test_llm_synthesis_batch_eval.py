@@ -41,6 +41,9 @@ def test_batch_synthesis_evaluation_runs_fake_dry_run(tmp_path):
     assert summary["invented_source_output_count"] == 0
     assert summary["grounded_direction_count"] == 0
     assert summary["ungrounded_direction_count"] == 3
+    assert summary["failure_category_counts"] == {
+        "grounding_failure": 1,
+    }
     assert len(summary["output_paths"]) == 1
     assert len(summary["validation_report_paths"]) == 1
     assert Path(summary["output_paths"][0]).exists()
@@ -67,6 +70,7 @@ def test_summarize_batch_synthesis_results_counts_validation_outcomes():
             "saved_output_validation": {
                 "is_valid": True,
                 "invented_source_ids": [],
+                "failure_categories": [],
                 "output_path": "valid.json",
                 "direction_grounding_traces": [
                     {"is_grounded": True},
@@ -80,6 +84,10 @@ def test_summarize_batch_synthesis_results_counts_validation_outcomes():
             "saved_output_validation": {
                 "is_valid": False,
                 "invented_source_ids": ["fake-source"],
+                "failure_categories": [
+                    "citation_failure",
+                    "grounding_failure",
+                ],
                 "output_path": "invalid.json",
                 "direction_grounding_traces": [
                     {"is_grounded": False},
@@ -99,6 +107,10 @@ def test_summarize_batch_synthesis_results_counts_validation_outcomes():
     assert summary.invented_source_output_count == 1
     assert summary.grounded_direction_count == 1
     assert summary.ungrounded_direction_count == 2
+    assert summary.failure_category_counts == {
+        "citation_failure": 1,
+        "grounding_failure": 1,
+    }
     assert summary.output_paths == ("valid.json", "invalid.json")
     assert summary.validation_report_paths == ("valid.md", "invalid.md")
 
@@ -117,6 +129,8 @@ def test_render_batch_synthesis_report_includes_summary_and_fixture_results(tmp_
     assert "- Artifacts: 1" in report
     assert "- Routed: 1" in report
     assert "- Invalid outputs: 1" in report
+    assert "## Failure Categories" in report
+    assert "`grounding_failure`: 1" in report
     assert "## Fixture Results" in report
     assert "### deterministic_template_risk" in report
     assert "project_direction_0_missing_source_ids" in report
