@@ -310,3 +310,99 @@ def test_project_intelligence_synthesis_status_contract_keys():
         "invented_source_count",
         "estimated_tokens",
     }
+
+
+def test_synthesis_summary_marks_invalid_preview_when_sources_are_invented():
+    from types import SimpleNamespace
+
+    from planning.evidence_cards import EvidenceCard
+    from planning.llm_synthesis_output_validator import (
+        validate_synthesis_parsed_response_against_cards,
+    )
+    from product_api import build_synthesis_summary
+
+    evidence_cards = [
+        EvidenceCard(
+            source_id="known-source",
+            source_type="research_paper",
+            title="Known Source",
+            support_scope="direct",
+            evidence_confidence="Strong",
+            key_excerpt="Known grounded evidence.",
+            specific_method_or_technique=None,
+            specific_dataset_or_benchmark=None,
+            specific_implementation_signal=None,
+            grounding_warning=None,
+            relevance_signal="plausible",
+            relevance_statuses=("lexically_supported",),
+            linked_candidate_titles=(),
+            user_facing_explanation="Grounded source.",
+        )
+    ]
+
+    parsed_response = {
+        "project_directions": [
+            {
+                "scope_level": "easy",
+                "build_type": "quick_build",
+                "estimated_time": "1-2 days",
+                "title": "Invented Easy Direction",
+                "source_ids": ["invented-source"],
+                "evidence_confidence": "Strong",
+                "grounding_warnings": [],
+                "resume_bullet": "Built an invented-source feature.",
+            },
+            {
+                "scope_level": "medium",
+                "build_type": "resume_mvp",
+                "estimated_time": "3-5 days",
+                "title": "Invented MVP Direction",
+                "source_ids": ["invented-source"],
+                "evidence_confidence": "Strong",
+                "grounding_warnings": [],
+                "resume_bullet": "Built an invented-source MVP.",
+            },
+            {
+                "scope_level": "hard",
+                "build_type": "flagship_extension",
+                "estimated_time": "1-2 weeks",
+                "title": "Invented Flagship Direction",
+                "source_ids": ["invented-source"],
+                "evidence_confidence": "Strong",
+                "grounding_warnings": [],
+                "resume_bullet": "Built an invented-source flagship.",
+            },
+        ],
+        "overall_confidence": "Strong",
+        "assumptions": [],
+        "warnings": [],
+    }
+
+    preview_validation = validate_synthesis_parsed_response_against_cards(
+        parsed_response=parsed_response,
+        evidence_cards=evidence_cards,
+    )
+
+    summary = build_synthesis_summary(
+        routing_decision=SimpleNamespace(
+            should_route=True,
+            reason="routing_approved",
+        ),
+        token_estimate=SimpleNamespace(estimated_tokens=1234),
+        evidence_cards=evidence_cards,
+        preview_validation=preview_validation,
+    )
+
+    assert preview_validation.is_valid is False
+    assert preview_validation.invented_source_ids == ("invented-source",)
+    assert summary == {
+        "status": "preview_invalid",
+        "source": "deterministic_fallback_preview",
+        "can_run_llm": True,
+        "routing_reason": "routing_approved",
+        "card_count": 1,
+        "validated": False,
+        "grounded_direction_count": 0,
+        "invented_source_count": 1,
+        "estimated_tokens": 1234,
+    }
