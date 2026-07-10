@@ -1,0 +1,193 @@
+from __future__ import annotations
+
+import argparse
+import json
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any
+
+from planning.evidence_cards import build_evidence_cards_from_artifact
+
+
+VALID_CONFIDENCE_LABELS = {
+    "Strong",
+    "Limited",
+    "Exploratory",
+}
+
+
+@dataclass(frozen=True)
+class LLMSynthesisOutputValidation:
+    output_path: str
+    artifact_path: str | None
+    is_valid: bool
+    errors: tuple[str, ...]
+    warnings: tuple[str, ...]
+    cited_source_ids: tuple[str, ...]
+    valid_source_ids: tuple[str, ...]
+    invented_source_ids: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def validate_saved_synthesis_output(
+    *,
+    output_path: Path,
+    artifact_path: Path | None = None,
+) -> LLMSynthesisOutputValidation:
+    output = json.loads(output_path.read_text())
+
+    resolved_artifact_path = artifact_path or _artifact_path_from_output(output)
+    valid_source_ids = _load_valid_source_ids(resolved_artifact_path)
+
+    errors = []
+    warnings = []
+
+    response = output.get("response", {})
+    parsed_response = response.get("parsed_response")
+
+    if parsed_response is None:
+        errors.append("missing_parsed_response")
+
+    response_warnings = response.get("warnings", [])
+    if response_warnings:
+        errors.append("response_contains_warnings")
+
+    if not output.get("routing_decision"):
+        errors.append("missing_routing_decision")
+
+    if not output.get("token_estimate"):
+        errors.append("missing_token_estimate")
+
+    if not output.get("provider"):
+        errors.append("missing_provider")
+
+    if not output.get("model"):
+        errors.append("missing_model")
+
+    cited_source_ids = tuple(sorted(_collect_cited_source_ids(parsed_response)))
+    invented_source_ids = tuple(
+        source_id
+        for source_id in cited_source_ids
+        if source_id not in valid_source_ids
+    )
+
+    if invented_source_ids:
+        errors.append("invented_source_ids")
+
+    if parsed_response is not None:
+        _validate_parsed_response(
+            parsed_response=parsed_response,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    return LLMSynthesisOutputValidation(
+        output_path=str(output_path),
+        artifact_path=str(resolved_artifact_path) if resolved_artifact_path else None,
+        is_valid=not errors,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+        cited_source_ids=cited_source_ids,
+        valid_source_ids=tuple(sorted(valid_source_ids)),
+        invented_source_ids=invented_source_ids,
+    )
+
+
+def _artifact_path_from_output(output: dict[str, Any]) -> Path | None:
+    artifact_path = output.get("run_metadata", {}).get("artifact_path")
+    if not artifact_path:
+        return None
+    path = Path(artifact_path)
+    return path if path.exists() else None
+
+
+def _load_valid_source_ids(artifact_path: Path | None) -> set[str]:
+    if artifact_path is None:
+        return set()
+
+    artifact = json.loads(artifact_path.read_text())
+    cards = build_evidence_cards_from_artifact(artifact)
+
+    return {
+        card.source_id
+        for card in cards
+    }
+
+
+def _validate_parsed_response(
+    *,
+    parsed_response: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    project_directions = parsed_response.get("project_directions")
+    if not isinstance(project_directions, list) or not project_directions:
+        errors.append("missing_project_directions")
+
+    overall_confidence = parsed_response.get("overall_confidence")
+    if overall_confidence not in VALID_CONFIDENCE_LABELS:
+        errors.append("invalid_overall_confidence")
+
+    for index, direction in enumerate(project_directions or []):
+        if not isinstance(direction, dict):
+            errors.append(f"project_direction_{index}_not_object")
+            continue
+
+        if not direction.get("title"):
+            errors.append(f"project_direction_{index}_missing_title")
+
+        if not direction.get("source_ids"):
+            errors.append(f"project_direction_{index}_missing_source_ids")
+
+        evidence_confidence = direction.get("evidence_confidence")
+        if evidence_confidence not in VALID_CONFIDENCE_LABELS:
+            errors.append(
+                f"project_direction_{index}_invalid_evidence_confidence"
+            )
+
+        if not direction.get("grounding_warnings"):
+            warnings.append(
+                f"project_direction_{index}_missing_grounding_warnings"
+            )
+
+        if not direction.get("resume_bullet"):
+            warnings.append(f"project_direction_{index}_missing_resume_bullet")
+
+
+def _collect_cited_source_ids(parsed_response: Any) -> set[str]:
+    if parsed_response is None:
+        return set()
+
+    source_ids = set()
+    project_directions = parsed_response.get("project_directions", [])
+
+    for direction in project_directions:
+        if not isinstance(direction, dict):
+            continue
+        for source_id in direction.get("source_ids", []):
+            source_ids.add(str(source_id))
+
+    return source_ids
+
+
+def _main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output-path", required=True)
+    parser.add_argument("--artifact-path")
+    args = parser.parse_args()
+
+    validation = validate_saved_synthesis_output(
+        output_path=Path(args.output_path),
+        artifact_path=Path(args.artifact_path) if args.artifact_path else None,
+    )
+
+    print(json.dumps(validation.to_dict(), indent=2))
+
+    if not validation.is_valid:
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    _main()
