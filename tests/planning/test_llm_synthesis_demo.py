@@ -213,3 +213,39 @@ def test_saved_demo_output_contains_final_synthesis_after_fallback(tmp_path):
     assert '"final_synthesis"' in saved_text
     assert '"source": "deterministic_fallback"' in saved_text
     assert '"fallback_used": true' in saved_text
+
+
+def test_llm_synthesis_demo_validates_final_synthesis_after_fallback(tmp_path):
+    output_path = tmp_path / "synthesis_output.json"
+
+    result = run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+    )
+
+    final_validation = result["final_synthesis_validation"]
+
+    assert result["final_synthesis"]["source"] == "deterministic_fallback"
+    assert final_validation["output_path"] == "final_synthesis"
+    assert final_validation["is_valid"] is True
+    assert final_validation["errors"] == ()
+    assert final_validation["failure_categories"] == ()
+    assert len(final_validation["direction_grounding_traces"]) == 3
+    assert all(
+        trace["is_grounded"]
+        for trace in final_validation["direction_grounding_traces"]
+    )
+
+
+def test_saved_demo_output_contains_final_synthesis_validation(tmp_path):
+    output_path = tmp_path / "synthesis_output.json"
+
+    run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+    )
+
+    saved_text = output_path.read_text()
+
+    assert '"final_synthesis_validation"' in saved_text
+    assert '"output_path": "final_synthesis"' in saved_text

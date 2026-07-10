@@ -26,6 +26,7 @@ from planning.llm_synthesis_client import (
 )
 from planning.llm_synthesis_output_validator import (
     validate_saved_synthesis_output,
+    validate_synthesis_parsed_response,
     write_synthesis_validation_report,
 )
 from planning.openai_synthesis_provider import OpenAISynthesisProvider
@@ -215,6 +216,13 @@ def run_llm_synthesis_demo(
                 "fallback_used": False,
                 "fallback_reason": "",
             }
+
+        final_validation = validate_synthesis_parsed_response(
+            parsed_response=result["final_synthesis"]["parsed_response"],
+            artifact_path=artifact_path,
+            output_path="final_synthesis",
+        )
+        result["final_synthesis_validation"] = final_validation.to_dict()
 
         if validation_report_output_path is not None:
             write_synthesis_validation_report(

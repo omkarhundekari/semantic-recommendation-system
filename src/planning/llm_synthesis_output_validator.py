@@ -39,6 +39,60 @@ class LLMSynthesisOutputValidation:
         return asdict(self)
 
 
+def validate_synthesis_parsed_response(
+    *,
+    parsed_response: Any,
+    artifact_path: Path | None = None,
+    output_path: str = "in_memory_final_synthesis",
+) -> LLMSynthesisOutputValidation:
+    evidence_card_map = _load_evidence_card_map(artifact_path)
+    valid_source_ids = set(evidence_card_map)
+
+    errors = []
+    warnings = []
+
+    if parsed_response is None:
+        errors.append("missing_parsed_response")
+    elif not isinstance(parsed_response, dict):
+        errors.append("parsed_response_not_object")
+    else:
+        _validate_parsed_response(
+            parsed_response=parsed_response,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    cited_source_ids = tuple(sorted(_collect_cited_source_ids(parsed_response)))
+    invented_source_ids = tuple(
+        source_id
+        for source_id in cited_source_ids
+        if source_id not in valid_source_ids
+    )
+
+    if invented_source_ids:
+        errors.append("invented_source_ids")
+
+    failure_categories = classify_validation_failures(errors)
+
+    direction_grounding_traces = _build_direction_grounding_traces(
+        parsed_response=parsed_response,
+        evidence_card_map=evidence_card_map,
+    )
+
+    return LLMSynthesisOutputValidation(
+        output_path=output_path,
+        artifact_path=str(artifact_path) if artifact_path else None,
+        is_valid=not errors,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+        cited_source_ids=cited_source_ids,
+        valid_source_ids=tuple(sorted(valid_source_ids)),
+        invented_source_ids=invented_source_ids,
+        failure_categories=tuple(failure_categories),
+        direction_grounding_traces=tuple(direction_grounding_traces),
+    )
+
+
 def validate_saved_synthesis_output(
     *,
     output_path: Path,
@@ -121,6 +175,7 @@ def classify_validation_failures(
     for error in errors:
         if error in {
             "missing_parsed_response",
+            "parsed_response_not_object",
             "response_contains_warnings",
         }:
             categories.add("parse_failure")
@@ -413,7 +468,7 @@ def _validate_direction_scope_sequence(
 
 
 def _collect_cited_source_ids(parsed_response: Any) -> set[str]:
-    if parsed_response is None:
+    if parsed_response is None or not isinstance(parsed_response, dict):
         return set()
 
     source_ids = set()

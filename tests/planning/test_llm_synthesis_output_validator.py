@@ -5,6 +5,7 @@ from planning.llm_synthesis_demo import run_llm_synthesis_demo
 from planning.llm_synthesis_output_validator import (
     classify_validation_failures,
     render_synthesis_validation_report,
+    validate_synthesis_parsed_response,
     validate_saved_synthesis_output,
     write_synthesis_validation_report,
 )
@@ -338,3 +339,57 @@ def test_validation_report_includes_failure_categories_for_invalid_sample():
 
     assert "## Failure Categories" in report
     assert "`parse_failure`" in report
+
+
+
+def test_validate_synthesis_parsed_response_accepts_grounded_final_response():
+    parsed_response = {
+        "project_directions": _make_scoped_directions(),
+        "overall_confidence": "Strong",
+        "assumptions": ["Generated from validated evidence."],
+        "warnings": [],
+    }
+
+    validation = validate_synthesis_parsed_response(
+        parsed_response=parsed_response,
+        artifact_path=ARTIFACT_PATH,
+        output_path="final_synthesis",
+    )
+
+    assert validation.is_valid
+    assert validation.output_path == "final_synthesis"
+    assert validation.errors == ()
+    assert validation.failure_categories == ()
+    assert len(validation.direction_grounding_traces) == 3
+    assert all(trace["is_grounded"] for trace in validation.direction_grounding_traces)
+
+
+def test_validate_synthesis_parsed_response_rejects_invented_sources():
+    parsed_response = {
+        "project_directions": _make_scoped_directions(
+            source_ids=["made-up-source"]
+        ),
+        "overall_confidence": "Strong",
+        "assumptions": [],
+        "warnings": [],
+    }
+
+    validation = validate_synthesis_parsed_response(
+        parsed_response=parsed_response,
+        artifact_path=ARTIFACT_PATH,
+    )
+
+    assert not validation.is_valid
+    assert validation.invented_source_ids == ("made-up-source",)
+    assert validation.failure_categories == ("citation_failure",)
+
+
+def test_validate_synthesis_parsed_response_rejects_non_object_response():
+    validation = validate_synthesis_parsed_response(
+        parsed_response=[],
+        artifact_path=ARTIFACT_PATH,
+    )
+
+    assert not validation.is_valid
+    assert "parsed_response_not_object" in validation.errors
+    assert validation.failure_categories == ("parse_failure",)
