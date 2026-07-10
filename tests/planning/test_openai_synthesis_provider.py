@@ -140,3 +140,17 @@ def test_extract_response_text_supports_output_text_dict():
 def test_extract_response_text_rejects_unknown_shape():
     with pytest.raises(ValueError):
         _extract_response_text(object())
+
+
+
+def test_openai_provider_can_read_model_from_environment(monkeypatch):
+    monkeypatch.setenv("OPENAI_MODEL", "gpt-5.4-mini")
+    provider = OpenAISynthesisProvider(
+        configured_model_name=None,
+        client=FakeOpenAIClient(),
+    )
+
+    provider.synthesize(_request())
+
+    call = provider.client.responses.calls[0]
+    assert call["model"] == "gpt-5.4-mini"

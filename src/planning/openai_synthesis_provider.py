@@ -8,7 +8,7 @@ from planning.llm_prompt_builder import render_llm_synthesis_prompt_text
 from planning.llm_synthesis_client import LLMSynthesisRequest
 
 
-DEFAULT_OPENAI_MODEL = "gpt-5.5-mini"
+DEFAULT_OPENAI_MODEL = "gpt-5.4-mini"
 
 
 class OpenAIProviderConfigurationError(RuntimeError):
@@ -17,7 +17,7 @@ class OpenAIProviderConfigurationError(RuntimeError):
 
 @dataclass(frozen=True)
 class OpenAISynthesisProvider:
-    model_name: str = DEFAULT_OPENAI_MODEL
+    configured_model_name: str | None = None
     provider_name: str = "openai"
     api_key_env_var: str = "OPENAI_API_KEY"
     temperature: float = 0.2
@@ -32,7 +32,7 @@ class OpenAISynthesisProvider:
         prompt_text = render_llm_synthesis_prompt_text(request.prompt)
 
         response = client.responses.create(
-            model=self.model_name,
+            model=self.resolved_model_name,
             input=[
                 {
                     "role": "system",
@@ -48,6 +48,17 @@ class OpenAISynthesisProvider:
         )
 
         return _extract_response_text(response)
+
+    @property
+    def model_name(self) -> str:
+        return self.configured_model_name or os.getenv(
+            "OPENAI_MODEL",
+            DEFAULT_OPENAI_MODEL,
+        )
+
+    @property
+    def resolved_model_name(self) -> str:
+        return self.model_name
 
     def _build_client(self) -> Any:
         api_key = os.getenv(self.api_key_env_var)
