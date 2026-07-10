@@ -16,6 +16,19 @@ from query_understanding import understand_query
 from research_evidence_assessment import build_evidence_assessment
 from research_query_anchors import extract_required_anchor_terms
 from product_plan_readiness import assess_product_plan_readiness
+from planning.evidence_brief import build_evidence_brief
+from planning.live_evidence_cards import build_live_evidence_cards_from_brief
+from planning.llm_prompt_builder import (
+    OUTPUT_SCHEMA,
+    SYSTEM_INSTRUCTION,
+    build_llm_synthesis_prompt,
+)
+from planning.llm_routing_policy import (
+    DEEP_MODE,
+    SessionBudgetState,
+    decide_llm_routing,
+)
+from planning.token_estimation import estimate_tokens_for_prompt
 from planning.product_enrichment import enrich_product_ideas
 from planning.llm_synthesis_demo import (
     build_default_output_path,
@@ -226,14 +239,73 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
     return options
 
 
-def build_project_intelligence_synthesis_status() -> Dict:
+def build_project_intelligence_synthesis_status(
+    *,
+    query: str,
+    constraints: Dict,
+    evidence_items: List[Dict],
+) -> Dict:
+    brief = build_evidence_brief(
+        evidence_items=evidence_items,
+        user_query=query,
+    )
+    evidence_cards = build_live_evidence_cards_from_brief(brief)
+
+    prompt = build_llm_synthesis_prompt(
+        user_goal=query,
+        constraints=constraints,
+        evidence_cards=evidence_cards,
+    )
+    token_estimate = estimate_tokens_for_prompt(prompt)
+
+    routing_decision = decide_llm_routing(
+        evidence_cards=evidence_cards,
+        session_budget=SessionBudgetState(
+            calls_remaining=1,
+            tokens_remaining=10000,
+        ),
+        mode=DEEP_MODE,
+        estimated_tokens=token_estimate.estimated_tokens,
+    )
+
+    confidence_counts = {
+        "strong_count": sum(
+            1
+            for card in evidence_cards
+            if card.evidence_confidence == "Strong"
+        ),
+        "limited_count": sum(
+            1
+            for card in evidence_cards
+            if card.evidence_confidence == "Limited"
+        ),
+        "exploratory_count": sum(
+            1
+            for card in evidence_cards
+            if card.evidence_confidence == "Exploratory"
+        ),
+    }
+
     return {
         "available": False,
         "reason": (
-            "artifact_backed_synthesis_not_enabled_for_project_intelligence"
+            "live_synthesis_execution_not_enabled_for_project_intelligence"
         ),
         "safe_inspection_endpoint": "/v1/synthesis-demo",
         "current_planning_source": "deterministic_product_pipeline",
+        "live_evidence_cards": {
+            "card_count": len(evidence_cards),
+            **confidence_counts,
+            "query_aligned_card_count": (
+                routing_decision.query_aligned_card_count
+            ),
+            "weak_card_count": routing_decision.weak_card_count,
+            "suspicious_card_count": (
+                routing_decision.suspicious_card_count
+            ),
+        },
+        "routing_preview": routing_decision.to_dict(),
+        "token_estimate": token_estimate.to_dict(),
         "safety_pipeline": {
             "raw_output_validation": True,
             "deterministic_fallback": True,
@@ -673,7 +745,11 @@ def generate_project_intelligence(
         },
         research_evidence_assessment=research_evidence_assessment,
         product_plan_readiness=product_plan_readiness.to_dict(),
-        synthesis_status=build_project_intelligence_synthesis_status(),
+        synthesis_status=build_project_intelligence_synthesis_status(
+            query=corrected_query,
+            constraints=constraints,
+            evidence_items=evidence_items,
+        ),
         clarification_required=False,
         inferred_domain_family=inference.get(
             "inferred_domain_family"

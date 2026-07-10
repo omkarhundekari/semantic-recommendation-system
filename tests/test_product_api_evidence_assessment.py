@@ -162,6 +162,30 @@ def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
     assert response.synthesis_status[
         "current_planning_source"
     ] == "deterministic_product_pipeline"
+    assert response.synthesis_status["reason"] == (
+        "live_synthesis_execution_not_enabled_for_project_intelligence"
+    )
+
+    live_cards = response.synthesis_status["live_evidence_cards"]
+    assert live_cards["card_count"] > 0
+    assert live_cards["query_aligned_card_count"] >= 0
+    assert {
+        "strong_count",
+        "limited_count",
+        "exploratory_count",
+        "weak_card_count",
+        "suspicious_card_count",
+    }.issubset(live_cards)
+
+    routing_preview = response.synthesis_status["routing_preview"]
+    assert "should_route" in routing_preview
+    assert "reason" in routing_preview
+    assert routing_preview["mode"] == "deep"
+
+    token_estimate = response.synthesis_status["token_estimate"]
+    assert token_estimate["estimated_tokens"] > 0
+    assert "evidence_cards" in token_estimate["section_token_estimates"]
+
     assert response.synthesis_status["safety_pipeline"] == {
         "raw_output_validation": True,
         "deterministic_fallback": True,
