@@ -59,6 +59,8 @@ def main():
             f"{direction.get('title')}"
         )
         print(f"   Badge: {direction.get('evidence_badge')}")
+        print(f"   Build: {direction.get('what_you_will_build')}")
+        print(f"   Why: {direction.get('why_it_matters')}")
         print(f"   Skills: {', '.join(direction.get('skills_shown', [])[:3])}")
         print(f"   Talking point: {direction.get('interview_talking_point')}")
 

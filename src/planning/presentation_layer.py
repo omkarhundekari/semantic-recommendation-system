@@ -64,8 +64,14 @@ def to_presentation_project_direction(
         title=_derive_presentation_title(direction),
         level=_derive_level(direction),
         estimated_time=str(direction.get("estimated_time", "Flexible")),
-        what_you_will_build=_derive_what_you_will_build(direction),
-        why_it_matters=_derive_why_it_matters(direction),
+        what_you_will_build=_derive_what_you_will_build(
+            direction,
+            cited_cards,
+        ),
+        why_it_matters=_derive_why_it_matters(
+            direction,
+            cited_cards,
+        ),
         skills_shown=_derive_skills_shown(direction),
         interview_talking_point=_derive_interview_talking_point(direction),
         evidence_badge=_derive_evidence_badge(confidence, cited_cards),
@@ -119,12 +125,20 @@ def _derive_level(direction: dict[str, Any]) -> str:
     return "Flexible"
 
 
-def _derive_what_you_will_build(direction: dict[str, Any]) -> str:
+def _derive_what_you_will_build(
+    direction: dict[str, Any],
+    cited_cards: list[Any],
+) -> str:
     title = _derive_presentation_title(direction)
     mvp_scope = direction.get("mvp_scope", [])
 
     if isinstance(mvp_scope, list) and mvp_scope:
-        steps = [str(step).strip() for step in mvp_scope[:3] if str(step).strip()]
+        steps = [
+            str(step).strip()
+            for step in mvp_scope[:3]
+            if str(step).strip()
+            and not _looks_internal_for_presentation(str(step))
+        ]
         if steps:
             return (
                 f"You will build {title.lower()}: "
@@ -133,43 +147,55 @@ def _derive_what_you_will_build(direction: dict[str, Any]) -> str:
             )
 
     problem_statement = direction.get("problem_statement")
-    if problem_statement:
+    if (
+        problem_statement
+        and not _looks_internal_for_presentation(str(problem_statement))
+    ):
         return (
             f"You will build {title.lower()} to solve this problem: "
             f"{str(problem_statement).strip()}"
         )
 
+    evidence_summary = _derive_evidence_phrase(cited_cards)
     return (
-        f"You will build {title.lower()}, a focused project that turns "
-        "research or implementation evidence into something concrete enough "
-        "to demo, explain, and improve."
+        f"You will build {title.lower()}, a focused product that takes a "
+        "user goal, recommends evidence-backed next steps, and explains the "
+        f"recommendation clearly. It is grounded in {evidence_summary}."
     )
 
 
-def _derive_why_it_matters(direction: dict[str, Any]) -> str:
+def _derive_why_it_matters(
+    direction: dict[str, Any],
+    cited_cards: list[Any],
+) -> str:
     grounded_reason = direction.get("why_this_is_grounded")
-    if grounded_reason:
+    if (
+        grounded_reason
+        and not _looks_internal_for_presentation(str(grounded_reason))
+    ):
         return (
             "This is stronger than a generic tutorial project because "
             f"{str(grounded_reason).strip()}"
         )
 
     confidence = direction.get("evidence_confidence")
+    evidence_summary = _derive_evidence_phrase(cited_cards)
+
     if confidence == "Strong":
         return (
-            "This project is backed by strong evidence, so it gives the "
-            "student a clearer story about why the project is worth building."
+            "This matters because it helps the student move beyond generic "
+            f"tutorials with a project grounded in {evidence_summary}."
         )
 
     if confidence == "Limited":
         return (
-            "This project is useful because it turns a partially supported "
-            "idea into a prototype where the riskiest assumptions can be tested."
+            "This matters because it turns a partially supported idea into a "
+            "prototype where the riskiest assumptions can be tested."
         )
 
     return (
-        "This project is useful because it explores an open-ended area where "
-        "the student can define the problem, test assumptions, and show judgment."
+        "This matters because it explores an open-ended area where the student "
+        "can define the problem, test assumptions, and show judgment."
     )
 
 
@@ -202,6 +228,30 @@ def _derive_interview_talking_point(direction: dict[str, Any]) -> str:
         "I built this project by turning research and implementation evidence "
         "into a working product that solves a focused user problem."
     )
+
+
+def _looks_internal_for_presentation(text: str) -> bool:
+    lowered = text.lower()
+    internal_markers = [
+        "evidence card",
+        "reviewed artifact",
+        "source id",
+        "source ids",
+        "grounding warning",
+        "grounding warnings",
+        "cited source",
+        "cited sources",
+        "this fallback",
+        "deterministic fallback",
+        "invented_source",
+        "routing",
+        "token estimate",
+        "validation trace",
+        "arxiv:",
+        "github.com/",
+    ]
+
+    return any(marker in lowered for marker in internal_markers)
 
 
 def _clean_user_facing_skill(skill: str) -> str:
@@ -322,6 +372,14 @@ def _derive_open_questions(
         "What evidence would prove this idea is useful?",
         "Which narrow user problem should the first prototype focus on?",
     ]
+
+
+def _derive_evidence_phrase(cited_cards: list[Any]) -> str:
+    summary = _derive_evidence_summary(cited_cards)
+    prefix = "Supported by "
+    if summary.startswith(prefix):
+        return summary.replace(prefix, "", 1).lower()
+    return summary.lower()
 
 
 def _derive_evidence_summary(cited_cards: list[Any]) -> str:

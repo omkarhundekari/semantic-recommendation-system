@@ -200,3 +200,47 @@ def test_why_it_matters_explains_grounding_without_raw_internal_language():
     )
     assert "source_ids" not in result.why_it_matters
     assert "token" not in result.why_it_matters.lower()
+
+
+def test_presentation_build_text_filters_internal_fallback_scope():
+    result = to_presentation_project_direction(
+        direction={
+            **_direction(),
+            "title": "Evidence-Grounded MVP: AutoML Experiment Recommendation Assistant",
+            "mvp_scope": [
+                "Load evidence cards from a reviewed artifact.",
+                "Select valid source IDs and preserve grounding warnings.",
+                "Render project directions with confidence and cited sources.",
+            ],
+            "why_this_is_grounded": (
+                "This fallback cites only source IDs present in the evidence "
+                "cards: arxiv:2504.08893, https://github.com/example/repo"
+            ),
+        },
+        evidence_cards=[
+            _card("source-1", "research_paper"),
+            _card("source-2", "github_repository"),
+        ],
+    )
+
+    combined_text = (
+        result.what_you_will_build + " " + result.why_it_matters
+    ).lower()
+
+    assert "evidence cards" not in combined_text
+    assert "source ids" not in combined_text
+    assert "grounding warnings" not in combined_text
+    assert "this fallback" not in combined_text
+    assert "arxiv:" not in combined_text
+    assert "github.com" not in combined_text
+
+    assert result.what_you_will_build
+    assert result.why_it_matters
+    assert (
+        "evidence-backed next steps" in result.what_you_will_build
+        or "solve this problem" in result.what_you_will_build
+    )
+    assert (
+        "generic tutorials" in result.why_it_matters
+        or "well supported" in result.why_it_matters
+    )
