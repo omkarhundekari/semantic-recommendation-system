@@ -241,6 +241,37 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
     return options
 
 
+def build_synthesis_summary(
+    *,
+    routing_decision,
+    token_estimate,
+    evidence_cards,
+    preview_validation,
+) -> Dict:
+    grounded_direction_count = sum(
+        1
+        for trace in preview_validation.direction_grounding_traces
+        if trace.get("is_grounded")
+    )
+
+    if preview_validation.is_valid:
+        status = "preview_valid"
+    else:
+        status = "preview_invalid"
+
+    return {
+        "status": status,
+        "source": "deterministic_fallback_preview",
+        "can_run_llm": routing_decision.should_route,
+        "routing_reason": routing_decision.reason,
+        "card_count": len(evidence_cards),
+        "validated": preview_validation.is_valid,
+        "grounded_direction_count": grounded_direction_count,
+        "invented_source_count": len(preview_validation.invented_source_ids),
+        "estimated_tokens": token_estimate.estimated_tokens,
+    }
+
+
 def build_project_intelligence_synthesis_status(
     *,
     query: str,
@@ -302,6 +333,13 @@ def build_project_intelligence_synthesis_status(
         output_path="live_final_synthesis_preview",
     )
 
+    synthesis_summary = build_synthesis_summary(
+        routing_decision=routing_decision,
+        token_estimate=token_estimate,
+        evidence_cards=evidence_cards,
+        preview_validation=preview_validation,
+    )
+
     return {
         "available": False,
         "reason": (
@@ -309,6 +347,7 @@ def build_project_intelligence_synthesis_status(
         ),
         "safe_inspection_endpoint": "/v1/synthesis-demo",
         "current_planning_source": "deterministic_product_pipeline",
+        "synthesis_summary": synthesis_summary,
         "live_evidence_cards": {
             "card_count": len(evidence_cards),
             **confidence_counts,

@@ -166,6 +166,17 @@ def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
         "live_synthesis_execution_not_enabled_for_project_intelligence"
     )
 
+    summary = response.synthesis_status["synthesis_summary"]
+    assert summary["status"] == "preview_valid"
+    assert summary["source"] == "deterministic_fallback_preview"
+    assert "can_run_llm" in summary
+    assert "routing_reason" in summary
+    assert summary["card_count"] > 0
+    assert summary["validated"] is True
+    assert summary["grounded_direction_count"] == 3
+    assert summary["invented_source_count"] == 0
+    assert summary["estimated_tokens"] > 0
+
     live_cards = response.synthesis_status["live_evidence_cards"]
     assert live_cards["card_count"] > 0
     assert live_cards["query_aligned_card_count"] >= 0
