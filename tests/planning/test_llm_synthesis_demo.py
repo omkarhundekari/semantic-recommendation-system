@@ -5,7 +5,11 @@ from planning.llm_routing_policy import (
     FAST_MODE,
     ROUTING_APPROVED,
 )
-from planning.llm_synthesis_demo import run_llm_synthesis_demo
+from planning.llm_synthesis_demo import (
+    build_default_output_path,
+    run_llm_synthesis_demo,
+    write_synthesis_demo_output,
+)
 
 
 ARTIFACT_PATH = Path(
@@ -52,3 +56,43 @@ def test_llm_synthesis_demo_marks_openai_api_attempt_only_when_not_dry_run():
 
     assert result["provider"] == "fake-dry-run"
     assert result["api_call_attempted"] is False
+
+
+
+def test_llm_synthesis_demo_can_write_output_file(tmp_path):
+    output_path = tmp_path / "synthesis_output.json"
+
+    result = run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+    )
+
+    assert output_path.exists()
+    assert result["run_metadata"]["artifact_path"] == str(ARTIFACT_PATH)
+    assert "created_at_utc" in result["run_metadata"]
+    assert "parsed_response" in result["response"]
+
+
+def test_write_synthesis_demo_output_creates_parent_directories(tmp_path):
+    output_path = tmp_path / "nested" / "result.json"
+    result = {"hello": "world"}
+
+    written_path = write_synthesis_demo_output(result, output_path)
+
+    assert written_path == output_path
+    assert output_path.exists()
+    assert '"hello": "world"' in output_path.read_text()
+
+
+def test_default_output_path_includes_run_identity():
+    output_path = build_default_output_path(
+        fixture_id="fixture",
+        artifact_id="artifact",
+        mode="deep",
+        provider="openai",
+        dry_run=False,
+    )
+
+    assert output_path.parent == Path("outputs/llm_synthesis_runs")
+    assert "fixture_artifact_deep_openai_real_" in output_path.name
+    assert output_path.suffix == ".json"

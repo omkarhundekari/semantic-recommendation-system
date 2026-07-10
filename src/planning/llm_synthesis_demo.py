@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -91,6 +92,7 @@ def run_llm_synthesis_demo(
     dry_run: bool = True,
     calls_remaining: int = 5,
     tokens_remaining: int = 10_000,
+    output_path: Path | None = None,
 ) -> dict[str, Any]:
     artifact = json.loads(artifact_path.read_text())
     request = build_synthesis_request_from_artifact(
@@ -110,7 +112,11 @@ def run_llm_synthesis_demo(
         provider=provider,
     )
 
-    return {
+    result = {
+        "run_metadata": {
+            "created_at_utc": datetime.now(timezone.utc).isoformat(),
+            "artifact_path": str(artifact_path),
+        },
         "fixture_id": artifact["artifact_identity"]["fixture_id"],
         "artifact_id": artifact["artifact_identity"]["artifact_id"],
         "mode": mode,
@@ -122,6 +128,38 @@ def run_llm_synthesis_demo(
         "token_estimate": request.token_estimate.to_dict(),
         "response": response.to_dict(),
     }
+
+    if output_path is not None:
+        write_synthesis_demo_output(result, output_path)
+
+    return result
+
+
+def write_synthesis_demo_output(
+    result: dict[str, Any],
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(result, indent=2))
+    return output_path
+
+
+def build_default_output_path(
+    *,
+    fixture_id: str,
+    artifact_id: str,
+    mode: str,
+    provider: str,
+    dry_run: bool,
+    output_dir: Path = Path("outputs/llm_synthesis_runs"),
+) -> Path:
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    run_type = "dry_run" if dry_run else "real"
+    filename = (
+        f"{fixture_id}_{artifact_id}_{mode}_{provider}_{run_type}_"
+        f"{timestamp}.json"
+    )
+    return output_dir / filename
 
 
 def _select_provider(
@@ -167,7 +205,33 @@ def _main() -> None:
     )
     parser.add_argument("--calls-remaining", type=int, default=5)
     parser.add_argument("--tokens-remaining", type=int, default=10_000)
+    parser.add_argument("--output-path")
+    parser.add_argument(
+        "--output-dir",
+        default="outputs/llm_synthesis_runs",
+    )
+    parser.add_argument(
+        "--no-save",
+        action="store_true",
+    )
     args = parser.parse_args()
+
+    artifact = json.loads(Path(args.artifact_path).read_text())
+    output_path = None
+
+    if not args.no_save:
+        output_path = (
+            Path(args.output_path)
+            if args.output_path
+            else build_default_output_path(
+                fixture_id=artifact["artifact_identity"]["fixture_id"],
+                artifact_id=artifact["artifact_identity"]["artifact_id"],
+                mode=args.mode,
+                provider=args.provider,
+                dry_run=args.dry_run,
+                output_dir=Path(args.output_dir),
+            )
+        )
 
     result = run_llm_synthesis_demo(
         artifact_path=Path(args.artifact_path),
@@ -176,9 +240,13 @@ def _main() -> None:
         dry_run=args.dry_run,
         calls_remaining=args.calls_remaining,
         tokens_remaining=args.tokens_remaining,
+        output_path=output_path,
     )
 
     print(json.dumps(result, indent=2))
+
+    if output_path is not None:
+        print(f"\nSaved synthesis output: {output_path}")
 
 
 if __name__ == "__main__":
