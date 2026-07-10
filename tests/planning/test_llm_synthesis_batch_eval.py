@@ -2,8 +2,10 @@ from pathlib import Path
 
 from planning.llm_synthesis_batch_eval import (
     discover_artifact_paths,
+    render_batch_synthesis_report,
     run_batch_synthesis_evaluation,
     summarize_batch_synthesis_results,
+    write_batch_synthesis_report,
 )
 
 
@@ -99,3 +101,40 @@ def test_summarize_batch_synthesis_results_counts_validation_outcomes():
     assert summary.ungrounded_direction_count == 2
     assert summary.output_paths == ("valid.json", "invalid.json")
     assert summary.validation_report_paths == ("valid.md", "invalid.md")
+
+
+
+def test_render_batch_synthesis_report_includes_summary_and_fixture_results(tmp_path):
+    batch_result = run_batch_synthesis_evaluation(
+        artifact_paths=[ARTIFACT_PATH],
+        output_dir=tmp_path / "runs",
+        validation_report_dir=tmp_path / "reports",
+    )
+
+    report = render_batch_synthesis_report(batch_result)
+
+    assert "# LLM Synthesis Batch Evaluation" in report
+    assert "- Artifacts: 1" in report
+    assert "- Routed: 1" in report
+    assert "- Invalid outputs: 1" in report
+    assert "## Fixture Results" in report
+    assert "### deterministic_template_risk" in report
+    assert "project_direction_0_missing_source_ids" in report
+
+
+def test_write_batch_synthesis_report(tmp_path):
+    batch_result = run_batch_synthesis_evaluation(
+        artifact_paths=[ARTIFACT_PATH],
+        output_dir=tmp_path / "runs",
+        validation_report_dir=tmp_path / "reports",
+    )
+    report_path = tmp_path / "batch_report.md"
+
+    written_path = write_batch_synthesis_report(
+        batch_result=batch_result,
+        output_path=report_path,
+    )
+
+    assert written_path == report_path
+    assert report_path.exists()
+    assert "LLM Synthesis Batch Evaluation" in report_path.read_text()

@@ -149,6 +149,90 @@ def summarize_batch_synthesis_results(
     )
 
 
+def render_batch_synthesis_report(
+    batch_result: dict[str, Any],
+) -> str:
+    summary = batch_result["summary"]
+    results = batch_result["results"]
+
+    lines = [
+        "# LLM Synthesis Batch Evaluation",
+        "",
+        "## Summary",
+        "",
+        f"- Artifacts: {summary['artifact_count']}",
+        f"- Routed: {summary['routed_count']}",
+        f"- Blocked: {summary['blocked_count']}",
+        f"- Valid outputs: {summary['valid_count']}",
+        f"- Invalid outputs: {summary['invalid_count']}",
+        f"- Outputs with invented sources: {summary['invented_source_output_count']}",
+        f"- Grounded directions: {summary['grounded_direction_count']}",
+        f"- Ungrounded directions: {summary['ungrounded_direction_count']}",
+        "",
+        "## Fixture Results",
+        "",
+    ]
+
+    for result in results:
+        fixture_id = result.get("fixture_id", "unknown_fixture")
+        artifact_id = result.get("artifact_id", "unknown_artifact")
+        routing = result.get("routing_decision", {})
+        validation = result.get("saved_output_validation", {})
+
+        routed = "routed" if routing.get("should_route") else "blocked"
+        routing_reason = routing.get("reason", "unknown_reason")
+        valid = validation.get("is_valid")
+        valid_label = "valid" if valid else "invalid"
+
+        lines.extend(
+            [
+                f"### {fixture_id}",
+                "",
+                f"- Artifact ID: `{artifact_id}`",
+                f"- Routing: `{routed}`",
+                f"- Routing reason: `{routing_reason}`",
+                f"- Validation: `{valid_label}`",
+            ]
+        )
+
+        errors = validation.get("errors", [])
+        if errors:
+            lines.append("- Errors:")
+            lines.extend(f"  - `{error}`" for error in errors)
+
+        invented = validation.get("invented_source_ids", [])
+        if invented:
+            lines.append("- Invented source IDs:")
+            lines.extend(f"  - `{source_id}`" for source_id in invented)
+
+        traces = validation.get("direction_grounding_traces", [])
+        if traces:
+            grounded_count = sum(1 for trace in traces if trace.get("is_grounded"))
+            lines.append(f"- Grounded directions: `{grounded_count}/{len(traces)}`")
+
+        output_path = validation.get("output_path")
+        if output_path:
+            lines.append(f"- Output path: `{output_path}`")
+
+        report_path = result.get("validation_report_output_path")
+        if report_path:
+            lines.append(f"- Validation report: `{report_path}`")
+
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_batch_synthesis_report(
+    *,
+    batch_result: dict[str, Any],
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_batch_synthesis_report(batch_result))
+    return output_path
+
+
 def write_batch_synthesis_summary(
     *,
     batch_result: dict[str, Any],
@@ -205,6 +289,10 @@ def _main() -> None:
         default="outputs/reports/llm_synthesis_batch_summary.json",
     )
     parser.add_argument(
+        "--summary-report-output-path",
+        default="outputs/reports/llm_synthesis_batch_summary.md",
+    )
+    parser.add_argument(
         "--no-save",
         action="store_true",
     )
@@ -226,6 +314,10 @@ def _main() -> None:
         write_batch_synthesis_summary(
             batch_result=batch_result,
             output_path=Path(args.summary_output_path),
+        )
+        write_batch_synthesis_report(
+            batch_result=batch_result,
+            output_path=Path(args.summary_report_output_path),
         )
 
     print(json.dumps(batch_result["summary"], indent=2))
