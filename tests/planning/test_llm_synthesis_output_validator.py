@@ -3,7 +3,9 @@ from pathlib import Path
 
 from planning.llm_synthesis_demo import run_llm_synthesis_demo
 from planning.llm_synthesis_output_validator import (
+    render_synthesis_validation_report,
     validate_saved_synthesis_output,
+    write_synthesis_validation_report,
 )
 
 
@@ -283,3 +285,36 @@ def test_validator_grounding_trace_exposes_invented_source_ids(tmp_path):
     assert traces[0]["is_grounded"] is False
     assert traces[0]["invented_source_ids"] == ["made-up-source"]
     assert traces[0]["valid_cited_source_ids"] == []
+
+
+
+def test_render_synthesis_validation_report_includes_grounding_trace():
+    validation = validate_saved_synthesis_output(
+        output_path=SAMPLE_VALID_OUTPUT,
+    )
+
+    report = render_synthesis_validation_report(validation)
+
+    assert "# LLM Synthesis Validation Report" in report
+    assert "Valid: `true`" in report
+    assert "## Direction Grounding Traces" in report
+    assert "### Easy:" in report
+    assert "Downstream Impact Analysis for Data Quality Incidents" in report
+    assert "`paper-data-quality-impact`" in report
+    assert "Grounded: `yes`" in report
+
+
+def test_write_synthesis_validation_report(tmp_path):
+    validation = validate_saved_synthesis_output(
+        output_path=SAMPLE_VALID_OUTPUT,
+    )
+    report_path = tmp_path / "validation_report.md"
+
+    written_path = write_synthesis_validation_report(
+        validation=validation,
+        output_path=report_path,
+    )
+
+    assert written_path == report_path
+    assert report_path.exists()
+    assert "LLM Synthesis Validation Report" in report_path.read_text()

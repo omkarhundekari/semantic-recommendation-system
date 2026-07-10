@@ -109,6 +109,101 @@ def validate_saved_synthesis_output(
     )
 
 
+def render_synthesis_validation_report(
+    validation: LLMSynthesisOutputValidation,
+) -> str:
+    lines = [
+        "# LLM Synthesis Validation Report",
+        "",
+        f"Output: `{validation.output_path}`",
+        f"Artifact: `{validation.artifact_path}`",
+        f"Valid: `{str(validation.is_valid).lower()}`",
+        "",
+        "## Summary",
+        "",
+        f"- Errors: {len(validation.errors)}",
+        f"- Warnings: {len(validation.warnings)}",
+        f"- Cited sources: {len(validation.cited_source_ids)}",
+        f"- Invented sources: {len(validation.invented_source_ids)}",
+        "",
+    ]
+
+    if validation.errors:
+        lines.extend(["## Errors", ""])
+        lines.extend(f"- `{error}`" for error in validation.errors)
+        lines.append("")
+
+    if validation.warnings:
+        lines.extend(["## Warnings", ""])
+        lines.extend(f"- `{warning}`" for warning in validation.warnings)
+        lines.append("")
+
+    lines.extend(["## Direction Grounding Traces", ""])
+
+    if not validation.direction_grounding_traces:
+        lines.extend(["No direction grounding traces were produced.", ""])
+        return "\n".join(lines).rstrip() + "\n"
+
+    for trace in validation.direction_grounding_traces:
+        grounded = "yes" if trace.get("is_grounded") else "no"
+        title = trace.get("title") or "Untitled direction"
+        scope = trace.get("scope_level") or "unknown"
+        build_type = trace.get("build_type") or "unknown"
+        estimated_time = trace.get("estimated_time") or "unknown"
+
+        lines.extend(
+            [
+                f"### {scope.title()}: {title}",
+                "",
+                f"- Build type: `{build_type}`",
+                f"- Estimated time: `{estimated_time}`",
+                f"- Evidence confidence: `{trace.get('evidence_confidence')}`",
+                f"- Grounded: `{grounded}`",
+                "",
+                "#### Sources",
+                "",
+            ]
+        )
+
+        evidence_cards = trace.get("supporting_evidence_cards", [])
+        if evidence_cards:
+            for card in evidence_cards:
+                lines.append(
+                    "- "
+                    f"{card.get('title')} "
+                    f"(`{card.get('source_id')}`, "
+                    f"{card.get('source_type')}, "
+                    f"{card.get('support_scope')}, "
+                    f"{card.get('evidence_confidence')})"
+                )
+        else:
+            lines.append("- No valid supporting evidence cards.")
+
+        invented = trace.get("invented_source_ids", [])
+        if invented:
+            lines.extend(["", "#### Invented Source IDs", ""])
+            lines.extend(f"- `{source_id}`" for source_id in invented)
+
+        grounding_warnings = trace.get("grounding_warnings", [])
+        if grounding_warnings:
+            lines.extend(["", "#### Grounding Warnings", ""])
+            lines.extend(f"- {warning}" for warning in grounding_warnings)
+
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_synthesis_validation_report(
+    *,
+    validation: LLMSynthesisOutputValidation,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_synthesis_validation_report(validation))
+    return output_path
+
+
 def _artifact_path_from_output(output: dict[str, Any]) -> Path | None:
     artifact_path = output.get("run_metadata", {}).get("artifact_path")
     if not artifact_path:
@@ -290,12 +385,19 @@ def _main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-path", required=True)
     parser.add_argument("--artifact-path")
+    parser.add_argument("--report-output-path")
     args = parser.parse_args()
 
     validation = validate_saved_synthesis_output(
         output_path=Path(args.output_path),
         artifact_path=Path(args.artifact_path) if args.artifact_path else None,
     )
+
+    if args.report_output_path:
+        write_synthesis_validation_report(
+            validation=validation,
+            output_path=Path(args.report_output_path),
+        )
 
     print(json.dumps(validation.to_dict(), indent=2))
 
