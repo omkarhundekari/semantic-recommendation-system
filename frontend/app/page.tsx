@@ -77,6 +77,24 @@ type Direction = {
   decision_trace?: DecisionTrace | null;
 };
 
+type PresentationProjectDirection = {
+  title: string;
+  level: string;
+  estimated_time: string;
+  what_you_will_build: string;
+  why_it_matters: string;
+  skills_shown: string[];
+  interview_talking_point: string;
+  evidence_badge: string;
+  confidence_explanation: string;
+  open_questions: string[];
+  evidence_summary: string;
+};
+
+type SynthesisStatus = {
+  presentation_project_directions?: PresentationProjectDirection[];
+};
+
 type IntelligenceResponse = {
   status: string;
   clarification_required?: boolean;
@@ -105,6 +123,7 @@ type IntelligenceResponse = {
       };
     };
   };
+  synthesis_status?: SynthesisStatus;
   directions: Direction[];
 };
 
@@ -851,6 +870,109 @@ export default function Home() {
                   </div>
                 </div>
               )}
+
+              {result.synthesis_status?.presentation_project_directions &&
+                result.synthesis_status.presentation_project_directions.length >
+                  0 && (
+                  <div className="mt-8 rounded-[2rem] border border-cyan-300/15 bg-cyan-300/[0.045] p-5 shadow-2xl shadow-cyan-950/10">
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                      <div>
+                        <p className="text-sm font-medium text-cyan-200">
+                          Evidence-backed project directions
+                        </p>
+
+                        <h3 className="mt-2 text-2xl font-semibold text-white">
+                          Frontend-safe recommendations
+                        </h3>
+                      </div>
+
+                      <p className="max-w-xl text-sm leading-6 text-slate-400 sm:text-right">
+                        These cards show the validated presentation layer only:
+                        what to build, why it matters, skills shown, and the
+                        interview story.
+                      </p>
+                    </div>
+
+                    <div className="mt-6 grid gap-4 lg:grid-cols-3">
+                      {result.synthesis_status.presentation_project_directions.map(
+                        (direction, index) => (
+                          <motion.article
+                            key={`${direction.title}-${index}`}
+                            initial={{ opacity: 0, y: 14 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{
+                              duration: 0.3,
+                              delay: index * 0.06,
+                            }}
+                            className="rounded-[1.5rem] border border-white/10 bg-slate-950/55 p-5"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                                {direction.evidence_badge}
+                              </span>
+
+                              <span className="text-xs text-slate-400">
+                                {direction.level} · {direction.estimated_time}
+                              </span>
+                            </div>
+
+                            <h4 className="mt-4 text-lg font-semibold text-white">
+                              {direction.title}
+                            </h4>
+
+                            <p className="mt-3 text-sm leading-6 text-slate-300">
+                              {direction.what_you_will_build}
+                            </p>
+
+                            <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.025] p-3 text-sm leading-6 text-slate-300">
+                              {direction.why_it_matters}
+                            </p>
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              {direction.skills_shown.slice(0, 4).map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-xs text-slate-300"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div className="mt-4 border-t border-white/10 pt-4">
+                              <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                                Interview angle
+                              </p>
+
+                              <p className="mt-2 text-sm leading-6 text-sky-100">
+                                {direction.interview_talking_point}
+                              </p>
+                            </div>
+
+                            {direction.open_questions.length > 0 && (
+                              <div className="mt-4 border-t border-white/10 pt-4">
+                                <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                                  Open questions
+                                </p>
+
+                                <ul className="mt-2 space-y-2">
+                                  {direction.open_questions.map((question) => (
+                                    <li
+                                      key={question}
+                                      className="text-sm leading-6 text-slate-400"
+                                    >
+                                      {question}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </motion.article>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
 
               <div className="mt-8 grid gap-5 lg:grid-cols-3">
                 {result.directions.map((direction, index) => {
