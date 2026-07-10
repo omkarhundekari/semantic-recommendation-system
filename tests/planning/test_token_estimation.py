@@ -4,8 +4,11 @@ from pathlib import Path
 import pytest
 
 from planning.evidence_cards import build_evidence_cards_from_artifact
+from planning.evidence_cards import build_evidence_cards_from_artifact
+from planning.llm_prompt_builder import build_llm_synthesis_prompt
 from planning.token_estimation import (
     estimate_llm_synthesis_prompt_tokens,
+    estimate_tokens_for_prompt,
     estimate_tokens_for_sections,
     estimate_tokens_for_text,
     is_within_token_budget,
@@ -15,6 +18,10 @@ from planning.token_estimation import (
 def _load_cards(relative_path):
     artifact = json.loads(Path(relative_path).read_text())
     return build_evidence_cards_from_artifact(artifact)
+
+
+def _load_artifact(relative_path):
+    return json.loads(Path(relative_path).read_text())
 
 
 def test_text_token_estimation_uses_safety_multiplier():
@@ -134,3 +141,24 @@ def test_token_estimation_rejects_invalid_parameters():
     estimate = estimate_tokens_for_sections({"prompt": "abc"})
     with pytest.raises(ValueError):
         is_within_token_budget(estimate, token_budget=-1)
+
+
+
+def test_token_estimation_accepts_structured_prompt_contract():
+    artifact = _load_artifact(
+        "data/manual_fixture_artifacts/deterministic_template_risk/"
+        "1bc94b0f56984302922f13d42dcb2a2e.json"
+    )
+    cards = build_evidence_cards_from_artifact(artifact)
+    prompt = build_llm_synthesis_prompt(
+        user_goal=artifact["query"],
+        constraints=artifact["constraints"],
+        evidence_cards=cards,
+    )
+
+    estimate = estimate_tokens_for_prompt(prompt)
+
+    assert estimate.estimated_tokens > 0
+    assert estimate.section_token_estimates["evidence_cards"] > 0
+    assert "evidence_cards" in estimate.largest_sections
+    assert estimate.section_token_estimates["output_schema"] > 0

@@ -10,6 +10,11 @@ from planning.manual_review_store import (
     DEFAULT_MANUAL_REVIEW_STORE,
     load_manual_review_records,
 )
+from planning.llm_prompt_builder import (
+    OUTPUT_SCHEMA,
+    SYSTEM_INSTRUCTION,
+    build_llm_synthesis_prompt,
+)
 from planning.llm_routing_policy import (
     DEEP_MODE,
     FAST_MODE,
@@ -20,36 +25,12 @@ from planning.llm_routing_policy import (
 )
 from planning.token_estimation import (
     TokenEstimate,
-    estimate_llm_synthesis_prompt_tokens,
+    estimate_tokens_for_prompt,
 )
 
 
-DEFAULT_SYNTHESIS_SYSTEM_INSTRUCTION = (
-    "Generate grounded project directions using only the provided evidence cards. "
-    "Cite only source IDs that appear in the evidence cards. Preserve grounding "
-    "warnings and avoid overconfident claims when evidence is limited or adjacent."
-)
-
-DEFAULT_SYNTHESIS_OUTPUT_SCHEMA = {
-    "candidates": [
-        {
-            "title": "string",
-            "problem_statement": "string",
-            "target_user": "string",
-            "source_ids": ["string"],
-            "evidence_confidence": "Strong | Limited | Exploratory",
-            "grounding_notes": ["string"],
-            "mvp_scope": ["string"],
-            "advanced_extensions": ["string"],
-            "skills_demonstrated": ["string"],
-            "resume_bullet": "string",
-            "interview_talking_points": ["string"],
-        }
-    ],
-    "overall_confidence": "Strong | Limited | Exploratory",
-    "assumptions": ["string"],
-    "warnings": ["string"],
-}
+DEFAULT_SYNTHESIS_SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION
+DEFAULT_SYNTHESIS_OUTPUT_SCHEMA = OUTPUT_SCHEMA
 
 
 @dataclass(frozen=True)
@@ -104,14 +85,17 @@ def build_llm_readiness_report_from_artifact(
 
     mode_reports = []
     for mode in modes:
-        token_estimate = estimate_llm_synthesis_prompt_tokens(
+        prompt = build_llm_synthesis_prompt(
             user_goal=artifact["query"],
             constraints=artifact["constraints"],
             evidence_cards=evidence_cards,
-            mode=mode,
             system_instruction=system_instruction,
-            output_schema=output_schema,
+            output_schema={
+                **output_schema,
+                "synthesis_mode": mode,
+            },
         )
+        token_estimate = estimate_tokens_for_prompt(prompt)
         routing_decision = decide_llm_routing(
             evidence_cards=evidence_cards,
             session_budget=session_budget,

@@ -85,6 +85,27 @@ def estimate_tokens_for_sections(
     )
 
 
+def estimate_tokens_for_prompt(
+    prompt: Any,
+    *,
+    chars_per_token: int = DEFAULT_CHARS_PER_TOKEN,
+    safety_multiplier: float = DEFAULT_SAFETY_MULTIPLIER,
+) -> TokenEstimate:
+    if hasattr(prompt, "to_dict"):
+        prompt_payload = prompt.to_dict()
+    else:
+        prompt_payload = prompt
+
+    if not isinstance(prompt_payload, dict):
+        raise TypeError("prompt must be a dictionary or expose to_dict().")
+
+    return estimate_tokens_for_sections(
+        prompt_payload,
+        chars_per_token=chars_per_token,
+        safety_multiplier=safety_multiplier,
+    )
+
+
 def estimate_llm_synthesis_prompt_tokens(
     *,
     user_goal: str,
