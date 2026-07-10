@@ -18,10 +18,9 @@ from research_query_anchors import extract_required_anchor_terms
 from product_plan_readiness import assess_product_plan_readiness
 from planning.evidence_brief import build_evidence_brief
 from planning.live_evidence_cards import build_live_evidence_cards_from_brief
-from planning.llm_prompt_builder import (
-    OUTPUT_SCHEMA,
-    SYSTEM_INSTRUCTION,
-    build_llm_synthesis_prompt,
+from planning.llm_prompt_builder import build_llm_synthesis_prompt
+from planning.llm_synthesis_fallback import (
+    build_deterministic_synthesis_fallback,
 )
 from planning.llm_routing_policy import (
     DEEP_MODE,
@@ -286,6 +285,14 @@ def build_project_intelligence_synthesis_status(
         ),
     }
 
+    deterministic_preview = build_deterministic_synthesis_fallback(
+        evidence_cards=evidence_cards,
+    )
+
+    deterministic_preview["synthesis_source"] = (
+        "deterministic_fallback_preview"
+    )
+
     return {
         "available": False,
         "reason": (
@@ -306,6 +313,11 @@ def build_project_intelligence_synthesis_status(
         },
         "routing_preview": routing_decision.to_dict(),
         "token_estimate": token_estimate.to_dict(),
+        "live_final_synthesis_preview": {
+            "source": "deterministic_fallback_preview",
+            "fallback_used": True,
+            "parsed_response": deterministic_preview,
+        },
         "safety_pipeline": {
             "raw_output_validation": True,
             "deterministic_fallback": True,

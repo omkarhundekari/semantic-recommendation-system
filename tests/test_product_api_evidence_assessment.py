@@ -186,6 +186,20 @@ def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
     assert token_estimate["estimated_tokens"] > 0
     assert "evidence_cards" in token_estimate["section_token_estimates"]
 
+    preview = response.synthesis_status["live_final_synthesis_preview"]
+    assert preview["source"] == "deterministic_fallback_preview"
+    assert preview["fallback_used"] is True
+
+    parsed_preview = preview["parsed_response"]
+    assert parsed_preview["synthesis_source"] == (
+        "deterministic_fallback_preview"
+    )
+    assert len(parsed_preview["project_directions"]) == 3
+    assert all(
+        direction["source_ids"]
+        for direction in parsed_preview["project_directions"]
+    )
+
     assert response.synthesis_status["safety_pipeline"] == {
         "raw_output_validation": True,
         "deterministic_fallback": True,
