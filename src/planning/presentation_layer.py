@@ -61,7 +61,7 @@ def to_presentation_project_direction(
     )
 
     return PresentationProjectDirection(
-        title=str(direction.get("title", "Project Direction")),
+        title=_derive_presentation_title(direction),
         level=_derive_level(direction),
         estimated_time=str(direction.get("estimated_time", "Flexible")),
         what_you_will_build=_derive_what_you_will_build(direction),
@@ -89,6 +89,23 @@ def _cards_for_direction(
         for card in evidence_cards
         if str(getattr(card, "source_id", "")) in source_id_set
     ]
+
+
+def _derive_presentation_title(direction: dict[str, Any]) -> str:
+    raw_title = str(direction.get("title", "Project Direction")).strip()
+
+    prefixes = {
+        "Quick Evidence Trace: ": "Starter",
+        "Evidence-Grounded MVP: ": "MVP",
+        "Validation-Safe Project Engine: ": "Engine",
+    }
+
+    for prefix, suffix in prefixes.items():
+        if raw_title.startswith(prefix):
+            base_title = raw_title.replace(prefix, "", 1).strip()
+            return f"{base_title} {suffix}"
+
+    return raw_title
 
 
 def _derive_level(direction: dict[str, Any]) -> str:

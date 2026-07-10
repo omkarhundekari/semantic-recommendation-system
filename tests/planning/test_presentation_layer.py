@@ -111,3 +111,15 @@ def test_invalid_preview_hides_presentation_directions():
     )
 
     assert result == []
+
+
+def test_presentation_title_removes_internal_fallback_prefixes():
+    result = to_presentation_project_direction(
+        direction={
+            **_direction(),
+            "title": "Quick Evidence Trace: RAG Evaluation Dashboard",
+        },
+        evidence_cards=[_card()],
+    )
+
+    assert result.title == "RAG Evaluation Dashboard Starter"
