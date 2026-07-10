@@ -47,18 +47,20 @@ def main():
     print("Synthesis summary:")
     print(json.dumps(summary, indent=2, sort_keys=True))
     print()
-    print("Validated project directions:")
+    print("Presentation project directions:")
     for index, direction in enumerate(
-        synthesis_status.get("validated_project_directions", []),
+        synthesis_status.get("presentation_project_directions", []),
         start=1,
     ):
         print(
             f"{index}. "
-            f"{direction.get('scope_level')} / "
-            f"{direction.get('build_type')} / "
+            f"{direction.get('level')} / "
             f"{direction.get('estimated_time')}: "
             f"{direction.get('title')}"
         )
+        print(f"   Badge: {direction.get('evidence_badge')}")
+        print(f"   Skills: {', '.join(direction.get('skills_shown', [])[:3])}")
+        print(f"   Talking point: {direction.get('interview_talking_point')}")
 
     print()
     print("Live evidence cards:")
