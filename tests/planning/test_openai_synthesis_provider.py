@@ -97,7 +97,7 @@ def test_openai_provider_uses_responses_api_with_structured_prompt():
     call = client.responses.calls[0]
     assert call["model"] == DEFAULT_OPENAI_MODEL
     assert call["temperature"] == 0.2
-    assert call["max_output_tokens"] == 1200
+    assert call["max_output_tokens"] == 2500
 
     messages = call["input"]
     assert messages[0]["role"] == "system"

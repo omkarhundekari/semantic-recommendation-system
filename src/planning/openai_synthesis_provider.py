@@ -21,7 +21,7 @@ class OpenAISynthesisProvider:
     provider_name: str = "openai"
     api_key_env_var: str = "OPENAI_API_KEY"
     temperature: float = 0.2
-    max_output_tokens: int = 1200
+    max_output_tokens: int = 2500
     client: Any | None = None
 
     def synthesize(

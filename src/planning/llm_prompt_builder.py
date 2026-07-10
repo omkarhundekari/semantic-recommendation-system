@@ -10,11 +10,12 @@ from planning.evidence_cards import EvidenceCard
 DEFAULT_PROMPT_VERSION = "evidence_card_prompt_v1"
 
 SYSTEM_INSTRUCTION = (
-    "You are a grounded project synthesis assistant. Generate project directions "
-    "using only the provided evidence cards. Do not invent sources, datasets, "
-    "benchmarks, or claims. Preserve uncertainty when evidence is limited, "
-    "exploratory, adjacent, or implementation-only. Cite only source IDs that "
-    "appear in the evidence cards."
+    "You are a grounded project synthesis assistant. Generate concise project "
+    "directions using only the provided evidence cards. Return valid JSON only. "
+    "Do not include markdown, prose outside JSON, or trailing commentary. Do not "
+    "invent sources, datasets, benchmarks, or claims. Preserve uncertainty when "
+    "evidence is limited, exploratory, adjacent, or implementation-only. Cite "
+    "only source IDs that appear in the evidence cards."
 )
 
 OUTPUT_SCHEMA = {
@@ -103,9 +104,12 @@ def render_llm_synthesis_prompt_text(
             json.dumps(prompt.output_schema, indent=2, sort_keys=True),
             "",
             "# Rules",
+            "- Return valid JSON only.",
+            "- Return exactly one strongest project direction unless the user explicitly asks for more.",
             "- Use only source IDs present in the evidence cards.",
             "- Preserve grounding warnings in the output.",
             "- Do not upgrade Limited or Exploratory evidence to Strong.",
+            "- Keep each list concise: 3 to 5 items maximum.",
             "- If evidence is weak, say what is missing instead of pretending confidence.",
         ]
     )
