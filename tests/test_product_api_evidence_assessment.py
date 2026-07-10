@@ -232,3 +232,41 @@ def test_ready_api_response_exposes_synthesis_status_without_raw_llm_output():
         "deterministic_fallback": True,
         "final_synthesis_validation": True,
     }
+
+
+def test_project_intelligence_synthesis_status_serializes_for_frontend():
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal=(
+                "Build a retrieval augmented generation project for "
+                "question answering for ML engineer roles in 3 weeks"
+            ),
+            selected_direction="AI / ML",
+        )
+    )
+
+    payload = response.model_dump()
+
+    synthesis_status = payload["synthesis_status"]
+
+    assert synthesis_status["available"] is False
+    assert synthesis_status["synthesis_summary"]["status"] == "preview_valid"
+    assert synthesis_status["synthesis_summary"]["validated"] is True
+    assert synthesis_status["synthesis_summary"][
+        "grounded_direction_count"
+    ] == 3
+    assert synthesis_status["synthesis_summary"][
+        "invented_source_count"
+    ] == 0
+
+    preview = synthesis_status["live_final_synthesis_preview"]
+    assert preview["source"] == "deterministic_fallback_preview"
+    assert preview["fallback_used"] is True
+    assert len(preview["parsed_response"]["project_directions"]) == 3
+
+    validation = synthesis_status[
+        "live_final_synthesis_preview_validation"
+    ]
+    assert validation["is_valid"] is True
+    assert validation["invented_source_ids"] == ()
+    assert validation["failure_categories"] == ()
