@@ -319,7 +319,7 @@ def test_synthesis_summary_marks_invalid_preview_when_sources_are_invented():
     from planning.llm_synthesis_output_validator import (
         validate_synthesis_parsed_response_against_cards,
     )
-    from product_api import build_synthesis_summary
+    from planning.product_synthesis_status import build_synthesis_summary
 
     evidence_cards = [
         EvidenceCard(

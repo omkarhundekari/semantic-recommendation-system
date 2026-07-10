@@ -31,6 +31,7 @@ from planning.llm_routing_policy import (
     decide_llm_routing,
 )
 from planning.token_estimation import estimate_tokens_for_prompt
+from planning.product_synthesis_status import build_synthesis_summary
 from planning.product_enrichment import enrich_product_ideas
 from planning.llm_synthesis_demo import (
     build_default_output_path,
@@ -239,37 +240,6 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
         options.append("Help me choose")
 
     return options
-
-
-def build_synthesis_summary(
-    *,
-    routing_decision,
-    token_estimate,
-    evidence_cards,
-    preview_validation,
-) -> Dict:
-    grounded_direction_count = sum(
-        1
-        for trace in preview_validation.direction_grounding_traces
-        if trace.get("is_grounded")
-    )
-
-    if preview_validation.is_valid:
-        status = "preview_valid"
-    else:
-        status = "preview_invalid"
-
-    return {
-        "status": status,
-        "source": "deterministic_fallback_preview",
-        "can_run_llm": routing_decision.should_route,
-        "routing_reason": routing_decision.reason,
-        "card_count": len(evidence_cards),
-        "validated": preview_validation.is_valid,
-        "grounded_direction_count": grounded_direction_count,
-        "invented_source_count": len(preview_validation.invented_source_ids),
-        "estimated_tokens": token_estimate.estimated_tokens,
-    }
 
 
 def build_project_intelligence_synthesis_status(
