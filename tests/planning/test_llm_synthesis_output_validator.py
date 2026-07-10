@@ -393,3 +393,43 @@ def test_validate_synthesis_parsed_response_rejects_non_object_response():
     assert not validation.is_valid
     assert "parsed_response_not_object" in validation.errors
     assert validation.failure_categories == ("parse_failure",)
+
+
+def test_strong_direction_does_not_require_grounding_warning():
+    parsed_response = {
+        "project_directions": _make_scoped_directions(),
+        "overall_confidence": "Strong",
+        "assumptions": [],
+        "warnings": [],
+    }
+
+    for direction in parsed_response["project_directions"]:
+        direction["grounding_warnings"] = []
+
+    validation = validate_synthesis_parsed_response(
+        parsed_response=parsed_response,
+        artifact_path=ARTIFACT_PATH,
+    )
+
+    assert validation.is_valid
+    assert validation.warnings == ()
+
+
+def test_limited_direction_without_grounding_warning_gets_warning():
+    parsed_response = {
+        "project_directions": _make_scoped_directions(confidence="Limited"),
+        "overall_confidence": "Limited",
+        "assumptions": [],
+        "warnings": [],
+    }
+
+    for direction in parsed_response["project_directions"]:
+        direction["grounding_warnings"] = []
+
+    validation = validate_synthesis_parsed_response(
+        parsed_response=parsed_response,
+        artifact_path=ARTIFACT_PATH,
+    )
+
+    assert validation.is_valid
+    assert "project_direction_0_missing_grounding_warnings" in validation.warnings

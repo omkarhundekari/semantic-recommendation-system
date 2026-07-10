@@ -436,13 +436,23 @@ def _validate_parsed_response(
                 f"project_direction_{index}_invalid_evidence_confidence"
             )
 
-        if not direction.get("grounding_warnings"):
+        if _direction_needs_grounding_warning(direction):
             warnings.append(
                 f"project_direction_{index}_missing_grounding_warnings"
             )
 
         if not direction.get("resume_bullet"):
             warnings.append(f"project_direction_{index}_missing_resume_bullet")
+
+
+def _direction_needs_grounding_warning(direction: dict[str, Any]) -> bool:
+    grounding_warnings = direction.get("grounding_warnings")
+    evidence_confidence = direction.get("evidence_confidence")
+
+    if grounding_warnings:
+        return False
+
+    return evidence_confidence in {"Limited", "Exploratory"}
 
 
 def _validate_direction_scope_sequence(
