@@ -13,6 +13,52 @@ ARTIFACT_PATH = Path(
 )
 
 
+def _make_scoped_directions(source_ids=None, confidence="Strong"):
+    source_ids = source_ids or [
+        "paper-data-quality-impact",
+        "paper-owner-aware-lineage",
+    ]
+
+    base = {
+        "title": "Scoped Project Direction",
+        "problem_statement": "Build a grounded project from evidence cards.",
+        "target_user": "students and early-career engineers",
+        "why_this_is_grounded": "The cited source IDs appear in the evidence cards.",
+        "source_ids": source_ids,
+        "evidence_confidence": confidence,
+        "grounding_warnings": ["No additional warning."],
+        "mvp_scope": ["Build the core workflow."],
+        "advanced_extensions": ["Add a stronger evaluation layer."],
+        "skills_demonstrated": ["Python", "PostgreSQL"],
+        "resume_bullet": "Built a grounded project synthesis workflow.",
+        "interview_talking_points": ["Explain evidence-grounded synthesis."],
+    }
+
+    return [
+        {
+            **base,
+            "scope_level": "easy",
+            "build_type": "quick_build",
+            "estimated_time": "1-2 days",
+            "title": "Quick Build Direction",
+        },
+        {
+            **base,
+            "scope_level": "medium",
+            "build_type": "resume_mvp",
+            "estimated_time": "3-5 days",
+            "title": "Resume MVP Direction",
+        },
+        {
+            **base,
+            "scope_level": "hard",
+            "build_type": "flagship_extension",
+            "estimated_time": "1-2 weeks",
+            "title": "Flagship Extension Direction",
+        },
+    ]
+
+
 def test_validator_accepts_saved_valid_synthesis_output(tmp_path):
     output_path = tmp_path / "valid_output.json"
 
@@ -21,11 +67,7 @@ def test_validator_accepts_saved_valid_synthesis_output(tmp_path):
         output_path=output_path,
     )
     parsed = result["response"]["parsed_response"]
-    parsed["project_directions"][0]["source_ids"] = [
-        "paper-data-quality-impact",
-        "paper-owner-aware-lineage",
-    ]
-    parsed["project_directions"][0]["evidence_confidence"] = "Strong"
+    parsed["project_directions"] = _make_scoped_directions()
     parsed["overall_confidence"] = "Strong"
     output_path.write_text(json.dumps(result, indent=2))
 
@@ -50,10 +92,9 @@ def test_validator_rejects_invented_source_ids(tmp_path):
         output_path=output_path,
     )
     parsed = result["response"]["parsed_response"]
-    parsed["project_directions"][0]["source_ids"] = [
-        "made-up-source",
-    ]
-    parsed["project_directions"][0]["evidence_confidence"] = "Strong"
+    parsed["project_directions"] = _make_scoped_directions(
+        source_ids=["made-up-source"]
+    )
     parsed["overall_confidence"] = "Strong"
     output_path.write_text(json.dumps(result, indent=2))
 
@@ -95,7 +136,9 @@ def test_validator_rejects_invalid_confidence_labels(tmp_path):
     )
     parsed = result["response"]["parsed_response"]
     parsed["overall_confidence"] = "Very Strong"
-    parsed["project_directions"][0]["evidence_confidence"] = "Very Strong"
+    parsed["project_directions"] = _make_scoped_directions(
+        confidence="Very Strong"
+    )
     output_path.write_text(json.dumps(result, indent=2))
 
     validation = validate_saved_synthesis_output(
@@ -143,3 +186,47 @@ def test_validator_rejects_committed_invalid_truncated_sample_output():
     assert not validation.is_valid
     assert "missing_parsed_response" in validation.errors
     assert "response_contains_warnings" in validation.errors
+
+
+
+def test_validator_rejects_wrong_scoped_direction_sequence(tmp_path):
+    output_path = tmp_path / "wrong_scope.json"
+
+    result = run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+    )
+    parsed = result["response"]["parsed_response"]
+    parsed["project_directions"] = _make_scoped_directions()
+    parsed["project_directions"][0]["scope_level"] = "hard"
+    parsed["overall_confidence"] = "Strong"
+    output_path.write_text(json.dumps(result, indent=2))
+
+    validation = validate_saved_synthesis_output(
+        output_path=output_path,
+    )
+
+    assert not validation.is_valid
+    assert "project_direction_0_invalid_scope_level" in validation.errors
+
+
+
+def test_validator_rejects_wrong_scoped_direction_sequence(tmp_path):
+    output_path = tmp_path / "wrong_scope.json"
+
+    result = run_llm_synthesis_demo(
+        artifact_path=ARTIFACT_PATH,
+        output_path=output_path,
+    )
+    parsed = result["response"]["parsed_response"]
+    parsed["project_directions"] = _make_scoped_directions()
+    parsed["project_directions"][0]["scope_level"] = "hard"
+    parsed["overall_confidence"] = "Strong"
+    output_path.write_text(json.dumps(result, indent=2))
+
+    validation = validate_saved_synthesis_output(
+        output_path=output_path,
+    )
+
+    assert not validation.is_valid
+    assert "project_direction_0_invalid_scope_level" in validation.errors

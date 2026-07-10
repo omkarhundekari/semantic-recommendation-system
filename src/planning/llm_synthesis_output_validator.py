@@ -15,6 +15,12 @@ VALID_CONFIDENCE_LABELS = {
     "Exploratory",
 }
 
+EXPECTED_DIRECTION_SCOPES = (
+    ("easy", "quick_build", "1-2 days"),
+    ("medium", "resume_mvp", "3-5 days"),
+    ("hard", "flagship_extension", "1-2 weeks"),
+)
+
 
 @dataclass(frozen=True)
 class LLMSynthesisOutputValidation:
@@ -125,6 +131,13 @@ def _validate_parsed_response(
     project_directions = parsed_response.get("project_directions")
     if not isinstance(project_directions, list) or not project_directions:
         errors.append("missing_project_directions")
+    elif len(project_directions) != len(EXPECTED_DIRECTION_SCOPES):
+        errors.append("invalid_project_direction_count")
+    else:
+        _validate_direction_scope_sequence(
+            project_directions=project_directions,
+            errors=errors,
+        )
 
     overall_confidence = parsed_response.get("overall_confidence")
     if overall_confidence not in VALID_CONFIDENCE_LABELS:
@@ -154,6 +167,28 @@ def _validate_parsed_response(
 
         if not direction.get("resume_bullet"):
             warnings.append(f"project_direction_{index}_missing_resume_bullet")
+
+
+def _validate_direction_scope_sequence(
+    *,
+    project_directions: list[Any],
+    errors: list[str],
+) -> None:
+    for index, expected in enumerate(EXPECTED_DIRECTION_SCOPES):
+        expected_scope, expected_build_type, expected_time = expected
+        direction = project_directions[index]
+
+        if not isinstance(direction, dict):
+            continue
+
+        if direction.get("scope_level") != expected_scope:
+            errors.append(f"project_direction_{index}_invalid_scope_level")
+
+        if direction.get("build_type") != expected_build_type:
+            errors.append(f"project_direction_{index}_invalid_build_type")
+
+        if direction.get("estimated_time") != expected_time:
+            errors.append(f"project_direction_{index}_invalid_estimated_time")
 
 
 def _collect_cited_source_ids(parsed_response: Any) -> set[str]:

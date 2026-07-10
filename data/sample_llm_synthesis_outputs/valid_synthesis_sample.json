@@ -43,7 +43,7 @@
   "response": {
     "provider_name": "openai",
     "model_name": "gpt-5.4-mini",
-    "raw_response_text": "{\n  \"assumptions\": [\n    \"The project will focus on known data-quality incidents and their downstream blast radius, not on detecting incidents from raw telemetry.\",\n    \"Dashboard ownership and dataset owner metadata are available or can be ingested into PostgreSQL.\",\n    \"Support engineers need a fast way to answer: which dashboards, owners, and business views are affected?\"\n  ],\n  \"overall_confidence\": \"Strong\",\n  \"project_directions\": [\n    {\n      \"advanced_extensions\": [\n        \"Add incident severity scoring based on number of impacted dashboards and owners\",\n        \"Generate notification drafts for affected owners and support teams\",\n        \"Add a timeline view of upstream failure to downstream impact propagation\"\n      ],\n      \"evidence_confidence\": \"Strong\",\n      \"grounding_warnings\": [\n        \"Evidence supports impact analysis and owner-aware lineage, but not a specific production architecture.\",\n        \"No evidence for automated root-cause detection; keep scope to impact mapping and reporting.\"\n      ],\n      \"interview_talking_points\": [\n        \"How lineage plus owner metadata can turn an incident into an actionable impact report\",\n        \"How to model dashboard dependencies and upstream data-quality events in PostgreSQL\",\n        \"How to prioritize communication by identifying affected dashboards, owners, and business views\"\n      ],\n      \"mvp_scope\": [\n        \"Ingest dashboard dependencies, upstream data-quality events, dataset owners, and business-view mappings into PostgreSQL\",\n        \"Compute impacted downstream dashboards and owners for a known incident\",\n        \"Expose a simple Python API or CLI that returns an incident impact report\"\n      ],\n      \"problem_statement\": \"Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.\",\n      \"resume_bullet\": \"Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.\",\n      \"skills_demonstrated\": [\n        \"Python backend development\",\n        \"PostgreSQL data modeling\",\n        \"Lineage and dependency analysis\",\n        \"Incident impact reporting\"\n      ],\n      \"source_ids\": [\n        \"paper-data-quality-impact\",\n        \"paper-owner-aware-lineage\",\n        \"repo-dashboard-impact\"\n      ],\n      \"target_user\": \"Support engineers handling data-quality incidents\",\n      \"title\": \"Data Quality Incident Impact Map\",\n      \"why_this_is_grounded\": \"The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures.\"\n    }\n  ],\n  \"warnings\": [\n    \"Evidence is strong for impact analysis, but limited for implementation details beyond loading dependencies and metadata.\",\n    \"No benchmark, dataset name, or production system constraints were provided in the evidence cards.\"\n  ]\n}",
+    "raw_response_text": "{\n  \"assumptions\": [\n    \"The project will focus on known data-quality incidents and their downstream blast radius, not on detecting incidents from raw telemetry.\",\n    \"Dashboard ownership and dataset owner metadata are available or can be ingested into PostgreSQL.\",\n    \"Support engineers need a fast way to answer: which dashboards, owners, and business views are affected?\"\n  ],\n  \"overall_confidence\": \"Strong\",\n  \"project_directions\": [\n    {\n      \"problem_statement\": \"Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.\",\n      \"target_user\": \"Support engineers handling data-quality incidents\",\n      \"why_this_is_grounded\": \"The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures.\",\n      \"source_ids\": [\n        \"paper-data-quality-impact\",\n        \"paper-owner-aware-lineage\",\n        \"repo-dashboard-impact\"\n      ],\n      \"evidence_confidence\": \"Strong\",\n      \"grounding_warnings\": [\n        \"Evidence supports impact analysis and owner-aware lineage, but not a specific production architecture.\",\n        \"No evidence for automated root-cause detection; keep scope to impact mapping and reporting.\"\n      ],\n      \"skills_demonstrated\": [\n        \"Python backend development\",\n        \"PostgreSQL data modeling\",\n        \"Lineage and dependency analysis\",\n        \"Incident impact reporting\"\n      ],\n      \"resume_bullet\": \"Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.\",\n      \"interview_talking_points\": [\n        \"How lineage plus owner metadata can turn an incident into an actionable impact report\",\n        \"How to model dashboard dependencies and upstream data-quality events in PostgreSQL\",\n        \"How to prioritize communication by identifying affected dashboards, owners, and business views\"\n      ],\n      \"scope_level\": \"easy\",\n      \"build_type\": \"quick_build\",\n      \"estimated_time\": \"1-2 days\",\n      \"title\": \"Incident Impact CLI\",\n      \"mvp_scope\": [\n        \"Load dataset owners and dashboard dependencies into PostgreSQL\",\n        \"Accept a known upstream data-quality incident ID\",\n        \"Return affected dashboards, reports, and owners from a Python CLI\"\n      ],\n      \"advanced_extensions\": [\n        \"Add CSV import/export\",\n        \"Add simple owner notification templates\",\n        \"Add incident history lookup\"\n      ]\n    },\n    {\n      \"problem_statement\": \"Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.\",\n      \"target_user\": \"Support engineers handling data-quality incidents\",\n      \"why_this_is_grounded\": \"The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures.\",\n      \"source_ids\": [\n        \"paper-data-quality-impact\",\n        \"paper-owner-aware-lineage\",\n        \"repo-dashboard-impact\"\n      ],\n      \"evidence_confidence\": \"Strong\",\n      \"grounding_warnings\": [\n        \"Evidence supports impact analysis and owner-aware lineage, but not a specific production architecture.\",\n        \"No evidence for automated root-cause detection; keep scope to impact mapping and reporting.\"\n      ],\n      \"skills_demonstrated\": [\n        \"Python backend development\",\n        \"PostgreSQL data modeling\",\n        \"Lineage and dependency analysis\",\n        \"Incident impact reporting\"\n      ],\n      \"resume_bullet\": \"Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.\",\n      \"interview_talking_points\": [\n        \"How lineage plus owner metadata can turn an incident into an actionable impact report\",\n        \"How to model dashboard dependencies and upstream data-quality events in PostgreSQL\",\n        \"How to prioritize communication by identifying affected dashboards, owners, and business views\"\n      ],\n      \"scope_level\": \"medium\",\n      \"build_type\": \"resume_mvp\",\n      \"estimated_time\": \"3-5 days\",\n      \"title\": \"Data Quality Incident Impact Map\",\n      \"mvp_scope\": [\n        \"Ingest dashboard dependencies, upstream data-quality events, dataset owners, and business-view mappings into PostgreSQL\",\n        \"Compute impacted downstream dashboards and owners for a known incident\",\n        \"Expose a simple Python API or CLI that returns an incident impact report\"\n      ],\n      \"advanced_extensions\": [\n        \"Add incident severity scoring based on number of impacted dashboards and owners\",\n        \"Generate notification drafts for affected owners and support teams\",\n        \"Add a timeline view of upstream failure to downstream impact propagation\"\n      ]\n    },\n    {\n      \"problem_statement\": \"Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.\",\n      \"target_user\": \"Support engineers handling data-quality incidents\",\n      \"why_this_is_grounded\": \"The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures.\",\n      \"source_ids\": [\n        \"paper-data-quality-impact\",\n        \"paper-owner-aware-lineage\",\n        \"repo-dashboard-impact\"\n      ],\n      \"evidence_confidence\": \"Strong\",\n      \"grounding_warnings\": [\n        \"Evidence supports impact analysis and owner-aware lineage, but not a specific production architecture.\",\n        \"No evidence for automated root-cause detection; keep scope to impact mapping and reporting.\"\n      ],\n      \"skills_demonstrated\": [\n        \"Python backend development\",\n        \"PostgreSQL data modeling\",\n        \"Lineage and dependency analysis\",\n        \"Incident impact reporting\"\n      ],\n      \"resume_bullet\": \"Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.\",\n      \"interview_talking_points\": [\n        \"How lineage plus owner metadata can turn an incident into an actionable impact report\",\n        \"How to model dashboard dependencies and upstream data-quality events in PostgreSQL\",\n        \"How to prioritize communication by identifying affected dashboards, owners, and business views\"\n      ],\n      \"scope_level\": \"hard\",\n      \"build_type\": \"flagship_extension\",\n      \"estimated_time\": \"1-2 weeks\",\n      \"title\": \"Owner-Aware Incident Intelligence Dashboard\",\n      \"mvp_scope\": [\n        \"Build a Python API for incident impact lookup\",\n        \"Model lineage, owner metadata, dashboards, reports, and business views\",\n        \"Add a web dashboard for blast-radius exploration\",\n        \"Generate support-ready incident summaries from grounded evidence\"\n      ],\n      \"advanced_extensions\": [\n        \"Add severity scoring from number of impacted dashboards and owners\",\n        \"Add a timeline view of upstream-to-downstream impact propagation\",\n        \"Add acknowledgement tracking for affected owners\"\n      ]\n    }\n  ],\n  \"warnings\": [\n    \"Evidence is strong for impact analysis, but limited for implementation details beyond loading dependencies and metadata.\",\n    \"No benchmark, dataset name, or production system constraints were provided in the evidence cards.\"\n  ]\n}",
     "parsed_response": {
       "assumptions": [
         "The project will focus on known data-quality incidents and their downstream blast radius, not on detecting incidents from raw telemetry.",
@@ -53,42 +53,128 @@
       "overall_confidence": "Strong",
       "project_directions": [
         {
-          "advanced_extensions": [
-            "Add incident severity scoring based on number of impacted dashboards and owners",
-            "Generate notification drafts for affected owners and support teams",
-            "Add a timeline view of upstream failure to downstream impact propagation"
+          "problem_statement": "Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.",
+          "target_user": "Support engineers handling data-quality incidents",
+          "why_this_is_grounded": "The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures.",
+          "source_ids": [
+            "paper-data-quality-impact",
+            "paper-owner-aware-lineage",
+            "repo-dashboard-impact"
           ],
           "evidence_confidence": "Strong",
           "grounding_warnings": [
             "Evidence supports impact analysis and owner-aware lineage, but not a specific production architecture.",
             "No evidence for automated root-cause detection; keep scope to impact mapping and reporting."
           ],
-          "interview_talking_points": [
-            "How lineage plus owner metadata can turn an incident into an actionable impact report",
-            "How to model dashboard dependencies and upstream data-quality events in PostgreSQL",
-            "How to prioritize communication by identifying affected dashboards, owners, and business views"
-          ],
-          "mvp_scope": [
-            "Ingest dashboard dependencies, upstream data-quality events, dataset owners, and business-view mappings into PostgreSQL",
-            "Compute impacted downstream dashboards and owners for a known incident",
-            "Expose a simple Python API or CLI that returns an incident impact report"
-          ],
-          "problem_statement": "Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.",
-          "resume_bullet": "Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.",
           "skills_demonstrated": [
             "Python backend development",
             "PostgreSQL data modeling",
             "Lineage and dependency analysis",
             "Incident impact reporting"
           ],
+          "resume_bullet": "Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.",
+          "interview_talking_points": [
+            "How lineage plus owner metadata can turn an incident into an actionable impact report",
+            "How to model dashboard dependencies and upstream data-quality events in PostgreSQL",
+            "How to prioritize communication by identifying affected dashboards, owners, and business views"
+          ],
+          "scope_level": "easy",
+          "build_type": "quick_build",
+          "estimated_time": "1-2 days",
+          "title": "Incident Impact CLI",
+          "mvp_scope": [
+            "Load dataset owners and dashboard dependencies into PostgreSQL",
+            "Accept a known upstream data-quality incident ID",
+            "Return affected dashboards, reports, and owners from a Python CLI"
+          ],
+          "advanced_extensions": [
+            "Add CSV import/export",
+            "Add simple owner notification templates",
+            "Add incident history lookup"
+          ]
+        },
+        {
+          "problem_statement": "Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.",
+          "target_user": "Support engineers handling data-quality incidents",
+          "why_this_is_grounded": "The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures.",
           "source_ids": [
             "paper-data-quality-impact",
             "paper-owner-aware-lineage",
             "repo-dashboard-impact"
           ],
-          "target_user": "Support engineers handling data-quality incidents",
+          "evidence_confidence": "Strong",
+          "grounding_warnings": [
+            "Evidence supports impact analysis and owner-aware lineage, but not a specific production architecture.",
+            "No evidence for automated root-cause detection; keep scope to impact mapping and reporting."
+          ],
+          "skills_demonstrated": [
+            "Python backend development",
+            "PostgreSQL data modeling",
+            "Lineage and dependency analysis",
+            "Incident impact reporting"
+          ],
+          "resume_bullet": "Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.",
+          "interview_talking_points": [
+            "How lineage plus owner metadata can turn an incident into an actionable impact report",
+            "How to model dashboard dependencies and upstream data-quality events in PostgreSQL",
+            "How to prioritize communication by identifying affected dashboards, owners, and business views"
+          ],
+          "scope_level": "medium",
+          "build_type": "resume_mvp",
+          "estimated_time": "3-5 days",
           "title": "Data Quality Incident Impact Map",
-          "why_this_is_grounded": "The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures."
+          "mvp_scope": [
+            "Ingest dashboard dependencies, upstream data-quality events, dataset owners, and business-view mappings into PostgreSQL",
+            "Compute impacted downstream dashboards and owners for a known incident",
+            "Expose a simple Python API or CLI that returns an incident impact report"
+          ],
+          "advanced_extensions": [
+            "Add incident severity scoring based on number of impacted dashboards and owners",
+            "Generate notification drafts for affected owners and support teams",
+            "Add a timeline view of upstream failure to downstream impact propagation"
+          ]
+        },
+        {
+          "problem_statement": "Support engineers need a reliable way to understand which downstream dashboards and owners are affected after a known data-quality incident so they can prioritize communication and remediation.",
+          "target_user": "Support engineers handling data-quality incidents",
+          "why_this_is_grounded": "The evidence directly mentions downstream dashboards, owners, reports, dependent datasets, owner metadata, impacted assets, and generating incident impact reports after upstream failures.",
+          "source_ids": [
+            "paper-data-quality-impact",
+            "paper-owner-aware-lineage",
+            "repo-dashboard-impact"
+          ],
+          "evidence_confidence": "Strong",
+          "grounding_warnings": [
+            "Evidence supports impact analysis and owner-aware lineage, but not a specific production architecture.",
+            "No evidence for automated root-cause detection; keep scope to impact mapping and reporting."
+          ],
+          "skills_demonstrated": [
+            "Python backend development",
+            "PostgreSQL data modeling",
+            "Lineage and dependency analysis",
+            "Incident impact reporting"
+          ],
+          "resume_bullet": "Built a Python/PostgreSQL incident impact mapping tool that joins dashboard dependencies, upstream data-quality events, and owner metadata to generate downstream blast-radius reports for support engineers.",
+          "interview_talking_points": [
+            "How lineage plus owner metadata can turn an incident into an actionable impact report",
+            "How to model dashboard dependencies and upstream data-quality events in PostgreSQL",
+            "How to prioritize communication by identifying affected dashboards, owners, and business views"
+          ],
+          "scope_level": "hard",
+          "build_type": "flagship_extension",
+          "estimated_time": "1-2 weeks",
+          "title": "Owner-Aware Incident Intelligence Dashboard",
+          "mvp_scope": [
+            "Build a Python API for incident impact lookup",
+            "Model lineage, owner metadata, dashboards, reports, and business views",
+            "Add a web dashboard for blast-radius exploration",
+            "Generate support-ready incident summaries from grounded evidence"
+          ],
+          "advanced_extensions": [
+            "Add severity scoring from number of impacted dashboards and owners",
+            "Add a timeline view of upstream-to-downstream impact propagation",
+            "Add acknowledgement tracking for affected owners"
+          ]
         }
       ],
       "warnings": [

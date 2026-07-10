@@ -157,3 +157,29 @@ def test_prompt_json_is_deterministic():
     )
 
     assert prompt_one.to_json() == prompt_two.to_json()
+
+
+
+def test_prompt_schema_requires_three_scoped_project_directions():
+    prompt = _prompt_for_artifact(
+        "data/manual_fixture_artifacts/deterministic_template_risk/"
+        "1bc94b0f56984302922f13d42dcb2a2e.json"
+    )
+
+    directions = prompt.output_schema["project_directions"]
+
+    assert [direction["scope_level"] for direction in directions] == [
+        "easy",
+        "medium",
+        "hard",
+    ]
+    assert [direction["build_type"] for direction in directions] == [
+        "quick_build",
+        "resume_mvp",
+        "flagship_extension",
+    ]
+    assert [direction["estimated_time"] for direction in directions] == [
+        "1-2 days",
+        "3-5 days",
+        "1-2 weeks",
+    ]
