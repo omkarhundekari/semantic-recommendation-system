@@ -8,6 +8,60 @@ from planning.domain_playbook_loader import DomainPlaybook, load_playbook_or_gen
 from planning.query_anchor_direction_adapter import extract_query_anchors
 
 
+KNOWN_STACK_TERMS = [
+    "Next.js",
+    "TypeScript",
+    "JavaScript",
+    "React",
+    "Vue",
+    "Angular",
+    "Python",
+    "FastAPI",
+    "Flask",
+    "Django",
+    "Node.js",
+    "Express",
+    "PostgreSQL",
+    "MySQL",
+    "MongoDB",
+    "Redis",
+    "Docker",
+    "Kubernetes",
+    "AWS",
+    "Firebase",
+    "Tailwind",
+]
+
+DOMAIN_STACK_TERMS = {
+    "frontend": {
+        "Next.js",
+        "TypeScript",
+        "JavaScript",
+        "React",
+        "Vue",
+        "Angular",
+        "Tailwind",
+        "Firebase",
+    },
+    "rag_llm": {
+        "Python",
+        "FastAPI",
+        "PostgreSQL",
+        "Docker",
+        "AWS",
+    },
+    "education_tech": {
+        "React",
+        "Next.js",
+        "TypeScript",
+        "JavaScript",
+        "Python",
+        "FastAPI",
+        "Firebase",
+    },
+}
+
+
 @dataclass(frozen=True)
 class MissionContext:
     user_goal: str
@@ -47,8 +101,23 @@ def build_mission_context(
     )
 
     preferred_stack = _as_string_list(safe_constraints.get("preferred_stack"))
-    idea_stack = _as_string_list(idea.get("suggested_tech_stack"))
-    primary_stack = _dedupe_preserve_order(preferred_stack + idea_stack)[:5]
+    query_stack = _extract_stack_terms(
+        " ".join(
+            [
+                user_goal,
+                query,
+                str(idea.get("project_title", "") or ""),
+            ]
+        )
+    )
+    idea_stack = _filter_stack_for_domain(
+        stack=_as_string_list(idea.get("suggested_tech_stack")),
+        domain=domain,
+        has_explicit_stack=bool(preferred_stack or query_stack),
+    )
+    primary_stack = _dedupe_preserve_order(
+        preferred_stack + query_stack + idea_stack
+    )[:5]
 
     query_anchors = extract_query_anchors(query or user_goal)
     if not query_anchors:
@@ -135,3 +204,56 @@ def _bucket_timeline(timeline: str) -> str:
         return "semester"
 
     return "2_3_weeks"
+
+
+def _extract_stack_terms(text: str) -> List[str]:
+    normalized = text.lower()
+    detected = []
+
+    for stack in KNOWN_STACK_TERMS:
+        if _contains_stack_term(normalized, stack):
+            detected.append(stack)
+
+    return detected
+
+
+def _contains_stack_term(normalized_text: str, stack: str) -> bool:
+    normalized_stack = stack.lower()
+
+    aliases = {
+        "next.js": ["next.js", "nextjs", "next js"],
+        "node.js": ["node.js", "nodejs", "node js"],
+        "typescript": ["typescript", "type script", "ts"],
+        "javascript": ["javascript", "java script", "js"],
+        "postgresql": ["postgresql", "postgres"],
+    }
+
+    candidates = aliases.get(normalized_stack, [normalized_stack])
+
+    return any(
+        re.search(
+            rf"(?<![a-z0-9]){re.escape(candidate)}(?![a-z0-9])",
+            normalized_text,
+        )
+        for candidate in candidates
+    )
+
+
+def _filter_stack_for_domain(
+    *,
+    stack: List[str],
+    domain: str,
+    has_explicit_stack: bool,
+) -> List[str]:
+    if not has_explicit_stack:
+        return stack
+
+    allowed = DOMAIN_STACK_TERMS.get(domain)
+    if not allowed:
+        return stack
+
+    return [
+        item
+        for item in stack
+        if item in allowed
+    ]

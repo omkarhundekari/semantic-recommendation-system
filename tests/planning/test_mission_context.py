@@ -70,3 +70,57 @@ def test_timeline_bucket_handles_one_week():
     )
 
     assert context.timeline_bucket == "1_week"
+
+
+def test_mission_context_prefers_stack_terms_from_query_before_idea_stack():
+    context = build_mission_context(
+        idea={
+            "project_title": "React Frontend Portfolio Frontend Experience",
+            "project_summary": "Build a frontend portfolio workflow.",
+            "detected_domain": "frontend",
+            "suggested_tech_stack": ["Python", "FastAPI", "PostgreSQL"],
+        },
+        user_goal="Build a React frontend portfolio project",
+        query="Build a React frontend portfolio project",
+        resolved_planning_domain="frontend",
+        constraints={},
+        evidence_coverage={},
+    )
+
+    assert context.primary_stack == ["React"]
+
+
+def test_mission_context_detects_typescript_and_nextjs_aliases():
+    context = build_mission_context(
+        idea={
+            "project_title": "Next Frontend Build",
+            "project_summary": "Build a frontend portfolio workflow.",
+            "detected_domain": "frontend",
+            "suggested_tech_stack": ["Python"],
+        },
+        user_goal="Build a NextJS frontend in TS",
+        query="Build a NextJS frontend in TS",
+        resolved_planning_domain="frontend",
+        constraints={},
+        evidence_coverage={},
+    )
+
+    assert context.primary_stack == ["Next.js", "TypeScript"]
+
+
+def test_mission_context_keeps_idea_stack_when_query_has_no_stack_terms():
+    context = build_mission_context(
+        idea={
+            "project_title": "Frontend Portfolio Experience",
+            "project_summary": "Build a frontend portfolio workflow.",
+            "detected_domain": "frontend",
+            "suggested_tech_stack": ["Python", "FastAPI", "PostgreSQL"],
+        },
+        user_goal="Build a portfolio project",
+        query="Build a portfolio project",
+        resolved_planning_domain="frontend",
+        constraints={},
+        evidence_coverage={},
+    )
+
+    assert context.primary_stack[:3] == ["Python", "FastAPI", "PostgreSQL"]
