@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -65,6 +65,13 @@ app.add_middleware(
 )
 
 
+BROAD_PLANNING_DOMAINS = {
+    "ai_ml",
+    "software_engineering",
+    "general",
+}
+
+
 SUPPORTED_PLANNING_DOMAINS = {
     "ai_ml",
     "backend",
@@ -107,6 +114,42 @@ def build_research_evidence_assessment(
         query=query,
         required_anchor_terms=required_anchor_terms,
     )
+
+
+def resolve_planning_domain(
+    *,
+    explicit_domain: Optional[str],
+    inferred_focus: Optional[str],
+) -> Optional[str]:
+    explicit = (explicit_domain or "").strip()
+    inferred = (inferred_focus or "").strip()
+
+    if explicit and explicit != "general":
+        return explicit
+
+    if inferred and inferred != "general":
+        return inferred
+
+    return explicit or inferred or None
+
+
+
+def resolve_response_planning_domain(
+    *,
+    planning_domain: Optional[str],
+    generated_domain: Optional[str],
+) -> Optional[str]:
+    planned = (planning_domain or "").strip()
+    generated = (generated_domain or "").strip()
+
+    if (
+        planned in BROAD_PLANNING_DOMAINS
+        and generated
+        and generated not in BROAD_PLANNING_DOMAINS
+    ):
+        return generated
+
+    return planned or generated or None
 
 
 def build_roadmap(idea: Dict) -> List[RoadmapStage]:
@@ -437,6 +480,10 @@ def generate_project_intelligence(
 
     inference = evidence_payload["inference"]
     evidence_items = evidence_payload["merged_results"]
+    planning_domain = resolve_planning_domain(
+        explicit_domain=correction_metadata.get("detected_domain"),
+        inferred_focus=inference.get("inferred_focus"),
+    )
     research_evidence_assessment = build_research_evidence_assessment(
         evidence_payload,
         query=corrected_query,
@@ -450,8 +497,7 @@ def generate_project_intelligence(
         classify_evidence_coverage(
             evidence_cards,
             query=corrected_query,
-            detected_domain=inference.get("inferred_focus")
-            or correction_metadata.get("detected_domain"),
+            detected_domain=planning_domain,
             supported_domains=SUPPORTED_PLANNING_DOMAINS,
             domain_inference=inference,
             query_metadata=correction_metadata,
@@ -509,7 +555,7 @@ def generate_project_intelligence(
             query=query,
             corrected_query=corrected_query,
             goal_summary=corrected_query,
-            detected_domain=inference.get("inferred_focus"),
+            detected_domain=planning_domain,
             detected_intent=correction_metadata.get("detected_intent"),
             evidence_route=evidence_payload.get("selected_route"),
             evidence_coverage=evidence_coverage,
@@ -563,7 +609,7 @@ def generate_project_intelligence(
         corrected_query,
         max_ideas=3,
         constraints=constraints,
-        detected_domain=inference.get("inferred_focus"),
+        detected_domain=planning_domain,
     )
 
     enrichment = enrich_product_ideas(
@@ -702,7 +748,7 @@ def generate_project_intelligence(
         query=query,
         corrected_query=corrected_query,
         goal_summary=corrected_query,
-        detected_domain=inference.get("inferred_focus"),
+        detected_domain=planning_domain,
         detected_intent=correction_metadata.get("detected_intent"),
         evidence_route=evidence_payload.get("selected_route"),
         evidence_coverage=evidence_coverage,
@@ -732,10 +778,13 @@ def generate_project_intelligence(
         family_confidence=inference.get("family_confidence"),
         inferred_focus=inference.get("inferred_focus"),
         focus_confidence=inference.get("focus_confidence"),
-        resolved_planning_domain=(
-            ideas[0].get("detected_domain")
-            if ideas
-            else None
+        resolved_planning_domain=resolve_response_planning_domain(
+            planning_domain=planning_domain,
+            generated_domain=(
+                ideas[0].get("detected_domain")
+                if ideas
+                else None
+            ),
         ),
         candidate_families=inference.get(
             "candidate_families",

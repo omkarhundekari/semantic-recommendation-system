@@ -528,3 +528,29 @@ def test_project_intelligence_response_includes_evidence_coverage():
     assert "can_generate_directions" in payload["evidence_coverage"]
     assert payload["evidence_coverage"]["unique_source_count"] > 0
 
+def test_explicit_user_domain_is_preserved_over_weaker_inferred_focus():
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal="AR VR education project",
+            constraints={
+                "skill_level": "intermediate",
+                "time_available": "3 weeks",
+                "target_roles": ["Software Engineer"],
+                "preferred_stack": ["Python", "FastAPI", "React"],
+            },
+        )
+    )
+
+    payload = response.model_dump()
+
+    assert payload["status"] == "ready"
+    assert payload["detected_domain"] == "education_tech"
+    assert payload["resolved_planning_domain"] == "education_tech"
+    assert payload["inferred_focus"] is not None
+    assert payload["evidence_coverage"] is not None
+    assert payload["evidence_coverage"]["coverage_state"] in {
+        "adequate_direct",
+        "adjacent_only",
+        "exploratory",
+    }
+
