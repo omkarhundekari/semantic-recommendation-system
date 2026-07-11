@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
@@ -13,6 +14,19 @@ OUT_OF_DOMAIN = "out_of_domain"
 QUERY_TOO_BROAD = "query_too_broad"
 
 DIRECT_SUPPORT_SCOPE = "direct"
+
+QUERY_STOP_WORDS = {
+    "app",
+    "application",
+    "build",
+    "builder",
+    "for",
+    "idea",
+    "ideas",
+    "project",
+    "system",
+    "tool",
+}
 
 
 @dataclass(frozen=True)
@@ -33,6 +47,7 @@ class EvidenceCoverageReport:
 def classify_evidence_coverage(
     evidence_cards: Iterable[Any],
     *,
+    query: str | None = None,
     detected_domain: str | None = None,
     supported_domains: set[str] | None = None,
     domain_inference: dict[str, Any] | None = None,
@@ -41,10 +56,17 @@ def classify_evidence_coverage(
     cards = list(evidence_cards or [])
     domain_inference = domain_inference or {}
     query_metadata = query_metadata or {}
+    query_anchors = _query_anchors(query or query_metadata.get("corrected_query", ""))
 
-    direct_count = sum(1 for card in cards if _is_direct(card))
-    adjacent_count = sum(1 for card in cards if _is_adjacent(card))
-    weak_count = sum(1 for card in cards if _is_weak(card))
+    direct_count = sum(
+        1 for card in cards if _is_direct(card, query_anchors=query_anchors)
+    )
+    adjacent_count = sum(
+        1 for card in cards if _is_adjacent(card, query_anchors=query_anchors)
+    )
+    weak_count = sum(
+        1 for card in cards if _is_weak(card, query_anchors=query_anchors)
+    )
     unique_source_count = len(
         {
             source_id
@@ -181,19 +203,26 @@ def _read(value: Any, key: str, default: Any = None) -> Any:
     return getattr(value, key, default)
 
 
-def _is_direct(card: Any) -> bool:
+def _is_direct(card: Any, *, query_anchors: set[str]) -> bool:
     return (
         _read(card, "support_scope") == DIRECT_SUPPORT_SCOPE
-        and not _is_weak(card)
+        and _has_query_anchor_overlap(card, query_anchors=query_anchors)
+        and not _is_weak(card, query_anchors=query_anchors)
     )
 
 
-def _is_adjacent(card: Any) -> bool:
+def _is_adjacent(card: Any, *, query_anchors: set[str]) -> bool:
     support_scope = str(_read(card, "support_scope", "") or "")
-    return bool(support_scope and support_scope != DIRECT_SUPPORT_SCOPE)
+    if support_scope and support_scope != DIRECT_SUPPORT_SCOPE:
+        return True
+
+    return (
+        support_scope == DIRECT_SUPPORT_SCOPE
+        and not _has_query_anchor_overlap(card, query_anchors=query_anchors)
+    )
 
 
-def _is_weak(card: Any) -> bool:
+def _is_weak(card: Any, *, query_anchors: set[str]) -> bool:
     relevance_signal = str(_read(card, "relevance_signal", "") or "").lower()
     evidence_confidence = str(
         _read(card, "evidence_confidence", "") or ""
@@ -204,6 +233,67 @@ def _is_weak(card: Any) -> bool:
         relevance_signal == "weak"
         or evidence_confidence == "exploratory"
         or "weak" in {str(status).lower() for status in relevance_statuses}
+    )
+
+
+def _query_anchors(query: str) -> set[str]:
+    anchors = {
+        token
+        for token in re.findall(r"[a-z][a-z0-9]{1,}", query.lower())
+        if token not in QUERY_STOP_WORDS
+    }
+
+    expanded = set(anchors)
+
+    if "rag" in anchors:
+        expanded.update({"retrieval augmented generation"})
+    if "vr" in anchors:
+        expanded.update({"virtual reality"})
+    if "ar" in anchors:
+        expanded.update({"augmented reality"})
+    if "react" in anchors:
+        expanded.update({"frontend", "component", "ui"})
+    if "frontend" in anchors:
+        expanded.update({"react", "component", "ui"})
+
+    return expanded
+
+
+def _card_text(card: Any) -> str:
+    return " ".join(
+        str(_read(card, key, "") or "")
+        for key in [
+            "title",
+            "key_excerpt",
+            "specific_method_or_technique",
+            "specific_implementation_signal",
+            "user_facing_explanation",
+        ]
+    ).lower()
+
+
+def _has_query_anchor_overlap(card: Any, *, query_anchors: set[str]) -> bool:
+    if not query_anchors:
+        return True
+
+    card_text = _card_text(card)
+    return any(
+        _anchor_matches_text(anchor, card_text)
+        for anchor in query_anchors
+    )
+
+
+def _anchor_matches_text(anchor: str, text: str) -> bool:
+    anchor = anchor.strip().lower()
+
+    if not anchor:
+        return False
+
+    if " " in anchor:
+        return anchor in text
+
+    return bool(
+        re.search(rf"(?<![a-z0-9]){re.escape(anchor)}(?![a-z0-9])", text)
     )
 
 

@@ -121,3 +121,82 @@ def test_cross_domain_query_is_detected_from_domain_inference():
     assert report.coverage_state == CROSS_DOMAIN
     assert report.can_generate_directions is True
     assert "cross_domain_query" in report.warnings
+
+def test_query_alignment_prevents_unrelated_retrieval_from_becoming_direct():
+    cards = [
+        {
+            "source_id": "movie-rec",
+            "support_scope": "direct",
+            "evidence_confidence": "Strong",
+            "relevance_signal": "plausible",
+            "title": "Movie Recommendation System with Explanation Layer",
+            "key_excerpt": "Ranking and personalization for movie recommendations.",
+        },
+        {
+            "source_id": "rag-repo",
+            "support_scope": "direct",
+            "evidence_confidence": "Strong",
+            "relevance_signal": "plausible",
+            "title": "RAGFlow",
+            "key_excerpt": "Retrieval augmented generation engine for enterprise documents.",
+        },
+        {
+            "source_id": "ar-paper",
+            "support_scope": "direct",
+            "evidence_confidence": "Strong",
+            "relevance_signal": "plausible",
+            "title": "Visual and Audio Hints for Search Tasks in Augmented Reality",
+            "key_excerpt": "An AR approach using head-mounted displays and virtual objects.",
+        },
+    ]
+
+    report = classify_evidence_coverage(
+        cards,
+        query="AR VR education project",
+        detected_domain="education_tech",
+        supported_domains={"education_tech"},
+    )
+
+    assert report.coverage_state == ADEQUATE_DIRECT
+    assert report.direct_count == 1
+    assert report.adjacent_count == 2
+
+
+def test_query_alignment_keeps_matching_rag_sources_direct():
+    cards = [
+        {
+            "source_id": "rag-a",
+            "support_scope": "direct",
+            "evidence_confidence": "Strong",
+            "relevance_signal": "plausible",
+            "title": "Retrieval-Augmented Generation for Question Answering",
+            "key_excerpt": "A RAG workflow for question answering and retrieval evaluation.",
+        },
+        {
+            "source_id": "rag-b",
+            "support_scope": "direct",
+            "evidence_confidence": "Strong",
+            "relevance_signal": "plausible",
+            "title": "RAG Evaluation with Faithfulness Metrics",
+            "key_excerpt": "Evaluates answer faithfulness and retrieval quality.",
+        },
+        {
+            "source_id": "rag-c",
+            "support_scope": "direct",
+            "evidence_confidence": "Strong",
+            "relevance_signal": "plausible",
+            "title": "Generation-Augmented Retrieval",
+            "key_excerpt": "Retrieval and generation methods for QA systems.",
+        },
+    ]
+
+    report = classify_evidence_coverage(
+        cards,
+        query="retrieval augmented generation for question answering",
+        detected_domain="rag_llm",
+        supported_domains={"rag_llm"},
+    )
+
+    assert report.coverage_state == STRONG_DIRECT
+    assert report.direct_count == 3
+

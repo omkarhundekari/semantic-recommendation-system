@@ -189,6 +189,7 @@ class ProjectIntelligenceResponse(BaseModel):
     detected_intent: Optional[str] = None
     evidence_route: Optional[str] = None
     source_counts: Dict[str, int] = Field(default_factory=dict)
+    evidence_coverage: Optional[Dict[str, Any]] = None
 
     clarification_required: bool = False
     clarification_message: Optional[str] = None

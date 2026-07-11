@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, List
 
@@ -16,6 +17,11 @@ from query_understanding import understand_query
 from research_evidence_assessment import build_evidence_assessment
 from research_query_anchors import extract_required_anchor_terms
 from product_plan_readiness import assess_product_plan_readiness
+from planning.evidence_brief import build_evidence_brief
+from planning.evidence_coverage_classifier import (
+    classify_evidence_coverage,
+)
+from planning.live_evidence_cards import build_live_evidence_cards_from_brief
 from planning.product_synthesis_status import (
     build_project_intelligence_synthesis_status,
 )
@@ -57,6 +63,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+SUPPORTED_PLANNING_DOMAINS = {
+    "ai_ml",
+    "backend",
+    "blockchain",
+    "cloud",
+    "computer_vision",
+    "cybersecurity",
+    "data_engineering",
+    "databases",
+    "developer_tools",
+    "devops",
+    "education_tech",
+    "fintech",
+    "frontend",
+    "full_stack",
+    "healthcare_ai",
+    "mlops",
+    "mobile",
+    "nlp",
+    "rag_llm",
+    "recommendation_systems",
+}
+
+
 
 
 def build_research_evidence_assessment(
@@ -409,6 +441,22 @@ def generate_project_intelligence(
         evidence_payload,
         query=corrected_query,
     )
+    evidence_brief = build_evidence_brief(
+        evidence_items=evidence_items,
+        user_query=corrected_query,
+    )
+    evidence_cards = build_live_evidence_cards_from_brief(evidence_brief)
+    evidence_coverage = asdict(
+        classify_evidence_coverage(
+            evidence_cards,
+            query=corrected_query,
+            detected_domain=inference.get("inferred_focus")
+            or correction_metadata.get("detected_domain"),
+            supported_domains=SUPPORTED_PLANNING_DOMAINS,
+            domain_inference=inference,
+            query_metadata=correction_metadata,
+        )
+    )
 
     pipeline.extend(
         [
@@ -464,6 +512,7 @@ def generate_project_intelligence(
             detected_domain=inference.get("inferred_focus"),
             detected_intent=correction_metadata.get("detected_intent"),
             evidence_route=evidence_payload.get("selected_route"),
+            evidence_coverage=evidence_coverage,
             source_counts={
                 "research_papers": len(
                     evidence_payload.get("research_results", [])
@@ -656,6 +705,7 @@ def generate_project_intelligence(
         detected_domain=inference.get("inferred_focus"),
         detected_intent=correction_metadata.get("detected_intent"),
         evidence_route=evidence_payload.get("selected_route"),
+        evidence_coverage=evidence_coverage,
         source_counts={
             "research_papers": len(
                 evidence_payload.get("research_results", [])

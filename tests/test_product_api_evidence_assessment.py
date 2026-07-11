@@ -496,3 +496,35 @@ def test_multidomain_clear_queries_resolve_without_clarification():
         assert len(
             payload["synthesis_status"]["frontend_project_directions"]
         ) == 3
+
+def test_project_intelligence_response_includes_evidence_coverage():
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal="retrieval augmented generation for question answering",
+            constraints={
+                "skill_level": "intermediate",
+                "time_available": "3 weeks",
+                "target_roles": ["ML Engineer"],
+                "preferred_stack": ["Python", "FastAPI"],
+            },
+        )
+    )
+
+    payload = response.model_dump()
+
+    assert payload["status"] == "ready"
+    assert payload["evidence_coverage"] is not None
+    assert payload["evidence_coverage"]["coverage_state"] in {
+        "strong_direct",
+        "adequate_direct",
+        "adjacent_only",
+        "exploratory",
+        "cross_domain",
+        "out_of_domain",
+        "query_too_broad",
+    }
+    assert "label" in payload["evidence_coverage"]
+    assert "user_message" in payload["evidence_coverage"]
+    assert "can_generate_directions" in payload["evidence_coverage"]
+    assert payload["evidence_coverage"]["unique_source_count"] > 0
+
