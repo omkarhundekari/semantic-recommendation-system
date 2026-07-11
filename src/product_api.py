@@ -22,6 +22,7 @@ from planning.evidence_coverage_classifier import (
     classify_evidence_coverage,
 )
 from planning.live_evidence_cards import build_live_evidence_cards_from_brief
+from planning.mission_context import build_mission_context
 from planning.product_synthesis_status import (
     build_project_intelligence_synthesis_status,
 )
@@ -677,6 +678,20 @@ def generate_project_intelligence(
         feasibility = idea.get("feasibility_analysis", {})
         profile = feasibility.get("build_profile", {})
 
+        mission_context = build_mission_context(
+            idea=idea,
+            user_goal=request.goal,
+            query=corrected_query,
+            resolved_planning_domain=planning_domain,
+            constraints={
+                "skill_level": getattr(request.constraints, "skill_level", "intermediate"),
+                "time_available": getattr(request.constraints, "time_available", "2-3 weeks"),
+                "preferred_stack": getattr(request.constraints, "preferred_stack", []),
+                "target_roles": getattr(request.constraints, "target_roles", []),
+            },
+            evidence_coverage=evidence_coverage,
+        )
+
         directions.append(
             ProjectDirection(
                 id=f"direction-{index}",
@@ -736,6 +751,7 @@ def generate_project_intelligence(
                 roadmap=enrich_roadmap_for_execution(
                     stages=build_roadmap(idea),
                     idea=idea,
+                    context=mission_context,
                 ),
                 risks=build_risks(idea),
                 verification=VerificationResult(**verification),
