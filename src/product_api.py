@@ -32,6 +32,9 @@ from planning.product_enrichment import enrich_product_ideas
 from planning.query_anchor_direction_adapter import (
     adapt_ideas_to_query_anchors,
 )
+from planning.roadmap_execution_enrichment import (
+    enrich_roadmap_for_execution,
+)
 from planning.llm_synthesis_demo import (
     build_default_output_path,
     build_default_validation_report_path,
@@ -730,7 +733,10 @@ def generate_project_intelligence(
                     if research_evidence_assessment
                     else None
                 ),
-                roadmap=build_roadmap(idea),
+                roadmap=enrich_roadmap_for_execution(
+                    stages=build_roadmap(idea),
+                    idea=idea,
+                ),
                 risks=build_risks(idea),
                 verification=VerificationResult(**verification),
                 repairs_applied=repairs,

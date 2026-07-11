@@ -63,6 +63,17 @@ class RoadmapStage(BaseModel):
     purpose: str
     tasks: List[str] = Field(default_factory=list)
 
+    stage_type: Optional[str] = None
+    objective: Optional[str] = None
+    why_it_matters: Optional[str] = None
+    commands: List[str] = Field(default_factory=list)
+    expected_outputs: List[str] = Field(default_factory=list)
+    acceptance_criteria: List[str] = Field(default_factory=list)
+    validation_checks: List[str] = Field(default_factory=list)
+    common_errors: List[str] = Field(default_factory=list)
+    portfolio_artifact: Optional[str] = None
+    unlock_condition: Optional[str] = None
+
 
 class VerificationResult(BaseModel):
     status: str
