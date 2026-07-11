@@ -531,7 +531,7 @@ export default function Home() {
 
             <div>
               <p className="text-sm font-semibold tracking-wide text-white">
-                Research-to-Prototype
+                Solvyn
               </p>
               <p className="text-xs text-slate-400">Intelligence Engine</p>
             </div>

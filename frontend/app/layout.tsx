@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Research-to-Prototype Intelligence Engine",
+  title: "Solvyn",
   description: "Evidence-grounded project directions and interactive execution roadmaps.",
 };
 

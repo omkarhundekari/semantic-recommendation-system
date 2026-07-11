@@ -39,10 +39,10 @@ from source_router import retrieve_evidence
 
 
 app = FastAPI(
-    title="Research-to-Prototype Intelligence API",
+    title="Solvyn API",
     description=(
         "Evidence-grounded project planning API that converts user goals into "
-        "buildable project directions and structured execution roadmaps."
+        "evidence-aware project directions and structured execution roadmaps."
     ),
     version="2.1.0",
 )
