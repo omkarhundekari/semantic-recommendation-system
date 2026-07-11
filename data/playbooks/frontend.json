@@ -1,0 +1,73 @@
+{
+  "domain": "frontend",
+  "playbook_version": "v1",
+  "typical_inputs": [
+    "target user persona",
+    "main user workflow",
+    "sample content or API response",
+    "responsive layout requirements",
+    "accessibility expectations"
+  ],
+  "typical_outputs": [
+    "interactive UI screen",
+    "stateful workflow",
+    "responsive layout",
+    "empty, loading, success, and error states",
+    "deployed frontend demo"
+  ],
+  "core_concepts": [
+    "component architecture",
+    "state management",
+    "responsive design",
+    "accessibility",
+    "loading and error states",
+    "user flow design"
+  ],
+  "typical_file_structure": [
+    "frontend/app/",
+    "frontend/components/",
+    "frontend/lib/",
+    "frontend/types/",
+    "frontend/public/",
+    "frontend/README.md"
+  ],
+  "setup_commands": [
+    "npx create-next-app@latest frontend --typescript --eslint",
+    "cd frontend && npm run lint",
+    "cd frontend && npm run build"
+  ],
+  "first_milestone_check": "The first screen renders the target workflow with realistic sample data and no TypeScript or lint errors.",
+  "validation_checks": [
+    "The UI renders loading, empty, success, and error states.",
+    "The layout works on mobile and desktop widths.",
+    "Interactive controls update visible state.",
+    "Important buttons and inputs have accessible labels."
+  ],
+  "common_errors": [
+    "Building static mockups without real state transitions.",
+    "Skipping error and empty states.",
+    "Hardcoding content that should come from typed data.",
+    "Ignoring mobile layout until the end."
+  ],
+  "typical_portfolio_artifacts": [
+    "deployed frontend URL",
+    "README with user flow screenshots",
+    "component architecture notes",
+    "before-after screenshots of interaction states"
+  ],
+  "interview_talking_points": [
+    "Explain how you structured reusable components.",
+    "Explain how state moves through the user flow.",
+    "Explain how you handled loading and error states.",
+    "Explain one accessibility improvement you made."
+  ],
+  "demo_strategy": "Walk through the main user flow from initial state to completed action while showing responsive behavior.",
+  "metrics_to_track": [
+    "lighthouse_accessibility_score",
+    "lighthouse_performance_score",
+    "core_flow_completion_steps",
+    "bundle_size_kb"
+  ],
+  "deployment_path": "Vercel deployment with environment variables documented in README.",
+  "test_strategy": "Add component or integration tests for the main user flow and verify lint/build pass before deployment."
+}

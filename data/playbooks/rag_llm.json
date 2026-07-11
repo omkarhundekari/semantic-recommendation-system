@@ -1,0 +1,75 @@
+{
+  "domain": "rag_llm",
+  "playbook_version": "v1",
+  "typical_inputs": [
+    "document corpus such as PDFs, markdown files, webpages, or support articles",
+    "evaluation questions with expected source documents",
+    "chunking configuration",
+    "embedding model choice",
+    "retrieval top-k setting"
+  ],
+  "typical_outputs": [
+    "retrieved chunks with source metadata",
+    "generated answer with citations",
+    "per-query retrieval score",
+    "faithfulness or citation coverage result",
+    "latency measurement"
+  ],
+  "core_concepts": [
+    "retrieval augmented generation",
+    "chunking strategy",
+    "embedding search",
+    "reranking",
+    "citation grounding",
+    "faithfulness evaluation"
+  ],
+  "typical_file_structure": [
+    "data/documents/",
+    "data/eval_questions.json",
+    "src/ingest.py",
+    "src/retriever.py",
+    "src/evaluator.py",
+    "outputs/retrieval_results.json",
+    "outputs/eval_results.json",
+    "README.md"
+  ],
+  "setup_commands": [
+    "mkdir -p data/documents outputs src tests",
+    "touch data/eval_questions.json src/ingest.py src/retriever.py src/evaluator.py README.md",
+    "pip install sentence-transformers faiss-cpu pydantic pytest"
+  ],
+  "first_milestone_check": "Running the retriever on one test question returns ranked chunks with source document IDs.",
+  "validation_checks": [
+    "Retrieved chunks include source metadata.",
+    "At least five evaluation questions have expected source documents.",
+    "Top-k retrieval returns at least one relevant chunk for a known query.",
+    "Generated answers cite retrieved sources instead of unsupported text."
+  ],
+  "common_errors": [
+    "Chunk size is too large and returns full documents instead of focused passages.",
+    "Chunks lose source metadata during ingestion.",
+    "Evaluation questions are too similar to the indexed document titles.",
+    "The answer generator is evaluated without checking retrieval quality first."
+  ],
+  "typical_portfolio_artifacts": [
+    "outputs/eval_results.json",
+    "README section explaining chunk size and embedding choices",
+    "retrieval examples with cited source IDs",
+    "validation table with retrieval and citation results"
+  ],
+  "interview_talking_points": [
+    "Explain why you selected your chunk size and overlap.",
+    "Explain the difference between retrieval relevance and answer faithfulness.",
+    "Explain how your evaluation set tests failure cases.",
+    "Explain how citations reduce hallucination risk."
+  ],
+  "demo_strategy": "Run one query and show retrieved chunks, source IDs, final answer, and citation coverage side by side.",
+  "metrics_to_track": [
+    "retrieval_precision_at_3",
+    "citation_coverage_percentage",
+    "faithfulness_pass_rate",
+    "average_latency_ms"
+  ],
+  "deployment_path": "FastAPI endpoint or Streamlit interface with query input, retrieved chunks, answer, and evaluation summary.",
+  "test_strategy": "Use pytest with known questions and expected source IDs. Assert at least one expected source appears in the top 3 retrieved chunks."
+}

@@ -39,17 +39,20 @@ def test_validator_passes_specific_mission():
             "one measurable classroom learning output."
         ),
         commands=[
-            "mkdir -p docs src tests outputs",
+            "mkdir -p data docs src tests outputs",
+            "touch data/learners.json docs/learning_objectives.md",
             "# React frontend and Python API workflow",
         ],
         expected_outputs=[
             "A React screen renders one AR VR classroom activity.",
             "The Python API returns one classroom activity payload.",
-            "docs/problem_statement.md contains the scoped input-output workflow.",
+            "docs/learning_objectives.md contains the learning objective alignment.",
+            "outputs/student_progress.json contains the student progress tracking result.",
         ],
         acceptance_criteria=[
             "The React page renders one AR VR classroom activity.",
             "The Python endpoint returns a saved classroom output.",
+            "outputs/student_progress.json exists after the feedback loop runs.",
         ],
         validation_checks=[
             "Run the React page and confirm the activity loads.",

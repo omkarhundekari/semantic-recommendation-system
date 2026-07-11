@@ -1,0 +1,75 @@
+{
+  "domain": "education_tech",
+  "playbook_version": "v1",
+  "typical_inputs": [
+    "learner profile",
+    "learning objective",
+    "lesson or activity content",
+    "student response or progress signal",
+    "feedback rubric"
+  ],
+  "typical_outputs": [
+    "personalized learning activity",
+    "student progress summary",
+    "feedback recommendation",
+    "mastery or completion signal",
+    "teacher or learner dashboard view"
+  ],
+  "core_concepts": [
+    "learning objective alignment",
+    "student progress tracking",
+    "feedback loop",
+    "mastery signal",
+    "adaptive learning path",
+    "classroom activity design"
+  ],
+  "typical_file_structure": [
+    "data/learners.json",
+    "data/activities.json",
+    "src/activity_engine.py",
+    "src/progress_tracker.py",
+    "src/feedback.py",
+    "outputs/student_progress.json",
+    "docs/learning_objectives.md",
+    "README.md"
+  ],
+  "setup_commands": [
+    "mkdir -p data outputs src tests docs",
+    "touch data/learners.json data/activities.json docs/learning_objectives.md",
+    "touch src/activity_engine.py src/progress_tracker.py src/feedback.py README.md"
+  ],
+  "first_milestone_check": "Given one learner profile and one learning objective, the system produces one activity and one feedback message.",
+  "validation_checks": [
+    "Each activity maps to a specific learning objective.",
+    "Student progress output changes when learner inputs change.",
+    "Feedback explains the next step instead of only giving a score.",
+    "The dashboard or output separates learner, activity, progress, and feedback data."
+  ],
+  "common_errors": [
+    "Creating activities that are not tied to learning objectives.",
+    "Treating feedback as a generic score instead of an actionable next step.",
+    "Hardcoding one learner instead of supporting multiple profiles.",
+    "Ignoring privacy and safety concerns around student data."
+  ],
+  "typical_portfolio_artifacts": [
+    "docs/learning_objectives.md",
+    "outputs/student_progress.json",
+    "README with learner workflow",
+    "demo screenshot or GIF of the learning activity flow"
+  ],
+  "interview_talking_points": [
+    "Explain how the system maps activities to learning objectives.",
+    "Explain how student progress changes the recommendation or feedback.",
+    "Explain how you avoided hardcoding one learner path.",
+    "Explain what data you would avoid collecting for student privacy."
+  ],
+  "demo_strategy": "Show two learner profiles receiving different activities, progress summaries, or feedback for the same learning objective.",
+  "metrics_to_track": [
+    "activity_completion_rate",
+    "feedback_actionability_score",
+    "mastery_signal_accuracy",
+    "learner_progress_change"
+  ],
+  "deployment_path": "Lightweight web dashboard or API demo showing learner profile, activity recommendation, progress, and feedback.",
+  "test_strategy": "Use fixtures for two learner profiles and assert the generated activity or feedback changes based on learner state."
+}
