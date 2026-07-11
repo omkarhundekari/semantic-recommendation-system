@@ -593,10 +593,6 @@ export default function Home() {
 
       if (payload.status === "ready" && payload.directions.length > 0) {
         setShouldScrollToDirections(true);
-
-        const firstDirection = payload.directions[0];
-        setSelectedDirectionId(firstDirection.id);
-        setActiveRoadmapNodeId(firstDirection.roadmap[0]?.id ?? null);
       }
 
       setResult(payload);
