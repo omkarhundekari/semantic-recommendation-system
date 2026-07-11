@@ -17,7 +17,7 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
-import { FormEvent, useCallback, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 type Verification = {
   status: string;
@@ -168,6 +168,42 @@ type IntelligenceResponse = {
   synthesis_status?: SynthesisStatus;
   directions: Direction[];
 };
+
+type SavedWorkspace = {
+  goal: string;
+  result: IntelligenceResponse;
+  selectedDirectionId: string | null;
+  activeRoadmapNodeId: string | null;
+  completedRoadmapNodeIds: string[];
+  savedAt: string;
+};
+
+const SAVED_WORKSPACE_KEY = "solvyn:last-workspace";
+
+function readSavedWorkspace(): SavedWorkspace | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawWorkspace = window.localStorage.getItem(SAVED_WORKSPACE_KEY);
+
+    if (!rawWorkspace) {
+      return null;
+    }
+
+    const workspace = JSON.parse(rawWorkspace) as SavedWorkspace;
+
+    if (!workspace.result || workspace.result.status !== "ready") {
+      return null;
+    }
+
+    return workspace;
+  } catch {
+    window.localStorage.removeItem(SAVED_WORKSPACE_KEY);
+    return null;
+  }
+}
 
 const examplePrompts = [
   "AI project for an ML engineer role in 3 weeks",
@@ -339,28 +375,38 @@ function getDecisionTracePresentation(
 }
 
 export default function Home() {
-  const [goal, setGoal] = useState("");
+  const [savedWorkspace] = useState<SavedWorkspace | null>(() =>
+    readSavedWorkspace(),
+  );
+
+  const [goal, setGoal] = useState(savedWorkspace?.goal ?? "");
   const [showConstraints, setShowConstraints] = useState(false);
   const [skillLevel, setSkillLevel] = useState("intermediate");
   const [timeAvailable, setTimeAvailable] = useState("3 weeks");
   const [targetRole, setTargetRole] = useState("");
   const [preferredStack, setPreferredStack] = useState("");
-  const [result, setResult] = useState<IntelligenceResponse | null>(null);
+  const [result, setResult] = useState<IntelligenceResponse | null>(
+    savedWorkspace?.result ?? null,
+  );
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showHelpChooser, setShowHelpChooser] = useState(false);
 
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(
-    null,
+    savedWorkspace?.selectedDirectionId ?? null,
   );
 
   const [activeRoadmapNodeId, setActiveRoadmapNodeId] = useState<string | null>(
-    null,
+    savedWorkspace?.activeRoadmapNodeId ?? null,
   );
 
   const [completedRoadmapNodeIds, setCompletedRoadmapNodeIds] = useState<
     string[]
-  >([]);
+  >(savedWorkspace?.completedRoadmapNodeIds ?? []);
+
+  const [recoveredWorkspace, setRecoveredWorkspace] = useState(
+    savedWorkspace !== null,
+  );
 
   const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
     string | null
@@ -374,6 +420,29 @@ export default function Home() {
 
   const [shouldScrollToHelpChooser, setShouldScrollToHelpChooser] =
     useState(false);
+
+  useEffect(() => {
+    if (!result || result.status !== "ready") {
+      return;
+    }
+
+    const workspace: SavedWorkspace = {
+      goal,
+      result,
+      selectedDirectionId,
+      activeRoadmapNodeId,
+      completedRoadmapNodeIds,
+      savedAt: new Date().toISOString(),
+    };
+
+    window.localStorage.setItem(SAVED_WORKSPACE_KEY, JSON.stringify(workspace));
+  }, [
+    goal,
+    result,
+    selectedDirectionId,
+    activeRoadmapNodeId,
+    completedRoadmapNodeIds,
+  ]);
 
   const clarificationSectionRef = useCallback(
     (node: HTMLElement | null) => {
@@ -478,6 +547,7 @@ export default function Home() {
     setSelectedDirectionId(null);
     setActiveRoadmapNodeId(null);
     setCompletedRoadmapNodeIds([]);
+    setRecoveredWorkspace(false);
     setExpandedWhyDirectionId(null);
     setShouldScrollToClarification(false);
     setShouldScrollToDirections(false);
@@ -562,6 +632,7 @@ export default function Home() {
     setSelectedDirectionId(direction.id);
     setActiveRoadmapNodeId(direction.roadmap[0]?.id ?? null);
     setCompletedRoadmapNodeIds([]);
+    setRecoveredWorkspace(false);
 
     window.setTimeout(() => {
       document
@@ -594,6 +665,17 @@ export default function Home() {
     if (nextNode) {
       setActiveRoadmapNodeId(nextNode.id);
     }
+  }
+
+  function clearSavedWorkspace() {
+    window.localStorage.removeItem(SAVED_WORKSPACE_KEY);
+    setGoal("");
+    setResult(null);
+    setSelectedDirectionId(null);
+    setActiveRoadmapNodeId(null);
+    setCompletedRoadmapNodeIds([]);
+    setRecoveredWorkspace(false);
+    setError("");
   }
 
   return (
@@ -1297,6 +1379,13 @@ export default function Home() {
                         <p className="mt-4 text-base leading-7 text-slate-300">
                           {selectedDirection.summary}
                         </p>
+
+                        {recoveredWorkspace && (
+                          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1.5 text-sm text-emerald-100">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Recovered your last workspace
+                          </p>
+                        )}
                       </div>
 
                       <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-sm text-slate-300 lg:min-w-64">
@@ -1312,6 +1401,14 @@ export default function Home() {
                           {selectedDirection.estimated_effort} ·{" "}
                           {selectedDirection.difficulty}
                         </p>
+
+                        <button
+                          type="button"
+                          onClick={clearSavedWorkspace}
+                          className="mt-4 w-full rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-rose-300/30 hover:bg-rose-400/10 hover:text-rose-100"
+                        >
+                          Clear saved workspace
+                        </button>
                       </div>
                     </div>
 
