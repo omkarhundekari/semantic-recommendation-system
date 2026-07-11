@@ -25,6 +25,9 @@ from planning.live_evidence_cards import build_live_evidence_cards_from_brief
 from planning.product_synthesis_status import (
     build_project_intelligence_synthesis_status,
 )
+from planning.coverage_aware_direction_notes import (
+    apply_coverage_notes_to_ideas,
+)
 from planning.product_enrichment import enrich_product_ideas
 from planning.llm_synthesis_demo import (
     build_default_output_path,
@@ -616,7 +619,10 @@ def generate_project_intelligence(
         ideas=ideas,
         constraints=constraints,
     )
-    ideas = enrichment.ideas
+    ideas = apply_coverage_notes_to_ideas(
+        ideas=enrichment.ideas,
+        evidence_coverage=evidence_coverage,
+    )
     final_verification_results = (
         enrichment.final_verification_results
     )
