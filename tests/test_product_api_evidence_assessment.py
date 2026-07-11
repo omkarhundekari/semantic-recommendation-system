@@ -466,3 +466,33 @@ def test_frontend_project_directions_use_ready_direction_titles():
     ]
 
     assert frontend_titles == ready_titles
+
+
+def test_multidomain_clear_queries_resolve_without_clarification():
+    cases = [
+        ("React portfolio project for frontend roles", "frontend"),
+        ("DevOps observability dashboard project", "devops"),
+        ("FinTech fraud detection project", "fintech"),
+        ("MLOps experiment tracking project", "mlops"),
+    ]
+
+    for goal, expected_focus in cases:
+        response = generate_project_intelligence(
+            ProjectIntelligenceRequest(
+                goal=goal,
+                constraints={
+                    "skill_level": "intermediate",
+                    "time_available": "3 weeks",
+                    "target_roles": ["Software Engineer"],
+                    "preferred_stack": ["Python", "FastAPI", "React"],
+                },
+            )
+        )
+
+        payload = response.model_dump()
+
+        assert payload["status"] == "ready", goal
+        assert payload["resolved_planning_domain"] == expected_focus, goal
+        assert len(
+            payload["synthesis_status"]["frontend_project_directions"]
+        ) == 3

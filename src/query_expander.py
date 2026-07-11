@@ -299,6 +299,9 @@ def build_typo_correction_anchors() -> List[str]:
         "monitoring",
         "deployment",
         "recommendation",
+        "tracking",
+        "experiment",
+        "registry",
     })
 
     return sorted(anchors)
@@ -416,6 +419,34 @@ def detect_domain(query: str) -> str:
         return "general"
 
     tokens = set(re.findall(r"[a-z0-9]+", cleaned_query))
+
+    explicit_domain_priority = [
+        "mlops",
+        "devops",
+        "fintech",
+        "frontend",
+        "backend",
+        "cybersecurity",
+        "blockchain",
+        "data_engineering",
+        "computer_vision",
+        "recommendation_systems",
+        "rag_llm",
+    ]
+
+    explicit_token_aliases = {
+        "frontend": {"frontend", "react", "nextjs"},
+        "backend": {"backend", "api", "fastapi", "django", "flask"},
+        "devops": {"devops", "cicd", "observability"},
+        "mlops": {"mlops"},
+        "fintech": {"fintech"},
+        "cybersecurity": {"cybersecurity"},
+    }
+
+    for domain in explicit_domain_priority:
+        aliases = explicit_token_aliases.get(domain, {domain})
+        if tokens.intersection(aliases):
+            return domain
 
     ai_ml_phrases = [
         "ai/ml",

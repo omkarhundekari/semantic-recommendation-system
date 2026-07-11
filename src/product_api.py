@@ -387,10 +387,19 @@ def generate_project_intelligence(
             pipeline=pipeline,
         )
 
+    retrieval_intent_hints = [
+        hint
+        for hint in (
+            understanding["direction_hints"]
+            + [correction_metadata.get("detected_domain")]
+        )
+        if hint
+    ]
+
     evidence_payload = retrieve_evidence(
         corrected_query,
         top_k=6,
-        intent_hints=understanding["direction_hints"],
+        intent_hints=retrieval_intent_hints,
         selected_direction=selected_direction,
     )
 

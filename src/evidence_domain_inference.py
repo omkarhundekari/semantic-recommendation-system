@@ -379,11 +379,50 @@ def infer_domain_from_evidence(
         top_family in supported_intent_families
     )
 
+    supported_explicit_focuses = [
+        focus
+        for focus in hint_focuses
+        if (
+            get_domain_family(focus) == top_family
+            and bool(
+                get_non_intent_sources(
+                    focus_sources.get(focus, set())
+                )
+            )
+        )
+    ]
+
+    explicit_focus_is_supported = bool(supported_explicit_focuses)
+
+    if supported_explicit_focuses:
+        top_focus = supported_explicit_focuses[0]
+        matching_focus_candidates = [
+            candidate
+            for candidate in candidate_focuses
+            if candidate["focus"] == top_focus
+        ]
+
+        if matching_focus_candidates:
+            top_focus_candidate = matching_focus_candidates[0]
+            focus_confidence = calculate_confidence(
+                score_share=top_focus_candidate["share"],
+                source_count=top_focus_candidate["source_count"],
+            )
+
+    explicit_focus_resolves_evidence_gap = (
+        explicit_focus_is_supported
+        and top_family_candidate["source_count"] >= 2
+    )
+
     requires_clarification = (
-        family_confidence < 0.58
+        (
+            family_confidence < 0.58
+            and not explicit_focus_resolves_evidence_gap
+        )
         or (
             ambiguous_evidence
             and not explicit_intent_is_supported
+            and not explicit_focus_is_supported
         )
     )
 

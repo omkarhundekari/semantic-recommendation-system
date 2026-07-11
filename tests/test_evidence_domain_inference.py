@@ -208,3 +208,69 @@ class EvidenceDomainInferenceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+def test_explicit_focus_with_some_evidence_resolves_family_ambiguity():
+    evidence_items = [
+        {
+            "title": "Developer tool paper",
+            "category": "developer_tools",
+            "source_type": "research_paper",
+        },
+        {
+            "title": "Repository analytics implementation",
+            "category": "developer_tools",
+            "source_type": "github_repository",
+        },
+        {
+            "title": "DevOps observability project pattern",
+            "category": "devops",
+            "source_type": "project_pattern",
+        },
+        {
+            "title": "Cloud monitoring repository",
+            "category": "cloud",
+            "source_type": "github_repository",
+        },
+    ]
+
+    result = infer_domain_from_evidence(
+        evidence_items,
+        intent_hints=["cloud_platform", "devops"],
+    )
+
+    assert result["inferred_domain_family"] == "cloud_platform"
+    assert result["inferred_focus"] in {"cloud", "devops"}
+    assert result["requires_clarification"] is False
+
+
+def test_explicit_focus_with_some_evidence_resolves_family_ambiguity():
+    evidence_items = [
+        {
+            "title": "Developer tool paper",
+            "category": "developer_tools",
+            "source_type": "research_paper",
+        },
+        {
+            "title": "Repository analytics implementation",
+            "category": "developer_tools",
+            "source_type": "github_repository",
+        },
+        {
+            "title": "DevOps observability project pattern",
+            "category": "devops",
+            "source_type": "project_pattern",
+        },
+        {
+            "title": "Cloud monitoring repository",
+            "category": "cloud",
+            "source_type": "github_repository",
+        },
+    ]
+
+    result = infer_domain_from_evidence(
+        evidence_items,
+        intent_hints=["cloud_platform", "devops"],
+    )
+
+    assert result["inferred_domain_family"] == "cloud_platform"
+    assert result["requires_clarification"] is False
