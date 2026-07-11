@@ -65,3 +65,39 @@ def test_project_api_returns_playbook_aware_rag_roadmap_missions():
     assert "data/eval_questions.json" in roadmap_text
     assert "retrieved chunks with source metadata" in roadmap_text
     assert "outputs/retrieval_results.json" in roadmap_text
+
+
+def test_project_api_returns_playbook_aware_frontend_roadmap_missions():
+    from product_api import generate_project_intelligence
+    from schemas.product_models import ProjectIntelligenceRequest
+
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal="Build a React frontend portfolio project with loading and error states",
+        )
+    )
+
+    assert response.status == "ready"
+    assert response.resolved_planning_domain == "frontend"
+    assert response.directions
+
+    roadmap = response.directions[0].roadmap
+    roadmap_text = " ".join(
+        " ".join(
+            [
+                stage.objective or "",
+                " ".join(stage.commands),
+                " ".join(stage.expected_outputs),
+                " ".join(stage.validation_checks),
+                stage.portfolio_artifact or "",
+            ]
+        )
+        for stage in roadmap
+    ).lower()
+
+    assert "frontend/app/" in roadmap_text
+    assert "loading, empty, success, and error states" in roadmap_text
+    assert "lighthouse_accessibility_score" in roadmap_text
+    assert "component architecture" in roadmap_text
+    assert "react" in roadmap_text
+    assert "python, fastapi, postgresql" not in roadmap_text
