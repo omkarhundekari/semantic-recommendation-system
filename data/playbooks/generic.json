@@ -1,0 +1,62 @@
+{
+  "domain": "generic",
+  "playbook_version": "v1",
+  "typical_inputs": [
+    "user problem statement",
+    "sample input data",
+    "expected output examples"
+  ],
+  "typical_outputs": [
+    "working prototype output",
+    "validation notes",
+    "portfolio-ready README"
+  ],
+  "core_concepts": [
+    "problem scoping",
+    "input-output workflow",
+    "validation",
+    "documentation"
+  ],
+  "typical_file_structure": [
+    "docs/problem_statement.md",
+    "docs/validation_plan.md",
+    "src/",
+    "tests/",
+    "outputs/",
+    "README.md"
+  ],
+  "setup_commands": [
+    "mkdir -p docs src tests outputs",
+    "touch README.md docs/problem_statement.md docs/validation_plan.md"
+  ],
+  "first_milestone_check": "The repository contains a clear problem statement, expected inputs, expected outputs, and success criteria.",
+  "validation_checks": [
+    "The prototype produces different outputs for different inputs.",
+    "The validation plan names at least one success metric.",
+    "The README explains how to run the project."
+  ],
+  "common_errors": [
+    "Choosing a scope that is too broad to finish.",
+    "Building features before defining the expected output.",
+    "Writing a README that explains the idea but not how to run it."
+  ],
+  "typical_portfolio_artifacts": [
+    "README.md",
+    "docs/problem_statement.md",
+    "docs/validation_plan.md",
+    "outputs/sample_result.json"
+  ],
+  "interview_talking_points": [
+    "Explain how you narrowed the project scope.",
+    "Explain the input-output workflow.",
+    "Explain how you validated the result."
+  ],
+  "demo_strategy": "Show one input, run the project, and explain the resulting output.",
+  "metrics_to_track": [
+    "completion_status",
+    "validation_pass_count",
+    "known_limitations_count"
+  ],
+  "deployment_path": "Local demo or lightweight web demo.",
+  "test_strategy": "Add one smoke test that runs the main workflow on a sample input."
+}
