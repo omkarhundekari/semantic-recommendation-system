@@ -29,6 +29,9 @@ from planning.coverage_aware_direction_notes import (
     apply_coverage_notes_to_ideas,
 )
 from planning.product_enrichment import enrich_product_ideas
+from planning.query_anchor_direction_adapter import (
+    adapt_ideas_to_query_anchors,
+)
 from planning.llm_synthesis_demo import (
     build_default_output_path,
     build_default_validation_report_path,
@@ -622,6 +625,11 @@ def generate_project_intelligence(
     ideas = apply_coverage_notes_to_ideas(
         ideas=enrichment.ideas,
         evidence_coverage=evidence_coverage,
+    )
+    ideas = adapt_ideas_to_query_anchors(
+        ideas=ideas,
+        query=corrected_query,
+        resolved_domain=planning_domain,
     )
     final_verification_results = (
         enrichment.final_verification_results
