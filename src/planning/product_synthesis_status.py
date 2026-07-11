@@ -93,6 +93,7 @@ def build_project_intelligence_synthesis_status(
     query: str,
     constraints: Dict,
     evidence_items: List[Dict],
+    project_directions: List[object] | None = None,
 ) -> Dict:
     brief = build_evidence_brief(
         evidence_items=evidence_items,
@@ -167,6 +168,11 @@ def build_project_intelligence_synthesis_status(
         preview_validation=preview_validation,
     )
 
+    frontend_project_directions = build_frontend_project_directions(
+        project_directions=project_directions or [],
+        presentation_project_directions=presentation_project_directions,
+    )
+
     return {
         "available": False,
         "reason": (
@@ -177,6 +183,7 @@ def build_project_intelligence_synthesis_status(
         "synthesis_summary": synthesis_summary,
         "validated_project_directions": validated_project_directions,
         "presentation_project_directions": presentation_project_directions,
+        "frontend_project_directions": frontend_project_directions,
         "live_evidence_cards": {
             "card_count": len(evidence_cards),
             **confidence_counts,
@@ -204,3 +211,114 @@ def build_project_intelligence_synthesis_status(
             "final_synthesis_validation": True,
         },
     }
+
+
+def build_frontend_project_directions(
+    *,
+    project_directions: List[object],
+    presentation_project_directions: List[Dict],
+) -> List[Dict]:
+    frontend_directions = []
+
+    for index, project_direction in enumerate(project_directions):
+        presentation = (
+            presentation_project_directions[index]
+            if index < len(presentation_project_directions)
+            else {}
+        )
+
+        frontend_directions.append(
+            {
+                "id": _read_field(project_direction, "id", f"direction-{index + 1}"),
+                "title": _read_field(
+                    project_direction,
+                    "title",
+                    f"Project Direction {index + 1}",
+                ),
+                "tier": _read_field(
+                    project_direction,
+                    "portfolio_tier",
+                    "Portfolio Build",
+                ),
+                "level": _level_from_difficulty(
+                    _read_field(project_direction, "difficulty", "Medium")
+                ),
+                "estimated_time": _read_field(
+                    project_direction,
+                    "estimated_effort",
+                    "Flexible",
+                ),
+                "summary": _read_field(project_direction, "summary", ""),
+                "evidence_badge": _read_field(
+                    presentation,
+                    "evidence_badge",
+                    "Evidence-informed",
+                ),
+                "confidence_explanation": _read_field(
+                    presentation,
+                    "confidence_explanation",
+                    "This direction is supported by the available evidence.",
+                ),
+                "evidence_summary": _read_field(
+                    presentation,
+                    "evidence_summary",
+                    "Evidence-informed",
+                ),
+                "skills_shown": _read_field(
+                    presentation,
+                    "skills_shown",
+                    [],
+                ),
+                "why_it_matters": _read_field(
+                    presentation,
+                    "why_it_matters",
+                    _read_field(project_direction, "why_it_fits", ""),
+                ),
+                "interview_talking_point": _read_field(
+                    presentation,
+                    "interview_talking_point",
+                    "Explain how this project turns evidence into a practical build.",
+                ),
+                "open_questions": _read_field(
+                    presentation,
+                    "open_questions",
+                    [],
+                ),
+                "roadmap": _serialize_list(
+                    _read_field(project_direction, "roadmap", []),
+                ),
+            }
+        )
+
+    return frontend_directions
+
+
+def _read_field(value: object, field_name: str, default: object) -> object:
+    if isinstance(value, dict):
+        return value.get(field_name, default)
+
+    return getattr(value, field_name, default)
+
+
+def _serialize_list(values: object) -> List[Dict]:
+    if not isinstance(values, list):
+        return []
+
+    serialized = []
+    for value in values:
+        if hasattr(value, "model_dump"):
+            serialized.append(value.model_dump())
+        elif isinstance(value, dict):
+            serialized.append(value)
+
+    return serialized
+
+
+def _level_from_difficulty(difficulty: object) -> str:
+    if difficulty == "Easy":
+        return "Beginner"
+
+    if difficulty == "Hard":
+        return "Advanced"
+
+    return "Intermediate"

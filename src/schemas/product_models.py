@@ -137,6 +137,23 @@ class PresentationProjectDirection(BaseModel):
     evidence_summary: str
 
 
+class FrontendProjectDirection(BaseModel):
+    id: str
+    title: str
+    tier: str
+    level: str
+    estimated_time: str
+    summary: str
+    evidence_badge: str
+    confidence_explanation: str
+    evidence_summary: str
+    skills_shown: List[str] = Field(default_factory=list)
+    why_it_matters: str
+    interview_talking_point: str
+    open_questions: List[str] = Field(default_factory=list)
+    roadmap: List[Dict[str, Any]] = Field(default_factory=list)
+
+
 class SynthesisStatus(BaseModel):
     available: bool
     reason: str
@@ -148,6 +165,9 @@ class SynthesisStatus(BaseModel):
     ] = Field(default_factory=list)
     presentation_project_directions: List[
         PresentationProjectDirection
+    ] = Field(default_factory=list)
+    frontend_project_directions: List[
+        FrontendProjectDirection
     ] = Field(default_factory=list)
     live_evidence_cards: Dict[str, Any] = Field(default_factory=dict)
     routing_preview: Dict[str, Any] = Field(default_factory=dict)

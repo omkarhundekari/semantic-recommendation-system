@@ -293,6 +293,7 @@ def test_project_intelligence_synthesis_status_contract_keys():
         "synthesis_summary",
         "validated_project_directions",
         "presentation_project_directions",
+        "frontend_project_directions",
         "live_evidence_cards",
         "routing_preview",
         "token_estimate",
@@ -439,3 +440,29 @@ def test_synthesis_summary_marks_invalid_preview_when_sources_are_invented():
         "invented_source_count": 1,
         "estimated_tokens": 1234,
     }
+
+
+def test_frontend_project_directions_use_ready_direction_titles():
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal=(
+                "Build a retrieval augmented generation project for "
+                "question answering for ML engineer roles in 3 weeks"
+            ),
+            selected_direction="AI / ML",
+        )
+    )
+
+    payload = response.model_dump()
+    ready_titles = [
+        direction["title"]
+        for direction in payload["directions"]
+    ]
+    frontend_titles = [
+        direction["title"]
+        for direction in payload["synthesis_status"][
+            "frontend_project_directions"
+        ]
+    ]
+
+    assert frontend_titles == ready_titles

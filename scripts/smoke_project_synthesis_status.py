@@ -47,9 +47,9 @@ def main():
     print("Synthesis summary:")
     print(json.dumps(summary, indent=2, sort_keys=True))
     print()
-    print("Presentation project directions:")
+    print("Frontend project directions:")
     for index, direction in enumerate(
-        synthesis_status.get("presentation_project_directions", []),
+        synthesis_status.get("frontend_project_directions", []),
         start=1,
     ):
         print(
@@ -58,8 +58,10 @@ def main():
             f"{direction.get('estimated_time')}: "
             f"{direction.get('title')}"
         )
+        if direction.get("tier"):
+            print(f"   Tier: {direction.get('tier')}")
         print(f"   Badge: {direction.get('evidence_badge')}")
-        print(f"   Build: {direction.get('what_you_will_build')}")
+        print(f"   Summary: {direction.get('summary')}")
         print(f"   Why: {direction.get('why_it_matters')}")
         print(f"   Skills: {', '.join(direction.get('skills_shown', [])[:3])}")
         print(f"   Talking point: {direction.get('interview_talking_point')}")

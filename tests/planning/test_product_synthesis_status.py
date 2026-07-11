@@ -213,3 +213,59 @@ def test_build_validated_project_directions_hides_invalid_preview():
     )
 
     assert directions == []
+
+
+def test_frontend_project_directions_use_product_direction_identity():
+    from planning.product_synthesis_status import (
+        build_frontend_project_directions,
+    )
+
+    result = build_frontend_project_directions(
+        project_directions=[
+            {
+                "id": "direction-1",
+                "title": "RAG Evaluation Studio",
+                "portfolio_tier": "Quick Win",
+                "difficulty": "Easy",
+                "estimated_effort": "3–5 days",
+                "summary": "Evaluate retrieval quality in RAG pipelines.",
+                "why_it_fits": "Grounded in RAG evaluation evidence.",
+                "roadmap": [
+                    {
+                        "id": "define",
+                        "title": "Define evaluation question",
+                        "purpose": "Choose a narrow failure mode.",
+                        "tasks": ["Pick retrieval quality or faithfulness."],
+                    }
+                ],
+            }
+        ],
+        presentation_project_directions=[
+            {
+                "title": "Movie Recommendation System Starter",
+                "evidence_badge": "Strong research and implementation support",
+                "confidence_explanation": (
+                    "This direction is well supported by available evidence."
+                ),
+                "evidence_summary": (
+                    "Supported by 1 research paper and 1 GitHub implementation"
+                ),
+                "skills_shown": ["Evaluation and validation"],
+                "why_it_matters": "This matters because it is evidence-backed.",
+                "interview_talking_point": (
+                    "I built a validation-focused project."
+                ),
+                "open_questions": [],
+            }
+        ],
+    )
+
+    assert result[0]["id"] == "direction-1"
+    assert result[0]["title"] == "RAG Evaluation Studio"
+    assert result[0]["tier"] == "Quick Win"
+    assert result[0]["level"] == "Beginner"
+    assert result[0]["evidence_badge"] == (
+        "Strong research and implementation support"
+    )
+    assert result[0]["skills_shown"] == ["Evaluation and validation"]
+    assert result[0]["roadmap"][0]["id"] == "define"

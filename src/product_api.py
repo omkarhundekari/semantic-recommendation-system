@@ -664,6 +664,7 @@ def generate_project_intelligence(
             query=corrected_query,
             constraints=constraints,
             evidence_items=evidence_items,
+            project_directions=directions,
         ),
         clarification_required=False,
         inferred_domain_family=inference.get(
