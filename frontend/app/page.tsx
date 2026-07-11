@@ -358,6 +358,10 @@ export default function Home() {
     null,
   );
 
+  const [completedRoadmapNodeIds, setCompletedRoadmapNodeIds] = useState<
+    string[]
+  >([]);
+
   const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
     string | null
   >(null);
@@ -473,6 +477,7 @@ export default function Home() {
     setResult(null);
     setSelectedDirectionId(null);
     setActiveRoadmapNodeId(null);
+    setCompletedRoadmapNodeIds([]);
     setExpandedWhyDirectionId(null);
     setShouldScrollToClarification(false);
     setShouldScrollToDirections(false);
@@ -556,6 +561,7 @@ export default function Home() {
   function chooseDirection(direction: Direction) {
     setSelectedDirectionId(direction.id);
     setActiveRoadmapNodeId(direction.roadmap[0]?.id ?? null);
+    setCompletedRoadmapNodeIds([]);
 
     window.setTimeout(() => {
       document
@@ -565,6 +571,29 @@ export default function Home() {
           block: "start",
         });
     }, 80);
+  }
+
+  function completeActiveMission() {
+    if (!selectedDirection || !activeRoadmapNodeId) {
+      return;
+    }
+
+    setCompletedRoadmapNodeIds((current) => {
+      if (current.includes(activeRoadmapNodeId)) {
+        return current;
+      }
+
+      return [...current, activeRoadmapNodeId];
+    });
+
+    const activeIndex = selectedDirection.roadmap.findIndex(
+      (node) => node.id === activeRoadmapNodeId,
+    );
+    const nextNode = selectedDirection.roadmap[activeIndex + 1];
+
+    if (nextNode) {
+      setActiveRoadmapNodeId(nextNode.id);
+    }
   }
 
   return (
@@ -1293,6 +1322,8 @@ export default function Home() {
                         <div className="space-y-7">
                           {selectedDirection.roadmap.map((node, index) => {
                             const isActive = node.id === activeRoadmapNodeId;
+                            const isCompleted =
+                              completedRoadmapNodeIds.includes(node.id);
                             const isRight = index % 2 === 1;
 
                             return (
@@ -1315,7 +1346,9 @@ export default function Home() {
                                   className={`rounded-2xl border p-4 transition sm:col-span-1 ${
                                     isActive
                                       ? "border-sky-200/50 bg-sky-300/10 shadow-xl shadow-sky-500/10"
-                                      : "border-white/10 bg-white/[0.025] hover:border-white/25 hover:bg-white/[0.045]"
+                                      : isCompleted
+                                        ? "border-emerald-300/30 bg-emerald-400/10"
+                                        : "border-white/10 bg-white/[0.025] hover:border-white/25 hover:bg-white/[0.045]"
                                   }`}
                                 >
                                   <div className="flex items-center gap-2">
@@ -1342,7 +1375,9 @@ export default function Home() {
                                     className={`grid h-9 w-9 place-items-center rounded-full border transition ${
                                       isActive
                                         ? "border-sky-200/70 bg-sky-300 text-slate-950 shadow-lg shadow-sky-300/30"
-                                        : "border-white/20 bg-slate-950 text-slate-400"
+                                        : isCompleted
+                                          ? "border-emerald-300/60 bg-emerald-400 text-slate-950"
+                                          : "border-white/20 bg-slate-950 text-slate-400"
                                     }`}
                                   >
                                     <CheckCircle2 className="h-4 w-4" />
@@ -1359,6 +1394,8 @@ export default function Home() {
                       <RoadmapDetailPanel
                         direction={selectedDirection}
                         activeNodeId={activeRoadmapNodeId}
+                        completedNodeIds={completedRoadmapNodeIds}
+                        onCompleteActiveMission={completeActiveMission}
                       />
                     </div>
                   </div>
@@ -1375,9 +1412,13 @@ export default function Home() {
 function RoadmapDetailPanel({
   direction,
   activeNodeId,
+  completedNodeIds,
+  onCompleteActiveMission,
 }: {
   direction: Direction;
   activeNodeId: string | null;
+  completedNodeIds: string[];
+  onCompleteActiveMission: () => void;
 }) {
   const activeNode =
     direction.roadmap.find((node) => node.id === activeNodeId) ??
@@ -1386,6 +1427,11 @@ function RoadmapDetailPanel({
   if (!activeNode) {
     return null;
   }
+
+  const completedCount = direction.roadmap.filter((node) =>
+    completedNodeIds.includes(node.id),
+  ).length;
+  const isActiveComplete = completedNodeIds.includes(activeNode.id);
 
   return (
     <AnimatePresence mode="wait">
@@ -1397,6 +1443,30 @@ function RoadmapDetailPanel({
         transition={{ duration: 0.22 }}
         className="sticky top-6 h-fit rounded-[1.6rem] border border-sky-300/15 bg-slate-950/80 p-5 shadow-2xl shadow-sky-950/20"
       >
+        <div className="mb-5 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-slate-300">
+              Mission progress
+            </span>
+            <span className="font-semibold text-white">
+              {completedCount}/{direction.roadmap.length}
+            </span>
+          </div>
+
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.06]">
+            <div
+              className="h-full rounded-full bg-sky-300 transition-all"
+              style={{
+                width: `${
+                  direction.roadmap.length > 0
+                    ? (completedCount / direction.roadmap.length) * 100
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+        </div>
+
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-sky-300">
@@ -1487,7 +1557,21 @@ function RoadmapDetailPanel({
         )}
 
         <div className="mt-6 border-t border-white/10 pt-4">
-          <p className="inline-flex items-center gap-2 text-sm text-slate-300">
+          <button
+            type="button"
+            onClick={onCompleteActiveMission}
+            disabled={isActiveComplete}
+            className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              isActiveComplete
+                ? "cursor-not-allowed border border-emerald-300/20 bg-emerald-400/10 text-emerald-100"
+                : "border border-sky-300/25 bg-sky-400/10 text-sky-100 hover:border-sky-200/50 hover:bg-sky-300/20 hover:text-white"
+            }`}
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            {isActiveComplete ? "Mission completed" : "Mark mission complete"}
+          </button>
+
+          <p className="mt-4 inline-flex items-center gap-2 text-sm text-slate-300">
             <FileCheck2 className="h-4 w-4 text-emerald-300" />
             {direction.verification.status === "passed"
               ? "Plan verified against role, scope, and evidence."
