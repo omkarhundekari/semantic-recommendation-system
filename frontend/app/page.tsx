@@ -112,12 +112,27 @@ type SynthesisStatus = {
   frontend_project_directions?: FrontendProjectDirection[];
 };
 
+type EvidenceCoverage = {
+  coverage_state: string;
+  label: string;
+  user_message: string;
+  can_generate_directions: boolean;
+  should_ask_clarification?: boolean;
+  should_offer_exploratory_mode?: boolean;
+  warnings?: string[];
+  direct_count?: number;
+  adjacent_count?: number;
+  weak_count?: number;
+  unique_source_count?: number;
+};
+
 type IntelligenceResponse = {
   status: string;
   clarification_required?: boolean;
   clarification_message?: string;
   clarification_options?: string[];
   evidence_route?: string;
+  evidence_coverage?: EvidenceCoverage | null;
   inferred_domain_family?: string | null;
   family_confidence?: number | null;
   inferred_focus?: string | null;
@@ -227,6 +242,30 @@ function confidenceLabel(value?: number | null) {
   }
 
   return "Emerging signal";
+}
+
+function coverageBadgeClass(state?: string) {
+  if (state === "strong_direct") {
+    return "border-emerald-300/20 bg-emerald-400/10 text-emerald-100";
+  }
+
+  if (state === "adequate_direct") {
+    return "border-sky-300/20 bg-sky-400/10 text-sky-100";
+  }
+
+  if (state === "adjacent_only") {
+    return "border-amber-300/20 bg-amber-400/10 text-amber-100";
+  }
+
+  if (
+    state === "exploratory" ||
+    state === "out_of_domain" ||
+    state === "query_too_broad"
+  ) {
+    return "border-rose-300/20 bg-rose-400/10 text-rose-100";
+  }
+
+  return "border-white/10 bg-white/[0.04] text-slate-200";
 }
 
 function formatSourceType(sourceType: string) {
@@ -840,6 +879,53 @@ export default function Home() {
                   </p>
                 </div>
               </div>
+
+              {result.evidence_coverage && (
+                <div
+                  className={`mt-6 rounded-2xl border p-5 ${coverageBadgeClass(
+                    result.evidence_coverage.coverage_state,
+                  )}`}
+                >
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-75">
+                        Evidence coverage
+                      </p>
+
+                      <p className="mt-2 text-lg font-semibold">
+                        {result.evidence_coverage.label}
+                      </p>
+
+                      <p className="mt-2 max-w-3xl text-sm leading-6 opacity-80">
+                        {result.evidence_coverage.user_message}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="rounded-xl border border-white/10 bg-slate-950/35 px-3 py-2">
+                        <p className="font-semibold">
+                          {result.evidence_coverage.direct_count ?? 0}
+                        </p>
+                        <p className="mt-1 opacity-70">direct</p>
+                      </div>
+
+                      <div className="rounded-xl border border-white/10 bg-slate-950/35 px-3 py-2">
+                        <p className="font-semibold">
+                          {result.evidence_coverage.adjacent_count ?? 0}
+                        </p>
+                        <p className="mt-1 opacity-70">adjacent</p>
+                      </div>
+
+                      <div className="rounded-xl border border-white/10 bg-slate-950/35 px-3 py-2">
+                        <p className="font-semibold">
+                          {result.evidence_coverage.unique_source_count ?? 0}
+                        </p>
+                        <p className="mt-1 opacity-70">sources</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {result.research_evidence_assessment && (
                 <div className="mt-6 rounded-2xl border border-sky-300/15 bg-sky-300/[0.05] p-5">
