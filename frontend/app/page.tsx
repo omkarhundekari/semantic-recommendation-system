@@ -54,6 +54,16 @@ type RoadmapNode = {
   title: string;
   purpose: string;
   tasks: string[];
+  stage_type?: string | null;
+  objective?: string | null;
+  why_it_matters?: string | null;
+  commands?: string[];
+  expected_outputs?: string[];
+  acceptance_criteria?: string[];
+  validation_checks?: string[];
+  common_errors?: string[];
+  portfolio_artifact?: string | null;
+  unlock_condition?: string | null;
 };
 
 type Direction = {
@@ -1390,40 +1400,91 @@ function RoadmapDetailPanel({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.14em] text-sky-300">
-              Selected stage
+              Mission
             </p>
 
             <h3 className="mt-2 text-xl font-semibold text-white">
               {activeNode.title}
             </h3>
+
+            {activeNode.stage_type && (
+              <p className="mt-2 inline-flex rounded-full border border-sky-300/20 bg-sky-400/10 px-2.5 py-1 text-xs text-sky-100">
+                {activeNode.stage_type.replaceAll("_", " ")}
+              </p>
+            )}
           </div>
 
           <Code2 className="h-5 w-5 text-sky-300" />
         </div>
 
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          {activeNode.purpose}
+          {activeNode.objective ?? activeNode.purpose}
         </p>
 
-        <div className="mt-6">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
-            Build this next
-          </p>
+        {activeNode.why_it_matters && (
+          <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+              Why this matters
+            </p>
 
-          <ul className="mt-3 space-y-3">
-            {activeNode.tasks.map((task, index) => (
-              <li
-                key={task}
-                className="flex gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] p-3 text-sm leading-6 text-slate-300"
-              >
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-sky-300/10 text-xs font-semibold text-sky-200">
-                  {index + 1}
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              {activeNode.why_it_matters}
+            </p>
+          </div>
+        )}
+
+        <MissionListSection
+          title="Build this next"
+          items={activeNode.tasks}
+          numbered
+        />
+
+        <MissionListSection
+          title="Command block"
+          items={activeNode.commands ?? []}
+          code
+        />
+
+        <MissionListSection
+          title="Expected outputs"
+          items={activeNode.expected_outputs ?? []}
+        />
+
+        <MissionListSection
+          title="Acceptance criteria"
+          items={activeNode.acceptance_criteria ?? []}
+        />
+
+        <MissionListSection
+          title="Validation checks"
+          items={activeNode.validation_checks ?? []}
+        />
+
+        <MissionListSection
+          title="Common errors to avoid"
+          items={activeNode.common_errors ?? []}
+        />
+
+        {(activeNode.portfolio_artifact || activeNode.unlock_condition) && (
+          <div className="mt-6 space-y-3 border-t border-white/10 pt-4">
+            {activeNode.portfolio_artifact && (
+              <p className="flex gap-3 rounded-xl border border-emerald-300/10 bg-emerald-400/5 p-3 text-sm leading-6 text-emerald-100">
+                <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+                <span>
+                  <span className="font-semibold">Portfolio artifact: </span>
+                  {activeNode.portfolio_artifact}
                 </span>
-                {task}
-              </li>
-            ))}
-          </ul>
-        </div>
+              </p>
+            )}
+
+            {activeNode.unlock_condition && (
+              <p className="rounded-xl border border-sky-300/10 bg-sky-400/5 p-3 text-sm leading-6 text-sky-100">
+                <span className="font-semibold">Unlock condition: </span>
+                {activeNode.unlock_condition}
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 border-t border-white/10 pt-4">
           <p className="inline-flex items-center gap-2 text-sm text-slate-300">
@@ -1435,5 +1496,45 @@ function RoadmapDetailPanel({
         </div>
       </motion.aside>
     </AnimatePresence>
+  );
+}
+
+function MissionListSection({
+  title,
+  items,
+  numbered = false,
+  code = false,
+}: {
+  title: string;
+  items: string[];
+  numbered?: boolean;
+  code?: boolean;
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-6">
+      <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+        {title}
+      </p>
+
+      <ul className="mt-3 space-y-3">
+        {items.map((item, index) => (
+          <li
+            key={`${title}-${item}-${index}`}
+            className={`flex gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] p-3 text-sm leading-6 text-slate-300 ${
+              code ? "font-mono text-xs text-sky-100" : ""
+            }`}
+          >
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-sky-300/10 text-xs font-semibold text-sky-200">
+              {numbered ? index + 1 : "✓"}
+            </span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
