@@ -7,6 +7,11 @@ import {
   type PortfolioSummary,
   type PortfolioWorkspaceLike,
 } from "@/lib/portfolioSummary";
+import {
+  buildInterviewStory,
+  formatInterviewStoryText,
+  type InterviewStory,
+} from "@/lib/interviewStory";
 import { validateProof } from "@/lib/proofValidation";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -421,6 +426,8 @@ export default function Home() {
   const [showHelpChooser, setShowHelpChooser] = useState(false);
   const [portfolioSummary, setPortfolioSummary] =
     useState<PortfolioSummary | null>(null);
+  const [interviewStory, setInterviewStory] =
+    useState<InterviewStory | null>(null);
 
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(
     savedWorkspace?.selectedDirectionId ?? null,
@@ -716,6 +723,30 @@ export default function Home() {
     } satisfies PortfolioWorkspaceLike);
 
     setPortfolioSummary(summary);
+  }
+
+  function createInterviewStory() {
+    if (!result || result.status !== "ready" || !selectedDirectionId) {
+      return;
+    }
+
+    const generatedSummary = generatePortfolioSummary({
+      goal,
+      selectedDirectionId,
+      completedRoadmapNodeIds,
+      guidedStepProofs,
+      completedGuidedStepIds,
+      result,
+    } satisfies PortfolioWorkspaceLike);
+
+    const summary = portfolioSummary ?? generatedSummary;
+
+    if (!summary) {
+      return;
+    }
+
+    setPortfolioSummary(summary);
+    setInterviewStory(buildInterviewStory(summary));
   }
 
   function completeActiveMission() {
@@ -1530,8 +1561,15 @@ export default function Home() {
                             Create portfolio summary
                           </button>
 
+                          <button
+                            type="button"
+                            onClick={createInterviewStory}
+                            className="rounded-xl border border-sky-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-sky-50 transition hover:border-sky-200/35 hover:bg-sky-300/10"
+                          >
+                            Generate interview story
+                          </button>
+
                           {[
-                            "Generate interview story",
                             "Prepare README outline",
                             "Preview Build Passport",
                           ].map((action) => (
@@ -1553,6 +1591,10 @@ export default function Home() {
 
                     {portfolioSummary && (
                       <PortfolioSummaryPreview summary={portfolioSummary} />
+                    )}
+
+                    {interviewStory && (
+                      <InterviewStoryPreview story={interviewStory} />
                     )}
 
                     <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
@@ -1665,6 +1707,89 @@ export default function Home() {
         )}
       </section>
     </main>
+  );
+}
+
+function InterviewStoryPreview({ story }: { story: InterviewStory }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyStory() {
+    await navigator.clipboard.writeText(formatInterviewStoryText(story));
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-sky-300/20 bg-sky-400/[0.045] p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-200">
+            Interview story
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-white">
+            Explain this project with confidence
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-sky-50/75">
+            A structured answer built from your completed missions, saved proof, validation,
+            tradeoffs, and portfolio summary.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={copyStory}
+          className="rounded-xl border border-sky-300/20 bg-slate-950/30 px-3 py-2 text-sm font-medium text-sky-50 transition hover:border-sky-200/40 hover:bg-sky-300/10"
+        >
+          {copied ? "Copied" : "Copy story"}
+        </button>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-white/10 bg-slate-950/45 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          60-90 second answer
+        </p>
+        <p className="mt-3 text-sm leading-7 text-slate-200">
+          {story.openingAnswer}
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <InterviewStorySection title="Problem" body={story.problem} />
+        <InterviewStorySection title="Approach" body={story.approach} />
+        <InterviewStorySection title="Implementation" body={story.implementation} />
+        <InterviewStorySection title="Validation" body={story.validation} />
+        <InterviewStorySection title="Tradeoff" body={story.tradeoff} />
+        <InterviewStorySection title="Next improvement" body={story.improvement} />
+      </div>
+
+      <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/35 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          Concise version
+        </p>
+        <p className="mt-3 text-sm leading-6 text-slate-300">
+          {story.conciseVersion}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function InterviewStorySection({
+  title,
+  body,
+}: {
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/30 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        {title}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-slate-300">
+        {body}
+      </p>
+    </div>
   );
 }
 
