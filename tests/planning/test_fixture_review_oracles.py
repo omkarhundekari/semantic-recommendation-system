@@ -9,14 +9,18 @@ from planning.fixture_review_oracles import (
 def test_fixture_review_oracles_are_valid():
     oracles = fixture_review_oracles()
 
-    assert len(oracles) == 1
+    assert len(oracles) == 10
+    assert len({oracle.fixture_id for oracle in oracles}) == len(oracles)
 
-    oracle = oracles[0]
-    oracle.validate()
+    for oracle in oracles:
+        oracle.validate()
 
-    assert oracle.fixture_id == "sparse_evidence_cloud_cost"
-    assert oracle.expected_overall_preference == "both_weak"
-    assert oracle.expected_response_quality == "exploratory"
+    sparse_oracle = get_fixture_review_oracle(
+        "sparse_evidence_cloud_cost"
+    )
+
+    assert sparse_oracle.expected_overall_preference == "both_weak"
+    assert sparse_oracle.expected_response_quality == "exploratory"
 
 
 def test_fixture_review_oracle_rejects_unknown_fixture():
