@@ -1,3 +1,8 @@
+import {
+  evaluateDecisionConsequences,
+  type DecisionConsequenceEvaluation,
+} from "./decisionConsequenceEvaluator";
+
 export type GuidedMissionStepLike = {
   step_id: string;
   title: string;
@@ -101,6 +106,7 @@ export type PortfolioSummary = {
   totalGuidedSteps: number;
   proofEntriesSaved: number;
   technicalDecisions: DecisionEntry[];
+  decisionConsequences: DecisionConsequenceEvaluation;
   proofEntries: ProofEntry[];
   skillsDemonstrated: string[];
   knownLimitations: string[];
@@ -135,6 +141,8 @@ export function generatePortfolioSummary(
 
   const proofEntries = extractProofEntries(workspace, direction);
   const technicalDecisions = extractDecisionPoints(workspace, direction);
+  const decisionConsequences =
+    evaluateDecisionConsequences(technicalDecisions);
   const skillsDemonstrated = extractSkills(direction, workspace);
   const knownLimitations = extractKnownLimitations(direction, workspace);
   const interviewTakeaways = extractInterviewTakeaways(direction);
@@ -166,6 +174,7 @@ export function generatePortfolioSummary(
     totalGuidedSteps: guidedStepKeys.length,
     proofEntriesSaved: proofEntries.length,
     technicalDecisions,
+    decisionConsequences,
     proofEntries,
     skillsDemonstrated,
     knownLimitations,
@@ -372,6 +381,47 @@ export function formatPortfolioSummaryText(summary: PortfolioSummary): string {
         (decision) => `- ${decision.decisionPoint}\n  Evidence: ${decision.answer}`,
       ),
       "- No technical decisions captured yet.",
+    ),
+    "",
+    "Decision consequences:",
+    ...formatListOrFallback(
+      summary.decisionConsequences.consequences.map(
+        (consequence) =>
+          `- [${consequence.category}] ${consequence.recommendedAdjustment}`,
+      ),
+      "- No decision consequences identified yet.",
+    ),
+    "",
+    "Validation focus:",
+    ...formatListOrFallback(
+      summary.decisionConsequences.validationFocus.map(
+        (metric) => `- ${metric}`,
+      ),
+      "- No explicit validation metric captured yet.",
+    ),
+    "",
+    "Deferred scope:",
+    ...formatListOrFallback(
+      summary.decisionConsequences.deferredItems.map(
+        (item) => `- ${item}`,
+      ),
+      "- No deferred scope captured yet.",
+    ),
+    "",
+    "Architecture signals:",
+    ...formatListOrFallback(
+      summary.decisionConsequences.architectureSignals.map(
+        (signal) => `- ${signal}`,
+      ),
+      "- No explicit architecture signal captured yet.",
+    ),
+    "",
+    "Engineering priorities:",
+    ...formatListOrFallback(
+      summary.decisionConsequences.priorities.map(
+        (priority) => `- ${priority}`,
+      ),
+      "- No explicit engineering priority captured yet.",
     ),
     "",
     "Known limitations:",
