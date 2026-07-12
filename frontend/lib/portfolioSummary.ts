@@ -347,3 +347,69 @@ function uniqueNonEmpty(values: string[]): string[] {
     new Set(values.map((value) => value.trim()).filter(Boolean)),
   );
 }
+
+export function formatPortfolioSummaryText(summary: PortfolioSummary): string {
+  const sections = [
+    `Project: ${summary.projectTitle}`,
+    `Goal: ${summary.goal}`,
+    summary.domain ? `Domain: ${summary.domain}` : "",
+    `Evidence: ${summary.evidenceConfidenceLabel}`,
+    summary.evidenceConfidenceDetail,
+    "",
+    "Execution summary:",
+    `- Missions completed: ${summary.missionsCompleted}/${summary.totalMissions}`,
+    `- Guided steps completed: ${summary.guidedStepsCompleted}/${summary.totalGuidedSteps}`,
+    `- Proof entries saved: ${summary.proofEntriesSaved}`,
+    "",
+    "Skills demonstrated:",
+    ...summary.skillsDemonstrated.map((skill) => `- ${skill}`),
+    "",
+    "Technical decisions:",
+    ...formatListOrFallback(
+      summary.technicalDecisions.map(
+        (decision) => `- ${decision.decisionPoint}\n  Evidence: ${decision.proof}`,
+      ),
+      "- No technical decisions captured yet.",
+    ),
+    "",
+    "Known limitations:",
+    ...formatListOrFallback(
+      summary.knownLimitations.map((limitation) => `- ${limitation}`),
+      "- No limitations captured yet.",
+    ),
+    "",
+    "Interview takeaways:",
+    ...formatListOrFallback(
+      summary.interviewTakeaways.map((takeaway) => `- ${takeaway}`),
+      "- No interview takeaways captured yet.",
+    ),
+    "",
+    "Portfolio artifacts:",
+    ...formatListOrFallback(
+      summary.portfolioArtifacts.map((artifact) => `- ${artifact}`),
+      "- No portfolio artifacts captured yet.",
+    ),
+  ];
+
+  return sections.filter((section) => section !== "").join("\n");
+}
+
+export function buildResumeReadyParagraph(summary: PortfolioSummary): string {
+  const skills = summary.skillsDemonstrated.slice(0, 3).join(", ");
+  const proofPhrase =
+    summary.proofEntriesSaved > 0
+      ? `${summary.proofEntriesSaved} proof-backed execution step${
+          summary.proofEntriesSaved === 1 ? "" : "s"
+        }`
+      : "guided execution evidence";
+
+  const validationPhrase = summary.completionState.fullyExecuted
+    ? "completed the full guided roadmap"
+    : "completed part of the guided roadmap";
+
+  return `Built ${summary.projectTitle}, a ${summary.domain ?? "technical"} project for ${summary.goal}. The project ${validationPhrase}, captured ${proofPhrase}, and demonstrated ${skills || "project execution, validation, and technical communication"}.`;
+}
+
+function formatListOrFallback(items: string[], fallback: string): string[] {
+  return items.length > 0 ? items : [fallback];
+}

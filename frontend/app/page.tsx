@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  buildResumeReadyParagraph,
+  formatPortfolioSummaryText,
   generatePortfolioSummary,
   type PortfolioSummary,
   type PortfolioWorkspaceLike,
@@ -1670,6 +1672,18 @@ function PortfolioSummaryPreview({
 }: {
   summary: PortfolioSummary;
 }) {
+  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const resumeParagraph = buildResumeReadyParagraph(summary);
+
+  async function copyText(label: string, text: string) {
+    await navigator.clipboard.writeText(text);
+    setCopiedSection(label);
+
+    window.setTimeout(() => {
+      setCopiedSection(null);
+    }, 1600);
+  }
+
   return (
     <div className="mt-6 rounded-2xl border border-sky-300/15 bg-sky-400/[0.04] p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1693,7 +1707,37 @@ function PortfolioSummaryPreview({
             {summary.guidedStepsCompleted}/{summary.totalGuidedSteps} guided steps
           </p>
           <p>{summary.proofEntriesSaved} proof entries</p>
+
+          <button
+            type="button"
+            onClick={() =>
+              void copyText("full-summary", formatPortfolioSummaryText(summary))
+            }
+            className="mt-3 w-full rounded-lg border border-sky-300/20 bg-sky-400/10 px-3 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-200/40 hover:bg-sky-300/20"
+          >
+            {copiedSection === "full-summary" ? "Copied" : "Copy summary"}
+          </button>
         </div>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Resume-ready paragraph
+          </p>
+
+          <button
+            type="button"
+            onClick={() => void copyText("resume", resumeParagraph)}
+            className="rounded-lg border border-white/10 px-2.5 py-1 text-xs font-medium text-slate-300 transition hover:border-sky-300/30 hover:text-sky-100"
+          >
+            {copiedSection === "resume" ? "Copied" : "Copy"}
+          </button>
+        </div>
+
+        <p className="mt-3 text-sm leading-6 text-slate-300">
+          {resumeParagraph}
+        </p>
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -1713,7 +1757,8 @@ function PortfolioSummaryPreview({
         <SummarySection
           title="Technical decisions"
           items={summary.technicalDecisions.map(
-            (decision) => `${decision.decisionPoint} ${decision.proof}`,
+            (decision) =>
+              `${decision.missionTitle} · ${decision.stepTitle}: ${decision.decisionPoint} Answer: ${decision.proof}`,
           )}
         />
 
