@@ -255,7 +255,13 @@ def search_github_project_corpus(
 ) -> List[Dict]:
     """
     Searches live GitHub implementation references stored locally.
+
+    The generated GitHub corpus is optional. When it is unavailable, callers
+    can continue with research papers and project-pattern evidence.
     """
+    if not os.path.exists(GITHUB_CORPUS_PATH):
+        return []
+
     load_github_corpus()
 
     raw_query_embedding = github_engine.create_query_embedding(query)
