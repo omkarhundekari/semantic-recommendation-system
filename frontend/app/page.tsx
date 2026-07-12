@@ -1538,6 +1538,12 @@ function RoadmapDetailPanel({
     nodeId: "",
     stepIndex: 0,
   });
+  const [guidedStepProofs, setGuidedStepProofs] = useState<
+    Record<string, string>
+  >({});
+  const [completedGuidedStepIds, setCompletedGuidedStepIds] = useState<
+    string[]
+  >([]);
 
   if (!activeNode) {
     return null;
@@ -1547,6 +1553,15 @@ function RoadmapDetailPanel({
   const activeGuidedStepIndex =
     guidedStepCursor.nodeId === activeNode.id ? guidedStepCursor.stepIndex : 0;
   const activeGuidedStep = guidedSteps[activeGuidedStepIndex] ?? null;
+  const activeGuidedStepKey = activeGuidedStep
+    ? `${activeNode.id}:${activeGuidedStep.step_id}`
+    : "";
+  const activeGuidedStepProof = activeGuidedStepKey
+    ? guidedStepProofs[activeGuidedStepKey] ?? ""
+    : "";
+  const isActiveGuidedStepComplete =
+    activeGuidedStepKey.length > 0 &&
+    completedGuidedStepIds.includes(activeGuidedStepKey);
 
   const completedCount = direction.roadmap.filter((node) =>
     completedNodeIds.includes(node.id),
@@ -1628,6 +1643,25 @@ function RoadmapDetailPanel({
             step={activeGuidedStep}
             stepIndex={activeGuidedStepIndex}
             totalSteps={guidedSteps.length}
+            proofValue={activeGuidedStepProof}
+            isComplete={isActiveGuidedStepComplete}
+            onProofChange={(value) =>
+              setGuidedStepProofs((current) => ({
+                ...current,
+                [activeGuidedStepKey]: value,
+              }))
+            }
+            onCompleteStep={() => {
+              if (!activeGuidedStepKey || !activeGuidedStepProof.trim()) {
+                return;
+              }
+
+              setCompletedGuidedStepIds((current) =>
+                current.includes(activeGuidedStepKey)
+                  ? current
+                  : [...current, activeGuidedStepKey],
+              );
+            }}
             onPrevious={() =>
               setGuidedStepCursor({
                 nodeId: activeNode.id,
@@ -1730,12 +1764,20 @@ function GuidedStepCoach({
   step,
   stepIndex,
   totalSteps,
+  proofValue,
+  isComplete,
+  onProofChange,
+  onCompleteStep,
   onPrevious,
   onNext,
 }: {
   step: GuidedMissionStep;
   stepIndex: number;
   totalSteps: number;
+  proofValue: string;
+  isComplete: boolean;
+  onProofChange: (value: string) => void;
+  onCompleteStep: () => void;
   onPrevious: () => void;
   onNext: () => void;
 }) {
@@ -1864,6 +1906,38 @@ function GuidedStepCoach({
               ))}
             </div>
           )}
+        </div>
+
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+              Your proof
+            </p>
+
+            {isComplete && (
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-medium text-emerald-100">
+                Step proof saved
+              </span>
+            )}
+          </div>
+
+          <textarea
+            value={proofValue}
+            onChange={(event) => onProofChange(event.target.value)}
+            placeholder="Paste the command output, file list, explanation, or result that proves you completed this step."
+            rows={5}
+            className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-slate-950/70 p-3 text-sm leading-6 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-emerald-300/40 focus:bg-slate-950"
+          />
+
+          <button
+            type="button"
+            onClick={onCompleteStep}
+            disabled={!proofValue.trim() || isComplete}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-300/20 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            {isComplete ? "Step completed" : "Save proof and complete step"}
+          </button>
         </div>
 
         <div className="rounded-xl border border-sky-300/10 bg-sky-400/[0.04] p-3">
