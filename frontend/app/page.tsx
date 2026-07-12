@@ -1441,6 +1441,15 @@ export default function Home() {
                             const isCompleted =
                               completedRoadmapNodeIds.includes(node.id);
                             const isRight = index % 2 === 1;
+                            const guidedStepCount =
+                              node.guided_steps?.length ?? 0;
+                            const completedGuidedStepCount = (
+                              node.guided_steps ?? []
+                            ).filter((step) =>
+                              completedGuidedStepIds.includes(
+                                `${node.id}:${step.step_id}`,
+                              ),
+                            ).length;
 
                             return (
                               <motion.button
@@ -1484,6 +1493,12 @@ export default function Home() {
                                   <p className="mt-1 text-sm leading-6 text-slate-400">
                                     {node.purpose}
                                   </p>
+
+                                  {guidedStepCount > 0 && (
+                                    <p className="mt-3 inline-flex rounded-full border border-emerald-300/15 bg-emerald-400/[0.06] px-2.5 py-1 text-xs font-medium text-emerald-100">
+                                      {completedGuidedStepCount}/{guidedStepCount} guided steps
+                                    </p>
+                                  )}
                                 </div>
 
                                 <div className="relative z-10 hidden h-10 w-10 place-items-center sm:grid">
