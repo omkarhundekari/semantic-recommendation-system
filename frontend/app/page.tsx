@@ -668,6 +668,26 @@ export default function Home() {
     }, 80);
   }
 
+  const selectedDirectionGuidedSteps =
+    selectedDirection?.roadmap.flatMap((node) => node.guided_steps ?? []) ?? [];
+  const selectedDirectionGuidedStepKeys =
+    selectedDirection?.roadmap.flatMap((node) =>
+      (node.guided_steps ?? []).map((step) => `${node.id}:${step.step_id}`),
+    ) ?? [];
+  const completedSelectedDirectionGuidedStepCount =
+    selectedDirectionGuidedStepKeys.filter((stepKey) =>
+      completedGuidedStepIds.includes(stepKey),
+    ).length;
+  const savedProofCount = selectedDirectionGuidedStepKeys.filter(
+    (stepKey) => guidedStepProofs[stepKey]?.trim(),
+  ).length;
+  const isSelectedProjectComplete =
+    selectedDirection !== null &&
+    selectedDirection.roadmap.length > 0 &&
+    selectedDirection.roadmap.every((node) =>
+      completedRoadmapNodeIds.includes(node.id),
+    );
+
   function completeActiveMission() {
     if (!selectedDirection || !activeRoadmapNodeId) {
       return;
@@ -1430,6 +1450,47 @@ export default function Home() {
                         </button>
                       </div>
                     </div>
+
+                    {isSelectedProjectComplete && (
+                      <div className="mt-8 rounded-2xl border border-emerald-300/20 bg-emerald-400/[0.06] p-5">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200">
+                              Project execution complete
+                            </p>
+                            <h3 className="mt-2 text-xl font-semibold text-white">
+                              Your guided build is ready to package.
+                            </h3>
+                            <p className="mt-2 text-sm leading-6 text-emerald-50/80">
+                              Every roadmap mission is complete. Next, Solvyn can turn this
+                              into a portfolio summary, interview story, and eventually a
+                              shareable Build Passport.
+                            </p>
+                          </div>
+
+                          <div className="grid min-w-56 gap-2 text-sm text-emerald-50/90">
+                            <p>
+                              <span className="font-semibold text-white">
+                                {completedRoadmapNodeIds.length}
+                              </span>{" "}
+                              missions completed
+                            </p>
+                            <p>
+                              <span className="font-semibold text-white">
+                                {completedSelectedDirectionGuidedStepCount}
+                              </span>
+                              /{selectedDirectionGuidedSteps.length} guided steps completed
+                            </p>
+                            <p>
+                              <span className="font-semibold text-white">
+                                {savedProofCount}
+                              </span>{" "}
+                              proof entries saved
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
                       <div className="relative">
