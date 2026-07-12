@@ -7,6 +7,7 @@ import {
   type PortfolioSummary,
   type PortfolioWorkspaceLike,
 } from "@/lib/portfolioSummary";
+import { validateProof } from "@/lib/proofValidation";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -2129,6 +2130,13 @@ function GuidedStepCoach({
 }) {
   const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === totalSteps - 1;
+  const proofValidation = validateProof(
+    proofValue,
+    step.expected_output_patterns ?? [],
+  );
+  const canCompleteStep =
+    proofValidation.status === "accepted" ||
+    proofValidation.status === "needs_detail";
 
   return (
     <div className="mt-6 overflow-hidden rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.035]">
@@ -2279,10 +2287,22 @@ function GuidedStepCoach({
             className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-slate-950/70 p-3 text-sm leading-6 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-emerald-300/40 focus:bg-slate-950"
           />
 
+          <p
+            className={`mt-2 rounded-lg border px-3 py-2 text-xs leading-5 ${
+              proofValidation.status === "accepted"
+                ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-100"
+                : proofValidation.status === "missing_expected_pattern"
+                  ? "border-amber-300/20 bg-amber-400/10 text-amber-100"
+                  : "border-white/10 bg-slate-950/40 text-slate-400"
+            }`}
+          >
+            {proofValidation.feedback}
+          </p>
+
           <button
             type="button"
             onClick={onCompleteStep}
-            disabled={!proofValue.trim() || isComplete}
+            disabled={!canCompleteStep || isComplete}
             className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-300/20 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <CheckCircle2 className="h-4 w-4" />
