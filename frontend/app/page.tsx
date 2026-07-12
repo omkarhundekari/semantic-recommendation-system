@@ -48,6 +48,9 @@ import {
   writeWorkspaceToStorage,
   type PersistedWorkspace,
 } from "@/lib/workspacePersistence";
+import {
+  sanitizeWorkspaceReferences,
+} from "@/lib/workspaceReferenceSanitizer";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -261,9 +264,14 @@ function readSavedWorkspace(): SavedWorkspace | null {
     return null;
   }
 
-  return readWorkspaceFromStorage<IntelligenceResponse>(
-    window.localStorage,
-  );
+  const workspace =
+    readWorkspaceFromStorage<IntelligenceResponse>(
+      window.localStorage,
+    );
+
+  return workspace
+    ? sanitizeWorkspaceReferences(workspace)
+    : null;
 }
 
 const examplePrompts = [
@@ -999,7 +1007,9 @@ export default function Home() {
         return;
       }
 
-      const workspace = importResult.workspace;
+      const workspace = sanitizeWorkspaceReferences(
+        importResult.workspace,
+      );
 
       setGoal(workspace.goal);
       setResult(workspace.result);
