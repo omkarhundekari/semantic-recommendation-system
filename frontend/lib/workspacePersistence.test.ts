@@ -4,7 +4,11 @@ import {
   CURRENT_WORKSPACE_SCHEMA_VERSION,
   migrateWorkspace,
   parseWorkspace,
+  readWorkspaceFromStorage,
+  removeWorkspaceFromStorage,
   serializeWorkspace,
+  writeWorkspaceToStorage,
+  type WorkspaceStorage,
 } from "./workspacePersistence";
 
 type ReadyResult = {
@@ -148,5 +152,100 @@ describe("workspace persistence", () => {
       schemaVersion: CURRENT_WORKSPACE_SCHEMA_VERSION,
       goal: "Build a retrieval project",
     });
+  });
+
+  it("reads a valid workspace from storage", () => {
+    const raw = serializeWorkspace({
+      goal: "Build a retrieval project",
+      result: readyResult,
+      selectedDirectionId: null,
+      activeRoadmapNodeId: null,
+      completedRoadmapNodeIds: [],
+      guidedStepProofs: {},
+      decisionAnswers: {},
+      completedGuidedStepIds: [],
+      adaptationDecisions: {},
+      adaptationEvidence: {},
+      savedAt: "2026-07-12T18:00:00.000Z",
+    });
+
+    const storage: WorkspaceStorage = {
+      getItem: () => raw,
+      setItem: () => undefined,
+      removeItem: () => undefined,
+    };
+
+    expect(
+      readWorkspaceFromStorage<ReadyResult>(storage)?.goal,
+    ).toBe("Build a retrieval project");
+  });
+
+  it("removes malformed stored workspace data", () => {
+    let removedKey: string | null = null;
+
+    const storage: WorkspaceStorage = {
+      getItem: () => "{bad-json",
+      setItem: () => undefined,
+      removeItem: (key) => {
+        removedKey = key;
+      },
+    };
+
+    expect(
+      readWorkspaceFromStorage<ReadyResult>(storage),
+    ).toBeNull();
+    expect(removedKey).toBe("solvyn:last-workspace");
+  });
+
+  it("fails safely when storage reads are blocked", () => {
+    const storage: WorkspaceStorage = {
+      getItem: () => {
+        throw new Error("Storage blocked");
+      },
+      setItem: () => undefined,
+      removeItem: () => undefined,
+    };
+
+    expect(
+      readWorkspaceFromStorage<ReadyResult>(storage),
+    ).toBeNull();
+  });
+
+  it("returns false when a workspace write fails", () => {
+    const storage: WorkspaceStorage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("Quota exceeded");
+      },
+      removeItem: () => undefined,
+    };
+
+    expect(
+      writeWorkspaceToStorage(storage, {
+        goal: "Build a retrieval project",
+        result: readyResult,
+        selectedDirectionId: null,
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {},
+        decisionAnswers: {},
+        completedGuidedStepIds: [],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-12T18:00:00.000Z",
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false when workspace removal fails", () => {
+    const storage: WorkspaceStorage = {
+      getItem: () => null,
+      setItem: () => undefined,
+      removeItem: () => {
+        throw new Error("Storage blocked");
+      },
+    };
+
+    expect(removeWorkspaceFromStorage(storage)).toBe(false);
   });
 });

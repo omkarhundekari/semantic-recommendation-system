@@ -40,9 +40,9 @@ import {
 } from "@/lib/acceptedAdaptationReadiness";
 import { validateProof } from "@/lib/proofValidation";
 import {
-  parseWorkspace,
-  serializeWorkspace,
-  WORKSPACE_STORAGE_KEY,
+  readWorkspaceFromStorage,
+  removeWorkspaceFromStorage,
+  writeWorkspaceToStorage,
   type PersistedWorkspace,
 } from "@/lib/workspacePersistence";
 
@@ -240,17 +240,9 @@ function readSavedWorkspace(): SavedWorkspace | null {
     return null;
   }
 
-  const rawWorkspace = window.localStorage.getItem(
-    WORKSPACE_STORAGE_KEY,
+  return readWorkspaceFromStorage<IntelligenceResponse>(
+    window.localStorage,
   );
-  const workspace =
-    parseWorkspace<IntelligenceResponse>(rawWorkspace);
-
-  if (!workspace && rawWorkspace) {
-    window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
-  }
-
-  return workspace;
 }
 
 const examplePrompts = [
@@ -493,23 +485,21 @@ export default function Home() {
       return;
     }
 
-    const workspace = serializeWorkspace<IntelligenceResponse>({
-      goal,
-      result,
-      selectedDirectionId,
-      activeRoadmapNodeId,
-      completedRoadmapNodeIds,
-      guidedStepProofs,
-      decisionAnswers,
-      completedGuidedStepIds,
-      adaptationDecisions,
-      adaptationEvidence,
-      savedAt: new Date().toISOString(),
-    });
-
-    window.localStorage.setItem(
-      WORKSPACE_STORAGE_KEY,
-      workspace,
+    writeWorkspaceToStorage<IntelligenceResponse>(
+      window.localStorage,
+      {
+        goal,
+        result,
+        selectedDirectionId,
+        activeRoadmapNodeId,
+        completedRoadmapNodeIds,
+        guidedStepProofs,
+        decisionAnswers,
+        completedGuidedStepIds,
+        adaptationDecisions,
+        adaptationEvidence,
+        savedAt: new Date().toISOString(),
+      },
     );
   }, [
     goal,
@@ -899,7 +889,7 @@ export default function Home() {
   }
 
   function clearSavedWorkspace() {
-    window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+    removeWorkspaceFromStorage(window.localStorage);
     setGoal("");
     setResult(null);
     setSelectedDirectionId(null);

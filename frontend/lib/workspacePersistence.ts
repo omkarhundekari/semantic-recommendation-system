@@ -147,3 +147,58 @@ export function serializeWorkspace<TResult>(
     schemaVersion: CURRENT_WORKSPACE_SCHEMA_VERSION,
   });
 }
+
+export type WorkspaceStorage = Pick<
+  Storage,
+  "getItem" | "setItem" | "removeItem"
+>;
+
+export function readWorkspaceFromStorage<TResult>(
+  storage: WorkspaceStorage,
+): PersistedWorkspace<TResult> | null {
+  try {
+    const rawWorkspace = storage.getItem(WORKSPACE_STORAGE_KEY);
+    const workspace = parseWorkspace<TResult>(rawWorkspace);
+
+    if (!workspace && rawWorkspace) {
+      try {
+        storage.removeItem(WORKSPACE_STORAGE_KEY);
+      } catch {
+        return null;
+      }
+    }
+
+    return workspace;
+  } catch {
+    return null;
+  }
+}
+
+export function writeWorkspaceToStorage<TResult>(
+  storage: WorkspaceStorage,
+  workspace: Omit<
+    PersistedWorkspace<TResult>,
+    "schemaVersion"
+  >,
+): boolean {
+  try {
+    storage.setItem(
+      WORKSPACE_STORAGE_KEY,
+      serializeWorkspace(workspace),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function removeWorkspaceFromStorage(
+  storage: WorkspaceStorage,
+): boolean {
+  try {
+    storage.removeItem(WORKSPACE_STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
