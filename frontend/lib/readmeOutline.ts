@@ -35,6 +35,29 @@ export function buildReadmeOutline(summary: PortfolioSummary): ReadmeOutline {
       ? summary.proofEntries.slice(0, 5).map((entry) => entry.proof)
       : ["Proof entries will appear here after guided build steps are completed."];
 
+  const adaptationAuditItems = [
+    ...summary.adaptationAudit.implemented.map(
+      (entry) =>
+        `Implemented: ${entry.title} — Evidence: ${entry.evidence}`,
+    ),
+    ...summary.adaptationAudit.acceptedMissingEvidence.map(
+      (entry) =>
+        `Accepted but missing evidence: ${entry.title}`,
+    ),
+    ...summary.adaptationAudit.deferred.map(
+      (entry) =>
+        `Deferred: ${entry.title}${
+          entry.rationale ? ` — ${entry.rationale}` : ""
+        }`,
+    ),
+    ...summary.adaptationAudit.rejected.map(
+      (entry) =>
+        `Rejected: ${entry.title}${
+          entry.rationale ? ` — ${entry.rationale}` : ""
+        }`,
+    ),
+  ];
+
   const sections: ReadmeSection[] = [
     {
       title: "Overview",
@@ -67,6 +90,13 @@ export function buildReadmeOutline(summary: PortfolioSummary): ReadmeOutline {
       body: formatBullets(proofPoints),
     },
     {
+      title: "Decision-Driven Roadmap Adjustments",
+      body:
+        adaptationAuditItems.length > 0
+          ? formatBullets(adaptationAuditItems)
+          : "No roadmap adaptation decisions have been recorded yet.",
+    },
+    {
       title: "Portfolio Artifacts",
       body: formatBullets(artifacts),
     },
@@ -76,12 +106,22 @@ export function buildReadmeOutline(summary: PortfolioSummary): ReadmeOutline {
     },
     {
       title: "Future Improvements",
-      body: formatBullets([
-        "Add stronger automated validation checks.",
-        "Improve deployment and reproducibility instructions.",
-        "Add more realistic datasets, examples, or edge cases.",
-        "Polish the user-facing demo and documentation.",
-      ]),
+      body: formatBullets(
+        [
+          ...summary.adaptationAudit.acceptedMissingEvidence.map(
+            (entry) =>
+              `Complete accepted adjustment and save evidence: ${entry.title}`,
+          ),
+          ...summary.adaptationAudit.deferred.map(
+            (entry) =>
+              `Revisit deferred adjustment: ${entry.title}`,
+          ),
+          "Add stronger automated validation checks.",
+          "Improve deployment and reproducibility instructions.",
+          "Add more realistic datasets, examples, or edge cases.",
+          "Polish the user-facing demo and documentation.",
+        ],
+      ),
     },
     {
       title: "Interview Explanation",

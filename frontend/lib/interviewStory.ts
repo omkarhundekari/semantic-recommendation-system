@@ -10,6 +10,7 @@ export type InterviewStory = {
   tradeoff: string;
   improvement: string;
   proofPoints: string[];
+  adaptationHighlights: string[];
   conciseVersion: string;
 };
 
@@ -27,6 +28,14 @@ export function buildInterviewStory(summary: PortfolioSummary): InterviewStory {
     summary.decisionConsequences.architectureSignals;
   const deferredItems =
     summary.decisionConsequences.deferredItems;
+  const implementedAdaptations =
+    summary.adaptationAudit.implemented;
+  const pendingAcceptedAdaptations =
+    summary.adaptationAudit.acceptedMissingEvidence;
+  const deferredAdaptations =
+    summary.adaptationAudit.deferred;
+  const rejectedAdaptations =
+    summary.adaptationAudit.rejected;
 
   const validationSignal =
     summary.knownLimitations.find((item) =>
@@ -42,13 +51,29 @@ export function buildInterviewStory(summary: PortfolioSummary): InterviewStory {
       ? ` The architecture reflected these explicit choices: ${architectureSignals.join(", ")}.`
       : "";
 
+  const adaptationImplementationDetail =
+    implementedAdaptations.length > 0
+      ? ` I also implemented ${implementedAdaptations.length} decision-driven roadmap adjustment${
+          implementedAdaptations.length === 1 ? "" : "s"
+        }. One saved adaptation proof was: ${implementedAdaptations[0].evidence}.`
+      : "";
+
   const implementation = firstProof
-    ? `For implementation, I used saved proof from the build process. One concrete proof point was: ${firstProof}.${architectureDetail}`
-    : `For implementation, I focused on building the core workflow first and saving evidence at each stage so the project could be reviewed later.${architectureDetail}`;
+    ? `For implementation, I used saved proof from the build process. One concrete proof point was: ${firstProof}.${architectureDetail}${adaptationImplementationDetail}`
+    : `For implementation, I focused on building the core workflow first and saving evidence at each stage so the project could be reviewed later.${architectureDetail}${adaptationImplementationDetail}`;
+
+  const adaptationValidationDetail =
+    pendingAcceptedAdaptations.length > 0
+      ? ` ${pendingAcceptedAdaptations.length} accepted roadmap adjustment${
+          pendingAcceptedAdaptations.length === 1 ? " still requires" : "s still require"
+        } implementation evidence.`
+      : implementedAdaptations.length > 0
+        ? ` Every accepted roadmap adjustment included in the artifact audit has saved implementation evidence.`
+        : "";
 
   const validation = validationFocus.length > 0
-    ? `I validated the project with explicit completion proof and evidence confidence. The project reached ${summary.evidenceConfidenceLabel}, and I chose ${validationFocus.join(", ")} as the validation focus. The validation story was: ${validationSignal}`
-    : `I validated the project with explicit completion proof and evidence confidence. The project reached ${summary.evidenceConfidenceLabel}, and the validation story was: ${validationSignal}`;
+    ? `I validated the project with explicit completion proof and evidence confidence. The project reached ${summary.evidenceConfidenceLabel}, and I chose ${validationFocus.join(", ")} as the validation focus. The validation story was: ${validationSignal}${adaptationValidationDetail}`
+    : `I validated the project with explicit completion proof and evidence confidence. The project reached ${summary.evidenceConfidenceLabel}, and the validation story was: ${validationSignal}${adaptationValidationDetail}`;
 
   const tradeoff = firstDecision && firstConsequence
     ? `One tradeoff I made was during ${firstDecision.missionTitle}. The decision point was: ${firstDecision.decisionPoint} I chose: ${firstDecision.answer} The downstream consequence was: ${firstConsequence.recommendedAdjustment}`
@@ -57,10 +82,18 @@ export function buildInterviewStory(summary: PortfolioSummary): InterviewStory {
       : `One tradeoff was keeping the first version focused. Instead of adding too many features early, I prioritized a working, testable MVP that could be improved safely.`;
 
   const improvement =
-    deferredItems.length > 0
-      ? `The next improvement would be to revisit the deferred scope: ${deferredItems.join(", ")}.`
-      : summary.knownLimitations[0] ??
-        "The next improvement would be to add stronger automated validation, more edge-case testing, and a more polished deployment or demo workflow.";
+    pendingAcceptedAdaptations.length > 0
+      ? `The next improvement would be to finish the accepted roadmap adjustments that still lack evidence: ${pendingAcceptedAdaptations
+          .map((entry) => entry.title)
+          .join(", ")}.`
+      : deferredAdaptations.length > 0
+        ? `The next improvement would be to revisit the deferred roadmap adjustments: ${deferredAdaptations
+            .map((entry) => entry.title)
+            .join(", ")}.`
+        : deferredItems.length > 0
+          ? `The next improvement would be to revisit the deferred scope: ${deferredItems.join(", ")}.`
+          : summary.knownLimitations[0] ??
+            "The next improvement would be to add stronger automated validation, more edge-case testing, and a more polished deployment or demo workflow.";
 
   const openingAnswer = [
     problem,
@@ -85,6 +118,28 @@ export function buildInterviewStory(summary: PortfolioSummary): InterviewStory {
     tradeoff,
     improvement,
     proofPoints: summary.proofEntries.slice(0, 5).map((entry) => entry.proof),
+    adaptationHighlights: [
+      ...implementedAdaptations.map(
+        (entry) =>
+          `Implemented: ${entry.title} — ${entry.evidence}`,
+      ),
+      ...pendingAcceptedAdaptations.map(
+        (entry) =>
+          `Accepted but missing evidence: ${entry.title}`,
+      ),
+      ...deferredAdaptations.map(
+        (entry) =>
+          `Deferred: ${entry.title}${
+            entry.rationale ? ` — ${entry.rationale}` : ""
+          }`,
+      ),
+      ...rejectedAdaptations.map(
+        (entry) =>
+          `Rejected: ${entry.title}${
+            entry.rationale ? ` — ${entry.rationale}` : ""
+          }`,
+      ),
+    ],
     conciseVersion,
   };
 }
@@ -121,6 +176,12 @@ export function formatInterviewStoryText(story: InterviewStory): string {
     ...formatListOrFallback(story.proofPoints, "No proof points saved yet.").map(
       (item) => `- ${item}`,
     ),
+    "",
+    "Roadmap adaptation audit:",
+    ...formatListOrFallback(
+      story.adaptationHighlights,
+      "No roadmap adaptation decisions captured yet.",
+    ).map((item) => `- ${item}`),
   ].join("\n");
 }
 

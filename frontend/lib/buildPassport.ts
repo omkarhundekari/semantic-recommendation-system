@@ -14,6 +14,7 @@ export type BuildPassport = {
   statuses: PassportStatus[];
   skills: string[];
   proofDigest: string[];
+  adaptationAudit: string[];
   artifacts: string[];
   shareableSummary: string;
   markdown: string;
@@ -37,6 +38,11 @@ export function buildPassport(summary: PortfolioSummary): BuildPassport {
       label: "Interview-prepped",
       passed: summary.completionState.interviewPrepped,
     },
+    {
+      label: "Accepted adaptations evidenced",
+      passed:
+        summary.adaptationAudit.acceptedMissingEvidenceCount === 0,
+    },
   ];
 
   const proofDigest =
@@ -49,9 +55,39 @@ export function buildPassport(summary: PortfolioSummary): BuildPassport {
       ? summary.portfolioArtifacts
       : ["Portfolio summary", "Interview story", "README outline"];
 
-  const executionSummary = `${summary.missionsCompleted}/${summary.totalMissions} missions completed, ${summary.guidedStepsCompleted}/${summary.totalGuidedSteps} guided steps completed, and ${summary.proofEntriesSaved} proof entries saved.`;
+  const adaptationAudit = [
+    ...summary.adaptationAudit.implemented.map(
+      (entry) =>
+        `Implemented: ${entry.title} — Evidence: ${entry.evidence}`,
+    ),
+    ...summary.adaptationAudit.acceptedMissingEvidence.map(
+      (entry) =>
+        `Accepted but missing evidence: ${entry.title}`,
+    ),
+    ...summary.adaptationAudit.deferred.map(
+      (entry) =>
+        `Deferred: ${entry.title}${
+          entry.rationale ? ` — ${entry.rationale}` : ""
+        }`,
+    ),
+    ...summary.adaptationAudit.rejected.map(
+      (entry) =>
+        `Rejected: ${entry.title}${
+          entry.rationale ? ` — ${entry.rationale}` : ""
+        }`,
+    ),
+  ];
 
-  const shareableSummary = `${summary.projectTitle} is a ${summary.evidenceConfidenceLabel.toLowerCase()} project built for: ${summary.goal}. It completed ${summary.missionsCompleted}/${summary.totalMissions} missions with ${summary.proofEntriesSaved} saved proof entries and demonstrates ${formatInlineList(summary.skillsDemonstrated.slice(0, 3))}.`;
+  const executionSummary = `${summary.missionsCompleted}/${summary.totalMissions} missions completed, ${summary.guidedStepsCompleted}/${summary.totalGuidedSteps} guided steps completed, ${summary.proofEntriesSaved} proof entries saved, and ${summary.adaptationAudit.implementedCount}/${summary.adaptationAudit.totalDecided} decided roadmap adaptations implemented with evidence.`;
+
+  const adaptationPhrase =
+    summary.adaptationAudit.implementedCount > 0
+      ? ` It also includes ${summary.adaptationAudit.implementedCount} implemented decision-driven roadmap adjustment${
+          summary.adaptationAudit.implementedCount === 1 ? "" : "s"
+        } with saved evidence.`
+      : "";
+
+  const shareableSummary = `${summary.projectTitle} is a ${summary.evidenceConfidenceLabel.toLowerCase()} project built for: ${summary.goal}. It completed ${summary.missionsCompleted}/${summary.totalMissions} missions with ${summary.proofEntriesSaved} saved proof entries and demonstrates ${formatInlineList(summary.skillsDemonstrated.slice(0, 3))}.${adaptationPhrase}`;
 
   const passport: BuildPassport = {
     title: summary.projectTitle,
@@ -62,6 +98,7 @@ export function buildPassport(summary: PortfolioSummary): BuildPassport {
     statuses,
     skills: summary.skillsDemonstrated,
     proofDigest,
+    adaptationAudit,
     artifacts,
     shareableSummary,
     markdown: "",
@@ -101,6 +138,14 @@ export function formatBuildPassportMarkdown(passport: BuildPassport): string {
     "## Proof Digest",
     "",
     ...formatBullets(passport.proofDigest),
+    "",
+    "## Roadmap Adaptation Audit",
+    "",
+    ...formatBullets(
+      passport.adaptationAudit.length > 0
+        ? passport.adaptationAudit
+        : ["No roadmap adaptation decisions captured yet."],
+    ),
     "",
     "## Portfolio Artifacts",
     "",
