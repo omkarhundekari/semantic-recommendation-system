@@ -12,6 +12,10 @@ import {
   formatInterviewStoryText,
   type InterviewStory,
 } from "@/lib/interviewStory";
+import {
+  buildReadmeOutline,
+  type ReadmeOutline,
+} from "@/lib/readmeOutline";
 import { validateProof } from "@/lib/proofValidation";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -428,6 +432,8 @@ export default function Home() {
     useState<PortfolioSummary | null>(null);
   const [interviewStory, setInterviewStory] =
     useState<InterviewStory | null>(null);
+  const [readmeOutline, setReadmeOutline] =
+    useState<ReadmeOutline | null>(null);
 
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(
     savedWorkspace?.selectedDirectionId ?? null,
@@ -725,9 +731,9 @@ export default function Home() {
     setPortfolioSummary(summary);
   }
 
-  function createInterviewStory() {
+  function getOrCreatePortfolioSummary(): PortfolioSummary | null {
     if (!result || result.status !== "ready" || !selectedDirectionId) {
-      return;
+      return null;
     }
 
     const generatedSummary = generatePortfolioSummary({
@@ -741,12 +747,31 @@ export default function Home() {
 
     const summary = portfolioSummary ?? generatedSummary;
 
+    if (summary) {
+      setPortfolioSummary(summary);
+    }
+
+    return summary;
+  }
+
+  function createInterviewStory() {
+    const summary = getOrCreatePortfolioSummary();
+
     if (!summary) {
       return;
     }
 
-    setPortfolioSummary(summary);
     setInterviewStory(buildInterviewStory(summary));
+  }
+
+  function createReadmeOutline() {
+    const summary = getOrCreatePortfolioSummary();
+
+    if (!summary) {
+      return;
+    }
+
+    setReadmeOutline(buildReadmeOutline(summary));
   }
 
   function completeActiveMission() {
@@ -1569,22 +1594,24 @@ export default function Home() {
                             Generate interview story
                           </button>
 
-                          {[
-                            "Prepare README outline",
-                            "Preview Build Passport",
-                          ].map((action) => (
-                            <button
-                              key={action}
-                              type="button"
-                              disabled
-                              className="cursor-not-allowed rounded-xl border border-white/10 bg-slate-950/20 px-3 py-3 text-left text-sm font-medium text-slate-500"
-                            >
-                              {action}
-                              <span className="mt-1 block text-xs font-normal text-slate-600">
-                                Coming soon
-                              </span>
-                            </button>
-                          ))}
+                          <button
+                            type="button"
+                            onClick={createReadmeOutline}
+                            className="rounded-xl border border-violet-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-violet-50 transition hover:border-violet-200/35 hover:bg-violet-300/10"
+                          >
+                            Prepare README outline
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled
+                            className="cursor-not-allowed rounded-xl border border-white/10 bg-slate-950/20 px-3 py-3 text-left text-sm font-medium text-slate-500"
+                          >
+                            Preview Build Passport
+                            <span className="mt-1 block text-xs font-normal text-slate-600">
+                              Coming soon
+                            </span>
+                          </button>
                         </div>
                       </div>
                     )}
@@ -1595,6 +1622,10 @@ export default function Home() {
 
                     {interviewStory && (
                       <InterviewStoryPreview story={interviewStory} />
+                    )}
+
+                    {readmeOutline && (
+                      <ReadmeOutlinePreview outline={readmeOutline} />
                     )}
 
                     <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
@@ -1707,6 +1738,52 @@ export default function Home() {
         )}
       </section>
     </main>
+  );
+}
+
+function ReadmeOutlinePreview({ outline }: { outline: ReadmeOutline }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyReadme() {
+    await navigator.clipboard.writeText(outline.markdown);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-violet-300/20 bg-violet-400/[0.045] p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-200">
+            README outline
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-white">
+            GitHub-ready project documentation
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-violet-50/75">
+            A structured README draft built from your completed missions, proof entries,
+            validation story, limitations, and portfolio artifacts.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={copyReadme}
+          className="rounded-xl border border-violet-300/20 bg-slate-950/30 px-3 py-2 text-sm font-medium text-violet-50 transition hover:border-violet-200/40 hover:bg-violet-300/10"
+        >
+          {copied ? "Copied" : "Copy README"}
+        </button>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-white/10 bg-slate-950/45 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          Markdown preview
+        </p>
+        <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-slate-950/60 p-4 text-xs leading-6 text-slate-200">
+          {outline.markdown}
+        </pre>
+      </div>
+    </div>
   );
 }
 
