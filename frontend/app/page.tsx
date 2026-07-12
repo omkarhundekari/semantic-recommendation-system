@@ -1642,14 +1642,47 @@ export default function Home() {
                                 </p>
                                 <p className="mt-1 text-sm leading-6 text-amber-100/75">
                                   {roadmapProgress.missingRequirements
-                                    .map((requirement) =>
-                                      requirement === "decision_answer"
-                                        ? "technical decision rationale"
-                                        : "proof of work",
-                                    )
+                                    .map((requirement) => {
+                                      if (requirement === "decision_answer") {
+                                        return "technical decision rationale";
+                                      }
+
+                                      if (
+                                        requirement ===
+                                        "proof_expected_pattern"
+                                      ) {
+                                        return "expected evidence in your proof";
+                                      }
+
+                                      return "proof of work";
+                                    })
                                     .join(" and ")}
                                 </p>
                               </div>
+                            </div>
+                          )}
+
+                          {roadmapProgress.currentProofStatus ===
+                            "missing_expected_pattern" && (
+                            <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-400/[0.05] p-4">
+                              <p className="text-sm font-semibold text-amber-100">
+                                Proof needs stronger evidence
+                              </p>
+                              <p className="mt-1 text-sm leading-6 text-amber-100/75">
+                                {roadmapProgress.currentProofFeedback}
+                              </p>
+                            </div>
+                          )}
+
+                          {roadmapProgress.currentProofStatus ===
+                            "needs_detail" && (
+                            <div className="mt-4 rounded-xl border border-sky-300/15 bg-sky-400/[0.05] p-4">
+                              <p className="text-sm font-semibold text-sky-100">
+                                Proof accepted with an improvement note
+                              </p>
+                              <p className="mt-1 text-sm leading-6 text-sky-100/75">
+                                {roadmapProgress.currentProofFeedback}
+                              </p>
                             </div>
                           )}
 

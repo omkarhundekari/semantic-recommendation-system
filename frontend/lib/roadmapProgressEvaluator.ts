@@ -1,15 +1,25 @@
+import { canCompleteGuidedStep } from "./guidedStepCompletion";
+import {
+  validateProof,
+  type ProofValidationStatus,
+} from "./proofValidation";
+
 export type RoadmapProgressStatus =
   | "not_started"
   | "in_progress"
   | "blocked"
   | "complete";
 
-export type MissingRequirement = "proof" | "decision_answer";
+export type MissingRequirement =
+  | "proof"
+  | "proof_expected_pattern"
+  | "decision_answer";
 
 export type ProgressGuidedStep = {
   step_id: string;
   action: string;
   decision_point?: string | null;
+  expected_output_patterns?: string[];
 };
 
 export type ProgressRoadmapStage = {
@@ -28,6 +38,9 @@ export type RoadmapProgressEvaluation = {
   currentStepKey: string | null;
   recommendedNextAction: string | null;
   missingRequirements: MissingRequirement[];
+  currentProofStatus: ProofValidationStatus | null;
+  currentProofFeedback: string | null;
+  missingProofPatterns: string[];
   blockedStepKeys: string[];
   missionReady: boolean;
   projectComplete: boolean;
@@ -47,10 +60,6 @@ type FlattenedStep = {
   step: ProgressGuidedStep;
 };
 
-function hasText(value: string | undefined): boolean {
-  return Boolean(value?.trim());
-}
-
 function flattenRoadmapSteps(
   roadmap: ProgressRoadmapStage[],
 ): FlattenedStep[] {
@@ -63,7 +72,7 @@ function flattenRoadmapSteps(
   );
 }
 
-function getMissingRequirements({
+function evaluateStep({
   step,
   stepKey,
   guidedStepProofs,
@@ -73,21 +82,40 @@ function getMissingRequirements({
   stepKey: string;
   guidedStepProofs: Record<string, string>;
   decisionAnswers: Record<string, string>;
-}): MissingRequirement[] {
-  const missing: MissingRequirement[] = [];
+}) {
+  const proofValidation = validateProof(
+    guidedStepProofs[stepKey] ?? "",
+    step.expected_output_patterns ?? [],
+  );
+  const decisionAnswer = decisionAnswers[stepKey] ?? "";
+  const canComplete = canCompleteGuidedStep({
+    proofStatus: proofValidation.status,
+    decisionPoint: step.decision_point,
+    decisionAnswer,
+  });
 
-  if (!hasText(guidedStepProofs[stepKey])) {
-    missing.push("proof");
+  const missingRequirements: MissingRequirement[] = [];
+
+  if (proofValidation.status === "empty") {
+    missingRequirements.push("proof");
+  }
+
+  if (proofValidation.status === "missing_expected_pattern") {
+    missingRequirements.push("proof_expected_pattern");
   }
 
   if (
     step.decision_point &&
-    !hasText(decisionAnswers[stepKey])
+    decisionAnswer.trim().length === 0
   ) {
-    missing.push("decision_answer");
+    missingRequirements.push("decision_answer");
   }
 
-  return missing;
+  return {
+    proofValidation,
+    missingRequirements,
+    canComplete,
+  };
 }
 
 export function evaluateRoadmapProgress({
@@ -113,14 +141,12 @@ export function evaluateRoadmapProgress({
         return false;
       }
 
-      return (
-        getMissingRequirements({
-          step,
-          stepKey,
-          guidedStepProofs,
-          decisionAnswers,
-        }).length > 0
-      );
+      return !evaluateStep({
+        step,
+        stepKey,
+        guidedStepProofs,
+        decisionAnswers,
+      }).canComplete;
     })
     .map(({ stepKey }) => stepKey);
 
@@ -145,14 +171,14 @@ export function evaluateRoadmapProgress({
       return !completedRoadmapNodeIds.includes(stage.id);
     }) ?? null;
 
-  const missingRequirements = currentStep
-    ? getMissingRequirements({
+  const currentStepEvaluation = currentStep
+    ? evaluateStep({
         step: currentStep.step,
         stepKey: currentStep.stepKey,
         guidedStepProofs,
         decisionAnswers,
       })
-    : [];
+    : null;
 
   const currentStageSteps = currentStage?.guided_steps ?? [];
   const missionReady =
@@ -190,11 +216,7 @@ export function evaluateRoadmapProgress({
   } else if (
     completedStepCount === 0 &&
     completedMissionCount === 0 &&
-    !hasText(
-      currentStep
-        ? guidedStepProofs[currentStep.stepKey]
-        : undefined,
-    )
+    currentStepEvaluation?.proofValidation.status === "empty"
   ) {
     status = "not_started";
   } else {
@@ -218,7 +240,14 @@ export function evaluateRoadmapProgress({
     currentStepKey: currentStep?.stepKey ?? null,
     recommendedNextAction:
       currentStep?.step.action ?? null,
-    missingRequirements,
+    missingRequirements:
+      currentStepEvaluation?.missingRequirements ?? [],
+    currentProofStatus:
+      currentStepEvaluation?.proofValidation.status ?? null,
+    currentProofFeedback:
+      currentStepEvaluation?.proofValidation.feedback ?? null,
+    missingProofPatterns:
+      currentStepEvaluation?.proofValidation.missingPatterns ?? [],
     blockedStepKeys,
     missionReady,
     projectComplete,

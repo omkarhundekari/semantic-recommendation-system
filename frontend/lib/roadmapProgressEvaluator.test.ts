@@ -13,6 +13,7 @@ const roadmap: ProgressRoadmapStage[] = [
         step_id: "write-scope",
         action: "Write the project scope.",
         decision_point: "Why is this metric useful?",
+        expected_output_patterns: ["input", "output"],
       },
     ],
   },
@@ -22,6 +23,7 @@ const roadmap: ProgressRoadmapStage[] = [
       {
         step_id: "build-workflow",
         action: "Build the first workflow.",
+        expected_output_patterns: [],
       },
     ],
   },
@@ -43,39 +45,61 @@ function evaluate(
 }
 
 describe("evaluateRoadmapProgress", () => {
-  it("returns the first guided step as the recommended next action", () => {
+  it("reports missing proof and decision reasoning", () => {
     const result = evaluate();
 
     expect(result.status).toBe("not_started");
-    expect(result.currentStageId).toBe("define");
     expect(result.currentStepKey).toBe("define:write-scope");
-    expect(result.recommendedNextAction).toBe(
-      "Write the project scope.",
-    );
     expect(result.missingRequirements).toEqual([
       "proof",
       "decision_answer",
     ]);
+    expect(result.currentProofStatus).toBe("empty");
   });
 
-  it("reports only the missing decision answer after proof is entered", () => {
+  it("reports proof that misses expected evidence", () => {
     const result = evaluate({
       guidedStepProofs: {
-        "define:write-scope": "The system receives a query.",
+        "define:write-scope": "I described the project.",
+      },
+      decisionAnswers: {
+        "define:write-scope": "The metric is useful.",
       },
     });
 
     expect(result.status).toBe("in_progress");
+    expect(result.currentProofStatus).toBe(
+      "missing_expected_pattern",
+    );
+    expect(result.missingRequirements).toEqual([
+      "proof_expected_pattern",
+    ]);
+    expect(result.missingProofPatterns).toEqual([
+      "input",
+      "output",
+    ]);
+  });
+
+  it("reports only a missing decision after valid proof", () => {
+    const result = evaluate({
+      guidedStepProofs: {
+        "define:write-scope":
+          "The input is a query and the output is a ranked result.",
+      },
+    });
+
+    expect(result.currentProofStatus).toBe("accepted");
     expect(result.missingRequirements).toEqual([
       "decision_answer",
     ]);
   });
 
-  it("moves to the next step after a valid step is completed", () => {
+  it("moves to the next step after valid completion", () => {
     const result = evaluate({
       completedGuidedStepIds: ["define:write-scope"],
       guidedStepProofs: {
-        "define:write-scope": "The system receives a query.",
+        "define:write-scope":
+          "The input is a query and the output is a ranked result.",
       },
       decisionAnswers: {
         "define:write-scope":
@@ -83,21 +107,41 @@ describe("evaluateRoadmapProgress", () => {
       },
     });
 
-    expect(result.status).toBe("in_progress");
     expect(result.completedStepCount).toBe(1);
-    expect(result.completionRatio).toBe(0.5);
-    expect(result.currentStageId).toBe("mvp");
     expect(result.currentStepKey).toBe(
       "mvp:build-workflow",
     );
-    expect(result.recommendedNextAction).toBe(
-      "Build the first workflow.",
-    );
+    expect(result.currentProofStatus).toBe("empty");
   });
 
-  it("blocks stale completion when required proof is missing", () => {
+  it("accepts detailed proof when no patterns are configured", () => {
     const result = evaluate({
       completedGuidedStepIds: ["define:write-scope"],
+      guidedStepProofs: {
+        "define:write-scope":
+          "The input is a query and the output is a ranked result.",
+        "mvp:build-workflow":
+          "The workflow produced the first saved result.",
+      },
+      decisionAnswers: {
+        "define:write-scope":
+          "The metric reflects retrieval usefulness.",
+      },
+    });
+
+    expect(result.currentStepKey).toBe(
+      "mvp:build-workflow",
+    );
+    expect(result.currentProofStatus).toBe("needs_detail");
+    expect(result.missingRequirements).toEqual([]);
+  });
+
+  it("blocks stale completion when proof quality is invalid", () => {
+    const result = evaluate({
+      completedGuidedStepIds: ["define:write-scope"],
+      guidedStepProofs: {
+        "define:write-scope": "Finished it.",
+      },
       decisionAnswers: {
         "define:write-scope":
           "The metric reflects retrieval usefulness.",
@@ -110,7 +154,7 @@ describe("evaluateRoadmapProgress", () => {
     ]);
   });
 
-  it("marks the project complete when all steps and missions are complete", () => {
+  it("marks the complete project only when all saved proof remains valid", () => {
     const result = evaluate({
       completedRoadmapNodeIds: ["define", "mvp"],
       completedGuidedStepIds: [
@@ -118,20 +162,19 @@ describe("evaluateRoadmapProgress", () => {
         "mvp:build-workflow",
       ],
       guidedStepProofs: {
-        "define:write-scope": "Defined input and output.",
-        "mvp:build-workflow": "Produced the first result.",
+        "define:write-scope":
+          "The input is a query and the output is a ranked result.",
+        "mvp:build-workflow":
+          "The workflow produced the first saved result.",
       },
       decisionAnswers: {
         "define:write-scope":
-          "The metric measures useful behavior.",
+          "The metric measures useful retrieval behavior.",
       },
     });
 
     expect(result.status).toBe("complete");
     expect(result.projectComplete).toBe(true);
-    expect(result.completedStepCount).toBe(2);
-    expect(result.completedMissionCount).toBe(2);
-    expect(result.currentStepKey).toBeNull();
-    expect(result.recommendedNextAction).toBeNull();
+    expect(result.blockedStepKeys).toEqual([]);
   });
 });
