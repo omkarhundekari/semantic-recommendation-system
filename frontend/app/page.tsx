@@ -39,6 +39,12 @@ import {
   evaluateAcceptedAdaptationReadiness,
 } from "@/lib/acceptedAdaptationReadiness";
 import { validateProof } from "@/lib/proofValidation";
+import {
+  parseWorkspace,
+  serializeWorkspace,
+  WORKSPACE_STORAGE_KEY,
+  type PersistedWorkspace,
+} from "@/lib/workspacePersistence";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -226,45 +232,25 @@ type IntelligenceResponse = {
   directions: Direction[];
 };
 
-type SavedWorkspace = {
-  goal: string;
-  result: IntelligenceResponse;
-  selectedDirectionId: string | null;
-  activeRoadmapNodeId: string | null;
-  completedRoadmapNodeIds: string[];
-  guidedStepProofs?: Record<string, string>;
-  decisionAnswers?: Record<string, string>;
-  completedGuidedStepIds?: string[];
-  adaptationDecisions?: AdaptationDecisionMap;
-  adaptationEvidence?: Record<string, string>;
-  savedAt: string;
-};
-
-const SAVED_WORKSPACE_KEY = "solvyn:last-workspace";
+type SavedWorkspace =
+  PersistedWorkspace<IntelligenceResponse>;
 
 function readSavedWorkspace(): SavedWorkspace | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  try {
-    const rawWorkspace = window.localStorage.getItem(SAVED_WORKSPACE_KEY);
+  const rawWorkspace = window.localStorage.getItem(
+    WORKSPACE_STORAGE_KEY,
+  );
+  const workspace =
+    parseWorkspace<IntelligenceResponse>(rawWorkspace);
 
-    if (!rawWorkspace) {
-      return null;
-    }
-
-    const workspace = JSON.parse(rawWorkspace) as SavedWorkspace;
-
-    if (!workspace.result || workspace.result.status !== "ready") {
-      return null;
-    }
-
-    return workspace;
-  } catch {
-    window.localStorage.removeItem(SAVED_WORKSPACE_KEY);
-    return null;
+  if (!workspace && rawWorkspace) {
+    window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
   }
+
+  return workspace;
 }
 
 const examplePrompts = [
@@ -507,7 +493,7 @@ export default function Home() {
       return;
     }
 
-    const workspace: SavedWorkspace = {
+    const workspace = serializeWorkspace<IntelligenceResponse>({
       goal,
       result,
       selectedDirectionId,
@@ -519,9 +505,12 @@ export default function Home() {
       adaptationDecisions,
       adaptationEvidence,
       savedAt: new Date().toISOString(),
-    };
+    });
 
-    window.localStorage.setItem(SAVED_WORKSPACE_KEY, JSON.stringify(workspace));
+    window.localStorage.setItem(
+      WORKSPACE_STORAGE_KEY,
+      workspace,
+    );
   }, [
     goal,
     result,
@@ -910,7 +899,7 @@ export default function Home() {
   }
 
   function clearSavedWorkspace() {
-    window.localStorage.removeItem(SAVED_WORKSPACE_KEY);
+    window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
     setGoal("");
     setResult(null);
     setSelectedDirectionId(null);
