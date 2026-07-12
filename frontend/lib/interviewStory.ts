@@ -19,6 +19,14 @@ export function buildInterviewStory(summary: PortfolioSummary): InterviewStory {
     summary.skillsDemonstrated[1] ?? "validation-driven development";
   const firstProof = summary.proofEntries[0]?.proof;
   const firstDecision = summary.technicalDecisions[0];
+  const firstConsequence =
+    summary.decisionConsequences.consequences[0];
+  const validationFocus =
+    summary.decisionConsequences.validationFocus;
+  const architectureSignals =
+    summary.decisionConsequences.architectureSignals;
+  const deferredItems =
+    summary.decisionConsequences.deferredItems;
 
   const validationSignal =
     summary.knownLimitations.find((item) =>
@@ -29,19 +37,30 @@ export function buildInterviewStory(summary: PortfolioSummary): InterviewStory {
 
   const approach = `My approach was to break the project into guided engineering missions instead of jumping straight into random implementation. I started by defining the scope, then built the smallest working workflow, validated it, extended it carefully, and finally packaged the work so it could be explained in an interview.`;
 
+  const architectureDetail =
+    architectureSignals.length > 0
+      ? ` The architecture reflected these explicit choices: ${architectureSignals.join(", ")}.`
+      : "";
+
   const implementation = firstProof
-    ? `For implementation, I used saved proof from the build process. One concrete proof point was: ${firstProof}`
-    : `For implementation, I focused on building the core workflow first and saving evidence at each stage so the project could be reviewed later.`;
+    ? `For implementation, I used saved proof from the build process. One concrete proof point was: ${firstProof}.${architectureDetail}`
+    : `For implementation, I focused on building the core workflow first and saving evidence at each stage so the project could be reviewed later.${architectureDetail}`;
 
-  const validation = `I validated the project with explicit completion proof and evidence confidence. The project reached ${summary.evidenceConfidenceLabel}, and the validation story was: ${validationSignal}`;
+  const validation = validationFocus.length > 0
+    ? `I validated the project with explicit completion proof and evidence confidence. The project reached ${summary.evidenceConfidenceLabel}, and I chose ${validationFocus.join(", ")} as the validation focus. The validation story was: ${validationSignal}`
+    : `I validated the project with explicit completion proof and evidence confidence. The project reached ${summary.evidenceConfidenceLabel}, and the validation story was: ${validationSignal}`;
 
-  const tradeoff = firstDecision
-    ? `One tradeoff I made was during ${firstDecision.missionTitle}. The decision point was: ${firstDecision.decisionPoint} My answer was: ${firstDecision.answer}`
-    : `One tradeoff was keeping the first version focused. Instead of adding too many features early, I prioritized a working, testable MVP that could be improved safely.`;
+  const tradeoff = firstDecision && firstConsequence
+    ? `One tradeoff I made was during ${firstDecision.missionTitle}. The decision point was: ${firstDecision.decisionPoint} I chose: ${firstDecision.answer} The downstream consequence was: ${firstConsequence.recommendedAdjustment}`
+    : firstDecision
+      ? `One tradeoff I made was during ${firstDecision.missionTitle}. The decision point was: ${firstDecision.decisionPoint} I chose: ${firstDecision.answer}`
+      : `One tradeoff was keeping the first version focused. Instead of adding too many features early, I prioritized a working, testable MVP that could be improved safely.`;
 
   const improvement =
-    summary.knownLimitations[0] ??
-    "The next improvement would be to add stronger automated validation, more edge-case testing, and a more polished deployment or demo workflow.";
+    deferredItems.length > 0
+      ? `The next improvement would be to revisit the deferred scope: ${deferredItems.join(", ")}.`
+      : summary.knownLimitations[0] ??
+        "The next improvement would be to add stronger automated validation, more edge-case testing, and a more polished deployment or demo workflow.";
 
   const openingAnswer = [
     problem,

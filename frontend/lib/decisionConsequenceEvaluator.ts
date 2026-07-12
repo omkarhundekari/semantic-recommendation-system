@@ -85,7 +85,17 @@ function includesAny(text: string, terms: string[]): boolean {
 }
 
 function extractMatchingTerms(text: string, terms: string[]): string[] {
-  return terms.filter((term) => text.includes(term));
+  const matches = terms.filter((term) => text.includes(term));
+
+  return matches.filter(
+    (term) =>
+      !matches.some(
+        (moreSpecificTerm) =>
+          moreSpecificTerm !== term &&
+          moreSpecificTerm.length > term.length &&
+          moreSpecificTerm.includes(term),
+      ),
+  );
 }
 
 function extractDeferredItems(answer: string): string[] {

@@ -52,7 +52,7 @@ describe("evaluateDecisionConsequences", () => {
       }),
     ]);
 
-    expect(result.validationFocus).toContain("precision@3");
+    expect(result.validationFocus).toEqual(["precision@3"]);
     expect(result.consequences[0].category).toBe("validation");
     expect(
       result.consequences[0].recommendedAdjustment,

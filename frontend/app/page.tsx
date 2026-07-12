@@ -2294,6 +2294,39 @@ function PortfolioSummaryPreview({
         />
 
         <SummarySection
+          title="Decision impact"
+          items={summary.decisionConsequences.consequences.map(
+            (consequence) =>
+              `${consequence.category}: ${consequence.recommendedAdjustment}`,
+          )}
+          emptyText="No downstream decision impact identified yet."
+        />
+
+        <SummarySection
+          title="Validation focus"
+          items={summary.decisionConsequences.validationFocus}
+          emptyText="No explicit validation metric captured yet."
+        />
+
+        <SummarySection
+          title="Architecture signals"
+          items={summary.decisionConsequences.architectureSignals}
+          emptyText="No explicit architecture choice captured yet."
+        />
+
+        <SummarySection
+          title="Deferred scope"
+          items={summary.decisionConsequences.deferredItems}
+          emptyText="No deferred scope captured yet."
+        />
+
+        <SummarySection
+          title="Engineering priorities"
+          items={summary.decisionConsequences.priorities}
+          emptyText="No explicit engineering priority captured yet."
+        />
+
+        <SummarySection
           title="Known limitations"
           items={summary.knownLimitations}
           emptyText="No limitations captured yet."
