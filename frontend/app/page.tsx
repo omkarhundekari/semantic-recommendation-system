@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  generatePortfolioSummary,
+  type PortfolioSummary,
+  type PortfolioWorkspaceLike,
+} from "@/lib/portfolioSummary";
+
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -410,6 +416,8 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showHelpChooser, setShowHelpChooser] = useState(false);
+  const [portfolioSummary, setPortfolioSummary] =
+    useState<PortfolioSummary | null>(null);
 
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(
     savedWorkspace?.selectedDirectionId ?? null,
@@ -580,6 +588,7 @@ export default function Home() {
     setShouldScrollToDirections(false);
     setShouldScrollToHelpChooser(false);
     setShowHelpChooser(false);
+    setPortfolioSummary(null);
     setIsLoading(true);
 
     try {
@@ -657,6 +666,7 @@ export default function Home() {
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
     setCompletedGuidedStepIds([]);
+    setPortfolioSummary(null);
 
     window.setTimeout(() => {
       document
@@ -687,6 +697,23 @@ export default function Home() {
     selectedDirection.roadmap.every((node) =>
       completedRoadmapNodeIds.includes(node.id),
     );
+
+  function createPortfolioSummary() {
+    if (!result || result.status !== "ready" || !selectedDirectionId) {
+      return;
+    }
+
+    const summary = generatePortfolioSummary({
+      goal,
+      selectedDirectionId,
+      completedRoadmapNodeIds,
+      guidedStepProofs,
+      completedGuidedStepIds,
+      result,
+    } satisfies PortfolioWorkspaceLike);
+
+    setPortfolioSummary(summary);
+  }
 
   function completeActiveMission() {
     if (!selectedDirection || !activeRoadmapNodeId) {
@@ -720,6 +747,7 @@ export default function Home() {
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
     setCompletedGuidedStepIds([]);
+    setPortfolioSummary(null);
     setError("");
   }
 
@@ -1491,8 +1519,15 @@ export default function Home() {
                         </div>
 
                         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                          <button
+                            type="button"
+                            onClick={createPortfolioSummary}
+                            className="rounded-xl border border-emerald-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-emerald-50 transition hover:border-emerald-200/35 hover:bg-emerald-300/10"
+                          >
+                            Create portfolio summary
+                          </button>
+
                           {[
-                            "Create portfolio summary",
                             "Generate interview story",
                             "Prepare README outline",
                             "Preview Build Passport",
@@ -1500,13 +1535,21 @@ export default function Home() {
                             <button
                               key={action}
                               type="button"
-                              className="rounded-xl border border-emerald-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-emerald-50 transition hover:border-emerald-200/35 hover:bg-emerald-300/10"
+                              disabled
+                              className="cursor-not-allowed rounded-xl border border-white/10 bg-slate-950/20 px-3 py-3 text-left text-sm font-medium text-slate-500"
                             >
                               {action}
+                              <span className="mt-1 block text-xs font-normal text-slate-600">
+                                Coming soon
+                              </span>
                             </button>
                           ))}
                         </div>
                       </div>
+                    )}
+
+                    {portfolioSummary && (
+                      <PortfolioSummaryPreview summary={portfolioSummary} />
                     )}
 
                     <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
@@ -1621,6 +1664,113 @@ export default function Home() {
     </main>
   );
 }
+
+function PortfolioSummaryPreview({
+  summary,
+}: {
+  summary: PortfolioSummary;
+}) {
+  return (
+    <div className="mt-6 rounded-2xl border border-sky-300/15 bg-sky-400/[0.04] p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-300">
+            Portfolio summary
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-white">
+            {summary.projectTitle}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            {summary.goal}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-slate-950/35 p-3 text-sm text-slate-300">
+          <p>
+            {summary.missionsCompleted}/{summary.totalMissions} missions
+          </p>
+          <p>
+            {summary.guidedStepsCompleted}/{summary.totalGuidedSteps} guided steps
+          </p>
+          <p>{summary.proofEntriesSaved} proof entries</p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <SummarySection
+          title="Evidence"
+          items={[
+            summary.evidenceConfidenceLabel,
+            summary.evidenceConfidenceDetail,
+          ]}
+        />
+
+        <SummarySection
+          title="Skills demonstrated"
+          items={summary.skillsDemonstrated}
+        />
+
+        <SummarySection
+          title="Technical decisions"
+          items={summary.technicalDecisions.map(
+            (decision) => `${decision.decisionPoint} ${decision.proof}`,
+          )}
+        />
+
+        <SummarySection
+          title="Known limitations"
+          items={summary.knownLimitations}
+          emptyText="No limitations captured yet."
+        />
+
+        <SummarySection
+          title="Interview takeaways"
+          items={summary.interviewTakeaways}
+        />
+
+        <SummarySection
+          title="Portfolio artifacts"
+          items={summary.portfolioArtifacts}
+          emptyText="No portfolio artifacts captured yet."
+        />
+      </div>
+    </div>
+  );
+}
+
+function SummarySection({
+  title,
+  items,
+  emptyText = "Nothing captured yet.",
+}: {
+  title: string;
+  items: string[];
+  emptyText?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        {title}
+      </p>
+
+      {items.length > 0 ? (
+        <ul className="mt-3 space-y-2">
+          {items.map((item, index) => (
+            <li
+              key={`${title}-${index}-${item}`}
+              className="text-sm leading-6 text-slate-300"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm leading-6 text-slate-500">{emptyText}</p>
+      )}
+    </div>
+  );
+}
+
 
 function RoadmapDetailPanel({
   direction,

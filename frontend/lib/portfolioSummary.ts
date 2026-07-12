@@ -64,7 +64,7 @@ export type PortfolioWorkspaceLike = {
       coverage_state?: string;
       user_message?: string;
       warnings?: string[];
-    };
+    } | null;
     directions: DirectionLike[];
   };
 };
