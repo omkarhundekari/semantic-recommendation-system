@@ -49,6 +49,22 @@ type DecisionTrace = {
   }>;
 };
 
+type GuidedMissionStep = {
+  step_id: string;
+  title: string;
+  explanation: string;
+  action: string;
+  starter_command?: string | null;
+  starter_files: string[];
+  done_when: string;
+  common_confusion: string;
+  decision_point?: string | null;
+  proof_type: string;
+  proof_prompt: string;
+  expected_output_patterns: string[];
+  interview_takeaway: string;
+};
+
 type RoadmapNode = {
   id: string;
   title: string;
@@ -64,6 +80,7 @@ type RoadmapNode = {
   common_errors?: string[];
   portfolio_artifact?: string | null;
   unlock_condition?: string | null;
+  guided_steps?: GuidedMissionStep[];
 };
 
 type Direction = {
@@ -1517,9 +1534,19 @@ function RoadmapDetailPanel({
     direction.roadmap.find((node) => node.id === activeNodeId) ??
     direction.roadmap[0];
 
+  const [guidedStepCursor, setGuidedStepCursor] = useState({
+    nodeId: "",
+    stepIndex: 0,
+  });
+
   if (!activeNode) {
     return null;
   }
+
+  const guidedSteps = activeNode.guided_steps ?? [];
+  const activeGuidedStepIndex =
+    guidedStepCursor.nodeId === activeNode.id ? guidedStepCursor.stepIndex : 0;
+  const activeGuidedStep = guidedSteps[activeGuidedStepIndex] ?? null;
 
   const completedCount = direction.roadmap.filter((node) =>
     completedNodeIds.includes(node.id),
@@ -1594,6 +1621,29 @@ function RoadmapDetailPanel({
               {activeNode.why_it_matters}
             </p>
           </div>
+        )}
+
+        {activeGuidedStep && (
+          <GuidedStepCoach
+            step={activeGuidedStep}
+            stepIndex={activeGuidedStepIndex}
+            totalSteps={guidedSteps.length}
+            onPrevious={() =>
+              setGuidedStepCursor({
+                nodeId: activeNode.id,
+                stepIndex: Math.max(activeGuidedStepIndex - 1, 0),
+              })
+            }
+            onNext={() =>
+              setGuidedStepCursor({
+                nodeId: activeNode.id,
+                stepIndex: Math.min(
+                  activeGuidedStepIndex + 1,
+                  guidedSteps.length - 1,
+                ),
+              })
+            }
+          />
         )}
 
         <MissionListSection
@@ -1675,6 +1725,180 @@ function RoadmapDetailPanel({
     </AnimatePresence>
   );
 }
+
+function GuidedStepCoach({
+  step,
+  stepIndex,
+  totalSteps,
+  onPrevious,
+  onNext,
+}: {
+  step: GuidedMissionStep;
+  stepIndex: number;
+  totalSteps: number;
+  onPrevious: () => void;
+  onNext: () => void;
+}) {
+  const isFirstStep = stepIndex === 0;
+  const isLastStep = stepIndex === totalSteps - 1;
+
+  return (
+    <div className="mt-6 overflow-hidden rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.035]">
+      <div className="border-b border-white/10 bg-slate-950/40 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200">
+            Guided build step
+          </p>
+
+          <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-100">
+            Step {stepIndex + 1} of {totalSteps}
+          </span>
+        </div>
+
+        <div className="mt-3 flex gap-1.5">
+          {Array.from({ length: totalSteps }).map((_, index) => (
+            <span
+              key={`guided-step-dot-${index}`}
+              className={`h-1.5 flex-1 rounded-full ${
+                index <= stepIndex ? "bg-emerald-300" : "bg-white/10"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4 p-4">
+        <div>
+          <h4 className="text-lg font-semibold text-white">{step.title}</h4>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            {step.explanation}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+            Do this
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-200">
+            {step.action}
+          </p>
+        </div>
+
+        {step.starter_command && (
+          <div className="rounded-xl border border-sky-300/10 bg-sky-400/[0.04] p-3">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-sky-300">
+              Starter command
+            </p>
+            <code className="mt-2 block rounded-lg bg-slate-950/80 p-3 font-mono text-xs leading-6 text-sky-100">
+              {step.starter_command}
+            </code>
+          </div>
+        )}
+
+        {step.starter_files.length > 0 && (
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+              Starter files
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {step.starter_files.map((file) => (
+                <span
+                  key={file}
+                  className="rounded-lg border border-white/10 bg-slate-950/50 px-2.5 py-1 font-mono text-xs text-slate-200"
+                >
+                  {file}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="grid gap-3">
+          <div className="rounded-xl border border-emerald-300/10 bg-emerald-400/[0.04] p-3">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-emerald-300">
+              Done when
+            </p>
+            <p className="mt-2 text-sm leading-6 text-emerald-50">
+              {step.done_when}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-amber-300/10 bg-amber-400/[0.04] p-3">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-amber-200">
+              Common confusion
+            </p>
+            <p className="mt-2 text-sm leading-6 text-amber-50/90">
+              {step.common_confusion}
+            </p>
+          </div>
+        </div>
+
+        {step.decision_point && (
+          <div className="rounded-xl border border-violet-300/10 bg-violet-400/[0.04] p-3">
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-violet-200">
+              Decision point
+            </p>
+            <p className="mt-2 text-sm leading-6 text-violet-50/90">
+              {step.decision_point}
+            </p>
+          </div>
+        )}
+
+        <div className="rounded-xl border border-white/[0.06] bg-slate-950/40 p-3">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+            Proof prompt
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-200">
+            {step.proof_prompt}
+          </p>
+
+          {step.expected_output_patterns.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {step.expected_output_patterns.map((pattern) => (
+                <span
+                  key={pattern}
+                  className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-slate-300"
+                >
+                  expects: {pattern}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-sky-300/10 bg-sky-400/[0.04] p-3">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-sky-300">
+            Interview takeaway
+          </p>
+          <p className="mt-2 text-sm leading-6 text-sky-50">
+            {step.interview_takeaway}
+          </p>
+        </div>
+
+        <div className="flex gap-3 border-t border-white/10 pt-4">
+          <button
+            type="button"
+            onClick={onPrevious}
+            disabled={isFirstStep}
+            className="flex-1 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-slate-300 transition hover:border-white/25 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Previous step
+          </button>
+
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={isLastStep}
+            className="flex-1 rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-200/40 hover:bg-emerald-300/20 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next step
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function MissionListSection({
   title,
