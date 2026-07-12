@@ -16,6 +16,10 @@ import {
   buildReadmeOutline,
   type ReadmeOutline,
 } from "@/lib/readmeOutline";
+import {
+  buildPassport,
+  type BuildPassport,
+} from "@/lib/buildPassport";
 import { validateProof } from "@/lib/proofValidation";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -434,6 +438,8 @@ export default function Home() {
     useState<InterviewStory | null>(null);
   const [readmeOutline, setReadmeOutline] =
     useState<ReadmeOutline | null>(null);
+  const [buildPassportPreview, setBuildPassportPreview] =
+    useState<BuildPassport | null>(null);
 
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(
     savedWorkspace?.selectedDirectionId ?? null,
@@ -772,6 +778,16 @@ export default function Home() {
     }
 
     setReadmeOutline(buildReadmeOutline(summary));
+  }
+
+  function createBuildPassportPreview() {
+    const summary = getOrCreatePortfolioSummary();
+
+    if (!summary) {
+      return;
+    }
+
+    setBuildPassportPreview(buildPassport(summary));
   }
 
   function completeActiveMission() {
@@ -1604,13 +1620,10 @@ export default function Home() {
 
                           <button
                             type="button"
-                            disabled
-                            className="cursor-not-allowed rounded-xl border border-white/10 bg-slate-950/20 px-3 py-3 text-left text-sm font-medium text-slate-500"
+                            onClick={createBuildPassportPreview}
+                            className="rounded-xl border border-amber-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-amber-50 transition hover:border-amber-200/35 hover:bg-amber-300/10"
                           >
                             Preview Build Passport
-                            <span className="mt-1 block text-xs font-normal text-slate-600">
-                              Coming soon
-                            </span>
                           </button>
                         </div>
                       </div>
@@ -1626,6 +1639,10 @@ export default function Home() {
 
                     {readmeOutline && (
                       <ReadmeOutlinePreview outline={readmeOutline} />
+                    )}
+
+                    {buildPassportPreview && (
+                      <BuildPassportPreview passport={buildPassportPreview} />
                     )}
 
                     <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
@@ -1738,6 +1755,102 @@ export default function Home() {
         )}
       </section>
     </main>
+  );
+}
+
+function BuildPassportPreview({
+  passport,
+}: {
+  passport: BuildPassport;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyPassport() {
+    await navigator.clipboard.writeText(passport.markdown);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-400/[0.045] p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">
+            Build Passport
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-white">
+            Project credibility snapshot
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-amber-50/75">
+            A compact proof-of-work record showing evidence confidence, execution progress,
+            saved proof, generated artifacts, and skills demonstrated.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={copyPassport}
+          className="rounded-xl border border-amber-300/20 bg-slate-950/30 px-3 py-2 text-sm font-medium text-amber-50 transition hover:border-amber-200/40 hover:bg-amber-300/10"
+        >
+          {copied ? "Copied" : "Copy passport"}
+        </button>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {passport.statuses.map((status) => (
+          <div
+            key={status.label}
+            className="rounded-xl border border-white/10 bg-slate-950/35 p-3"
+          >
+            <p className="text-lg">{status.passed ? "✅" : "◻️"}</p>
+            <p className="mt-2 text-sm font-semibold text-white">
+              {status.label}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <BuildPassportSection title="Evidence" body={passport.evidence} />
+        <BuildPassportSection title="Execution" body={passport.executionSummary} />
+        <BuildPassportSection
+          title="Skills"
+          body={passport.skills.join(", ") || "No skills listed yet."}
+        />
+        <BuildPassportSection
+          title="Shareable summary"
+          body={passport.shareableSummary}
+        />
+      </div>
+
+      <div className="mt-5 rounded-xl border border-white/10 bg-slate-950/45 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          Passport markdown
+        </p>
+        <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-slate-950/60 p-4 text-xs leading-6 text-slate-200">
+          {passport.markdown}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+function BuildPassportSection({
+  title,
+  body,
+}: {
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/30 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        {title}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-slate-300">
+        {body}
+      </p>
+    </div>
   );
 }
 
