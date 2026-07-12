@@ -430,10 +430,6 @@ export default function Home() {
     string[]
   >(savedWorkspace?.completedGuidedStepIds ?? []);
 
-  const [recoveredWorkspace, setRecoveredWorkspace] = useState(
-    savedWorkspace !== null,
-  );
-
   const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
     string | null
   >(null);
@@ -579,7 +575,6 @@ export default function Home() {
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
     setCompletedGuidedStepIds([]);
-    setRecoveredWorkspace(false);
     setExpandedWhyDirectionId(null);
     setShouldScrollToClarification(false);
     setShouldScrollToDirections(false);
@@ -662,7 +657,6 @@ export default function Home() {
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
     setCompletedGuidedStepIds([]);
-    setRecoveredWorkspace(false);
 
     window.setTimeout(() => {
       document
@@ -706,7 +700,6 @@ export default function Home() {
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
     setCompletedGuidedStepIds([]);
-    setRecoveredWorkspace(false);
     setError("");
   }
 
@@ -1412,12 +1405,6 @@ export default function Home() {
                           {selectedDirection.summary}
                         </p>
 
-                        {recoveredWorkspace && (
-                          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1.5 text-sm text-emerald-100">
-                            <CheckCircle2 className="h-4 w-4" />
-                            Recovered your last workspace
-                          </p>
-                        )}
                       </div>
 
                       <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-sm text-slate-300 lg:min-w-64">
@@ -1439,7 +1426,7 @@ export default function Home() {
                           onClick={clearSavedWorkspace}
                           className="mt-4 w-full rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-rose-300/30 hover:bg-rose-400/10 hover:text-rose-100"
                         >
-                          Clear saved workspace
+                          Start over
                         </button>
                       </div>
                     </div>
