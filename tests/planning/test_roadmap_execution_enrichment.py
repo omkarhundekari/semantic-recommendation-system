@@ -113,3 +113,76 @@ def test_enrich_roadmap_uses_domain_playbook_context():
     assert "data/learners.json" in combined
     assert "outputs/student_progress.json" in combined
     assert "react" in combined
+
+
+def test_enriched_roadmap_attaches_guided_steps_when_context_is_available():
+    from planning.mission_context import build_mission_context
+
+    idea = {
+        "project_title": "RAG Evaluation Studio",
+        "project_summary": "Build a RAG evaluation workflow.",
+        "detected_domain": "rag_llm",
+        "suggested_tech_stack": ["Python", "FastAPI"],
+        "mvp_scope": ["Create one retrieval evaluation workflow."],
+        "advanced_extensions": ["Add reranking comparison."],
+    }
+
+    context = build_mission_context(
+        idea=idea,
+        user_goal="Build a RAG evaluation project for question answering",
+        query="Build a RAG evaluation project for question answering",
+        resolved_planning_domain="rag_llm",
+        constraints={
+            "skill_level": "intermediate",
+            "time_available": "3 weeks",
+            "preferred_stack": ["Python"],
+            "target_roles": ["Machine Learning Engineer"],
+        },
+        evidence_coverage={"coverage_state": "strong_direct"},
+    )
+
+    stages = [
+        RoadmapStage(
+            id="define",
+            title="Define the problem",
+            purpose="Turn the idea into a measurable problem.",
+        ),
+        RoadmapStage(
+            id="mvp",
+            title="Build the MVP",
+            purpose="Implement the smallest complete version.",
+        ),
+    ]
+
+    enriched = enrich_roadmap_for_execution(
+        stages=stages,
+        idea=idea,
+        context=context,
+    )
+
+    assert enriched[0].guided_steps
+    assert enriched[1].guided_steps
+
+    guided_text = " ".join(
+        " ".join(
+            [
+                step.title,
+                step.explanation,
+                step.action,
+                step.starter_command or "",
+                " ".join(step.starter_files),
+                step.done_when,
+                step.proof_prompt,
+                " ".join(step.expected_output_patterns),
+                step.interview_takeaway,
+            ]
+        )
+        for stage in enriched
+        for step in stage.guided_steps
+    ).lower()
+
+    assert "data/documents" in guided_text
+    assert "data/eval_questions.json" in guided_text
+    assert "retrieval" in guided_text
+    assert "proof" in guided_text or "paste" in guided_text
+    assert "interview" in guided_text or "structured the project" in guided_text

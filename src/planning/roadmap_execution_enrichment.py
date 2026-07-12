@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, List, Optional
 
+from planning.guided_step_generator import build_guided_steps_for_stage
 from planning.mission_context import MissionContext
 from schemas.product_models import RoadmapStage
 
@@ -47,6 +48,14 @@ def enrich_roadmap_for_execution(
                     "common_errors": _common_errors(stage.id, context),
                     "portfolio_artifact": _portfolio_artifact(stage.id, context),
                     "unlock_condition": _unlock_condition(stage.id, context),
+                    "guided_steps": (
+                        build_guided_steps_for_stage(
+                            stage=stage,
+                            context=context,
+                        )
+                        if context
+                        else stage.guided_steps
+                    ),
                 }
             )
         )
