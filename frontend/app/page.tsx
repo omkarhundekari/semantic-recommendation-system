@@ -799,6 +799,8 @@ export default function Home() {
       guidedStepProofs,
       decisionAnswers,
       completedGuidedStepIds,
+      adaptationDecisions,
+      adaptationEvidence,
       result,
     } satisfies PortfolioWorkspaceLike);
   }, [
@@ -809,6 +811,8 @@ export default function Home() {
     guidedStepProofs,
     decisionAnswers,
     completedGuidedStepIds,
+    adaptationDecisions,
+    adaptationEvidence,
   ]);
 
   const roadmapAdaptations = useMemo(

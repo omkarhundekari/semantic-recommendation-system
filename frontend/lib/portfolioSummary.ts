@@ -2,6 +2,13 @@ import {
   evaluateDecisionConsequences,
   type DecisionConsequenceEvaluation,
 } from "./decisionConsequenceEvaluator";
+import {
+  buildAdaptationArtifactAudit,
+  formatAdaptationArtifactEntry,
+  type AdaptationArtifactAudit,
+} from "./adaptationArtifactAudit";
+import { evaluateRoadmapAdaptations } from "./roadmapAdaptationEvaluator";
+import type { AdaptationDecisionMap } from "./roadmapAdaptationState";
 
 export type GuidedMissionStepLike = {
   step_id: string;
@@ -63,6 +70,8 @@ export type PortfolioWorkspaceLike = {
   guidedStepProofs?: Record<string, string>;
   decisionAnswers?: Record<string, string>;
   completedGuidedStepIds?: string[];
+  adaptationDecisions?: AdaptationDecisionMap;
+  adaptationEvidence?: Record<string, string>;
   result: {
     resolved_planning_domain?: string | null;
     evidence_coverage?: {
@@ -107,6 +116,7 @@ export type PortfolioSummary = {
   proofEntriesSaved: number;
   technicalDecisions: DecisionEntry[];
   decisionConsequences: DecisionConsequenceEvaluation;
+  adaptationAudit: AdaptationArtifactAudit;
   proofEntries: ProofEntry[];
   skillsDemonstrated: string[];
   knownLimitations: string[];
@@ -143,6 +153,15 @@ export function generatePortfolioSummary(
   const technicalDecisions = extractDecisionPoints(workspace, direction);
   const decisionConsequences =
     evaluateDecisionConsequences(technicalDecisions);
+  const roadmapAdaptations = evaluateRoadmapAdaptations({
+    roadmap: direction.roadmap,
+    decisionConsequences,
+  });
+  const adaptationAudit = buildAdaptationArtifactAudit({
+    adaptations: roadmapAdaptations.adaptations,
+    decisions: workspace.adaptationDecisions ?? {},
+    evidence: workspace.adaptationEvidence ?? {},
+  });
   const skillsDemonstrated = extractSkills(direction, workspace);
   const knownLimitations = extractKnownLimitations(direction, workspace);
   const interviewTakeaways = extractInterviewTakeaways(direction);
@@ -175,6 +194,7 @@ export function generatePortfolioSummary(
     proofEntriesSaved: proofEntries.length,
     technicalDecisions,
     decisionConsequences,
+    adaptationAudit,
     proofEntries,
     skillsDemonstrated,
     knownLimitations,
@@ -424,6 +444,30 @@ export function formatPortfolioSummaryText(summary: PortfolioSummary): string {
       "- No explicit engineering priority captured yet.",
     ),
     "",
+    "Roadmap adaptation audit:",
+    ...formatListOrFallback(
+      summary.adaptationAudit.entries.map(
+        (entry) => `- ${formatAdaptationArtifactEntry(entry)}`,
+      ),
+      "- No roadmap adaptation decisions captured yet.",
+    ),
+    "",
+    "Implemented adaptations:",
+    ...formatListOrFallback(
+      summary.adaptationAudit.implemented.map(
+        (entry) => `- ${entry.title}: ${entry.evidence}`,
+      ),
+      "- No accepted adaptations have implementation evidence yet.",
+    ),
+    "",
+    "Accepted adaptations missing evidence:",
+    ...formatListOrFallback(
+      summary.adaptationAudit.acceptedMissingEvidence.map(
+        (entry) => `- ${entry.title}`,
+      ),
+      "- No accepted adaptations are missing evidence.",
+    ),
+    "",
     "Known limitations:",
     ...formatListOrFallback(
       summary.knownLimitations.map((limitation) => `- ${limitation}`),
@@ -459,7 +503,14 @@ export function buildResumeReadyParagraph(summary: PortfolioSummary): string {
     ? "completed the full guided roadmap"
     : "completed part of the guided roadmap";
 
-  return `Built ${summary.projectTitle}, a ${summary.domain ?? "technical"} project for ${summary.goal}. The project ${validationPhrase}, captured ${proofPhrase}, and demonstrated ${skills || "project execution, validation, and technical communication"}.`;
+  const adaptationPhrase =
+    summary.adaptationAudit.implementedCount > 0
+      ? `, implemented ${summary.adaptationAudit.implementedCount} decision-driven roadmap adjustment${
+          summary.adaptationAudit.implementedCount === 1 ? "" : "s"
+        } with saved evidence`
+      : "";
+
+  return `Built ${summary.projectTitle}, a ${summary.domain ?? "technical"} project for ${summary.goal}. The project ${validationPhrase}, captured ${proofPhrase}${adaptationPhrase}, and demonstrated ${skills || "project execution, validation, and technical communication"}.`;
 }
 
 function formatListOrFallback(items: string[], fallback: string): string[] {
