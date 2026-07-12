@@ -22,6 +22,10 @@ import {
 } from "@/lib/buildPassport";
 import { canCompleteGuidedStep } from "@/lib/guidedStepCompletion";
 import { evaluateRoadmapProgress } from "@/lib/roadmapProgressEvaluator";
+import {
+  evaluateRoadmapAdaptations,
+  type RoadmapAdaptation,
+} from "@/lib/roadmapAdaptationEvaluator";
 import { validateProof } from "@/lib/proofValidation";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -779,6 +783,23 @@ export default function Home() {
     decisionAnswers,
     completedGuidedStepIds,
   ]);
+
+  const roadmapAdaptations = useMemo(
+    () =>
+      evaluateRoadmapAdaptations({
+        roadmap: selectedDirection?.roadmap ?? [],
+        decisionConsequences:
+          portfolioSummary?.decisionConsequences ?? {
+            decisionCount: 0,
+            consequences: [],
+            validationFocus: [],
+            deferredItems: [],
+            architectureSignals: [],
+            priorities: [],
+          },
+      }),
+    [selectedDirection, portfolioSummary],
+  );
 
   const interviewStory = useMemo(
     () =>
@@ -1952,6 +1973,7 @@ export default function Home() {
                       <RoadmapDetailPanel
                         direction={selectedDirection}
                         activeNodeId={activeRoadmapNodeId}
+                        adaptations={roadmapAdaptations.adaptations}
                         completedNodeIds={completedRoadmapNodeIds}
                         guidedStepProofs={guidedStepProofs}
                         decisionAnswers={decisionAnswers}
@@ -2384,6 +2406,7 @@ function SummarySection({
 function RoadmapDetailPanel({
   direction,
   activeNodeId,
+  adaptations,
   completedNodeIds,
   guidedStepProofs,
   decisionAnswers,
@@ -2395,6 +2418,7 @@ function RoadmapDetailPanel({
 }: {
   direction: Direction;
   activeNodeId: string | null;
+  adaptations: RoadmapAdaptation[];
   completedNodeIds: string[];
   guidedStepProofs: Record<string, string>;
   decisionAnswers: Record<string, string>;
@@ -2455,6 +2479,9 @@ function RoadmapDetailPanel({
     completedNodeIds.includes(node.id),
   ).length;
   const isActiveComplete = completedNodeIds.includes(activeNode.id);
+  const activeMissionAdaptations = adaptations.filter(
+    (adaptation) => adaptation.targetStageId === activeNode.id,
+  );
 
   return (
     <AnimatePresence mode="wait">
@@ -2592,6 +2619,72 @@ function RoadmapDetailPanel({
           />
         )}
 
+        {activeMissionAdaptations.length > 0 && (
+          <div className="mt-6 rounded-2xl border border-violet-300/20 bg-violet-400/[0.05] p-4">
+            <div className="flex items-start gap-3">
+              <GitBranch className="mt-0.5 h-5 w-5 shrink-0 text-violet-300" />
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-200">
+                  Decision-aware adjustments
+                </p>
+                <p className="mt-2 text-sm leading-6 text-violet-50/75">
+                  These suggestions come from the technical decisions you
+                  recorded. The original roadmap remains unchanged.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {activeMissionAdaptations.map((adaptation) => (
+                <div
+                  key={`${adaptation.targetStageId}-${adaptation.category}`}
+                  className="rounded-xl border border-white/[0.08] bg-slate-950/35 p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-violet-300/20 bg-violet-400/10 px-2.5 py-1 text-xs font-medium text-violet-100">
+                      {adaptation.category}
+                    </span>
+                    <h4 className="font-semibold text-white">
+                      {adaptation.title}
+                    </h4>
+                  </div>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    {adaptation.rationale}
+                  </p>
+
+                  <AdaptationList
+                    title="Suggested tasks"
+                    items={adaptation.suggestedTasks}
+                  />
+
+                  <AdaptationList
+                    title="Suggested acceptance criteria"
+                    items={adaptation.suggestedAcceptanceCriteria}
+                  />
+
+                  <AdaptationList
+                    title="Suggested validation checks"
+                    items={adaptation.suggestedValidationChecks}
+                  />
+
+                  {adaptation.suggestedUnlockCondition && (
+                    <div className="mt-4 rounded-xl border border-violet-300/15 bg-violet-400/[0.05] p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-violet-200">
+                        Suggested unlock condition
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-violet-50/80">
+                        {adaptation.suggestedUnlockCondition}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <MissionListSection
           title="Build this next"
           items={activeNode.tasks}
@@ -2687,6 +2780,38 @@ function RoadmapDetailPanel({
         </div>
       </motion.aside>
     </AnimatePresence>
+  );
+}
+
+function AdaptationList({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+        {title}
+      </p>
+
+      <ul className="mt-2 space-y-2">
+        {items.map((item) => (
+          <li
+            key={`${title}-${item}`}
+            className="flex gap-2 text-sm leading-6 text-slate-300"
+          >
+            <ArrowRight className="mt-1.5 h-3.5 w-3.5 shrink-0 text-violet-300" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
