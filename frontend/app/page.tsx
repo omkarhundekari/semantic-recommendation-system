@@ -192,6 +192,8 @@ type SavedWorkspace = {
   selectedDirectionId: string | null;
   activeRoadmapNodeId: string | null;
   completedRoadmapNodeIds: string[];
+  guidedStepProofs?: Record<string, string>;
+  completedGuidedStepIds?: string[];
   savedAt: string;
 };
 
@@ -421,6 +423,13 @@ export default function Home() {
     string[]
   >(savedWorkspace?.completedRoadmapNodeIds ?? []);
 
+  const [guidedStepProofs, setGuidedStepProofs] = useState<
+    Record<string, string>
+  >(savedWorkspace?.guidedStepProofs ?? {});
+  const [completedGuidedStepIds, setCompletedGuidedStepIds] = useState<
+    string[]
+  >(savedWorkspace?.completedGuidedStepIds ?? []);
+
   const [recoveredWorkspace, setRecoveredWorkspace] = useState(
     savedWorkspace !== null,
   );
@@ -449,6 +458,8 @@ export default function Home() {
       selectedDirectionId,
       activeRoadmapNodeId,
       completedRoadmapNodeIds,
+      guidedStepProofs,
+      completedGuidedStepIds,
       savedAt: new Date().toISOString(),
     };
 
@@ -459,6 +470,8 @@ export default function Home() {
     selectedDirectionId,
     activeRoadmapNodeId,
     completedRoadmapNodeIds,
+    guidedStepProofs,
+    completedGuidedStepIds,
   ]);
 
   const clarificationSectionRef = useCallback(
@@ -564,6 +577,8 @@ export default function Home() {
     setSelectedDirectionId(null);
     setActiveRoadmapNodeId(null);
     setCompletedRoadmapNodeIds([]);
+    setGuidedStepProofs({});
+    setCompletedGuidedStepIds([]);
     setRecoveredWorkspace(false);
     setExpandedWhyDirectionId(null);
     setShouldScrollToClarification(false);
@@ -645,6 +660,8 @@ export default function Home() {
     setSelectedDirectionId(direction.id);
     setActiveRoadmapNodeId(direction.roadmap[0]?.id ?? null);
     setCompletedRoadmapNodeIds([]);
+    setGuidedStepProofs({});
+    setCompletedGuidedStepIds([]);
     setRecoveredWorkspace(false);
 
     window.setTimeout(() => {
@@ -687,6 +704,8 @@ export default function Home() {
     setSelectedDirectionId(null);
     setActiveRoadmapNodeId(null);
     setCompletedRoadmapNodeIds([]);
+    setGuidedStepProofs({});
+    setCompletedGuidedStepIds([]);
     setRecoveredWorkspace(false);
     setError("");
   }
@@ -1505,6 +1524,10 @@ export default function Home() {
                         direction={selectedDirection}
                         activeNodeId={activeRoadmapNodeId}
                         completedNodeIds={completedRoadmapNodeIds}
+                        guidedStepProofs={guidedStepProofs}
+                        completedGuidedStepIds={completedGuidedStepIds}
+                        onGuidedStepProofChange={setGuidedStepProofs}
+                        onCompletedGuidedStepIdsChange={setCompletedGuidedStepIds}
                         onCompleteActiveMission={completeActiveMission}
                       />
                     </div>
@@ -1523,11 +1546,23 @@ function RoadmapDetailPanel({
   direction,
   activeNodeId,
   completedNodeIds,
+  guidedStepProofs,
+  completedGuidedStepIds,
+  onGuidedStepProofChange,
+  onCompletedGuidedStepIdsChange,
   onCompleteActiveMission,
 }: {
   direction: Direction;
   activeNodeId: string | null;
   completedNodeIds: string[];
+  guidedStepProofs: Record<string, string>;
+  completedGuidedStepIds: string[];
+  onGuidedStepProofChange: React.Dispatch<
+    React.SetStateAction<Record<string, string>>
+  >;
+  onCompletedGuidedStepIdsChange: React.Dispatch<
+    React.SetStateAction<string[]>
+  >;
   onCompleteActiveMission: () => void;
 }) {
   const activeNode =
@@ -1538,13 +1573,6 @@ function RoadmapDetailPanel({
     nodeId: "",
     stepIndex: 0,
   });
-  const [guidedStepProofs, setGuidedStepProofs] = useState<
-    Record<string, string>
-  >({});
-  const [completedGuidedStepIds, setCompletedGuidedStepIds] = useState<
-    string[]
-  >([]);
-
   if (!activeNode) {
     return null;
   }
@@ -1659,7 +1687,7 @@ function RoadmapDetailPanel({
             proofValue={activeGuidedStepProof}
             isComplete={isActiveGuidedStepComplete}
             onProofChange={(value) =>
-              setGuidedStepProofs((current) => ({
+              onGuidedStepProofChange((current) => ({
                 ...current,
                 [activeGuidedStepKey]: value,
               }))
@@ -1669,7 +1697,7 @@ function RoadmapDetailPanel({
                 return;
               }
 
-              setCompletedGuidedStepIds((current) =>
+              onCompletedGuidedStepIdsChange((current) =>
                 current.includes(activeGuidedStepKey)
                   ? current
                   : [...current, activeGuidedStepKey],
