@@ -21,6 +21,7 @@ import {
   type BuildPassport,
 } from "@/lib/buildPassport";
 import { canCompleteGuidedStep } from "@/lib/guidedStepCompletion";
+import { evaluateRoadmapProgress } from "@/lib/roadmapProgressEvaluator";
 import { validateProof } from "@/lib/proofValidation";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -717,25 +718,43 @@ export default function Home() {
     }, 80);
   }
 
+  const roadmapProgress = useMemo(
+    () =>
+      evaluateRoadmapProgress({
+        roadmap: selectedDirection?.roadmap ?? [],
+        completedRoadmapNodeIds,
+        completedGuidedStepIds,
+        guidedStepProofs,
+        decisionAnswers,
+      }),
+    [
+      selectedDirection,
+      completedRoadmapNodeIds,
+      completedGuidedStepIds,
+      guidedStepProofs,
+      decisionAnswers,
+    ],
+  );
+
   const selectedDirectionGuidedSteps =
     selectedDirection?.roadmap.flatMap((node) => node.guided_steps ?? []) ?? [];
   const selectedDirectionGuidedStepKeys =
     selectedDirection?.roadmap.flatMap((node) =>
       (node.guided_steps ?? []).map((step) => `${node.id}:${step.step_id}`),
     ) ?? [];
-  const completedSelectedDirectionGuidedStepCount =
-    selectedDirectionGuidedStepKeys.filter((stepKey) =>
-      completedGuidedStepIds.includes(stepKey),
-    ).length;
   const savedProofCount = selectedDirectionGuidedStepKeys.filter(
     (stepKey) => guidedStepProofs[stepKey]?.trim(),
   ).length;
-  const isSelectedProjectComplete =
-    selectedDirection !== null &&
-    selectedDirection.roadmap.length > 0 &&
-    selectedDirection.roadmap.every((node) =>
-      completedRoadmapNodeIds.includes(node.id),
-    );
+  const completedSelectedDirectionGuidedStepCount =
+    roadmapProgress.completedStepCount;
+  const isSelectedProjectComplete = roadmapProgress.projectComplete;
+  const roadmapProgressPercent = Math.round(
+    roadmapProgress.completionRatio * 100,
+  );
+  const currentProgressNode =
+    selectedDirection?.roadmap.find(
+      (node) => node.id === roadmapProgress.currentStageId,
+    ) ?? null;
 
   const portfolioSummary = useMemo(() => {
     if (!result || result.status !== "ready" || !selectedDirectionId) {
@@ -1582,6 +1601,113 @@ export default function Home() {
                         >
                           Start over
                         </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 rounded-2xl border border-sky-300/15 bg-sky-400/[0.04] p-5">
+                      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="max-w-2xl">
+                          <div className="flex items-center gap-2">
+                            <Target className="h-4 w-4 text-sky-300" />
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-200">
+                              Engineering progress
+                            </p>
+                          </div>
+
+                          <h3 className="mt-2 text-xl font-semibold text-white">
+                            {roadmapProgress.status === "complete"
+                              ? "Your project execution is complete."
+                              : currentProgressNode
+                                ? `Continue with ${currentProgressNode.title}`
+                                : "Start your first engineering mission"}
+                          </h3>
+
+                          {roadmapProgress.recommendedNextAction && (
+                            <div className="mt-4 rounded-xl border border-white/[0.07] bg-slate-950/35 p-4">
+                              <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                                Recommended next action
+                              </p>
+                              <p className="mt-2 text-sm leading-6 text-slate-200">
+                                {roadmapProgress.recommendedNextAction}
+                              </p>
+                            </div>
+                          )}
+
+                          {roadmapProgress.missingRequirements.length > 0 && (
+                            <div className="mt-4 flex gap-3 rounded-xl border border-amber-300/15 bg-amber-400/[0.05] p-4">
+                              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                              <div>
+                                <p className="text-sm font-semibold text-amber-100">
+                                  Missing before this step can be completed
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-amber-100/75">
+                                  {roadmapProgress.missingRequirements
+                                    .map((requirement) =>
+                                      requirement === "decision_answer"
+                                        ? "technical decision rationale"
+                                        : "proof of work",
+                                    )
+                                    .join(" and ")}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {roadmapProgress.blockedStepKeys.length > 0 && (
+                            <div className="mt-4 flex gap-3 rounded-xl border border-rose-300/15 bg-rose-400/[0.05] p-4">
+                              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-300" />
+                              <div>
+                                <p className="text-sm font-semibold text-rose-100">
+                                  Saved progress needs attention
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-rose-100/75">
+                                  {roadmapProgress.blockedStepKeys.length} completed step
+                                  {roadmapProgress.blockedStepKeys.length === 1 ? "" : "s"} no
+                                  longer meet the proof or decision requirements.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-64 rounded-2xl border border-white/[0.07] bg-slate-950/35 p-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-sm text-slate-300">
+                              Overall progress
+                            </p>
+                            <p className="text-lg font-semibold text-white">
+                              {roadmapProgressPercent}%
+                            </p>
+                          </div>
+
+                          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.07]">
+                            <div
+                              className="h-full rounded-full bg-sky-300 transition-all"
+                              style={{ width: `${roadmapProgressPercent}%` }}
+                            />
+                          </div>
+
+                          <div className="mt-4 grid gap-2 text-sm text-slate-300">
+                            <p>
+                              <span className="font-semibold text-white">
+                                {roadmapProgress.completedStepCount}
+                              </span>
+                              /{roadmapProgress.totalStepCount} guided steps
+                            </p>
+                            <p>
+                              <span className="font-semibold text-white">
+                                {roadmapProgress.completedMissionCount}
+                              </span>
+                              /{roadmapProgress.totalMissionCount} missions
+                            </p>
+                            <p>
+                              <span className="font-semibold text-white">
+                                {savedProofCount}
+                              </span>{" "}
+                              proof entries saved
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
