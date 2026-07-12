@@ -490,9 +490,13 @@ def generate_project_intelligence(
 
     inference = evidence_payload["inference"]
     evidence_items = evidence_payload["merged_results"]
+    explicit_domain = correction_metadata.get("detected_domain")
     planning_domain = resolve_planning_domain(
-        explicit_domain=correction_metadata.get("detected_domain"),
+        explicit_domain=explicit_domain,
         inferred_focus=inference.get("inferred_focus"),
+    )
+    has_specific_explicit_domain = bool(
+        explicit_domain and explicit_domain != "general"
     )
     research_evidence_assessment = build_research_evidence_assessment(
         evidence_payload,
@@ -543,7 +547,10 @@ def generate_project_intelligence(
         ]
     )
 
-    if inference.get("requires_clarification"):
+    if (
+        inference.get("requires_clarification")
+        and not has_specific_explicit_domain
+    ):
         candidate_families = inference.get(
             "candidate_families",
             [],

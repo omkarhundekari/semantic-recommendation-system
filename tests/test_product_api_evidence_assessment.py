@@ -549,8 +549,38 @@ def test_explicit_user_domain_is_preserved_over_weaker_inferred_focus():
     assert payload["inferred_focus"] is not None
     assert payload["evidence_coverage"] is not None
     assert payload["evidence_coverage"]["coverage_state"] in {
+        "strong_direct",
         "adequate_direct",
         "adjacent_only",
         "exploratory",
     }
+
+def test_explicit_devops_domain_does_not_require_github_corpus(
+    monkeypatch,
+):
+    import github_corpus_search
+
+    monkeypatch.setattr(
+        github_corpus_search,
+        "GITHUB_CORPUS_PATH",
+        "data/nonexistent_github_project_corpus.csv",
+    )
+
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal="DevOps observability dashboard project",
+            constraints={
+                "skill_level": "intermediate",
+                "time_available": "3 weeks",
+                "target_roles": ["Software Engineer"],
+                "preferred_stack": ["Python", "FastAPI", "React"],
+            },
+        )
+    )
+
+    payload = response.model_dump()
+
+    assert payload["status"] == "ready"
+    assert payload["detected_domain"] == "devops"
+    assert payload["resolved_planning_domain"] == "devops"
 
