@@ -34,6 +34,10 @@ import {
   type AdaptationDecisionMap,
   type AdaptationDecisionStatus,
 } from "@/lib/roadmapAdaptationState";
+import {
+  canCompleteMissionWithAdaptations,
+  evaluateAcceptedAdaptationReadiness,
+} from "@/lib/acceptedAdaptationReadiness";
 import { validateProof } from "@/lib/proofValidation";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -232,6 +236,7 @@ type SavedWorkspace = {
   decisionAnswers?: Record<string, string>;
   completedGuidedStepIds?: string[];
   adaptationDecisions?: AdaptationDecisionMap;
+  adaptationEvidence?: Record<string, string>;
   savedAt: string;
 };
 
@@ -480,6 +485,9 @@ export default function Home() {
     useState<AdaptationDecisionMap>(
       savedWorkspace?.adaptationDecisions ?? {},
     );
+  const [adaptationEvidence, setAdaptationEvidence] = useState<
+    Record<string, string>
+  >(savedWorkspace?.adaptationEvidence ?? {});
 
   const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
     string | null
@@ -509,6 +517,7 @@ export default function Home() {
       decisionAnswers,
       completedGuidedStepIds,
       adaptationDecisions,
+      adaptationEvidence,
       savedAt: new Date().toISOString(),
     };
 
@@ -523,6 +532,7 @@ export default function Home() {
     decisionAnswers,
     completedGuidedStepIds,
     adaptationDecisions,
+    adaptationEvidence,
   ]);
 
   const clarificationSectionRef = useCallback(
@@ -721,6 +731,7 @@ export default function Home() {
     setDecisionAnswers({});
     setCompletedGuidedStepIds([]);
     setAdaptationDecisions({});
+    setAdaptationEvidence({});
     setRevealedArtifacts({
       summary: false,
       interviewStory: false,
@@ -1991,6 +2002,7 @@ export default function Home() {
                         activeNodeId={activeRoadmapNodeId}
                         adaptations={roadmapAdaptations.adaptations}
                         adaptationDecisions={adaptationDecisions}
+                        adaptationEvidence={adaptationEvidence}
                         completedNodeIds={completedRoadmapNodeIds}
                         guidedStepProofs={guidedStepProofs}
                         decisionAnswers={decisionAnswers}
@@ -1999,6 +2011,7 @@ export default function Home() {
                         onDecisionAnswerChange={setDecisionAnswers}
                         onCompletedGuidedStepIdsChange={setCompletedGuidedStepIds}
                         onAdaptationDecisionsChange={setAdaptationDecisions}
+                        onAdaptationEvidenceChange={setAdaptationEvidence}
                         onCompleteActiveMission={completeActiveMission}
                       />
                     </div>
@@ -2426,6 +2439,7 @@ function RoadmapDetailPanel({
   activeNodeId,
   adaptations,
   adaptationDecisions,
+  adaptationEvidence,
   completedNodeIds,
   guidedStepProofs,
   decisionAnswers,
@@ -2434,12 +2448,14 @@ function RoadmapDetailPanel({
   onDecisionAnswerChange,
   onCompletedGuidedStepIdsChange,
   onAdaptationDecisionsChange,
+  onAdaptationEvidenceChange,
   onCompleteActiveMission,
 }: {
   direction: Direction;
   activeNodeId: string | null;
   adaptations: RoadmapAdaptation[];
   adaptationDecisions: AdaptationDecisionMap;
+  adaptationEvidence: Record<string, string>;
   completedNodeIds: string[];
   guidedStepProofs: Record<string, string>;
   decisionAnswers: Record<string, string>;
@@ -2455,6 +2471,9 @@ function RoadmapDetailPanel({
   >;
   onAdaptationDecisionsChange: React.Dispatch<
     React.SetStateAction<AdaptationDecisionMap>
+  >;
+  onAdaptationEvidenceChange: React.Dispatch<
+    React.SetStateAction<Record<string, string>>
   >;
   onCompleteActiveMission: () => void;
 }) {
@@ -2499,8 +2518,21 @@ function RoadmapDetailPanel({
   const allActiveMissionGuidedStepsComplete =
     guidedSteps.length === 0 ||
     completedActiveMissionGuidedStepCount === guidedSteps.length;
-  const missionCompletionBlocked =
+
+  const adaptationReadiness =
+    evaluateAcceptedAdaptationReadiness({
+      stageId: activeNode.id,
+      adaptations,
+      decisions: adaptationDecisions,
+      evidence: adaptationEvidence,
+    });
+
+  const guidedStepCompletionBlocked =
     guidedSteps.length > 0 && !allActiveMissionGuidedStepsComplete;
+  const adaptationCompletionBlocked =
+    !canCompleteMissionWithAdaptations(adaptationReadiness);
+  const missionCompletionBlocked =
+    guidedStepCompletionBlocked || adaptationCompletionBlocked;
 
   const completedCount = direction.roadmap.filter((node) =>
     completedNodeIds.includes(node.id),
@@ -2670,6 +2702,8 @@ function RoadmapDetailPanel({
                   adaptationRationales[key] ??
                   savedDecision?.rationale ??
                   "";
+                const evidenceValue =
+                  adaptationEvidence[key] ?? "";
 
                 function saveDecision(
                   status: AdaptationDecisionStatus,
@@ -2798,6 +2832,48 @@ function RoadmapDetailPanel({
                       </button>
                     </div>
 
+                    {savedDecision?.status === "accepted" && (
+                      <div className="mt-4 rounded-xl border border-emerald-300/15 bg-emerald-400/[0.05] p-3">
+                        <label
+                          htmlFor={`adaptation-evidence-${key}`}
+                          className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-200"
+                        >
+                          Required implementation evidence
+                        </label>
+
+                        <p className="mt-2 text-xs leading-5 text-emerald-50/65">
+                          Save a command result, test output, metric, file path,
+                          commit reference, or concise implementation note that
+                          proves this accepted adjustment was completed.
+                        </p>
+
+                        <textarea
+                          id={`adaptation-evidence-${key}`}
+                          value={evidenceValue}
+                          onChange={(event) =>
+                            onAdaptationEvidenceChange((current) => ({
+                              ...current,
+                              [key]: event.target.value,
+                            }))
+                          }
+                          placeholder="Example: pytest output, precision@3 result, benchmark summary, or commit reference."
+                          className="mt-3 min-h-24 w-full rounded-xl border border-emerald-300/15 bg-slate-950/50 px-3 py-2 text-sm leading-6 text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-emerald-300/45"
+                        />
+
+                        <p
+                          className={`mt-2 text-xs font-medium ${
+                            evidenceValue.trim()
+                              ? "text-emerald-200"
+                              : "text-amber-200"
+                          }`}
+                        >
+                          {evidenceValue.trim()
+                            ? "Evidence saved. This adjustment no longer blocks the mission."
+                            : "Evidence is required before this mission can be completed."}
+                        </p>
+                      </div>
+                    )}
+
                     {savedDecision && (
                       <div className="mt-3 flex flex-col gap-2 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
                         <span>
@@ -2809,11 +2885,16 @@ function RoadmapDetailPanel({
 
                         <button
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
                             onAdaptationDecisionsChange((current) =>
                               clearAdaptationDecision(current, key),
-                            )
-                          }
+                            );
+                            onAdaptationEvidenceChange((current) => {
+                              const next = { ...current };
+                              delete next[key];
+                              return next;
+                            });
+                          }}
                           className="font-semibold text-slate-300 transition hover:text-white"
                         >
                           Reset
@@ -2910,15 +2991,31 @@ function RoadmapDetailPanel({
             <CheckCircle2 className="h-4 w-4" />
             {isActiveComplete
               ? "Mission completed"
-              : missionCompletionBlocked
+              : guidedStepCompletionBlocked
                 ? "Complete guided steps first"
-                : "Mark mission complete"}
+                : adaptationCompletionBlocked
+                  ? "Add accepted-adjustment evidence"
+                  : "Mark mission complete"}
           </button>
 
-          {missionCompletionBlocked && (
+          {guidedStepCompletionBlocked && (
             <p className="mt-3 rounded-xl border border-amber-300/10 bg-amber-400/[0.04] p-3 text-sm leading-6 text-amber-100">
               Save proof for every guided step before completing this mission.
             </p>
+          )}
+
+          {adaptationCompletionBlocked && (
+            <div className="mt-3 rounded-xl border border-violet-300/15 bg-violet-400/[0.05] p-3 text-sm leading-6 text-violet-100">
+              <p className="font-semibold">
+                Accepted adjustments still need evidence.
+              </p>
+
+              <ul className="mt-2 space-y-1 text-violet-50/75">
+                {adaptationReadiness.missingEvidence.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </div>
           )}
 
           <p className="mt-4 inline-flex items-center gap-2 text-sm text-slate-300">
