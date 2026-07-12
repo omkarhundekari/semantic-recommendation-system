@@ -420,4 +420,66 @@ describe("workspace backup UI", () => {
       screen.getByLabelText("Import workspace"),
     ).toBeInTheDocument();
   });
+
+  it("keeps an imported workspace usable when local saving fails", async () => {
+    render(<Home />);
+
+    const setItem = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("Browser storage is unavailable.");
+      });
+
+    uploadJson(
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Unsaved but usable retrieval workspace",
+        result: {
+          status: "ready",
+          directions: [],
+        },
+        selectedDirectionId: null,
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {},
+        decisionAnswers: {},
+        completedGuidedStepIds: [],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-12T18:00:00.000Z",
+      }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Workspace imported successfully. Its progress and evidence have been restored.",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByDisplayValue(
+        "Unsaved but usable retrieval workspace",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      await screen.findByText(
+        "Unable to save locally",
+        {},
+        {
+          timeout: 1000,
+        },
+      ),
+    ).toBeInTheDocument();
+
+    expect(setItem).toHaveBeenCalled();
+    expect(
+      screen.getByDisplayValue(
+        "Unsaved but usable retrieval workspace",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Import workspace"),
+    ).toBeInTheDocument();
+  });
 });
