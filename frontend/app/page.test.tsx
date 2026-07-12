@@ -482,4 +482,151 @@ describe("workspace backup UI", () => {
       screen.getByLabelText("Import workspace"),
     ).toBeInTheDocument();
   });
+
+  it("restores a saved workspace automatically on page load", async () => {
+    window.localStorage.setItem(
+      WORKSPACE_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Resume my saved retrieval workspace",
+        result: {
+          status: "ready",
+          directions: [
+            {
+              id: "saved-retrieval",
+              title: "Saved Retrieval Workspace",
+              summary:
+                "A previously saved project restored at startup.",
+              scope:
+                "Build and validate one grounded retrieval workflow.",
+              estimated_effort: "3 weeks",
+              portfolio_tier: "strong",
+              difficulty: "intermediate",
+              career_signal: "high",
+              why_it_fits:
+                "Demonstrates retrieval and evaluation skills.",
+              mvp_steps: ["Build retrieval"],
+              advanced_extensions: [],
+              tech_stack: ["Python", "React"],
+              target_roles: ["ML Engineer"],
+              roadmap: [
+                {
+                  id: "validate",
+                  title: "Validate saved retrieval quality",
+                  purpose:
+                    "Measure the selected retrieval metric.",
+                  tasks: ["Run a repeatable evaluation."],
+                  stage_type: "validation",
+                  objective: "Save measurable evidence.",
+                  why_it_matters:
+                    "Validation makes the result credible.",
+                  commands: ["python evaluate.py"],
+                  expected_outputs: ["precision@3"],
+                  acceptance_criteria: [
+                    "A saved result reports precision@3.",
+                  ],
+                  validation_checks: [
+                    "Repeat the evaluation successfully.",
+                  ],
+                  common_errors: [],
+                  portfolio_artifact: "evaluation.json",
+                  unlock_condition:
+                    "Save the evaluation result.",
+                  guided_steps: [
+                    {
+                      step_id: "measure",
+                      title: "Measure saved retrieval",
+                      explanation:
+                        "Run evaluation and preserve its output.",
+                      action:
+                        "Run the saved retrieval evaluation.",
+                      starter_command: "python evaluate.py",
+                      starter_files: ["evaluate.py"],
+                      done_when:
+                        "The output reports precision@3.",
+                      common_confusion:
+                        "Use the same fixture for every run.",
+                      decision_point:
+                        "Which retrieval metric should be prioritized?",
+                      proof_type: "command_output",
+                      proof_prompt:
+                        "Paste the saved evaluation output.",
+                      expected_output_patterns: ["precision@3"],
+                      interview_takeaway:
+                        "Explain why this metric was selected.",
+                    },
+                  ],
+                },
+              ],
+              risks: [],
+              repairs_applied: [],
+              verification: {
+                status: "verified",
+                score: 3,
+                max_score: 3,
+                warnings: [],
+              },
+            },
+          ],
+        },
+        selectedDirectionId: "saved-retrieval",
+        activeRoadmapNodeId: "validate",
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {
+          "validate:measure": "precision@3: 0.81",
+        },
+        decisionAnswers: {
+          "validate:measure":
+            "Precision at three reflects the intended demo.",
+        },
+        completedGuidedStepIds: ["validate:measure"],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-12T18:00:00.000Z",
+      }),
+    );
+
+    render(<Home />);
+
+    expect(
+      screen.getByDisplayValue(
+        "Resume my saved retrieval workspace",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Saved Retrieval Workspace",
+        level: 2,
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Validate saved retrieval quality",
+        level: 3,
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Saved locally"),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByText(
+        "Workspace imported successfully. Its progress and evidence have been restored.",
+      ),
+    ).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      const storedWorkspace = window.localStorage.getItem(
+        WORKSPACE_STORAGE_KEY,
+      );
+
+      expect(storedWorkspace).not.toBeNull();
+      expect(
+        JSON.parse(storedWorkspace ?? "{}").selectedDirectionId,
+      ).toBe("saved-retrieval");
+    });
+  });
 });
