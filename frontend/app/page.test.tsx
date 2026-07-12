@@ -14,6 +14,10 @@ import {
   vi,
 } from "vitest";
 
+import {
+  WORKSPACE_STORAGE_KEY,
+} from "@/lib/workspacePersistence";
+
 import Home from "./page";
 
 function uploadJson(content: string) {
@@ -239,6 +243,181 @@ describe("workspace backup UI", () => {
           )}\\.`,
         ),
       ),
+    ).toBeInTheDocument();
+  });
+
+  it("clears the active workspace and browser storage when starting over", async () => {
+    render(<Home />);
+
+    uploadJson(
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Reset this grounded retrieval project",
+        result: {
+          status: "ready",
+          directions: [
+            {
+              id: "grounded-retrieval",
+              title: "Grounded Retrieval Reset Test",
+              summary: "A populated workspace used to test reset.",
+              scope: "Build and validate one grounded workflow.",
+              estimated_effort: "3 weeks",
+              portfolio_tier: "strong",
+              difficulty: "intermediate",
+              career_signal: "high",
+              why_it_fits: "Shows retrieval and evaluation skills.",
+              mvp_steps: ["Define the retrieval workflow"],
+              advanced_extensions: [],
+              tech_stack: ["Python", "React"],
+              target_roles: ["ML Engineer"],
+              roadmap: [
+                {
+                  id: "validate",
+                  title: "Validate retrieval quality",
+                  purpose: "Measure the selected retrieval metric.",
+                  tasks: ["Run a repeatable evaluation."],
+                  stage_type: "validation",
+                  objective: "Save measurable evidence.",
+                  why_it_matters:
+                    "Validation makes the project credible.",
+                  commands: ["python evaluate.py"],
+                  expected_outputs: ["precision@3"],
+                  acceptance_criteria: [
+                    "A saved result reports precision@3.",
+                  ],
+                  validation_checks: [
+                    "Repeat the evaluation successfully.",
+                  ],
+                  common_errors: [],
+                  portfolio_artifact: "evaluation.json",
+                  unlock_condition:
+                    "Save the evaluation result.",
+                  guided_steps: [
+                    {
+                      step_id: "measure",
+                      title: "Measure retrieval",
+                      explanation:
+                        "Run the evaluation and save its output.",
+                      action: "Run the retrieval evaluation.",
+                      starter_command: "python evaluate.py",
+                      starter_files: ["evaluate.py"],
+                      done_when:
+                        "The output reports precision@3.",
+                      common_confusion:
+                        "Use the same fixture for every run.",
+                      decision_point:
+                        "Which retrieval metric will you prioritize?",
+                      proof_type: "command_output",
+                      proof_prompt:
+                        "Paste the saved evaluation output.",
+                      expected_output_patterns: ["precision@3"],
+                      interview_takeaway:
+                        "Explain why the metric was selected.",
+                    },
+                  ],
+                },
+              ],
+              risks: [],
+              repairs_applied: [],
+              verification: {
+                status: "verified",
+                score: 3,
+                max_score: 3,
+                warnings: [],
+              },
+            },
+          ],
+        },
+        selectedDirectionId: "grounded-retrieval",
+        activeRoadmapNodeId: "validate",
+        completedRoadmapNodeIds: ["validate"],
+        guidedStepProofs: {
+          "validate:measure": "precision@3: 0.82",
+        },
+        decisionAnswers: {
+          "validate:measure":
+            "Precision at three reflects the demo workflow.",
+        },
+        completedGuidedStepIds: ["validate:measure"],
+        adaptationDecisions: {
+          "validate:validation": {
+            adaptationKey: "validate:validation",
+            status: "accepted",
+            rationale: "Keep evaluation measurable.",
+            decidedAt: "2026-07-12T18:00:00.000Z",
+          },
+        },
+        adaptationEvidence: {
+          "validate:validation":
+            "Saved evaluation.json with precision@3.",
+        },
+        savedAt: "2026-07-12T18:00:00.000Z",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Grounded Retrieval Reset Test",
+        level: 2,
+      }),
+    ).toBeInTheDocument();
+
+    await waitFor(
+      () => {
+        expect(
+          window.localStorage.getItem(
+            WORKSPACE_STORAGE_KEY,
+          ),
+        ).not.toBeNull();
+      },
+      {
+        timeout: 1000,
+      },
+    );
+
+    expect(
+      screen.getByText(
+        "Workspace imported successfully. Its progress and evidence have been restored.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Start over",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        window.localStorage.getItem(
+          WORKSPACE_STORAGE_KEY,
+        ),
+      ).toBeNull();
+    });
+
+    expect(
+      screen.queryByText(
+        "Workspace imported successfully. Its progress and evidence have been restored.",
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Grounded Retrieval Reset Test",
+        level: 2,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Export workspace",
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(
+        /I want an AI project for an ML engineer role/i,
+      ),
+    ).toHaveValue("");
+    expect(
+      screen.getByLabelText("Import workspace"),
     ).toBeInTheDocument();
   });
 });
