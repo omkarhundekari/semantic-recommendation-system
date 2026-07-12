@@ -61,7 +61,7 @@ def _define_steps(context: MissionContext) -> List[GuidedMissionStep]:
             proof_prompt=(
                 "Paste your folder tree or list the files you created for this step."
             ),
-            expected_output_patterns=_expected_patterns_from_files(primary_files),
+            expected_output_patterns=_specific_file_patterns(primary_files),
             interview_takeaway=(
                 "I structured the project so inputs, code, tests, and outputs were "
                 "separated before implementation."
@@ -97,7 +97,11 @@ def _define_steps(context: MissionContext) -> List[GuidedMissionStep]:
                 "Write one sentence explaining what your project receives, produces, "
                 "and how you will know it works."
             ),
-            expected_output_patterns=[],
+            expected_output_patterns=[
+                _domain_input(context),
+                _domain_output(context),
+                _metric_phrase(context),
+            ],
             interview_takeaway=(
                 "I defined the project around measurable inputs and outputs instead "
                 "of only describing the topic."
@@ -140,7 +144,7 @@ def _mvp_steps(context: MissionContext) -> List[GuidedMissionStep]:
                 "Paste the first output from your workflow. Include the input you used "
                 "and the output it produced."
             ),
-            expected_output_patterns=_mvp_expected_patterns(context),
+            expected_output_patterns=_workflow_proof_patterns(context),
             interview_takeaway=(
                 "I built the smallest complete workflow first so every later feature "
                 "had a stable foundation."
@@ -167,7 +171,7 @@ def _mvp_steps(context: MissionContext) -> List[GuidedMissionStep]:
             ),
             proof_type="output_paste",
             proof_prompt=f"Paste the saved result from {output_path}.",
-            expected_output_patterns=_mvp_expected_patterns(context),
+            expected_output_patterns=_saved_output_patterns(context),
             interview_takeaway=(
                 "I saved concrete MVP outputs so I could compare later improvements "
                 "against the first working version."
@@ -205,7 +209,7 @@ def _validate_steps(context: MissionContext) -> List[GuidedMissionStep]:
                 "Paste your validation output. Include the metric name, test input, "
                 "and observed result."
             ),
-            expected_output_patterns=[metric],
+            expected_output_patterns=[metric, "input", "result"],
             interview_takeaway=(
                 "I validated the project with a measurable signal instead of only "
                 "claiming the demo worked."
@@ -236,7 +240,7 @@ def _validate_steps(context: MissionContext) -> List[GuidedMissionStep]:
             proof_prompt=(
                 "Write one failure case, why it happened, and what you would improve."
             ),
-            expected_output_patterns=[],
+            expected_output_patterns=["failure", "why", "improve"],
             interview_takeaway=(
                 "I tested the project beyond the happy path and documented a realistic "
                 "next improvement."
@@ -276,7 +280,7 @@ def _extend_steps(context: MissionContext) -> List[GuidedMissionStep]:
             proof_prompt=(
                 "Explain what the extension changes and how you confirmed the MVP still works."
             ),
-            expected_output_patterns=[],
+            expected_output_patterns=["extension", "mvp", "works"],
             interview_takeaway=(
                 "I improved the MVP with one focused extension while preserving the "
                 "original workflow."
@@ -313,7 +317,7 @@ def _package_steps(context: MissionContext) -> List[GuidedMissionStep]:
             proof_prompt=(
                 "Write the interview explanation for this project in three sentences."
             ),
-            expected_output_patterns=[],
+            expected_output_patterns=["README", "validation", "limitation"],
             interview_takeaway=(
                 "I can explain the project as a complete engineering story: problem, design, "
                 "validation, tradeoffs, and next steps."
@@ -326,12 +330,43 @@ def _starter_files(context: MissionContext) -> List[str]:
     return context.playbook.typical_file_structure[:4]
 
 
-def _expected_patterns_from_files(files: List[str]) -> List[str]:
-    return [
-        item.strip("/").split("/")[0]
-        for item in files
-        if item.strip("/")
-    ]
+def _specific_file_patterns(files: List[str]) -> List[str]:
+    return _dedupe_preserve_order(
+        [
+            item.strip()
+            for item in files
+            if item.strip()
+        ]
+    )
+
+
+def _workflow_proof_patterns(context: MissionContext) -> List[str]:
+    return _dedupe_preserve_order(
+        _mvp_expected_patterns(context)
+        + [_domain_input(context), _domain_output(context)]
+    )
+
+
+def _saved_output_patterns(context: MissionContext) -> List[str]:
+    return _dedupe_preserve_order(
+        [_first_output_path(context)] + _mvp_expected_patterns(context)
+    )
+
+
+def _dedupe_preserve_order(values: List[str]) -> List[str]:
+    seen = set()
+    output = []
+
+    for value in values:
+        normalized = value.lower().strip()
+
+        if not normalized or normalized in seen:
+            continue
+
+        seen.add(normalized)
+        output.append(value)
+
+    return output
 
 
 def _anchor_phrase(context: MissionContext) -> str:

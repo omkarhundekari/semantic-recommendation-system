@@ -74,15 +74,18 @@ def test_define_stage_guides_rag_project_structure():
             + " "
             + step.proof_prompt
             + " "
+            + " ".join(step.expected_output_patterns)
+            + " "
             + step.interview_takeaway
             for step in steps
         ]
     ).lower()
 
     assert len(steps) == 2
-    assert "data/documents" in combined
+    assert "data/documents/" in combined
     assert "data/eval_questions.json" in combined
     assert "docs/problem_statement.md" in combined
+    assert "retrieval_precision_at_3" in combined
     assert all(step.done_when for step in steps)
     assert all(step.proof_prompt for step in steps)
     assert all(step.interview_takeaway for step in steps)
@@ -116,6 +119,7 @@ def test_mvp_stage_guides_frontend_workflow():
     assert "loading" in combined
     assert "error" in combined
     assert "success" in combined
+    assert "outputs/sample_result.json" in combined
 
 
 def test_beginner_guided_steps_omit_decision_points():
@@ -144,3 +148,40 @@ def test_intermediate_guided_steps_include_decision_points():
 
     assert steps
     assert any(step.decision_point for step in steps)
+
+
+def test_guided_steps_avoid_duplicate_generic_folder_patterns():
+    steps = build_guided_steps_for_stage(
+        stage=RoadmapStage(
+            id="define",
+            title="Define the project",
+            purpose="Define the measurable project scope.",
+        ),
+        context=_rag_context(),
+    )
+
+    structure_step = steps[0]
+
+    assert structure_step.expected_output_patterns == [
+        "data/documents/",
+        "data/eval_questions.json",
+        "src/ingest.py",
+        "src/retriever.py",
+    ]
+    assert structure_step.expected_output_patterns.count("data") == 0
+    assert structure_step.expected_output_patterns.count("src") == 0
+
+
+def test_explanation_steps_require_reasoning_specific_patterns():
+    validate_steps = build_guided_steps_for_stage(
+        stage=RoadmapStage(
+            id="validate",
+            title="Validate the result",
+            purpose="Validate the system.",
+        ),
+        context=_rag_context(),
+    )
+
+    failure_step = validate_steps[1]
+
+    assert failure_step.expected_output_patterns == ["failure", "why", "improve"]
