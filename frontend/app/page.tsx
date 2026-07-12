@@ -235,6 +235,12 @@ type IntelligenceResponse = {
 type SavedWorkspace =
   PersistedWorkspace<IntelligenceResponse>;
 
+type WorkspaceSaveStatus =
+  | "idle"
+  | "saving"
+  | "saved"
+  | "error";
+
 function readSavedWorkspace(): SavedWorkspace | null {
   if (typeof window === "undefined") {
     return null;
@@ -466,6 +472,10 @@ export default function Home() {
   const [adaptationEvidence, setAdaptationEvidence] = useState<
     Record<string, string>
   >(savedWorkspace?.adaptationEvidence ?? {});
+  const [workspaceSaveStatus, setWorkspaceSaveStatus] =
+    useState<WorkspaceSaveStatus>(
+      savedWorkspace ? "saved" : "idle",
+    );
 
   const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
     string | null
@@ -485,22 +495,36 @@ export default function Home() {
       return;
     }
 
-    writeWorkspaceToStorage<IntelligenceResponse>(
-      window.localStorage,
-      {
-        goal,
-        result,
-        selectedDirectionId,
-        activeRoadmapNodeId,
-        completedRoadmapNodeIds,
-        guidedStepProofs,
-        decisionAnswers,
-        completedGuidedStepIds,
-        adaptationDecisions,
-        adaptationEvidence,
-        savedAt: new Date().toISOString(),
-      },
-    );
+    const savingTimeout = window.setTimeout(() => {
+      setWorkspaceSaveStatus("saving");
+    }, 0);
+
+    const saveTimeout = window.setTimeout(() => {
+      const saved =
+        writeWorkspaceToStorage<IntelligenceResponse>(
+          window.localStorage,
+          {
+            goal,
+            result,
+            selectedDirectionId,
+            activeRoadmapNodeId,
+            completedRoadmapNodeIds,
+            guidedStepProofs,
+            decisionAnswers,
+            completedGuidedStepIds,
+            adaptationDecisions,
+            adaptationEvidence,
+            savedAt: new Date().toISOString(),
+          },
+        );
+
+      setWorkspaceSaveStatus(saved ? "saved" : "error");
+    }, 250);
+
+    return () => {
+      window.clearTimeout(savingTimeout);
+      window.clearTimeout(saveTimeout);
+    };
   }, [
     goal,
     result,
@@ -613,6 +637,7 @@ export default function Home() {
     }
 
     setError("");
+    setWorkspaceSaveStatus("idle");
     setResult(null);
     setSelectedDirectionId(null);
     setActiveRoadmapNodeId(null);
@@ -890,6 +915,7 @@ export default function Home() {
 
   function clearSavedWorkspace() {
     removeWorkspaceFromStorage(window.localStorage);
+    setWorkspaceSaveStatus("idle");
     setGoal("");
     setResult(null);
     setSelectedDirectionId(null);
@@ -926,9 +952,39 @@ export default function Home() {
             </div>
           </div>
 
-          <span className="hidden rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-200 sm:block">
-            Evidence-first planning
-          </span>
+          <div className="hidden items-center gap-2 sm:flex">
+            {workspaceSaveStatus !== "idle" && (
+              <span
+                role="status"
+                aria-live="polite"
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                  workspaceSaveStatus === "error"
+                    ? "border-rose-300/20 bg-rose-400/10 text-rose-200"
+                    : workspaceSaveStatus === "saving"
+                      ? "border-amber-300/20 bg-amber-400/10 text-amber-200"
+                      : "border-sky-300/20 bg-sky-400/10 text-sky-200"
+                }`}
+              >
+                {workspaceSaveStatus === "error" ? (
+                  <AlertCircle className="h-3.5 w-3.5" />
+                ) : workspaceSaveStatus === "saving" ? (
+                  <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                )}
+
+                {workspaceSaveStatus === "error"
+                  ? "Unable to save locally"
+                  : workspaceSaveStatus === "saving"
+                    ? "Saving..."
+                    : "Saved locally"}
+              </span>
+            )}
+
+            <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-200">
+              Evidence-first planning
+            </span>
+          </div>
         </nav>
 
         <motion.div
