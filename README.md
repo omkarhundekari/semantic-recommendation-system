@@ -1,4 +1,84 @@
+# Solvyn
 
+[![Frontend CI](https://github.com/omkarhundekari/semantic-recommendation-system/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/omkarhundekari/semantic-recommendation-system/actions/workflows/frontend-ci.yml)
+[![Backend CI](https://github.com/omkarhundekari/semantic-recommendation-system/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/omkarhundekari/semantic-recommendation-system/actions/workflows/backend-ci.yml)
+
+**A Research-to-Prototype Intelligence Engine**
+
+Solvyn turns technical goals and research evidence into grounded, buildable software projects with execution roadmaps, proof-driven progress, technical decision capture, and portfolio-ready outputs.
+
+## Core Workflow
+
+```text
+User goal
+  → query understanding
+  → research and implementation evidence retrieval
+  → evidence coverage and confidence assessment
+  → project direction generation
+  → domain-aware execution roadmap
+  → guided proof and technical decision capture
+  → Build Passport, README outline, and interview story
+```
+
+## Backend Setup
+
+Create and activate a virtual environment:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install runtime and development dependencies:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
+```
+
+Run the backend test suite:
+
+```bash
+python -m pytest -q
+```
+
+The generated GitHub implementation corpus is optional. When `data/github_project_corpus.csv` is unavailable, Solvyn continues using research-paper and project-pattern evidence.
+
+## Frontend Setup
+
+Install dependencies:
+
+```bash
+cd frontend
+npm ci
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Run frontend quality checks:
+
+```bash
+npm test
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+## Quality Gates
+
+GitHub Actions runs separate backend and frontend workflows on relevant pushes and pull requests.
+
+The backend workflow uses Python 3.11, installs `requirements-dev.txt`, and runs the complete pytest suite.
+
+The frontend workflow uses Node.js 24 and runs Vitest, ESLint, TypeScript, and the Next.js production build.
+
+## Local Data and Secrets
+
+Generated corpora, runtime outputs, environment files, and API keys remain local and must not be committed. OpenAI-backed synthesis is isolated behind provider interfaces, while tests use fake providers and clients to avoid live API charges.
 
 ## Evaluation and LLM Synthesis Architecture
 
