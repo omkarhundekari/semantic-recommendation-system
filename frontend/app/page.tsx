@@ -432,14 +432,12 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showHelpChooser, setShowHelpChooser] = useState(false);
-  const [portfolioSummary, setPortfolioSummary] =
-    useState<PortfolioSummary | null>(null);
-  const [interviewStory, setInterviewStory] =
-    useState<InterviewStory | null>(null);
-  const [readmeOutline, setReadmeOutline] =
-    useState<ReadmeOutline | null>(null);
-  const [buildPassportPreview, setBuildPassportPreview] =
-    useState<BuildPassport | null>(null);
+  const [revealedArtifacts, setRevealedArtifacts] = useState({
+    summary: false,
+    interviewStory: false,
+    readme: false,
+    passport: false,
+  });
 
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(
     savedWorkspace?.selectedDirectionId ?? null,
@@ -610,7 +608,12 @@ export default function Home() {
     setShouldScrollToDirections(false);
     setShouldScrollToHelpChooser(false);
     setShowHelpChooser(false);
-    setPortfolioSummary(null);
+    setRevealedArtifacts({
+      summary: false,
+      interviewStory: false,
+      readme: false,
+      passport: false,
+    });
     setIsLoading(true);
 
     try {
@@ -688,7 +691,12 @@ export default function Home() {
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
     setCompletedGuidedStepIds([]);
-    setPortfolioSummary(null);
+    setRevealedArtifacts({
+      summary: false,
+      interviewStory: false,
+      readme: false,
+      passport: false,
+    });
 
     window.setTimeout(() => {
       document
@@ -720,29 +728,12 @@ export default function Home() {
       completedRoadmapNodeIds.includes(node.id),
     );
 
-  function createPortfolioSummary() {
-    if (!result || result.status !== "ready" || !selectedDirectionId) {
-      return;
-    }
-
-    const summary = generatePortfolioSummary({
-      goal,
-      selectedDirectionId,
-      completedRoadmapNodeIds,
-      guidedStepProofs,
-      completedGuidedStepIds,
-      result,
-    } satisfies PortfolioWorkspaceLike);
-
-    setPortfolioSummary(summary);
-  }
-
-  function getOrCreatePortfolioSummary(): PortfolioSummary | null {
+  const portfolioSummary = useMemo(() => {
     if (!result || result.status !== "ready" || !selectedDirectionId) {
       return null;
     }
 
-    const generatedSummary = generatePortfolioSummary({
+    return generatePortfolioSummary({
       goal,
       selectedDirectionId,
       completedRoadmapNodeIds,
@@ -750,44 +741,67 @@ export default function Home() {
       completedGuidedStepIds,
       result,
     } satisfies PortfolioWorkspaceLike);
+  }, [
+    goal,
+    result,
+    selectedDirectionId,
+    completedRoadmapNodeIds,
+    guidedStepProofs,
+    completedGuidedStepIds,
+  ]);
 
-    const summary = portfolioSummary ?? generatedSummary;
+  const interviewStory = useMemo(
+    () =>
+      revealedArtifacts.interviewStory && portfolioSummary
+        ? buildInterviewStory(portfolioSummary)
+        : null,
+    [revealedArtifacts.interviewStory, portfolioSummary],
+  );
 
-    if (summary) {
-      setPortfolioSummary(summary);
+  const readmeOutline = useMemo(
+    () =>
+      revealedArtifacts.readme && portfolioSummary
+        ? buildReadmeOutline(portfolioSummary)
+        : null,
+    [revealedArtifacts.readme, portfolioSummary],
+  );
+
+  const buildPassportPreview = useMemo(
+    () =>
+      revealedArtifacts.passport && portfolioSummary
+        ? buildPassport(portfolioSummary)
+        : null,
+    [revealedArtifacts.passport, portfolioSummary],
+  );
+
+  function revealArtifact(artifact: keyof typeof revealedArtifacts) {
+    if (!portfolioSummary) {
+      return;
     }
 
-    return summary;
+    setRevealedArtifacts((current) => ({
+      ...current,
+      [artifact]: true,
+    }));
+  }
+
+  function createPortfolioSummary() {
+    revealArtifact("summary");
   }
 
   function createInterviewStory() {
-    const summary = getOrCreatePortfolioSummary();
-
-    if (!summary) {
-      return;
-    }
-
-    setInterviewStory(buildInterviewStory(summary));
+    revealArtifact("summary");
+    revealArtifact("interviewStory");
   }
 
   function createReadmeOutline() {
-    const summary = getOrCreatePortfolioSummary();
-
-    if (!summary) {
-      return;
-    }
-
-    setReadmeOutline(buildReadmeOutline(summary));
+    revealArtifact("summary");
+    revealArtifact("readme");
   }
 
   function createBuildPassportPreview() {
-    const summary = getOrCreatePortfolioSummary();
-
-    if (!summary) {
-      return;
-    }
-
-    setBuildPassportPreview(buildPassport(summary));
+    revealArtifact("summary");
+    revealArtifact("passport");
   }
 
   function completeActiveMission() {
@@ -822,7 +836,12 @@ export default function Home() {
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
     setCompletedGuidedStepIds([]);
-    setPortfolioSummary(null);
+    setRevealedArtifacts({
+      summary: false,
+      interviewStory: false,
+      readme: false,
+      passport: false,
+    });
     setError("");
   }
 
@@ -1652,7 +1671,7 @@ export default function Home() {
                       </div>
                     )}
 
-                    {portfolioSummary && (
+                    {revealedArtifacts.summary && portfolioSummary && (
                       <PortfolioSummaryPreview summary={portfolioSummary} />
                     )}
 
