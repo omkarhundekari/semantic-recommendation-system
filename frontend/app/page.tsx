@@ -1688,6 +1688,7 @@ function RoadmapDetailPanel({
             completedStepCount={completedActiveMissionGuidedStepCount}
             proofValue={activeGuidedStepProof}
             isComplete={isActiveGuidedStepComplete}
+            isMissionReady={allActiveMissionGuidedStepsComplete}
             onProofChange={(value) =>
               onGuidedStepProofChange((current) => ({
                 ...current,
@@ -1835,6 +1836,7 @@ function GuidedStepCoach({
   completedStepCount,
   proofValue,
   isComplete,
+  isMissionReady,
   onProofChange,
   onCompleteStep,
   onPrevious,
@@ -1846,6 +1848,7 @@ function GuidedStepCoach({
   completedStepCount: number;
   proofValue: string;
   isComplete: boolean;
+  isMissionReady: boolean;
   onProofChange: (value: string) => void;
   onCompleteStep: () => void;
   onPrevious: () => void;
@@ -2026,6 +2029,17 @@ function GuidedStepCoach({
             {step.interview_takeaway}
           </p>
         </div>
+
+        {isMissionReady && (
+          <div className="rounded-xl border border-emerald-300/20 bg-emerald-400/[0.06] p-3">
+            <p className="text-sm font-semibold text-emerald-100">
+              Mission ready to complete
+            </p>
+            <p className="mt-1 text-sm leading-6 text-emerald-50/80">
+              All guided proof is saved. You can now mark this mission complete.
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-3 border-t border-white/10 pt-4">
           <button
