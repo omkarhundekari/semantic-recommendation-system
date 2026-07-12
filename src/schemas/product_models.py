@@ -57,6 +57,22 @@ class EvidenceReference(BaseModel):
     url: Optional[str] = None
 
 
+class GuidedMissionStep(BaseModel):
+    step_id: str
+    title: str
+    explanation: str
+    action: str
+    starter_command: Optional[str] = None
+    starter_files: List[str] = Field(default_factory=list)
+    done_when: str
+    common_confusion: str
+    decision_point: Optional[str] = None
+    proof_type: str
+    proof_prompt: str
+    expected_output_patterns: List[str] = Field(default_factory=list)
+    interview_takeaway: str
+
+
 class RoadmapStage(BaseModel):
     id: str
     title: str
@@ -73,6 +89,7 @@ class RoadmapStage(BaseModel):
     common_errors: List[str] = Field(default_factory=list)
     portfolio_artifact: Optional[str] = None
     unlock_condition: Optional[str] = None
+    guided_steps: List[GuidedMissionStep] = Field(default_factory=list)
 
 
 class VerificationResult(BaseModel):
