@@ -1565,9 +1565,9 @@ export default function Home() {
                               Your guided build is ready to package.
                             </h3>
                             <p className="mt-2 text-sm leading-6 text-emerald-50/80">
-                              Every roadmap mission is complete. Next, Solvyn can turn this
-                              into a portfolio summary, interview story, and eventually a
-                              shareable Build Passport.
+                              Every roadmap mission is complete and backed by saved proof.
+                              Now Solvyn can package the same work for resume, interviews,
+                              GitHub, and a proof-of-work snapshot.
                             </p>
                           </div>
 
@@ -1593,38 +1593,61 @@ export default function Home() {
                           </div>
                         </div>
 
-                        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                          <button
-                            type="button"
-                            onClick={createPortfolioSummary}
-                            className="rounded-xl border border-emerald-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-emerald-50 transition hover:border-emerald-200/35 hover:bg-emerald-300/10"
-                          >
-                            Create portfolio summary
-                          </button>
+                        <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/25 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200">
+                            Package your project
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-emerald-50/75">
+                            Generate four connected artifacts from the same completed build:
+                            resume signal, interview explanation, GitHub documentation, and
+                            credibility snapshot.
+                          </p>
 
-                          <button
-                            type="button"
-                            onClick={createInterviewStory}
-                            className="rounded-xl border border-sky-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-sky-50 transition hover:border-sky-200/35 hover:bg-sky-300/10"
-                          >
-                            Generate interview story
-                          </button>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            <button
+                              type="button"
+                              onClick={createPortfolioSummary}
+                              className="rounded-xl border border-emerald-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-emerald-50 transition hover:border-emerald-200/35 hover:bg-emerald-300/10"
+                            >
+                              Create portfolio summary
+                              <span className="mt-1 block text-xs font-normal text-emerald-100/65">
+                                For resume and LinkedIn
+                              </span>
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={createReadmeOutline}
-                            className="rounded-xl border border-violet-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-violet-50 transition hover:border-violet-200/35 hover:bg-violet-300/10"
-                          >
-                            Prepare README outline
-                          </button>
+                            <button
+                              type="button"
+                              onClick={createInterviewStory}
+                              className="rounded-xl border border-sky-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-sky-50 transition hover:border-sky-200/35 hover:bg-sky-300/10"
+                            >
+                              Generate interview story
+                              <span className="mt-1 block text-xs font-normal text-sky-100/65">
+                                For recruiter and interview answers
+                              </span>
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={createBuildPassportPreview}
-                            className="rounded-xl border border-amber-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-amber-50 transition hover:border-amber-200/35 hover:bg-amber-300/10"
-                          >
-                            Preview Build Passport
-                          </button>
+                            <button
+                              type="button"
+                              onClick={createReadmeOutline}
+                              className="rounded-xl border border-violet-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-violet-50 transition hover:border-violet-200/35 hover:bg-violet-300/10"
+                            >
+                              Prepare README outline
+                              <span className="mt-1 block text-xs font-normal text-violet-100/65">
+                                For GitHub documentation
+                              </span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={createBuildPassportPreview}
+                              className="rounded-xl border border-amber-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-amber-50 transition hover:border-amber-200/35 hover:bg-amber-300/10"
+                            >
+                              Preview Build Passport
+                              <span className="mt-1 block text-xs font-normal text-amber-100/65">
+                                For proof-of-work credibility
+                              </span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
