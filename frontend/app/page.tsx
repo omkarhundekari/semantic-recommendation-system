@@ -40,6 +40,9 @@ import {
 } from "@/lib/acceptedAdaptationReadiness";
 import { validateProof } from "@/lib/proofValidation";
 import {
+  createWorkspaceBackup,
+  createWorkspaceBackupFilename,
+  importWorkspaceBackup,
   readWorkspaceFromStorage,
   removeWorkspaceFromStorage,
   writeWorkspaceToStorage,
@@ -63,7 +66,14 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ChangeEvent,
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 type Verification = {
   status: string;
@@ -240,6 +250,11 @@ type WorkspaceSaveStatus =
   | "saving"
   | "saved"
   | "error";
+
+type WorkspaceTransferFeedback = {
+  status: "success" | "error";
+  message: string;
+} | null;
 
 function readSavedWorkspace(): SavedWorkspace | null {
   if (typeof window === "undefined") {
@@ -476,6 +491,8 @@ export default function Home() {
     useState<WorkspaceSaveStatus>(
       savedWorkspace ? "saved" : "idle",
     );
+  const [workspaceTransferFeedback, setWorkspaceTransferFeedback] =
+    useState<WorkspaceTransferFeedback>(null);
 
   const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
     string | null
@@ -913,6 +930,124 @@ export default function Home() {
     }
   }
 
+  function exportWorkspaceBackup() {
+    if (!result || result.status !== "ready") {
+      setWorkspaceTransferFeedback({
+        status: "error",
+        message: "There is no ready workspace to export.",
+      });
+      return;
+    }
+
+    const savedAt = new Date().toISOString();
+    const backup = createWorkspaceBackup<IntelligenceResponse>({
+      goal,
+      result,
+      selectedDirectionId,
+      activeRoadmapNodeId,
+      completedRoadmapNodeIds,
+      guidedStepProofs,
+      decisionAnswers,
+      completedGuidedStepIds,
+      adaptationDecisions,
+      adaptationEvidence,
+      savedAt,
+    });
+    const filename = createWorkspaceBackupFilename(
+      selectedDirection?.title ?? goal,
+      savedAt,
+    );
+    const blob = new Blob([backup], {
+      type: "application/json",
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const downloadLink = document.createElement("a");
+
+    downloadLink.href = downloadUrl;
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+
+    setWorkspaceTransferFeedback({
+      status: "success",
+      message: `Workspace exported as ${filename}.`,
+    });
+  }
+
+  async function importWorkspaceFile(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const rawBackup = await file.text();
+      const importResult =
+        importWorkspaceBackup<IntelligenceResponse>(rawBackup);
+
+      if (importResult.status === "error") {
+        setWorkspaceTransferFeedback({
+          status: "error",
+          message: importResult.message,
+        });
+        return;
+      }
+
+      const workspace = importResult.workspace;
+
+      setGoal(workspace.goal);
+      setResult(workspace.result);
+      setSelectedDirectionId(workspace.selectedDirectionId);
+      setActiveRoadmapNodeId(workspace.activeRoadmapNodeId);
+      setCompletedRoadmapNodeIds(
+        workspace.completedRoadmapNodeIds,
+      );
+      setGuidedStepProofs(workspace.guidedStepProofs);
+      setDecisionAnswers(workspace.decisionAnswers);
+      setCompletedGuidedStepIds(
+        workspace.completedGuidedStepIds,
+      );
+      setAdaptationDecisions(workspace.adaptationDecisions);
+      setAdaptationEvidence(workspace.adaptationEvidence);
+      setExpandedWhyDirectionId(null);
+      setRevealedArtifacts({
+        summary: false,
+        interviewStory: false,
+        readme: false,
+        passport: false,
+      });
+      setError("");
+      setWorkspaceSaveStatus("saving");
+      setWorkspaceTransferFeedback({
+        status: "success",
+        message:
+          "Workspace imported successfully. Its progress and evidence have been restored.",
+      });
+
+      window.setTimeout(() => {
+        document
+          .getElementById("project-roadmap")
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+      }, 80);
+    } catch {
+      setWorkspaceTransferFeedback({
+        status: "error",
+        message: "The workspace file could not be read.",
+      });
+    } finally {
+      input.value = "";
+    }
+  }
+
   function clearSavedWorkspace() {
     removeWorkspaceFromStorage(window.localStorage);
     setWorkspaceSaveStatus("idle");
@@ -924,6 +1059,9 @@ export default function Home() {
     setGuidedStepProofs({});
     setDecisionAnswers({});
     setCompletedGuidedStepIds([]);
+    setAdaptationDecisions({});
+    setAdaptationEvidence({});
+    setWorkspaceTransferFeedback(null);
     setRevealedArtifacts({
       summary: false,
       interviewStory: false,
@@ -952,40 +1090,66 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hidden items-center gap-2 sm:flex">
-            {workspaceSaveStatus !== "idle" && (
-              <span
-                role="status"
-                aria-live="polite"
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
-                  workspaceSaveStatus === "error"
-                    ? "border-rose-300/20 bg-rose-400/10 text-rose-200"
+          <div className="flex items-center gap-2">
+            <label className="cursor-pointer rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-emerald-300/30 hover:bg-emerald-400/10 hover:text-emerald-100">
+              Import workspace
+              <input
+                type="file"
+                accept="application/json,.json"
+                onChange={importWorkspaceFile}
+                className="sr-only"
+              />
+            </label>
+
+            <div className="hidden items-center gap-2 sm:flex">
+              {workspaceSaveStatus !== "idle" && (
+                <span
+                  role="status"
+                  aria-live="polite"
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                    workspaceSaveStatus === "error"
+                      ? "border-rose-300/20 bg-rose-400/10 text-rose-200"
+                      : workspaceSaveStatus === "saving"
+                        ? "border-amber-300/20 bg-amber-400/10 text-amber-200"
+                        : "border-sky-300/20 bg-sky-400/10 text-sky-200"
+                  }`}
+                >
+                  {workspaceSaveStatus === "error" ? (
+                    <AlertCircle className="h-3.5 w-3.5" />
+                  ) : workspaceSaveStatus === "saving" ? (
+                    <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+
+                  {workspaceSaveStatus === "error"
+                    ? "Unable to save locally"
                     : workspaceSaveStatus === "saving"
-                      ? "border-amber-300/20 bg-amber-400/10 text-amber-200"
-                      : "border-sky-300/20 bg-sky-400/10 text-sky-200"
-                }`}
-              >
-                {workspaceSaveStatus === "error" ? (
-                  <AlertCircle className="h-3.5 w-3.5" />
-                ) : workspaceSaveStatus === "saving" ? (
-                  <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                )}
+                      ? "Saving..."
+                      : "Saved locally"}
+                </span>
+              )}
 
-                {workspaceSaveStatus === "error"
-                  ? "Unable to save locally"
-                  : workspaceSaveStatus === "saving"
-                    ? "Saving..."
-                    : "Saved locally"}
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-200">
+                Evidence-first planning
               </span>
-            )}
-
-            <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-200">
-              Evidence-first planning
-            </span>
+            </div>
           </div>
         </nav>
+
+        {workspaceTransferFeedback && (
+          <p
+            role="status"
+            aria-live="polite"
+            className={`mt-5 rounded-2xl border px-4 py-3 text-sm leading-6 ${
+              workspaceTransferFeedback.status === "success"
+                ? "border-emerald-300/20 bg-emerald-400/[0.07] text-emerald-100"
+                : "border-rose-300/20 bg-rose-400/[0.07] text-rose-100"
+            }`}
+          >
+            {workspaceTransferFeedback.message}
+          </p>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -1681,13 +1845,24 @@ export default function Home() {
                           {selectedDirection.difficulty}
                         </p>
 
-                        <button
-                          type="button"
-                          onClick={clearSavedWorkspace}
-                          className="mt-4 w-full rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-rose-300/30 hover:bg-rose-400/10 hover:text-rose-100"
-                        >
-                          Start over
-                        </button>
+                        <div className="mt-4 grid gap-2">
+                          <button
+                            type="button"
+                            onClick={exportWorkspaceBackup}
+                            className="w-full rounded-xl border border-sky-300/20 bg-sky-400/[0.06] px-3 py-2 text-xs font-medium text-sky-100 transition hover:border-sky-200/40 hover:bg-sky-300/15"
+                          >
+                            Export workspace
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={clearSavedWorkspace}
+                            className="w-full rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-rose-300/30 hover:bg-rose-400/10 hover:text-rose-100"
+                          >
+                            Start over
+                          </button>
+                        </div>
+
                       </div>
                     </div>
 

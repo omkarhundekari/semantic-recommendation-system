@@ -202,3 +202,86 @@ export function removeWorkspaceFromStorage(
     return false;
   }
 }
+
+export type WorkspaceImportResult<TResult> =
+  | {
+      status: "success";
+      workspace: PersistedWorkspace<TResult>;
+    }
+  | {
+      status: "error";
+      message: string;
+    };
+
+export function createWorkspaceBackup<TResult>(
+  workspace: Omit<
+    PersistedWorkspace<TResult>,
+    "schemaVersion"
+  >,
+): string {
+  return JSON.stringify(
+    {
+      ...workspace,
+      schemaVersion: CURRENT_WORKSPACE_SCHEMA_VERSION,
+    },
+    null,
+    2,
+  );
+}
+
+export function importWorkspaceBackup<TResult>(
+  rawBackup: string,
+): WorkspaceImportResult<TResult> {
+  if (!rawBackup.trim()) {
+    return {
+      status: "error",
+      message: "The selected workspace backup is empty.",
+    };
+  }
+
+  let parsedBackup: unknown;
+
+  try {
+    parsedBackup = JSON.parse(rawBackup) as unknown;
+  } catch {
+    return {
+      status: "error",
+      message: "The selected file is not valid JSON.",
+    };
+  }
+
+  const workspace = migrateWorkspace<TResult>(parsedBackup);
+
+  if (!workspace) {
+    return {
+      status: "error",
+      message:
+        "The selected file is not a valid ready Solvyn workspace.",
+    };
+  }
+
+  return {
+    status: "success",
+    workspace,
+  };
+}
+
+export function createWorkspaceBackupFilename(
+  projectTitle: string,
+  savedAt: string,
+): string {
+  const normalizedTitle =
+    projectTitle
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "project";
+
+  const parsedDate = new Date(savedAt);
+  const date =
+    Number.isNaN(parsedDate.getTime())
+      ? "undated"
+      : parsedDate.toISOString().slice(0, 10);
+
+  return `solvyn-${normalizedTitle}-${date}.json`;
+}

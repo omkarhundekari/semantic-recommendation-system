@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   CURRENT_WORKSPACE_SCHEMA_VERSION,
+  createWorkspaceBackup,
+  createWorkspaceBackupFilename,
+  importWorkspaceBackup,
   migrateWorkspace,
   parseWorkspace,
   readWorkspaceFromStorage,
@@ -247,5 +250,108 @@ describe("workspace persistence", () => {
     };
 
     expect(removeWorkspaceFromStorage(storage)).toBe(false);
+  });
+
+  it("creates a readable versioned workspace backup", () => {
+    const backup = createWorkspaceBackup({
+      goal: "Build a retrieval project",
+      result: readyResult,
+      selectedDirectionId: "retrieval",
+      activeRoadmapNodeId: "validate",
+      completedRoadmapNodeIds: ["define"],
+      guidedStepProofs: {
+        "define:scope": "Saved scope.",
+      },
+      decisionAnswers: {
+        "define:scope": "Use precision@3.",
+      },
+      completedGuidedStepIds: ["define:scope"],
+      adaptationDecisions: {},
+      adaptationEvidence: {},
+      savedAt: "2026-07-12T18:00:00.000Z",
+    });
+
+    expect(backup).toContain('"schemaVersion": 2');
+    expect(backup).toContain('"goal": "Build a retrieval project"');
+    expect(backup.split("\n").length).toBeGreaterThan(1);
+  });
+
+  it("imports and migrates a valid workspace backup", () => {
+    const result = importWorkspaceBackup<ReadyResult>(
+      JSON.stringify({
+        goal: "Imported retrieval project",
+        result: readyResult,
+        selectedDirectionId: "retrieval",
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        savedAt: "2026-07-12T18:00:00.000Z",
+      }),
+    );
+
+    expect(result.status).toBe("success");
+
+    if (result.status === "success") {
+      expect(result.workspace.schemaVersion).toBe(
+        CURRENT_WORKSPACE_SCHEMA_VERSION,
+      );
+      expect(result.workspace.goal).toBe(
+        "Imported retrieval project",
+      );
+      expect(result.workspace.guidedStepProofs).toEqual({});
+      expect(result.workspace.adaptationDecisions).toEqual({});
+    }
+  });
+
+  it("rejects empty workspace backup content", () => {
+    expect(importWorkspaceBackup<ReadyResult>("   ")).toEqual({
+      status: "error",
+      message: "The selected workspace backup is empty.",
+    });
+  });
+
+  it("rejects malformed workspace backup JSON", () => {
+    expect(
+      importWorkspaceBackup<ReadyResult>("{bad-json"),
+    ).toEqual({
+      status: "error",
+      message: "The selected file is not valid JSON.",
+    });
+  });
+
+  it("rejects a non-ready workspace backup", () => {
+    expect(
+      importWorkspaceBackup<ReadyResult>(
+        JSON.stringify({
+          goal: "Invalid backup",
+          result: {
+            status: "clarification_required",
+          },
+        }),
+      ),
+    ).toEqual({
+      status: "error",
+      message:
+        "The selected file is not a valid ready Solvyn workspace.",
+    });
+  });
+
+  it("creates a stable backup filename", () => {
+    expect(
+      createWorkspaceBackupFilename(
+        "Grounded Retrieval System",
+        "2026-07-12T18:00:00.000Z",
+      ),
+    ).toBe(
+      "solvyn-grounded-retrieval-system-2026-07-12.json",
+    );
+  });
+
+  it("sanitizes unusual titles and invalid dates", () => {
+    expect(
+      createWorkspaceBackupFilename(
+        "  RAG + Search / Demo!  ",
+        "not-a-date",
+      ),
+    ).toBe("solvyn-rag-search-demo-undated.json");
   });
 });
