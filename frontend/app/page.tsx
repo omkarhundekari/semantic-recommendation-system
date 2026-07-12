@@ -215,6 +215,7 @@ type SavedWorkspace = {
   activeRoadmapNodeId: string | null;
   completedRoadmapNodeIds: string[];
   guidedStepProofs?: Record<string, string>;
+  decisionAnswers?: Record<string, string>;
   completedGuidedStepIds?: string[];
   savedAt: string;
 };
@@ -454,6 +455,9 @@ export default function Home() {
   const [guidedStepProofs, setGuidedStepProofs] = useState<
     Record<string, string>
   >(savedWorkspace?.guidedStepProofs ?? {});
+  const [decisionAnswers, setDecisionAnswers] = useState<
+    Record<string, string>
+  >(savedWorkspace?.decisionAnswers ?? {});
   const [completedGuidedStepIds, setCompletedGuidedStepIds] = useState<
     string[]
   >(savedWorkspace?.completedGuidedStepIds ?? []);
@@ -483,6 +487,7 @@ export default function Home() {
       activeRoadmapNodeId,
       completedRoadmapNodeIds,
       guidedStepProofs,
+      decisionAnswers,
       completedGuidedStepIds,
       savedAt: new Date().toISOString(),
     };
@@ -495,6 +500,7 @@ export default function Home() {
     activeRoadmapNodeId,
     completedRoadmapNodeIds,
     guidedStepProofs,
+    decisionAnswers,
     completedGuidedStepIds,
   ]);
 
@@ -602,6 +608,7 @@ export default function Home() {
     setActiveRoadmapNodeId(null);
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
+    setDecisionAnswers({});
     setCompletedGuidedStepIds([]);
     setExpandedWhyDirectionId(null);
     setShouldScrollToClarification(false);
@@ -690,6 +697,7 @@ export default function Home() {
     setActiveRoadmapNodeId(direction.roadmap[0]?.id ?? null);
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
+    setDecisionAnswers({});
     setCompletedGuidedStepIds([]);
     setRevealedArtifacts({
       summary: false,
@@ -738,6 +746,7 @@ export default function Home() {
       selectedDirectionId,
       completedRoadmapNodeIds,
       guidedStepProofs,
+      decisionAnswers,
       completedGuidedStepIds,
       result,
     } satisfies PortfolioWorkspaceLike);
@@ -747,6 +756,7 @@ export default function Home() {
     selectedDirectionId,
     completedRoadmapNodeIds,
     guidedStepProofs,
+    decisionAnswers,
     completedGuidedStepIds,
   ]);
 
@@ -835,6 +845,7 @@ export default function Home() {
     setActiveRoadmapNodeId(null);
     setCompletedRoadmapNodeIds([]);
     setGuidedStepProofs({});
+    setDecisionAnswers({});
     setCompletedGuidedStepIds([]);
     setRevealedArtifacts({
       summary: false,
@@ -1783,8 +1794,10 @@ export default function Home() {
                         activeNodeId={activeRoadmapNodeId}
                         completedNodeIds={completedRoadmapNodeIds}
                         guidedStepProofs={guidedStepProofs}
+                        decisionAnswers={decisionAnswers}
                         completedGuidedStepIds={completedGuidedStepIds}
                         onGuidedStepProofChange={setGuidedStepProofs}
+                        onDecisionAnswerChange={setDecisionAnswers}
                         onCompletedGuidedStepIdsChange={setCompletedGuidedStepIds}
                         onCompleteActiveMission={completeActiveMission}
                       />
@@ -2116,7 +2129,7 @@ function PortfolioSummaryPreview({
           title="Technical decisions"
           items={summary.technicalDecisions.map(
             (decision) =>
-              `${decision.missionTitle} · ${decision.stepTitle}: ${decision.decisionPoint} Answer: ${decision.proof}`,
+              `${decision.missionTitle} · ${decision.stepTitle}: ${decision.decisionPoint} Answer: ${decision.answer}`,
           )}
         />
 
@@ -2180,8 +2193,10 @@ function RoadmapDetailPanel({
   activeNodeId,
   completedNodeIds,
   guidedStepProofs,
+  decisionAnswers,
   completedGuidedStepIds,
   onGuidedStepProofChange,
+  onDecisionAnswerChange,
   onCompletedGuidedStepIdsChange,
   onCompleteActiveMission,
 }: {
@@ -2189,8 +2204,12 @@ function RoadmapDetailPanel({
   activeNodeId: string | null;
   completedNodeIds: string[];
   guidedStepProofs: Record<string, string>;
+  decisionAnswers: Record<string, string>;
   completedGuidedStepIds: string[];
   onGuidedStepProofChange: React.Dispatch<
+    React.SetStateAction<Record<string, string>>
+  >;
+  onDecisionAnswerChange: React.Dispatch<
     React.SetStateAction<Record<string, string>>
   >;
   onCompletedGuidedStepIdsChange: React.Dispatch<
@@ -2219,6 +2238,9 @@ function RoadmapDetailPanel({
     : "";
   const activeGuidedStepProof = activeGuidedStepKey
     ? guidedStepProofs[activeGuidedStepKey] ?? ""
+    : "";
+  const activeDecisionAnswer = activeGuidedStepKey
+    ? decisionAnswers[activeGuidedStepKey] ?? ""
     : "";
   const isActiveGuidedStepComplete =
     activeGuidedStepKey.length > 0 &&
@@ -2318,10 +2340,17 @@ function RoadmapDetailPanel({
             totalSteps={guidedSteps.length}
             completedStepCount={completedActiveMissionGuidedStepCount}
             proofValue={activeGuidedStepProof}
+            decisionAnswerValue={activeDecisionAnswer}
             isComplete={isActiveGuidedStepComplete}
             isMissionReady={allActiveMissionGuidedStepsComplete}
             onProofChange={(value) =>
               onGuidedStepProofChange((current) => ({
+                ...current,
+                [activeGuidedStepKey]: value,
+              }))
+            }
+            onDecisionAnswerChange={(value) =>
+              onDecisionAnswerChange((current) => ({
                 ...current,
                 [activeGuidedStepKey]: value,
               }))
@@ -2466,9 +2495,11 @@ function GuidedStepCoach({
   totalSteps,
   completedStepCount,
   proofValue,
+  decisionAnswerValue,
   isComplete,
   isMissionReady,
   onProofChange,
+  onDecisionAnswerChange,
   onCompleteStep,
   onPrevious,
   onNext,
@@ -2478,9 +2509,11 @@ function GuidedStepCoach({
   totalSteps: number;
   completedStepCount: number;
   proofValue: string;
+  decisionAnswerValue: string;
   isComplete: boolean;
   isMissionReady: boolean;
   onProofChange: (value: string) => void;
+  onDecisionAnswerChange: (value: string) => void;
   onCompleteStep: () => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -2598,6 +2631,13 @@ function GuidedStepCoach({
             <p className="mt-2 text-sm leading-6 text-violet-50/90">
               {step.decision_point}
             </p>
+            <textarea
+              value={decisionAnswerValue}
+              onChange={(event) => onDecisionAnswerChange(event.target.value)}
+              placeholder="Write your reasoning for this technical decision. This becomes part of your interview story and Build Passport."
+              rows={3}
+              className="mt-3 w-full resize-none rounded-xl border border-violet-300/15 bg-slate-950/70 p-3 text-sm leading-6 text-violet-50 outline-none transition placeholder:text-slate-600 focus:border-violet-300/40 focus:bg-slate-950"
+            />
           </div>
         )}
 

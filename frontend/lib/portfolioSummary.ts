@@ -56,6 +56,7 @@ export type PortfolioWorkspaceLike = {
   selectedDirectionId: string | null;
   completedRoadmapNodeIds: string[];
   guidedStepProofs?: Record<string, string>;
+  decisionAnswers?: Record<string, string>;
   completedGuidedStepIds?: string[];
   result: {
     resolved_planning_domain?: string | null;
@@ -75,7 +76,7 @@ export type DecisionEntry = {
   stepId: string;
   stepTitle: string;
   decisionPoint: string;
-  proof: string;
+  answer: string;
 };
 
 export type ProofEntry = {
@@ -188,15 +189,16 @@ export function extractDecisionPoints(
   workspace: PortfolioWorkspaceLike,
   direction: DirectionLike,
 ): DecisionEntry[] {
-  const proofs = workspace.guidedStepProofs ?? {};
+  const answers = workspace.decisionAnswers ?? {};
 
   return direction.roadmap.flatMap((node) =>
     (node.guided_steps ?? [])
       .filter((step) => step.decision_point)
       .map((step) => {
-        const proof = proofs[guidedStepKey(node.id, step.step_id)]?.trim() ?? "";
+        const answer =
+          answers[guidedStepKey(node.id, step.step_id)]?.trim() ?? "";
 
-        if (!proof) {
+        if (!answer) {
           return null;
         }
 
@@ -206,7 +208,7 @@ export function extractDecisionPoints(
           stepId: step.step_id,
           stepTitle: step.title,
           decisionPoint: step.decision_point ?? "",
-          proof,
+          answer,
         };
       })
       .filter((entry): entry is DecisionEntry => entry !== null),
@@ -367,7 +369,7 @@ export function formatPortfolioSummaryText(summary: PortfolioSummary): string {
     "Technical decisions:",
     ...formatListOrFallback(
       summary.technicalDecisions.map(
-        (decision) => `- ${decision.decisionPoint}\n  Evidence: ${decision.proof}`,
+        (decision) => `- ${decision.decisionPoint}\n  Evidence: ${decision.answer}`,
       ),
       "- No technical decisions captured yet.",
     ),

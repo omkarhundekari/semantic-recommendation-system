@@ -36,7 +36,7 @@ export function buildInterviewStory(summary: PortfolioSummary): InterviewStory {
   const validation = `I validated the project with explicit completion proof and evidence confidence. The project reached ${summary.evidenceConfidenceLabel}, and the validation story was: ${validationSignal}`;
 
   const tradeoff = firstDecision
-    ? `One tradeoff I made was during ${firstDecision.missionTitle}. The decision point was: ${firstDecision.decisionPoint} My answer was: ${firstDecision.proof}`
+    ? `One tradeoff I made was during ${firstDecision.missionTitle}. The decision point was: ${firstDecision.decisionPoint} My answer was: ${firstDecision.answer}`
     : `One tradeoff was keeping the first version focused. Instead of adding too many features early, I prioritized a working, testable MVP that could be improved safely.`;
 
   const improvement =
