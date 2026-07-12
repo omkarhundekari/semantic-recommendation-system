@@ -2095,6 +2095,13 @@ function BuildPassportPreview({
         />
       </div>
 
+      <ArtifactAuditPreview
+        title="Roadmap adaptation audit"
+        items={passport.adaptationAudit}
+        emptyText="No roadmap adaptation decisions captured yet."
+        accent="amber"
+      />
+
       <div className="mt-5 rounded-xl border border-white/10 bg-slate-950/45 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
           Passport markdown
@@ -2103,6 +2110,55 @@ function BuildPassportPreview({
           {passport.markdown}
         </pre>
       </div>
+    </div>
+  );
+}
+
+function ArtifactAuditPreview({
+  title,
+  items,
+  emptyText,
+  accent,
+}: {
+  title: string;
+  items: string[];
+  emptyText: string;
+  accent: "amber" | "violet" | "sky";
+}) {
+  const accentClasses = {
+    amber:
+      "border-amber-300/15 bg-amber-400/[0.035] text-amber-200",
+    violet:
+      "border-violet-300/15 bg-violet-400/[0.035] text-violet-200",
+    sky:
+      "border-sky-300/15 bg-sky-400/[0.035] text-sky-200",
+  };
+
+  return (
+    <div
+      className={`mt-5 rounded-xl border p-4 ${accentClasses[accent]}`}
+    >
+      <p className="text-xs font-semibold uppercase tracking-[0.14em]">
+        {title}
+      </p>
+
+      {items.length > 0 ? (
+        <ul className="mt-3 space-y-2">
+          {items.map((item, index) => (
+            <li
+              key={`${title}-${index}-${item}`}
+              className="flex gap-2 text-sm leading-6 text-slate-300"
+            >
+              <GitBranch className="mt-1.5 h-3.5 w-3.5 shrink-0" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm leading-6 text-slate-500">
+          {emptyText}
+        </p>
+      )}
     </div>
   );
 }
@@ -2159,6 +2215,23 @@ function ReadmeOutlinePreview({ outline }: { outline: ReadmeOutline }) {
           {copied ? "Copied" : "Copy README"}
         </button>
       </div>
+
+      <ArtifactAuditPreview
+        title="Decision-driven roadmap adjustments"
+        items={
+          outline.sections
+            .find(
+              (section) =>
+                section.title ===
+                "Decision-Driven Roadmap Adjustments",
+            )
+            ?.body.split("\n")
+            .map((item) => item.replace(/^-\s*/, "").trim())
+            .filter(Boolean) ?? []
+        }
+        emptyText="No roadmap adaptation decisions captured yet."
+        accent="violet"
+      />
 
       <div className="mt-5 rounded-xl border border-white/10 bg-slate-950/45 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
@@ -2223,6 +2296,13 @@ function InterviewStoryPreview({ story }: { story: InterviewStory }) {
         <InterviewStorySection title="Tradeoff" body={story.tradeoff} />
         <InterviewStorySection title="Next improvement" body={story.improvement} />
       </div>
+
+      <ArtifactAuditPreview
+        title="Roadmap adaptation audit"
+        items={story.adaptationHighlights}
+        emptyText="No roadmap adaptation decisions captured yet."
+        accent="sky"
+      />
 
       <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/35 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
@@ -2381,6 +2461,44 @@ function PortfolioSummaryPreview({
           title="Engineering priorities"
           items={summary.decisionConsequences.priorities}
           emptyText="No explicit engineering priority captured yet."
+        />
+
+        <SummarySection
+          title="Implemented adaptations"
+          items={summary.adaptationAudit.implemented.map(
+            (entry) => `${entry.title}: ${entry.evidence}`,
+          )}
+          emptyText="No accepted adaptations have implementation evidence yet."
+        />
+
+        <SummarySection
+          title="Accepted adaptations missing evidence"
+          items={summary.adaptationAudit.acceptedMissingEvidence.map(
+            (entry) => entry.title,
+          )}
+          emptyText="No accepted adaptations are missing evidence."
+        />
+
+        <SummarySection
+          title="Deferred adaptations"
+          items={summary.adaptationAudit.deferred.map(
+            (entry) =>
+              `${entry.title}${
+                entry.rationale ? `: ${entry.rationale}` : ""
+              }`,
+          )}
+          emptyText="No roadmap adaptations have been deferred."
+        />
+
+        <SummarySection
+          title="Rejected adaptations"
+          items={summary.adaptationAudit.rejected.map(
+            (entry) =>
+              `${entry.title}${
+                entry.rationale ? `: ${entry.rationale}` : ""
+              }`,
+          )}
+          emptyText="No roadmap adaptations have been rejected."
         />
 
         <SummarySection
