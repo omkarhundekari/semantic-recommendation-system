@@ -2356,7 +2356,15 @@ function RoadmapDetailPanel({
               }))
             }
             onCompleteStep={() => {
-              if (!activeGuidedStepKey || !activeGuidedStepProof.trim()) {
+              const requiresDecisionAnswer = Boolean(
+                activeGuidedStep.decision_point,
+              );
+
+              if (
+                !activeGuidedStepKey ||
+                !activeGuidedStepProof.trim() ||
+                (requiresDecisionAnswer && !activeDecisionAnswer.trim())
+              ) {
                 return;
               }
 
@@ -2524,9 +2532,12 @@ function GuidedStepCoach({
     proofValue,
     step.expected_output_patterns ?? [],
   );
+  const hasRequiredDecisionAnswer =
+    !step.decision_point || decisionAnswerValue.trim().length > 0;
   const canCompleteStep =
-    proofValidation.status === "accepted" ||
-    proofValidation.status === "needs_detail";
+    hasRequiredDecisionAnswer &&
+    (proofValidation.status === "accepted" ||
+      proofValidation.status === "needs_detail");
 
   return (
     <div className="mt-6 overflow-hidden rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.035]">
@@ -2714,9 +2725,11 @@ function GuidedStepCoach({
             <CheckCircle2 className="h-4 w-4" />
             {isComplete
               ? "Step completed"
-              : proofValidation.status === "missing_expected_pattern"
-                ? "Add missing proof details"
-                : proofValidation.status === "empty"
+              : !hasRequiredDecisionAnswer
+                ? "Answer the decision point"
+                : proofValidation.status === "missing_expected_pattern"
+                  ? "Add missing proof details"
+                  : proofValidation.status === "empty"
                   ? "Paste proof to continue"
                   : isLastStep
                     ? "Save proof and unlock mission"
