@@ -1562,6 +1562,18 @@ function RoadmapDetailPanel({
   const isActiveGuidedStepComplete =
     activeGuidedStepKey.length > 0 &&
     completedGuidedStepIds.includes(activeGuidedStepKey);
+  const activeMissionGuidedStepKeys = guidedSteps.map(
+    (step) => `${activeNode.id}:${step.step_id}`,
+  );
+  const completedActiveMissionGuidedStepCount =
+    activeMissionGuidedStepKeys.filter((stepKey) =>
+      completedGuidedStepIds.includes(stepKey),
+    ).length;
+  const allActiveMissionGuidedStepsComplete =
+    guidedSteps.length === 0 ||
+    completedActiveMissionGuidedStepCount === guidedSteps.length;
+  const missionCompletionBlocked =
+    guidedSteps.length > 0 && !allActiveMissionGuidedStepsComplete;
 
   const completedCount = direction.roadmap.filter((node) =>
     completedNodeIds.includes(node.id),
@@ -1643,6 +1655,7 @@ function RoadmapDetailPanel({
             step={activeGuidedStep}
             stepIndex={activeGuidedStepIndex}
             totalSteps={guidedSteps.length}
+            completedStepCount={completedActiveMissionGuidedStepCount}
             proofValue={activeGuidedStepProof}
             isComplete={isActiveGuidedStepComplete}
             onProofChange={(value) =>
@@ -1736,17 +1749,35 @@ function RoadmapDetailPanel({
         <div className="mt-6 border-t border-white/10 pt-4">
           <button
             type="button"
-            onClick={onCompleteActiveMission}
-            disabled={isActiveComplete}
+            onClick={() => {
+              if (missionCompletionBlocked) {
+                return;
+              }
+
+              onCompleteActiveMission();
+            }}
+            disabled={isActiveComplete || missionCompletionBlocked}
             className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
               isActiveComplete
                 ? "cursor-not-allowed border border-emerald-300/20 bg-emerald-400/10 text-emerald-100"
-                : "border border-sky-300/25 bg-sky-400/10 text-sky-100 hover:border-sky-200/50 hover:bg-sky-300/20 hover:text-white"
+                : missionCompletionBlocked
+                  ? "cursor-not-allowed border border-amber-300/20 bg-amber-400/10 text-amber-100"
+                  : "border border-sky-300/25 bg-sky-400/10 text-sky-100 hover:border-sky-200/50 hover:bg-sky-300/20 hover:text-white"
             }`}
           >
             <CheckCircle2 className="h-4 w-4" />
-            {isActiveComplete ? "Mission completed" : "Mark mission complete"}
+            {isActiveComplete
+              ? "Mission completed"
+              : missionCompletionBlocked
+                ? "Complete guided steps first"
+                : "Mark mission complete"}
           </button>
+
+          {missionCompletionBlocked && (
+            <p className="mt-3 rounded-xl border border-amber-300/10 bg-amber-400/[0.04] p-3 text-sm leading-6 text-amber-100">
+              Save proof for every guided step before completing this mission.
+            </p>
+          )}
 
           <p className="mt-4 inline-flex items-center gap-2 text-sm text-slate-300">
             <FileCheck2 className="h-4 w-4 text-emerald-300" />
@@ -1764,6 +1795,7 @@ function GuidedStepCoach({
   step,
   stepIndex,
   totalSteps,
+  completedStepCount,
   proofValue,
   isComplete,
   onProofChange,
@@ -1774,6 +1806,7 @@ function GuidedStepCoach({
   step: GuidedMissionStep;
   stepIndex: number;
   totalSteps: number;
+  completedStepCount: number;
   proofValue: string;
   isComplete: boolean;
   onProofChange: (value: string) => void;
@@ -1796,6 +1829,10 @@ function GuidedStepCoach({
             Step {stepIndex + 1} of {totalSteps}
           </span>
         </div>
+
+        <p className="mt-2 text-xs text-emerald-100/80">
+          {completedStepCount}/{totalSteps} guided steps completed
+        </p>
 
         <div className="mt-3 flex gap-1.5">
           {Array.from({ length: totalSteps }).map((_, index) => (
