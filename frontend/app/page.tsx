@@ -1489,6 +1489,23 @@ export default function Home() {
                             </p>
                           </div>
                         </div>
+
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                          {[
+                            "Create portfolio summary",
+                            "Generate interview story",
+                            "Prepare README outline",
+                            "Preview Build Passport",
+                          ].map((action) => (
+                            <button
+                              key={action}
+                              type="button"
+                              className="rounded-xl border border-emerald-300/15 bg-slate-950/30 px-3 py-3 text-left text-sm font-medium text-emerald-50 transition hover:border-emerald-200/35 hover:bg-emerald-300/10"
+                            >
+                              {action}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
 
