@@ -2308,9 +2308,13 @@ function GuidedStepCoach({
             <CheckCircle2 className="h-4 w-4" />
             {isComplete
               ? "Step completed"
-              : isLastStep
-                ? "Save proof and unlock mission"
-                : "Save proof and continue"}
+              : proofValidation.status === "missing_expected_pattern"
+                ? "Add missing proof details"
+                : proofValidation.status === "empty"
+                  ? "Paste proof to continue"
+                  : isLastStep
+                    ? "Save proof and unlock mission"
+                    : "Save proof and continue"}
           </button>
         </div>
 
