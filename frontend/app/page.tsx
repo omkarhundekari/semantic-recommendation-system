@@ -26,6 +26,14 @@ import {
   evaluateRoadmapAdaptations,
   type RoadmapAdaptation,
 } from "@/lib/roadmapAdaptationEvaluator";
+import {
+  adaptationKey,
+  clearAdaptationDecision,
+  createAdaptationDecision,
+  setAdaptationDecision,
+  type AdaptationDecisionMap,
+  type AdaptationDecisionStatus,
+} from "@/lib/roadmapAdaptationState";
 import { validateProof } from "@/lib/proofValidation";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -223,6 +231,7 @@ type SavedWorkspace = {
   guidedStepProofs?: Record<string, string>;
   decisionAnswers?: Record<string, string>;
   completedGuidedStepIds?: string[];
+  adaptationDecisions?: AdaptationDecisionMap;
   savedAt: string;
 };
 
@@ -467,6 +476,10 @@ export default function Home() {
   const [completedGuidedStepIds, setCompletedGuidedStepIds] = useState<
     string[]
   >(savedWorkspace?.completedGuidedStepIds ?? []);
+  const [adaptationDecisions, setAdaptationDecisions] =
+    useState<AdaptationDecisionMap>(
+      savedWorkspace?.adaptationDecisions ?? {},
+    );
 
   const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
     string | null
@@ -495,6 +508,7 @@ export default function Home() {
       guidedStepProofs,
       decisionAnswers,
       completedGuidedStepIds,
+      adaptationDecisions,
       savedAt: new Date().toISOString(),
     };
 
@@ -508,6 +522,7 @@ export default function Home() {
     guidedStepProofs,
     decisionAnswers,
     completedGuidedStepIds,
+    adaptationDecisions,
   ]);
 
   const clarificationSectionRef = useCallback(
@@ -705,6 +720,7 @@ export default function Home() {
     setGuidedStepProofs({});
     setDecisionAnswers({});
     setCompletedGuidedStepIds([]);
+    setAdaptationDecisions({});
     setRevealedArtifacts({
       summary: false,
       interviewStory: false,
@@ -1974,6 +1990,7 @@ export default function Home() {
                         direction={selectedDirection}
                         activeNodeId={activeRoadmapNodeId}
                         adaptations={roadmapAdaptations.adaptations}
+                        adaptationDecisions={adaptationDecisions}
                         completedNodeIds={completedRoadmapNodeIds}
                         guidedStepProofs={guidedStepProofs}
                         decisionAnswers={decisionAnswers}
@@ -1981,6 +1998,7 @@ export default function Home() {
                         onGuidedStepProofChange={setGuidedStepProofs}
                         onDecisionAnswerChange={setDecisionAnswers}
                         onCompletedGuidedStepIdsChange={setCompletedGuidedStepIds}
+                        onAdaptationDecisionsChange={setAdaptationDecisions}
                         onCompleteActiveMission={completeActiveMission}
                       />
                     </div>
@@ -2407,6 +2425,7 @@ function RoadmapDetailPanel({
   direction,
   activeNodeId,
   adaptations,
+  adaptationDecisions,
   completedNodeIds,
   guidedStepProofs,
   decisionAnswers,
@@ -2414,11 +2433,13 @@ function RoadmapDetailPanel({
   onGuidedStepProofChange,
   onDecisionAnswerChange,
   onCompletedGuidedStepIdsChange,
+  onAdaptationDecisionsChange,
   onCompleteActiveMission,
 }: {
   direction: Direction;
   activeNodeId: string | null;
   adaptations: RoadmapAdaptation[];
+  adaptationDecisions: AdaptationDecisionMap;
   completedNodeIds: string[];
   guidedStepProofs: Record<string, string>;
   decisionAnswers: Record<string, string>;
@@ -2432,6 +2453,9 @@ function RoadmapDetailPanel({
   onCompletedGuidedStepIdsChange: React.Dispatch<
     React.SetStateAction<string[]>
   >;
+  onAdaptationDecisionsChange: React.Dispatch<
+    React.SetStateAction<AdaptationDecisionMap>
+  >;
   onCompleteActiveMission: () => void;
 }) {
   const activeNode =
@@ -2442,6 +2466,9 @@ function RoadmapDetailPanel({
     nodeId: "",
     stepIndex: 0,
   });
+  const [adaptationRationales, setAdaptationRationales] = useState<
+    Record<string, string>
+  >({});
   if (!activeNode) {
     return null;
   }
@@ -2636,9 +2663,38 @@ function RoadmapDetailPanel({
             </div>
 
             <div className="mt-4 space-y-4">
-              {activeMissionAdaptations.map((adaptation) => (
+              {activeMissionAdaptations.map((adaptation) => {
+                const key = adaptationKey(adaptation);
+                const savedDecision = adaptationDecisions[key];
+                const rationale =
+                  adaptationRationales[key] ??
+                  savedDecision?.rationale ??
+                  "";
+
+                function saveDecision(
+                  status: AdaptationDecisionStatus,
+                ) {
+                  if (
+                    status === "rejected" &&
+                    rationale.trim().length === 0
+                  ) {
+                    return;
+                  }
+
+                  const record = createAdaptationDecision({
+                    adaptation,
+                    status,
+                    rationale,
+                  });
+
+                  onAdaptationDecisionsChange((current) =>
+                    setAdaptationDecision(current, record),
+                  );
+                }
+
+                return (
                 <div
-                  key={`${adaptation.targetStageId}-${adaptation.category}`}
+                  key={key}
                   className="rounded-xl border border-white/[0.08] bg-slate-950/35 p-4"
                 >
                   <div className="flex flex-wrap items-center gap-2">
@@ -2648,6 +2704,20 @@ function RoadmapDetailPanel({
                     <h4 className="font-semibold text-white">
                       {adaptation.title}
                     </h4>
+
+                    {savedDecision && (
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
+                          savedDecision.status === "accepted"
+                            ? "border-emerald-300/25 bg-emerald-400/10 text-emerald-100"
+                            : savedDecision.status === "rejected"
+                              ? "border-rose-300/25 bg-rose-400/10 text-rose-100"
+                              : "border-amber-300/25 bg-amber-400/10 text-amber-100"
+                        }`}
+                      >
+                        {savedDecision.status}
+                      </span>
+                    )}
                   </div>
 
                   <p className="mt-3 text-sm leading-6 text-slate-300">
@@ -2679,8 +2749,88 @@ function RoadmapDetailPanel({
                       </p>
                     </div>
                   )}
+
+                  <div className="mt-4 border-t border-white/[0.08] pt-4">
+                    <label
+                      htmlFor={`adaptation-rationale-${key}`}
+                      className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500"
+                    >
+                      Decision rationale
+                    </label>
+
+                    <textarea
+                      id={`adaptation-rationale-${key}`}
+                      value={rationale}
+                      onChange={(event) =>
+                        setAdaptationRationales((current) => ({
+                          ...current,
+                          [key]: event.target.value,
+                        }))
+                      }
+                      placeholder="Explain why you are accepting, deferring, or rejecting this adjustment."
+                      className="mt-2 min-h-20 w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-sm leading-6 text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-violet-300/40"
+                    />
+
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                      <button
+                        type="button"
+                        onClick={() => saveDecision("accepted")}
+                        className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:border-emerald-200/45 hover:bg-emerald-300/20"
+                      >
+                        Accept
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => saveDecision("deferred")}
+                        className="rounded-xl border border-amber-300/20 bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-100 transition hover:border-amber-200/45 hover:bg-amber-300/20"
+                      >
+                        Defer
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => saveDecision("rejected")}
+                        disabled={rationale.trim().length === 0}
+                        className="rounded-xl border border-rose-300/20 bg-rose-400/10 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:border-rose-200/45 hover:bg-rose-300/20 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Reject
+                      </button>
+                    </div>
+
+                    {savedDecision && (
+                      <div className="mt-3 flex flex-col gap-2 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+                        <span>
+                          Saved {new Date(savedDecision.decidedAt).toLocaleString()}
+                          {savedDecision.rationale
+                            ? ` · ${savedDecision.rationale}`
+                            : ""}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onAdaptationDecisionsChange((current) =>
+                              clearAdaptationDecision(current, key),
+                            )
+                          }
+                          className="font-semibold text-slate-300 transition hover:text-white"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    )}
+
+                    {!savedDecision &&
+                      rationale.trim().length === 0 && (
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          A rationale is required when rejecting an adjustment.
+                        </p>
+                      )}
+                  </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
