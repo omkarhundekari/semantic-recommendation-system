@@ -20,6 +20,7 @@ import {
   buildPassport,
   type BuildPassport,
 } from "@/lib/buildPassport";
+import { canCompleteGuidedStep } from "@/lib/guidedStepCompletion";
 import { validateProof } from "@/lib/proofValidation";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -2534,10 +2535,11 @@ function GuidedStepCoach({
   );
   const hasRequiredDecisionAnswer =
     !step.decision_point || decisionAnswerValue.trim().length > 0;
-  const canCompleteStep =
-    hasRequiredDecisionAnswer &&
-    (proofValidation.status === "accepted" ||
-      proofValidation.status === "needs_detail");
+  const canCompleteStep = canCompleteGuidedStep({
+    proofStatus: proofValidation.status,
+    decisionPoint: step.decision_point,
+    decisionAnswer: decisionAnswerValue,
+  });
 
   return (
     <div className="mt-6 overflow-hidden rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.035]">
