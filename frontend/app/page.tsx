@@ -2253,15 +2253,24 @@ function GuidedStepCoach({
           </p>
 
           {step.expected_output_patterns.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {step.expected_output_patterns.map((pattern) => (
-                <span
-                  key={pattern}
-                  className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-slate-300"
-                >
-                  expects: {pattern}
-                </span>
-              ))}
+            <div className="mt-4 rounded-xl border border-emerald-300/10 bg-emerald-400/[0.035] p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                Proof should include
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-400">
+                These signals help Solvyn confirm that your proof belongs to this exact
+                step instead of being a generic completion note.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {step.expected_output_patterns.map((pattern) => (
+                  <span
+                    key={pattern}
+                    className="rounded-full border border-emerald-300/15 bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-100"
+                  >
+                    {pattern}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>
