@@ -1,8 +1,10 @@
 from dataclasses import asdict
+from datetime import datetime, timezone
+import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from feasibility_scorer import score_project_feasibility
@@ -53,6 +55,24 @@ from schemas.product_models import (
 )
 from source_router import retrieve_evidence
 
+from execution_evidence.api_models import (
+    RepositoryEvidenceSyncRequest,
+)
+from execution_evidence.coordinator import (
+    StatefulGitHubSyncCoordinator,
+    StatefulGitHubSyncResult,
+)
+from execution_evidence.github_client import (
+    GitHubExecutionEvidenceClient,
+)
+from execution_evidence.service import (
+    GitHubExecutionEvidenceService,
+)
+from execution_evidence.store import (
+    InMemoryRepositoryEvidenceStore,
+    RepositoryEvidenceConflictError,
+)
+
 
 app = FastAPI(
     title="Solvyn API",
@@ -73,6 +93,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+_execution_evidence_store = (
+    InMemoryRepositoryEvidenceStore()
+)
+
+
+def get_execution_evidence_coordinator(
+) -> StatefulGitHubSyncCoordinator:
+    client = GitHubExecutionEvidenceClient(
+        token=os.getenv("GITHUB_TOKEN"),
+    )
+    service = GitHubExecutionEvidenceService(
+        client=client,
+    )
+
+    return StatefulGitHubSyncCoordinator(
+        service=service,
+        store=_execution_evidence_store,
+    )
 
 
 BROAD_PLANNING_DOMAINS = {
@@ -312,6 +352,34 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
         options.append("Help me choose")
 
     return options
+
+
+@app.post(
+    "/v1/execution-evidence/repositories/sync",
+    response_model=StatefulGitHubSyncResult,
+)
+def sync_execution_evidence_repository(
+    request: RepositoryEvidenceSyncRequest,
+    coordinator: StatefulGitHubSyncCoordinator = Depends(
+        get_execution_evidence_coordinator
+    ),
+) -> StatefulGitHubSyncResult:
+    try:
+        return coordinator.sync_repository(
+            repository_url=request.repository_url,
+            observed_at=datetime.now(timezone.utc),
+            since=request.since,
+        )
+    except RepositoryEvidenceConflictError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except ValueError as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
 
 
 @app.get("/health")
