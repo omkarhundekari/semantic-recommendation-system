@@ -23,10 +23,9 @@ from execution_evidence.sqlite_store import (
     SQLiteRepositoryEvidenceStoreError,
 )
 from execution_evidence.store import (
+    RepositoryEvidenceRestoreError,
     StoredRepositoryEvidence,
 )
-
-
 SAVED_AT = datetime.fromisoformat(
     "2026-07-13T12:00:00+00:00"
 )
@@ -254,3 +253,81 @@ def test_sqlite_delete_cascades_aggregate_rows(
         ).fetchone()["count"] == 0
     finally:
         connection.close()
+
+
+def test_sqlite_restore_rolls_back_mid_batch_failure(
+    tmp_path: Path,
+    monkeypatch,
+):
+    store = SQLiteRepositoryEvidenceStore(
+        tmp_path / "solvyn.db"
+    )
+
+    first_record = _record()
+    second_reference = (
+        parse_github_repository_url(
+            "https://github.com/example/second"
+        )
+    )
+    second_record = first_record.model_copy(
+        update={
+            "repository": second_reference,
+            "evidence": [],
+            "attributions": [],
+            "sync_state": RepositorySyncState(
+                repository_key=(
+                    second_reference.repository_key
+                ),
+            ),
+            "sync_snapshot": (
+                GitHubRepositorySyncSnapshot(
+                    repository_key=(
+                        second_reference.repository_key
+                    ),
+                )
+            ),
+            "revision": 6,
+        },
+        deep=True,
+    )
+
+    original_writer = (
+        store._restore_record_on_connection
+    )
+    call_count = 0
+
+    def fail_second_record(
+        connection,
+        record,
+    ):
+        nonlocal call_count
+        call_count += 1
+
+        if call_count == 2:
+            raise sqlite3.IntegrityError(
+                "forced restore failure"
+            )
+
+        original_writer(
+            connection,
+            record,
+        )
+
+    monkeypatch.setattr(
+        store,
+        "_restore_record_on_connection",
+        fail_second_record,
+    )
+
+    with pytest.raises(
+        RepositoryEvidenceRestoreError,
+        match="Could not restore",
+    ):
+        store.restore(
+            [
+                first_record,
+                second_record,
+            ]
+        )
+
+    assert store.list_repository_keys() == []

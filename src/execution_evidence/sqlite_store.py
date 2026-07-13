@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from execution_evidence.models import (
     EvidenceAttribution,
@@ -18,8 +18,12 @@ from execution_evidence.sqlite_schema import (
 )
 from execution_evidence.store import (
     RepositoryEvidenceConflictError,
+    RepositoryEvidenceRestoreError,
+    RepositoryEvidenceRestoreReport,
     RepositoryEvidenceStore,
     StoredRepositoryEvidence,
+    build_repository_evidence_restore_report,
+    prepare_repository_evidence_restore,
 )
 
 
@@ -413,6 +417,90 @@ class SQLiteRepositoryEvidenceStore(
         finally:
             connection.close()
 
+    def restore(
+        self,
+        records: Sequence[
+            StoredRepositoryEvidence
+        ],
+        *,
+        require_empty: bool = True,
+    ) -> RepositoryEvidenceRestoreReport:
+        prepared = (
+            prepare_repository_evidence_restore(
+                records
+            )
+        )
+        connection = self._connect()
+
+        try:
+            connection.execute(
+                "BEGIN IMMEDIATE"
+            )
+            self._ensure_workspace_on_connection(
+                connection
+            )
+
+            existing_keys = {
+                str(row["repository_key"])
+                for row in connection.execute(
+                    """
+                    SELECT repository_key
+                    FROM repositories
+                    WHERE workspace_id = ?
+                    """,
+                    (self._workspace_id,),
+                )
+            }
+
+            if require_empty and existing_keys:
+                raise RepositoryEvidenceRestoreError(
+                    "Repository evidence restore requires "
+                    "an empty destination."
+                )
+
+            restored_keys = {
+                record.repository.repository_key
+                for record in prepared
+            }
+            conflicting_keys = sorted(
+                restored_keys.intersection(
+                    existing_keys
+                )
+            )
+
+            if conflicting_keys:
+                raise RepositoryEvidenceRestoreError(
+                    "Repository evidence restore would "
+                    "overwrite existing repositories: "
+                    + ", ".join(conflicting_keys)
+                    + "."
+                )
+
+            for record in prepared:
+                self._restore_record_on_connection(
+                    connection,
+                    record,
+                )
+
+            connection.execute("COMMIT")
+
+            return (
+                build_repository_evidence_restore_report(
+                    prepared
+                )
+            )
+        except RepositoryEvidenceRestoreError:
+            self._rollback(connection)
+            raise
+        except sqlite3.Error as error:
+            self._rollback(connection)
+            raise RepositoryEvidenceRestoreError(
+                "Could not restore repository evidence "
+                "into SQLite."
+            ) from error
+        finally:
+            connection.close()
+
     def delete(
         self,
         repository_key: str,
@@ -471,6 +559,94 @@ class SQLiteRepositoryEvidenceStore(
             ) from error
         finally:
             connection.close()
+
+    def _restore_record_on_connection(
+        self,
+        connection: sqlite3.Connection,
+        record: StoredRepositoryEvidence,
+    ) -> None:
+        timestamp = record.saved_at.isoformat()
+        repository_key = (
+            record.repository.repository_key
+        )
+
+        cursor = connection.execute(
+            """
+            INSERT INTO repositories (
+                workspace_id,
+                repository_key,
+                provider,
+                owner,
+                repository_name,
+                canonical_url,
+                revision,
+                aggregate_schema_version,
+                saved_at,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            (
+                self._workspace_id,
+                repository_key,
+                record.repository.provider,
+                record.repository.owner,
+                record.repository.repository,
+                record.repository.canonical_url,
+                record.revision,
+                record.schema_version,
+                timestamp,
+                timestamp,
+                timestamp,
+            ),
+        )
+        repository_id = int(cursor.lastrowid)
+
+        self._write_evidence(
+            connection,
+            repository_id,
+            record.evidence,
+        )
+        self._write_attributions(
+            connection,
+            repository_id,
+            record.attributions,
+        )
+
+        connection.execute(
+            """
+            INSERT INTO repository_sync_states (
+                repository_id,
+                payload_json,
+                updated_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                repository_id,
+                record.sync_state.model_dump_json(),
+                timestamp,
+            ),
+        )
+
+        connection.execute(
+            """
+            INSERT INTO repository_sync_snapshots (
+                repository_id,
+                payload_json,
+                updated_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                repository_id,
+                record.sync_snapshot.model_dump_json(),
+                timestamp,
+            ),
+        )
 
     def _connect(self) -> sqlite3.Connection:
         try:

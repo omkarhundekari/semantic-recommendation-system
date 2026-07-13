@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -104,6 +104,56 @@ class RepositoryEvidenceConflictError(RuntimeError):
     pass
 
 
+class RepositoryEvidenceRestoreError(RuntimeError):
+    pass
+
+
+class RepositoryEvidenceRestoreReport(BaseModel):
+    restored_count: int = Field(ge=0)
+    repository_keys: List[str] = Field(
+        default_factory=list
+    )
+
+
+def prepare_repository_evidence_restore(
+    records: Sequence[StoredRepositoryEvidence],
+) -> List[StoredRepositoryEvidence]:
+    prepared: List[StoredRepositoryEvidence] = []
+    seen_repository_keys = set()
+
+    for record in records:
+        repository_key = (
+            record.repository.repository_key
+        )
+
+        if repository_key in seen_repository_keys:
+            raise RepositoryEvidenceRestoreError(
+                "Repository evidence restore contains "
+                f"duplicate repository key: {repository_key}."
+            )
+
+        seen_repository_keys.add(repository_key)
+        prepared.append(
+            record.model_copy(deep=True)
+        )
+
+    return prepared
+
+
+def build_repository_evidence_restore_report(
+    records: Sequence[StoredRepositoryEvidence],
+) -> RepositoryEvidenceRestoreReport:
+    repository_keys = sorted(
+        record.repository.repository_key
+        for record in records
+    )
+
+    return RepositoryEvidenceRestoreReport(
+        restored_count=len(repository_keys),
+        repository_keys=repository_keys,
+    )
+
+
 class RepositoryEvidenceStore(ABC):
     @abstractmethod
     def load(
@@ -119,6 +169,21 @@ class RepositoryEvidenceStore(ABC):
         *,
         expected_revision: Optional[int] = None,
     ) -> StoredRepositoryEvidence:
+        raise NotImplementedError
+
+    @abstractmethod
+    def restore(
+        self,
+        records: Sequence[
+            StoredRepositoryEvidence
+        ],
+        *,
+        require_empty: bool = True,
+    ) -> RepositoryEvidenceRestoreReport:
+        """
+        Restore exact aggregate state without incrementing
+        revisions or modifying domain timestamps.
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -187,6 +252,66 @@ class InMemoryRepositoryEvidenceStore(
         self._records[repository_key] = saved
 
         return saved.model_copy(deep=True)
+
+    def restore(
+        self,
+        records: Sequence[
+            StoredRepositoryEvidence
+        ],
+        *,
+        require_empty: bool = True,
+    ) -> RepositoryEvidenceRestoreReport:
+        prepared = (
+            prepare_repository_evidence_restore(
+                records
+            )
+        )
+
+        if require_empty and self._records:
+            raise RepositoryEvidenceRestoreError(
+                "Repository evidence restore requires "
+                "an empty destination."
+            )
+
+        restored_keys = {
+            record.repository.repository_key
+            for record in prepared
+        }
+        conflicting_keys = sorted(
+            restored_keys.intersection(
+                self._records
+            )
+        )
+
+        if conflicting_keys:
+            raise RepositoryEvidenceRestoreError(
+                "Repository evidence restore would "
+                "overwrite existing repositories: "
+                + ", ".join(conflicting_keys)
+                + "."
+            )
+
+        restored_records = {
+            repository_key: record.model_copy(
+                deep=True
+            )
+            for repository_key, record in (
+                self._records.items()
+            )
+        }
+
+        for record in prepared:
+            restored_records[
+                record.repository.repository_key
+            ] = record.model_copy(deep=True)
+
+        self._records = restored_records
+
+        return (
+            build_repository_evidence_restore_report(
+                prepared
+            )
+        )
 
     def delete(
         self,

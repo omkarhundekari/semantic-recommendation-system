@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, ValidationError
@@ -11,8 +11,12 @@ from pydantic import BaseModel, Field, ValidationError
 from execution_evidence.store import (
     CURRENT_EVIDENCE_STORE_SCHEMA_VERSION,
     RepositoryEvidenceConflictError,
+    RepositoryEvidenceRestoreError,
+    RepositoryEvidenceRestoreReport,
     RepositoryEvidenceStore,
     StoredRepositoryEvidence,
+    build_repository_evidence_restore_report,
+    prepare_repository_evidence_restore,
 )
 
 
@@ -102,6 +106,84 @@ class JsonRepositoryEvidenceStore(
         self._write_document(document)
 
         return saved.model_copy(deep=True)
+
+    def restore(
+        self,
+        records: Sequence[
+            StoredRepositoryEvidence
+        ],
+        *,
+        require_empty: bool = True,
+    ) -> RepositoryEvidenceRestoreReport:
+        prepared = (
+            prepare_repository_evidence_restore(
+                records
+            )
+        )
+        document = self._read_document()
+
+        if require_empty and document.records:
+            raise RepositoryEvidenceRestoreError(
+                "Repository evidence restore requires "
+                "an empty destination."
+            )
+
+        restored_keys = {
+            record.repository.repository_key
+            for record in prepared
+        }
+        conflicting_keys = sorted(
+            restored_keys.intersection(
+                document.records
+            )
+        )
+
+        if conflicting_keys:
+            raise RepositoryEvidenceRestoreError(
+                "Repository evidence restore would "
+                "overwrite existing repositories: "
+                + ", ".join(conflicting_keys)
+                + "."
+            )
+
+        restored_records = {
+            repository_key: record.model_copy(
+                deep=True
+            )
+            for repository_key, record in (
+                document.records.items()
+            )
+        }
+
+        for record in prepared:
+            restored_records[
+                record.repository.repository_key
+            ] = record.model_copy(deep=True)
+
+        restored_document = (
+            RepositoryEvidenceStoreDocument(
+                schema_version=(
+                    document.schema_version
+                ),
+                records=restored_records,
+            )
+        )
+
+        try:
+            self._write_document(
+                restored_document
+            )
+        except RepositoryEvidenceStoreError as error:
+            raise RepositoryEvidenceRestoreError(
+                "Could not restore repository "
+                "evidence into the JSON store."
+            ) from error
+
+        return (
+            build_repository_evidence_restore_report(
+                prepared
+            )
+        )
 
     def delete(
         self,

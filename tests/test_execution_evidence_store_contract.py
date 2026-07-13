@@ -23,6 +23,7 @@ from execution_evidence.sqlite_store import (
 from execution_evidence.store import (
     InMemoryRepositoryEvidenceStore,
     RepositoryEvidenceConflictError,
+    RepositoryEvidenceRestoreError,
     RepositoryEvidenceStore,
     StoredRepositoryEvidence,
 )
@@ -277,3 +278,169 @@ def test_store_updates_one_repository_without_mutating_another(
         )
         == second_saved
     )
+
+
+def test_store_restore_preserves_exact_aggregate_state(
+    store_factory: StoreFactory,
+):
+    store = store_factory()
+
+    first_record = _record().model_copy(
+        update={
+            "revision": 0,
+            "evidence": [
+                _evidence("def456"),
+                _evidence("abc123"),
+            ],
+            "saved_at": datetime.fromisoformat(
+                "2026-07-13T12:34:56.123456+00:00"
+            ),
+        },
+        deep=True,
+    )
+    second_record = _record(
+        reference=SECOND_REFERENCE,
+        evidence=[],
+    ).model_copy(
+        update={
+            "revision": 7,
+            "saved_at": datetime.fromisoformat(
+                "2026-07-14T01:02:03.654321+00:00"
+            ),
+        },
+        deep=True,
+    )
+
+    report = store.restore(
+        [
+            second_record,
+            first_record,
+        ]
+    )
+
+    assert report.restored_count == 2
+    assert report.repository_keys == sorted(
+        [
+            REPOSITORY_KEY,
+            SECOND_REFERENCE.repository_key,
+        ]
+    )
+    assert store.load(REPOSITORY_KEY) == first_record
+    assert (
+        store.load(
+            SECOND_REFERENCE.repository_key
+        )
+        == second_record
+    )
+
+    loaded = store.load(REPOSITORY_KEY)
+    assert loaded is not None
+    assert [
+        item.external_id
+        for item in loaded.evidence
+    ] == [
+        "def456",
+        "abc123",
+    ]
+
+
+def test_store_restore_requires_empty_destination_by_default(
+    store_factory: StoreFactory,
+):
+    store = store_factory()
+    existing = store.save(_record())
+
+    with pytest.raises(
+        RepositoryEvidenceRestoreError,
+        match="empty destination",
+    ):
+        store.restore(
+            [
+                _record(
+                    reference=SECOND_REFERENCE,
+                    evidence=[],
+                ).model_copy(
+                    update={"revision": 5},
+                    deep=True,
+                )
+            ]
+        )
+
+    assert store.load(REPOSITORY_KEY) == existing
+    assert (
+        store.load(
+            SECOND_REFERENCE.repository_key
+        )
+        is None
+    )
+
+
+def test_store_restore_can_add_disjoint_records_explicitly(
+    store_factory: StoreFactory,
+):
+    store = store_factory()
+    existing = store.save(_record())
+
+    restored = _record(
+        reference=SECOND_REFERENCE,
+        evidence=[],
+    ).model_copy(
+        update={"revision": 9},
+        deep=True,
+    )
+
+    store.restore(
+        [restored],
+        require_empty=False,
+    )
+
+    assert store.load(REPOSITORY_KEY) == existing
+    assert (
+        store.load(
+            SECOND_REFERENCE.repository_key
+        )
+        == restored
+    )
+
+
+def test_store_restore_rejects_duplicate_batch_atomically(
+    store_factory: StoreFactory,
+):
+    store = store_factory()
+    record = _record().model_copy(
+        update={"revision": 4},
+        deep=True,
+    )
+
+    with pytest.raises(
+        RepositoryEvidenceRestoreError,
+        match="duplicate repository key",
+    ):
+        store.restore(
+            [
+                record,
+                record.model_copy(deep=True),
+            ]
+        )
+
+    assert store.list_repository_keys() == []
+
+
+def test_normal_save_continues_from_restored_revision(
+    store_factory: StoreFactory,
+):
+    store = store_factory()
+    restored = _record().model_copy(
+        update={"revision": 7},
+        deep=True,
+    )
+
+    store.restore([restored])
+
+    saved = store.save(
+        restored,
+        expected_revision=7,
+    )
+
+    assert saved.revision == 8
+    assert store.load(REPOSITORY_KEY) == saved
