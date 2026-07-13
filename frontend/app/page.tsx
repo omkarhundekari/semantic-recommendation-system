@@ -280,6 +280,13 @@ const examplePrompts = [
   "Cloud cost optimization project with Python",
 ];
 
+const hiddenArtifacts = {
+  summary: false,
+  interviewStory: false,
+  readme: false,
+  passport: false,
+};
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -460,12 +467,8 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showHelpChooser, setShowHelpChooser] = useState(false);
-  const [revealedArtifacts, setRevealedArtifacts] = useState({
-    summary: false,
-    interviewStory: false,
-    readme: false,
-    passport: false,
-  });
+  const [revealedArtifacts, setRevealedArtifacts] =
+    useState(hiddenArtifacts);
 
   const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(
     savedWorkspace?.selectedDirectionId ?? null,
@@ -988,7 +991,15 @@ export default function Home() {
     });
   }
 
-  function applyImportedWorkspace(
+  function resetWorkspacePresentationState() {
+    setExpandedWhyDirectionId(null);
+    setPendingImportedWorkspace(null);
+    setShowClearWorkspaceConfirmation(false);
+    setRevealedArtifacts(hiddenArtifacts);
+    setError("");
+  }
+
+  function applyWorkspaceSnapshot(
     workspace: SavedWorkspace,
   ) {
     setGoal(workspace.goal);
@@ -1005,15 +1016,13 @@ export default function Home() {
     );
     setAdaptationDecisions(workspace.adaptationDecisions);
     setAdaptationEvidence(workspace.adaptationEvidence);
-    setExpandedWhyDirectionId(null);
-    setPendingImportedWorkspace(null);
-    setRevealedArtifacts({
-      summary: false,
-      interviewStory: false,
-      readme: false,
-      passport: false,
-    });
-    setError("");
+  }
+
+  function applyImportedWorkspace(
+    workspace: SavedWorkspace,
+  ) {
+    applyWorkspaceSnapshot(workspace);
+    resetWorkspacePresentationState();
     setWorkspaceSaveStatus("saving");
     setWorkspaceTransferFeedback({
       status: "success",
@@ -1076,7 +1085,6 @@ export default function Home() {
   }
 
   function clearSavedWorkspace() {
-    setShowClearWorkspaceConfirmation(false);
     removeWorkspaceFromStorage(window.localStorage);
     setWorkspaceSaveStatus("idle");
     setGoal("");
@@ -1090,14 +1098,7 @@ export default function Home() {
     setAdaptationDecisions({});
     setAdaptationEvidence({});
     setWorkspaceTransferFeedback(null);
-    setPendingImportedWorkspace(null);
-    setRevealedArtifacts({
-      summary: false,
-      interviewStory: false,
-      readme: false,
-      passport: false,
-    });
-    setError("");
+    resetWorkspacePresentationState();
   }
 
   return (
