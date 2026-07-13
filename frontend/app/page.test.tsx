@@ -627,8 +627,20 @@ describe("workspace backup UI", () => {
       }),
     ).toBeInTheDocument();
 
+    const restoredSaveTime = new Intl.DateTimeFormat(
+      undefined,
+      {
+        hour: "numeric",
+        minute: "2-digit",
+      },
+    ).format(
+      new Date("2026-07-12T18:00:00.000Z"),
+    );
+
     expect(
-      screen.getByText("Saved locally"),
+      screen.getByText(
+        `Saved locally · ${restoredSaveTime}`,
+      ),
     ).toBeInTheDocument();
 
     expect(
@@ -908,6 +920,55 @@ describe("workspace backup UI", () => {
         "Keep this workspace after reset cancellation",
       ),
     ).toBeInTheDocument();
+
+    expect(
+      window.localStorage.getItem(
+        WORKSPACE_STORAGE_KEY,
+      ),
+    ).not.toBeNull();
+  });
+
+  it("shows the latest successful automatic save time", async () => {
+    render(<Home />);
+
+    uploadJson(
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Timestamped autosave workspace",
+        result: {
+          status: "ready",
+          directions: [],
+        },
+        selectedDirectionId: null,
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {},
+        decisionAnswers: {},
+        completedGuidedStepIds: [],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-12T18:00:00.000Z",
+      }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Workspace imported successfully. Its progress and evidence have been restored.",
+      ),
+    ).toBeInTheDocument();
+
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(
+            /^Saved locally · /,
+          ),
+        ).toBeInTheDocument();
+      },
+      {
+        timeout: 1000,
+      },
+    );
 
     expect(
       window.localStorage.getItem(

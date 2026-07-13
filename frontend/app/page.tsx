@@ -260,6 +260,23 @@ type WorkspaceTransferFeedback = {
   message: string;
 } | null;
 
+function formatWorkspaceSaveTime(savedAt: string | null): string | null {
+  if (!savedAt) {
+    return null;
+  }
+
+  const savedDate = new Date(savedAt);
+
+  if (Number.isNaN(savedDate.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(savedDate);
+}
+
 function readSavedWorkspace(): SavedWorkspace | null {
   if (typeof window === "undefined") {
     return null;
@@ -503,6 +520,10 @@ export default function Home() {
     useState<WorkspaceSaveStatus>(
       savedWorkspace ? "saved" : "idle",
     );
+  const [lastWorkspaceSavedAt, setLastWorkspaceSavedAt] =
+    useState<string | null>(
+      savedWorkspace?.savedAt ?? null,
+    );
   const [workspaceTransferFeedback, setWorkspaceTransferFeedback] =
     useState<WorkspaceTransferFeedback>(null);
   const [pendingImportedWorkspace, setPendingImportedWorkspace] =
@@ -566,16 +587,22 @@ export default function Home() {
     }, 0);
 
     const saveTimeout = window.setTimeout(() => {
+      const savedAt = new Date().toISOString();
       const saved =
         writeWorkspaceToStorage<IntelligenceResponse>(
           window.localStorage,
           createCurrentWorkspaceSnapshot(
-            new Date().toISOString(),
+            savedAt,
             readyResult,
           ),
         );
 
-      setWorkspaceSaveStatus(saved ? "saved" : "error");
+      if (saved) {
+        setLastWorkspaceSavedAt(savedAt);
+        setWorkspaceSaveStatus("saved");
+      } else {
+        setWorkspaceSaveStatus("error");
+      }
     }, 250);
 
     return () => {
@@ -1023,6 +1050,7 @@ export default function Home() {
     );
     setAdaptationDecisions(workspace.adaptationDecisions);
     setAdaptationEvidence(workspace.adaptationEvidence);
+    setLastWorkspaceSavedAt(workspace.savedAt);
   }
 
   function applyImportedWorkspace(
@@ -1094,6 +1122,7 @@ export default function Home() {
   function clearSavedWorkspace() {
     removeWorkspaceFromStorage(window.localStorage);
     setWorkspaceSaveStatus("idle");
+    setLastWorkspaceSavedAt(null);
     setGoal("");
     setResult(null);
     setSelectedDirectionId(null);
@@ -1163,7 +1192,15 @@ export default function Home() {
                     ? "Unable to save locally"
                     : workspaceSaveStatus === "saving"
                       ? "Saving..."
-                      : "Saved locally"}
+                      : `Saved locally${
+                          formatWorkspaceSaveTime(
+                            lastWorkspaceSavedAt,
+                          )
+                            ? ` · ${formatWorkspaceSaveTime(
+                                lastWorkspaceSavedAt,
+                              )}`
+                            : ""
+                        }`}
                 </span>
               )}
 
