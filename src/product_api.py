@@ -68,9 +68,12 @@ from execution_evidence.github_client import (
 from execution_evidence.service import (
     GitHubExecutionEvidenceService,
 )
+from execution_evidence.json_store import (
+    JsonRepositoryEvidenceStore,
+)
 from execution_evidence.store import (
-    InMemoryRepositoryEvidenceStore,
     RepositoryEvidenceConflictError,
+    RepositoryEvidenceStore,
 )
 
 
@@ -95,9 +98,44 @@ app.add_middleware(
 )
 
 
-_execution_evidence_store = (
-    InMemoryRepositoryEvidenceStore()
+EXECUTION_EVIDENCE_STORE_PATH_ENV = (
+    "SOLVYN_EXECUTION_EVIDENCE_STORE_PATH"
 )
+
+DEFAULT_EXECUTION_EVIDENCE_STORE_PATH = Path(
+    "data/execution_evidence/repositories.json"
+)
+
+
+def build_execution_evidence_store(
+    path: Optional[str] = None,
+) -> RepositoryEvidenceStore:
+    configured_path = (
+        path
+        or os.getenv(
+            EXECUTION_EVIDENCE_STORE_PATH_ENV
+        )
+    )
+
+    resolved_path = Path(
+        configured_path
+        if configured_path
+        else DEFAULT_EXECUTION_EVIDENCE_STORE_PATH
+    )
+
+    return JsonRepositoryEvidenceStore(
+        resolved_path
+    )
+
+
+_execution_evidence_store = (
+    build_execution_evidence_store()
+)
+
+
+def get_execution_evidence_store(
+) -> RepositoryEvidenceStore:
+    return _execution_evidence_store
 
 
 def get_execution_evidence_coordinator(
@@ -111,7 +149,7 @@ def get_execution_evidence_coordinator(
 
     return StatefulGitHubSyncCoordinator(
         service=service,
-        store=_execution_evidence_store,
+        store=get_execution_evidence_store(),
     )
 
 
