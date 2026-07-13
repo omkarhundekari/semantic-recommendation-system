@@ -83,6 +83,9 @@ from execution_evidence.service import (
 from execution_evidence.json_store import (
     JsonRepositoryEvidenceStore,
 )
+from execution_evidence.sqlite_store import (
+    SQLiteRepositoryEvidenceStore,
+)
 from execution_evidence.store import (
     RepositoryEvidenceConflictError,
     RepositoryEvidenceStore,
@@ -111,18 +114,61 @@ app.add_middleware(
 )
 
 
+EXECUTION_EVIDENCE_STORE_BACKEND_ENV = (
+    "SOLVYN_EXECUTION_EVIDENCE_STORE_BACKEND"
+)
+
 EXECUTION_EVIDENCE_STORE_PATH_ENV = (
     "SOLVYN_EXECUTION_EVIDENCE_STORE_PATH"
 )
+
+DEFAULT_EXECUTION_EVIDENCE_STORE_BACKEND = "json"
 
 DEFAULT_EXECUTION_EVIDENCE_STORE_PATH = Path(
     "data/execution_evidence/repositories.json"
 )
 
+DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH = Path(
+    "data/execution_evidence/solvyn.db"
+)
+
+SUPPORTED_EXECUTION_EVIDENCE_STORE_BACKENDS = {
+    "json",
+    "sqlite",
+}
+
 
 def build_execution_evidence_store(
     path: Optional[str] = None,
+    *,
+    backend: Optional[str] = None,
 ) -> RepositoryEvidenceStore:
+    configured_backend = (
+        backend
+        or os.getenv(
+            EXECUTION_EVIDENCE_STORE_BACKEND_ENV
+        )
+        or DEFAULT_EXECUTION_EVIDENCE_STORE_BACKEND
+    )
+    resolved_backend = (
+        configured_backend.strip().lower()
+    )
+
+    if (
+        resolved_backend
+        not in SUPPORTED_EXECUTION_EVIDENCE_STORE_BACKENDS
+    ):
+        supported = ", ".join(
+            sorted(
+                SUPPORTED_EXECUTION_EVIDENCE_STORE_BACKENDS
+            )
+        )
+        raise ValueError(
+            "Unsupported execution evidence store "
+            f"backend: {configured_backend}. "
+            f"Supported backends: {supported}."
+        )
+
     configured_path = (
         path
         or os.getenv(
@@ -130,13 +176,44 @@ def build_execution_evidence_store(
         )
     )
 
-    resolved_path = Path(
-        configured_path
-        if configured_path
-        else DEFAULT_EXECUTION_EVIDENCE_STORE_PATH
-    )
+    if configured_path:
+        resolved_path = Path(
+            configured_path
+        )
+    elif resolved_backend == "sqlite":
+        resolved_path = (
+            DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH
+        )
+    else:
+        resolved_path = (
+            DEFAULT_EXECUTION_EVIDENCE_STORE_PATH
+        )
 
-    return JsonRepositoryEvidenceStore(
+    if resolved_backend == "json":
+        if resolved_path.suffix.lower() != ".json":
+            raise ValueError(
+                "JSON execution evidence storage "
+                "requires a .json path."
+            )
+
+        return JsonRepositoryEvidenceStore(
+            resolved_path
+        )
+
+    if resolved_path.suffix.lower() != ".db":
+        raise ValueError(
+            "SQLite execution evidence storage "
+            "requires a .db path."
+        )
+
+    if not resolved_path.is_file():
+        raise ValueError(
+            "SQLite execution evidence storage "
+            "requires an existing promoted database: "
+            f"{resolved_path}."
+        )
+
+    return SQLiteRepositoryEvidenceStore(
         resolved_path
     )
 
