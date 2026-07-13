@@ -10,6 +10,7 @@ from execution_evidence.github_repository import (
     GitHubRepositoryReference,
 )
 from execution_evidence.models import (
+    EvidenceAttribution,
     ExecutionEvidenceItem,
     RepositorySyncState,
 )
@@ -18,7 +19,7 @@ from execution_evidence.snapshot import (
 )
 
 
-CURRENT_EVIDENCE_STORE_SCHEMA_VERSION = 1
+CURRENT_EVIDENCE_STORE_SCHEMA_VERSION = 2
 
 
 class StoredRepositoryEvidence(BaseModel):
@@ -28,6 +29,9 @@ class StoredRepositoryEvidence(BaseModel):
     )
     repository: GitHubRepositoryReference
     evidence: List[ExecutionEvidenceItem] = Field(
+        default_factory=list
+    )
+    attributions: List[EvidenceAttribution] = Field(
         default_factory=list
     )
     sync_state: RepositorySyncState
@@ -64,6 +68,35 @@ class StoredRepositoryEvidence(BaseModel):
             raise ValueError(
                 "Stored execution evidence contains items "
                 "from a different repository."
+            )
+
+        evidence_keys = {
+            item.evidence_key
+            for item in self.evidence
+        }
+        attribution_keys = [
+            attribution.attribution_key
+            for attribution in self.attributions
+        ]
+
+        missing_evidence = [
+            attribution.evidence_key
+            for attribution in self.attributions
+            if attribution.evidence_key not in evidence_keys
+        ]
+
+        if missing_evidence:
+            raise ValueError(
+                "Stored attribution references execution "
+                "evidence that does not exist."
+            )
+
+        if len(attribution_keys) != len(
+            set(attribution_keys)
+        ):
+            raise ValueError(
+                "Stored execution evidence contains duplicate "
+                "attributions."
             )
 
 
