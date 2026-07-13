@@ -952,7 +952,455 @@ def write_migration_report_atomically(
         ) from error
 
 
+def _temporary_migration_database_path(
+    destination_path: Path,
+) -> Path:
+    return destination_path.parent / (
+        f".{destination_path.name}."
+        f"{uuid4().hex}.migrating"
+    )
+
+
+def _build_verified_json_migration_database(
+    *,
+    source_path: Path,
+    temporary_path: Path,
+    created_at: str,
+    dry_run: bool,
+) -> RepositoryEvidenceMigrationReport:
+    from execution_evidence.json_store import (
+        JsonRepositoryEvidenceStore,
+    )
+
+    source = JsonRepositoryEvidenceStore(
+        source_path
+    )
+    source_records = (
+        load_repository_evidence_snapshot(
+            source
+        )
+    )
+    initial_root_hash = (
+        build_repository_evidence_root_hash(
+            source_records
+        )
+    )
+
+    temporary_store = (
+        SQLiteRepositoryEvidenceStore(
+            temporary_path
+        )
+    )
+    temporary_store.restore(
+        source_records,
+        require_empty=True,
+    )
+
+    del temporary_store
+
+    cold_store = (
+        SQLiteRepositoryEvidenceStore(
+            temporary_path
+        )
+    )
+
+    report = (
+        verify_repository_evidence_migration(
+            source_records=source_records,
+            destination=cold_store,
+        )
+    ).model_copy(
+        update={
+            "source_type": "json",
+            "dry_run": dry_run,
+        },
+        deep=True,
+    )
+
+    del cold_store
+
+    receipt = build_migration_receipt(
+        report=report,
+        source_identifier=str(
+            source_path
+        ),
+        created_at=created_at,
+    )
+    persist_migration_receipt(
+        database_path=temporary_path,
+        receipt=receipt,
+    )
+    verify_migration_receipt(
+        database_path=temporary_path,
+        receipt=receipt,
+    )
+
+    final_source_records = (
+        load_repository_evidence_snapshot(
+            JsonRepositoryEvidenceStore(
+                source_path
+            )
+        )
+    )
+    final_root_hash = (
+        build_repository_evidence_root_hash(
+            final_source_records
+        )
+    )
+
+    if final_root_hash != initial_root_hash:
+        raise RepositoryEvidenceMigrationError(
+            "JSON source changed during "
+            "the migration."
+        )
+
+    return report
+
+
+def _sqlite_sidecar_paths(
+    database_path: Path | str,
+) -> tuple[Path, Path, Path]:
+    path = Path(database_path)
+
+    return (
+        Path(f"{path}-wal"),
+        Path(f"{path}-shm"),
+        Path(f"{path}-journal"),
+    )
+
+
+def finalize_sqlite_database_for_promotion(
+    database_path: Path | str,
+) -> None:
+    path = Path(database_path)
+
+    try:
+        connection = sqlite3.connect(
+            str(path),
+            timeout=5.0,
+            isolation_level=None,
+        )
+    except sqlite3.Error as error:
+        raise RepositoryEvidenceMigrationError(
+            "Could not open the verified SQLite "
+            "database for promotion."
+        ) from error
+
+    try:
+        checkpoint = connection.execute(
+            "PRAGMA wal_checkpoint(TRUNCATE)"
+        ).fetchone()
+
+        if checkpoint is None:
+            raise RepositoryEvidenceMigrationError(
+                "SQLite WAL checkpoint returned "
+                "no result."
+            )
+
+        busy_count = int(checkpoint[0])
+
+        if busy_count != 0:
+            raise RepositoryEvidenceMigrationError(
+                "SQLite WAL checkpoint could not "
+                "complete because the database is busy."
+            )
+
+        journal_mode_row = connection.execute(
+            "PRAGMA journal_mode = DELETE"
+        ).fetchone()
+
+        if (
+            journal_mode_row is None
+            or str(
+                journal_mode_row[0]
+            ).lower()
+            != "delete"
+        ):
+            raise RepositoryEvidenceMigrationError(
+                "Could not convert the migration "
+                "database to single-file journal mode."
+            )
+    except sqlite3.Error as error:
+        raise RepositoryEvidenceMigrationError(
+            "Could not finalize the SQLite "
+            "migration database."
+        ) from error
+    finally:
+        connection.close()
+
+    wal_path, shm_path, journal_path = (
+        _sqlite_sidecar_paths(path)
+    )
+
+    for durable_sidecar in (
+        wal_path,
+        journal_path,
+    ):
+        if (
+            durable_sidecar.exists()
+            and durable_sidecar.stat().st_size > 0
+        ):
+            raise RepositoryEvidenceMigrationError(
+                "SQLite migration database still "
+                "contains durable sidecar content "
+                "after finalization: "
+                f"{durable_sidecar}."
+            )
+
+    for removable_sidecar in (
+        wal_path,
+        shm_path,
+        journal_path,
+    ):
+        try:
+            removable_sidecar.unlink(
+                missing_ok=True
+            )
+        except OSError as error:
+            raise RepositoryEvidenceMigrationError(
+                "Could not remove finalized SQLite "
+                "sidecar file: "
+                f"{removable_sidecar}."
+            ) from error
+
+    remaining_sidecars = [
+        artifact
+        for artifact in _sqlite_sidecar_paths(
+            path
+        )
+        if artifact.exists()
+    ]
+
+    if remaining_sidecars:
+        raise RepositoryEvidenceMigrationError(
+            "SQLite migration database still has "
+            "sidecar files after cleanup: "
+            + ", ".join(
+                str(artifact)
+                for artifact in remaining_sidecars
+            )
+            + "."
+        )
+
+
+def verify_finalized_migration_database(
+    *,
+    database_path: Path | str,
+) -> None:
+    path = Path(database_path)
+    uri = (
+        path.resolve().as_uri()
+        + "?mode=ro"
+    )
+
+    try:
+        connection = sqlite3.connect(
+            uri,
+            uri=True,
+            timeout=5.0,
+            isolation_level=None,
+        )
+        connection.row_factory = sqlite3.Row
+    except sqlite3.Error as error:
+        raise RepositoryEvidenceMigrationError(
+            "Could not open the finalized SQLite "
+            "database in read-only mode."
+        ) from error
+
+    try:
+        integrity_messages = [
+            str(row[0])
+            for row in connection.execute(
+                "PRAGMA integrity_check"
+            ).fetchall()
+        ]
+
+        if integrity_messages != ["ok"]:
+            raise RepositoryEvidenceMigrationError(
+                "Finalized SQLite integrity check "
+                "failed: "
+                + ",".join(
+                    integrity_messages
+                )
+            )
+
+        foreign_key_rows = connection.execute(
+            "PRAGMA foreign_key_check"
+        ).fetchall()
+
+        if foreign_key_rows:
+            raise RepositoryEvidenceMigrationError(
+                "Finalized SQLite database contains "
+                "foreign-key violations."
+            )
+
+        receipt_count = int(
+            connection.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM execution_evidence_import_receipts
+                """
+            ).fetchone()["count"]
+        )
+
+        if receipt_count != 1:
+            raise RepositoryEvidenceMigrationError(
+                "Finalized SQLite database must "
+                "contain exactly one migration receipt."
+            )
+    except sqlite3.Error as error:
+        raise RepositoryEvidenceMigrationError(
+            "Could not verify the finalized SQLite "
+            "migration database."
+        ) from error
+    finally:
+        connection.close()
+
+
+def fsync_file(
+    path: Path | str,
+) -> None:
+    import os
+
+    file_path = Path(path)
+
+    try:
+        descriptor = os.open(
+            str(file_path),
+            os.O_RDONLY,
+        )
+
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    except OSError as error:
+        raise RepositoryEvidenceMigrationError(
+            "Could not fsync the SQLite "
+            "migration database."
+        ) from error
+
+
+def fsync_directory(
+    path: Path | str,
+) -> None:
+    import os
+
+    directory = Path(path)
+
+    try:
+        descriptor = os.open(
+            str(directory),
+            os.O_RDONLY,
+        )
+
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    except OSError as error:
+        raise RepositoryEvidenceMigrationError(
+            "Could not fsync the migration "
+            "destination directory."
+        ) from error
+
+
+def promote_sqlite_database_atomically(
+    *,
+    temporary_path: Path | str,
+    destination_path: Path | str,
+) -> None:
+    import os
+
+    temporary = Path(temporary_path)
+    destination = Path(destination_path)
+
+    if (
+        temporary.resolve().parent
+        != destination.resolve().parent
+    ):
+        raise RepositoryEvidenceMigrationError(
+            "SQLite migration database must be "
+            "created in the destination directory."
+        )
+
+    assert_destination_artifacts_absent(
+        destination
+    )
+    fsync_file(temporary)
+
+    try:
+        os.replace(
+            temporary,
+            destination,
+        )
+    except OSError as error:
+        raise RepositoryEvidenceMigrationError(
+            "Could not atomically promote the "
+            "SQLite migration database."
+        ) from error
+
+    fsync_directory(
+        destination.parent
+    )
+
+
 def dry_run_json_to_sqlite_migration(
+    *,
+    source_path: Path | str,
+    destination_path: Path | str,
+    report_path: Path | str,
+    created_at: str,
+) -> RepositoryEvidenceMigrationReport:
+    source_file = Path(source_path)
+    destination_file = Path(
+        destination_path
+    )
+    report_file = Path(report_path)
+    lock_path = destination_file.with_name(
+        f".{destination_file.name}.migration.lock"
+    )
+
+    assert_destination_artifacts_absent(
+        destination_file
+    )
+
+    with RepositoryEvidenceMigrationLock(
+        lock_path
+    ):
+        destination_file.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+        temporary_path = (
+            _temporary_migration_database_path(
+                destination_file
+            )
+        )
+
+        try:
+            report = (
+                _build_verified_json_migration_database(
+                    source_path=source_file,
+                    temporary_path=temporary_path,
+                    created_at=created_at,
+                    dry_run=True,
+                )
+            )
+
+            write_migration_report_atomically(
+                report_path=report_file,
+                report=report,
+            )
+
+            return report
+        finally:
+            remove_sqlite_database_artifacts(
+                temporary_path
+            )
+
+
+def promote_json_to_sqlite_migration(
     *,
     source_path: Path | str,
     destination_path: Path | str,
@@ -979,79 +1427,32 @@ def dry_run_json_to_sqlite_migration(
     with RepositoryEvidenceMigrationLock(
         lock_path
     ):
-        source = JsonRepositoryEvidenceStore(
-            source_file
-        )
-        source_records = (
-            load_repository_evidence_snapshot(
-                source
-            )
-        )
-        initial_root_hash = (
-            build_repository_evidence_root_hash(
-                source_records
-            )
-        )
-
         destination_file.parent.mkdir(
             parents=True,
             exist_ok=True,
         )
         temporary_path = (
-            destination_file.parent
-            / (
-                f".{destination_file.name}."
-                f"{uuid4().hex}.migrating"
+            _temporary_migration_database_path(
+                destination_file
             )
         )
+        promoted = False
 
         try:
-            temporary_store = (
-                SQLiteRepositoryEvidenceStore(
-                    temporary_path
-                )
-            )
-            temporary_store.restore(
-                source_records,
-                require_empty=True,
-            )
-
-            del temporary_store
-
-            cold_store = (
-                SQLiteRepositoryEvidenceStore(
-                    temporary_path
-                )
-            )
-
             report = (
-                verify_repository_evidence_migration(
-                    source_records=(
-                        source_records
-                    ),
-                    destination=cold_store,
+                _build_verified_json_migration_database(
+                    source_path=source_file,
+                    temporary_path=temporary_path,
+                    created_at=created_at,
+                    dry_run=False,
                 )
-            ).model_copy(
-                update={
-                    "source_type": "json",
-                },
-                deep=True,
             )
 
-            receipt = build_migration_receipt(
-                report=report,
-                source_identifier=str(
-                    source_file
-                ),
-                created_at=created_at,
+            finalize_sqlite_database_for_promotion(
+                temporary_path
             )
-            persist_migration_receipt(
-                database_path=temporary_path,
-                receipt=receipt,
-            )
-            verify_migration_receipt(
-                database_path=temporary_path,
-                receipt=receipt,
+            verify_finalized_migration_database(
+                database_path=temporary_path
             )
 
             final_source_records = (
@@ -1067,12 +1468,34 @@ def dry_run_json_to_sqlite_migration(
                 )
             )
 
-            if final_root_hash != initial_root_hash:
-                raise (
-                    RepositoryEvidenceMigrationError(
-                        "JSON source changed during "
-                        "the migration dry run."
-                    )
+            if final_root_hash != report.root_hash:
+                raise RepositoryEvidenceMigrationError(
+                    "JSON source changed immediately "
+                    "before SQLite promotion."
+                )
+
+            promote_sqlite_database_atomically(
+                temporary_path=temporary_path,
+                destination_path=destination_file,
+            )
+            promoted = True
+
+            verify_finalized_migration_database(
+                database_path=destination_file
+            )
+
+            remaining_sidecars = [
+                artifact
+                for artifact in _sqlite_sidecar_paths(
+                    destination_file
+                )
+                if artifact.exists()
+            ]
+
+            if remaining_sidecars:
+                raise RepositoryEvidenceMigrationError(
+                    "Promoted SQLite database created "
+                    "unexpected sidecar files."
                 )
 
             write_migration_report_atomically(
@@ -1082,6 +1505,7 @@ def dry_run_json_to_sqlite_migration(
 
             return report
         finally:
-            remove_sqlite_database_artifacts(
-                temporary_path
-            )
+            if not promoted:
+                remove_sqlite_database_artifacts(
+                    temporary_path
+                )

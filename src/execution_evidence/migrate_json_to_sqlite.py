@@ -8,15 +8,15 @@ from pathlib import Path
 from execution_evidence.store_migration import (
     RepositoryEvidenceMigrationError,
     dry_run_json_to_sqlite_migration,
+    promote_json_to_sqlite_migration,
 )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Verify a JSON-to-SQLite execution "
-            "evidence migration without promoting "
-            "the SQLite database."
+            "Verify or promote a JSON-to-SQLite "
+            "execution evidence migration."
         )
     )
     parser.add_argument(
@@ -30,15 +30,24 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         required=True,
         help=(
-            "Future SQLite destination path. "
-            "It must not already exist."
+            "SQLite destination path. It and all "
+            "SQLite sidecars must not already exist."
         ),
     )
     parser.add_argument(
         "--report-path",
         type=Path,
         required=True,
-        help="Path for the verified dry-run report.",
+        help="Path for the verified migration report.",
+    )
+    parser.add_argument(
+        "--promote",
+        action="store_true",
+        help=(
+            "Atomically promote the verified SQLite "
+            "database. Without this flag, only a "
+            "disposable dry run is performed."
+        ),
     )
 
     return parser.parse_args()
@@ -51,16 +60,30 @@ def main() -> int:
     ).isoformat()
 
     try:
-        report = (
-            dry_run_json_to_sqlite_migration(
-                source_path=args.source_json,
-                destination_path=(
-                    args.destination_db
-                ),
-                report_path=args.report_path,
-                created_at=created_at,
+        if args.promote:
+            report = (
+                promote_json_to_sqlite_migration(
+                    source_path=args.source_json,
+                    destination_path=(
+                        args.destination_db
+                    ),
+                    report_path=args.report_path,
+                    created_at=created_at,
+                )
             )
-        )
+            status = "promoted"
+        else:
+            report = (
+                dry_run_json_to_sqlite_migration(
+                    source_path=args.source_json,
+                    destination_path=(
+                        args.destination_db
+                    ),
+                    report_path=args.report_path,
+                    created_at=created_at,
+                )
+            )
+            status = "verified"
     except RepositoryEvidenceMigrationError as error:
         print(
             json.dumps(
@@ -77,8 +100,8 @@ def main() -> int:
     print(
         json.dumps(
             {
-                "status": "verified",
-                "dry_run": True,
+                "status": status,
+                "dry_run": report.dry_run,
                 "repository_count": (
                     report.repository_count
                 ),
@@ -89,6 +112,11 @@ def main() -> int:
                     report.attribution_count
                 ),
                 "root_hash": report.root_hash,
+                "destination_path": (
+                    str(args.destination_db)
+                    if args.promote
+                    else None
+                ),
                 "report_path": str(
                     args.report_path
                 ),

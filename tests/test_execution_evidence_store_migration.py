@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -491,3 +492,315 @@ def test_json_dry_run_writes_report_without_destination(
     assert stored_report == report.model_dump(
         mode="json"
     )
+
+
+def test_promotion_creates_verified_single_file_database(
+    tmp_path: Path,
+):
+    from execution_evidence.json_store import (
+        JsonRepositoryEvidenceStore,
+    )
+    from execution_evidence.store_migration import (
+        promote_json_to_sqlite_migration,
+        verify_finalized_migration_database,
+    )
+
+    source_path = tmp_path / "repositories.json"
+    destination_path = tmp_path / "solvyn.db"
+    report_path = tmp_path / "promotion-report.json"
+
+    source_records = [
+        _record(revision=0),
+        _record(
+            reference=SECOND_REFERENCE,
+            revision=9,
+            with_attribution=False,
+        ),
+    ]
+
+    JsonRepositoryEvidenceStore(
+        source_path
+    ).restore(source_records)
+
+    report = promote_json_to_sqlite_migration(
+        source_path=source_path,
+        destination_path=destination_path,
+        report_path=report_path,
+        created_at=(
+            "2026-07-13T12:00:00+00:00"
+        ),
+    )
+
+    assert report.verified is True
+    assert report.dry_run is False
+    assert destination_path.exists()
+    assert source_path.exists()
+    assert report_path.exists()
+
+    for suffix in (
+        "-wal",
+        "-shm",
+        "-journal",
+    ):
+        assert not Path(
+            f"{destination_path}{suffix}"
+        ).exists()
+
+    verify_finalized_migration_database(
+        database_path=destination_path
+    )
+
+    restored_store = (
+        SQLiteRepositoryEvidenceStore(
+            destination_path
+        )
+    )
+
+    assert (
+        restored_store.load(
+            FIRST_REFERENCE.repository_key
+        )
+        == source_records[0]
+    )
+    assert (
+        restored_store.load(
+            SECOND_REFERENCE.repository_key
+        )
+        == source_records[1]
+    )
+
+
+def test_promotion_rejects_existing_destination_without_mutation(
+    tmp_path: Path,
+):
+    from execution_evidence.json_store import (
+        JsonRepositoryEvidenceStore,
+    )
+    from execution_evidence.store_migration import (
+        promote_json_to_sqlite_migration,
+    )
+
+    source_path = tmp_path / "repositories.json"
+    destination_path = tmp_path / "solvyn.db"
+    report_path = tmp_path / "promotion-report.json"
+
+    JsonRepositoryEvidenceStore(
+        source_path
+    ).restore([_record()])
+
+    destination_path.write_bytes(
+        b"existing-destination"
+    )
+    original_bytes = (
+        destination_path.read_bytes()
+    )
+
+    with pytest.raises(
+        RepositoryEvidenceMigrationError,
+        match="already exist",
+    ):
+        promote_json_to_sqlite_migration(
+            source_path=source_path,
+            destination_path=destination_path,
+            report_path=report_path,
+            created_at=(
+                "2026-07-13T12:00:00+00:00"
+            ),
+        )
+
+    assert (
+        destination_path.read_bytes()
+        == original_bytes
+    )
+    assert not report_path.exists()
+
+
+def test_promotion_failure_before_rename_leaves_destination_absent(
+    tmp_path: Path,
+    monkeypatch,
+):
+    from execution_evidence.json_store import (
+        JsonRepositoryEvidenceStore,
+    )
+    from execution_evidence.store_migration import (
+        promote_json_to_sqlite_migration,
+    )
+
+    source_path = tmp_path / "repositories.json"
+    destination_path = tmp_path / "solvyn.db"
+    report_path = tmp_path / "promotion-report.json"
+
+    JsonRepositoryEvidenceStore(
+        source_path
+    ).restore([_record(revision=5)])
+
+    def fail_finalization(*args, **kwargs):
+        raise RepositoryEvidenceMigrationError(
+            "forced finalization failure"
+        )
+
+    monkeypatch.setattr(
+        (
+            "execution_evidence.store_migration."
+            "finalize_sqlite_database_for_promotion"
+        ),
+        fail_finalization,
+    )
+
+    with pytest.raises(
+        RepositoryEvidenceMigrationError,
+        match="forced finalization failure",
+    ):
+        promote_json_to_sqlite_migration(
+            source_path=source_path,
+            destination_path=destination_path,
+            report_path=report_path,
+            created_at=(
+                "2026-07-13T12:00:00+00:00"
+            ),
+        )
+
+    assert not destination_path.exists()
+    assert not report_path.exists()
+    assert not list(
+        tmp_path.glob("*.migrating*")
+    )
+    assert not destination_path.with_name(
+        f".{destination_path.name}.migration.lock"
+    ).exists()
+
+
+def test_normal_save_continues_after_promoted_revision(
+    tmp_path: Path,
+):
+    from execution_evidence.json_store import (
+        JsonRepositoryEvidenceStore,
+    )
+    from execution_evidence.store_migration import (
+        promote_json_to_sqlite_migration,
+    )
+
+    source_path = tmp_path / "repositories.json"
+    destination_path = tmp_path / "solvyn.db"
+    report_path = tmp_path / "promotion-report.json"
+    restored = _record(revision=7)
+
+    JsonRepositoryEvidenceStore(
+        source_path
+    ).restore([restored])
+
+    promote_json_to_sqlite_migration(
+        source_path=source_path,
+        destination_path=destination_path,
+        report_path=report_path,
+        created_at=(
+            "2026-07-13T12:00:00+00:00"
+        ),
+    )
+
+    store = SQLiteRepositoryEvidenceStore(
+        destination_path
+    )
+    saved = store.save(
+        restored,
+        expected_revision=7,
+    )
+
+    assert saved.revision == 8
+
+
+def test_finalization_removes_empty_shared_memory_sidecar(
+    tmp_path: Path,
+):
+    from execution_evidence.store_migration import (
+        finalize_sqlite_database_for_promotion,
+    )
+
+    database_path = tmp_path / "solvyn.db"
+    SQLiteRepositoryEvidenceStore(
+        database_path
+    )
+
+    shm_path = Path(
+        f"{database_path}-shm"
+    )
+    shm_path.touch()
+
+    finalize_sqlite_database_for_promotion(
+        database_path
+    )
+
+    assert database_path.exists()
+    assert not shm_path.exists()
+    assert not Path(
+        f"{database_path}-wal"
+    ).exists()
+    assert not Path(
+        f"{database_path}-journal"
+    ).exists()
+
+
+def test_finalization_rejects_nonempty_wal_sidecar(
+    tmp_path: Path,
+    monkeypatch,
+):
+    from execution_evidence.store_migration import (
+        finalize_sqlite_database_for_promotion,
+    )
+
+    database_path = tmp_path / "solvyn.db"
+    SQLiteRepositoryEvidenceStore(
+        database_path
+    )
+
+    wal_path = Path(
+        f"{database_path}-wal"
+    )
+
+    original_connect = sqlite3.connect
+
+    class ConnectionWrapper:
+        def __init__(self, connection):
+            self._connection = connection
+
+        def execute(self, statement):
+            result = self._connection.execute(
+                statement
+            )
+
+            if (
+                statement
+                == "PRAGMA journal_mode = DELETE"
+            ):
+                wal_path.write_bytes(
+                    b"uncheckpointed"
+                )
+
+            return result
+
+        def close(self):
+            self._connection.close()
+
+    def wrapped_connect(*args, **kwargs):
+        return ConnectionWrapper(
+            original_connect(
+                *args,
+                **kwargs,
+            )
+        )
+
+    monkeypatch.setattr(
+        (
+            "execution_evidence.store_migration."
+            "sqlite3.connect"
+        ),
+        wrapped_connect,
+    )
+
+    with pytest.raises(
+        RepositoryEvidenceMigrationError,
+        match="durable sidecar content",
+    ):
+        finalize_sqlite_database_for_promotion(
+            database_path
+        )
