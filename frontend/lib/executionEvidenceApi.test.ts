@@ -51,6 +51,7 @@ function successfulResponse(): ExecutionEvidenceSyncResponse {
         canonical_url:
           "https://github.com/owner/repository",
       },
+      attributions: [],
       evidence: [
         {
           provider: "github",

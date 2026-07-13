@@ -989,6 +989,15 @@ describe("workspace backup UI", () => {
       new Date("2026-07-13T00:00:30.000Z"),
     );
 
+    const setIntervalSpy = vi.spyOn(
+      window,
+      "setInterval",
+    );
+    const clearIntervalSpy = vi.spyOn(
+      window,
+      "clearInterval",
+    );
+
     window.localStorage.setItem(
       WORKSPACE_STORAGE_KEY,
       JSON.stringify({
@@ -1032,8 +1041,24 @@ describe("workspace backup UI", () => {
       screen.getByText("Saved 1 min ago"),
     ).toBeInTheDocument();
 
+    const freshnessIntervalCall =
+      setIntervalSpy.mock.calls.find(
+        ([, delay]) => delay === 60_000,
+      );
+
+    expect(freshnessIntervalCall).toBeDefined();
+
+    const freshnessIntervalId =
+      setIntervalSpy.mock.results[
+        setIntervalSpy.mock.calls.findIndex(
+          ([, delay]) => delay === 60_000,
+        )
+      ].value;
+
     unmount();
 
-    expect(vi.getTimerCount()).toBe(0);
+    expect(clearIntervalSpy).toHaveBeenCalledWith(
+      freshnessIntervalId,
+    );
   });
 });

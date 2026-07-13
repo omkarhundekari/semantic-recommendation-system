@@ -83,6 +83,21 @@ export type ExecutionEvidenceSyncResponse = {
     revision: number;
     saved_at: string;
     evidence: ExecutionEvidenceItem[];
+    attributions: Array<{
+      evidence_key: string;
+      roadmap_node_id: string;
+      source:
+        | "deterministic"
+        | "semantic"
+        | "manual";
+      confidence: number;
+      rationale: string;
+      status:
+        | "suggested"
+        | "accepted"
+        | "rejected";
+      decided_at: string | null;
+    }>;
     repository: {
       provider: "github";
       owner: string;
