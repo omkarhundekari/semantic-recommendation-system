@@ -107,6 +107,127 @@ export type ExecutionEvidenceSyncResponse = {
   };
 };
 
+export type StoredExecutionEvidenceRepository =
+  ExecutionEvidenceSyncResponse["stored"] & {
+    sync_state?: ExecutionEvidenceSyncResponse["sync"]["sync_state"];
+    sync_snapshot?: ExecutionEvidenceSyncResponse["sync"]["sync_snapshot"];
+  };
+
+export function buildRestoredExecutionEvidenceResponse(
+  stored: StoredExecutionEvidenceRepository,
+): ExecutionEvidenceSyncResponse {
+  const repositoryKey =
+    stored.sync_state?.repository_key ??
+    [
+      stored.repository.provider,
+      `${stored.repository.owner}/${stored.repository.repository}`,
+    ].join(":");
+
+  const syncState =
+    stored.sync_state ?? {
+      repository_key: repositoryKey,
+      status: "succeeded" as const,
+      latest_commit_sha: null,
+      cursor: null,
+      last_attempted_at: null,
+      last_succeeded_at: stored.saved_at,
+      error_message: null,
+    };
+
+  return {
+    created: false,
+    sync: {
+      repository_key: repositoryKey,
+      status:
+        syncState.status === "failed"
+          ? "failed"
+          : "succeeded",
+      evidence: stored.evidence,
+      synced_counts: {},
+      failed_types: [],
+      errors: {},
+      sync_state: syncState,
+      sync_snapshot:
+        stored.sync_snapshot ?? {
+          repository_key: repositoryKey,
+          sources: {},
+        },
+    },
+    stored,
+  };
+}
+
+export async function loadExecutionEvidenceRepository(
+  {
+    apiBaseUrl,
+    repositoryKey,
+  }: {
+    apiBaseUrl: string;
+    repositoryKey: string;
+  },
+  fetcher: typeof fetch = fetch,
+): Promise<ExecutionEvidenceSyncResponse> {
+  const normalizedRepositoryKey =
+    repositoryKey.trim();
+
+  if (!normalizedRepositoryKey) {
+    throw new ExecutionEvidenceApiError(
+      "A repository key is required to restore execution evidence.",
+    );
+  }
+
+  const encodedRepositoryKey =
+    normalizedRepositoryKey
+      .split("/")
+      .map((segment) =>
+        encodeURIComponent(segment),
+      )
+      .join("/");
+
+  let response: Response;
+
+  try {
+    response = await fetcher(
+      `${apiBaseUrl}/v1/execution-evidence/repositories/${encodedRepositoryKey}`,
+    );
+  } catch {
+    throw new ExecutionEvidenceApiError(
+      "Could not reach the execution-evidence API.",
+    );
+  }
+
+  let payload: unknown;
+
+  try {
+    payload = await response.json();
+  } catch {
+    throw new ExecutionEvidenceApiError(
+      "The execution-evidence API returned invalid JSON.",
+      response.status,
+    );
+  }
+
+  if (!response.ok) {
+    const detail =
+      typeof payload === "object" &&
+      payload !== null &&
+      "detail" in payload &&
+      typeof payload.detail === "string"
+        ? payload.detail
+        : "The stored repository evidence could not be loaded.";
+
+    throw new ExecutionEvidenceApiError(
+      detail,
+      response.status,
+    );
+  }
+
+  return buildRestoredExecutionEvidenceResponse(
+    payload as StoredExecutionEvidenceRepository,
+  );
+}
+
+
 export class ExecutionEvidenceApiError extends Error {
   status: number | null;
 

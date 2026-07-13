@@ -14,6 +14,10 @@ import {
   vi,
 } from "vitest";
 
+import {
+  EXECUTION_EVIDENCE_REPOSITORY_KEY,
+} from "@/lib/executionEvidencePersistence";
+
 import Home from "./page";
 
 function successfulPayload() {
@@ -97,6 +101,57 @@ afterEach(() => {
 });
 
 describe("execution evidence panel", () => {
+  it("restores stored execution evidence on reload", async () => {
+    const payload = successfulPayload();
+
+    window.localStorage.setItem(
+      EXECUTION_EVIDENCE_REPOSITORY_KEY,
+      "github:owner/repository",
+    );
+
+    const fetchMock = vi.spyOn(
+      globalThis,
+      "fetch",
+    ).mockResolvedValue(
+      new Response(
+        JSON.stringify(payload.stored),
+        {
+          status: 200,
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+        },
+      ),
+    );
+
+    render(<Home />);
+
+    expect(
+      screen.getByRole("button", {
+        name: "Restoring evidence",
+      }),
+    ).toBeDisabled();
+
+    expect(
+      await screen.findByText(
+        "Add execution evidence panel",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByLabelText(
+        "Public GitHub repository URL",
+      ),
+    ).toHaveValue(
+      "https://github.com/owner/repository",
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/v1/execution-evidence/repositories/github%3Aowner/repository",
+    );
+  });
+
   it("keeps repository sync available without a planned project", () => {
     render(<Home />);
 

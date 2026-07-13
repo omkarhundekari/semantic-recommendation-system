@@ -58,6 +58,7 @@ import {
 import {
   ExecutionEvidenceApiError,
   getExecutionEvidenceCounts,
+  loadExecutionEvidenceRepository,
   syncExecutionEvidence,
   type ExecutionEvidenceItem,
   type ExecutionEvidenceSyncResponse,
@@ -67,6 +68,11 @@ import type {
   EvidenceAttribution,
 } from "@/lib/executionEvidenceAttributionApi";
 import ExecutionEvidenceAttributionControls from "@/components/ExecutionEvidenceAttributionControls";
+import {
+  readExecutionEvidenceRepositoryKey,
+  removeExecutionEvidenceRepositoryKey,
+  writeExecutionEvidenceRepositoryKey,
+} from "@/lib/executionEvidencePersistence";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -484,6 +490,22 @@ export default function Home() {
     useState("");
   const [isSyncingExecutionEvidence, setIsSyncingExecutionEvidence] =
     useState(false);
+  const [restoredExecutionEvidenceRepositoryKey] =
+    useState<string | null>(() => {
+      if (typeof window === "undefined") {
+        return null;
+      }
+
+      return readExecutionEvidenceRepositoryKey(
+        window.localStorage,
+      );
+    });
+  const [
+    isRestoringExecutionEvidence,
+    setIsRestoringExecutionEvidence,
+  ] = useState(
+    restoredExecutionEvidenceRepositoryKey !== null,
+  );
   const [result, setResult] = useState<IntelligenceResponse | null>(
     savedWorkspace?.result ?? null,
   );
@@ -550,6 +572,66 @@ export default function Home() {
 
   const [shouldScrollToHelpChooser, setShouldScrollToHelpChooser] =
     useState(false);
+
+  useEffect(() => {
+    if (!restoredExecutionEvidenceRepositoryKey) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void loadExecutionEvidenceRepository({
+      apiBaseUrl: API_BASE_URL,
+      repositoryKey:
+        restoredExecutionEvidenceRepositoryKey,
+    })
+      .then((restoredResult) => {
+        if (cancelled) {
+          return;
+        }
+
+        setExecutionEvidenceResult(
+          restoredResult,
+        );
+        setRepositoryUrl(
+          restoredResult.stored.repository
+            .canonical_url,
+        );
+      })
+      .catch((caughtError) => {
+        if (cancelled) {
+          return;
+        }
+
+        if (
+          caughtError instanceof
+            ExecutionEvidenceApiError &&
+          caughtError.status === 404
+        ) {
+          removeExecutionEvidenceRepositoryKey(
+            window.localStorage,
+          );
+          return;
+        }
+
+        setExecutionEvidenceError(
+          "Stored execution evidence could not be restored. You can continue working or synchronize the repository again.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsRestoringExecutionEvidence(
+            false,
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    restoredExecutionEvidenceRepositoryKey,
+  ]);
 
   useEffect(() => {
     if (
@@ -827,6 +909,10 @@ export default function Home() {
       });
 
       setExecutionEvidenceResult(syncResult);
+      writeExecutionEvidenceRepositoryKey(
+        window.localStorage,
+        syncResult.sync.repository_key,
+      );
     } catch (caughtError) {
       setExecutionEvidenceError(
         caughtError instanceof ExecutionEvidenceApiError
@@ -1571,10 +1657,18 @@ export default function Home() {
 
               <button
                 type="submit"
-                disabled={isSyncingExecutionEvidence}
+                disabled={
+                  isSyncingExecutionEvidence ||
+                  isRestoringExecutionEvidence
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-300/25 bg-sky-400/15 px-5 py-3 text-sm font-semibold text-sky-100 transition hover:bg-sky-400/25 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSyncingExecutionEvidence ? (
+                {isRestoringExecutionEvidence ? (
+                  <>
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Restoring evidence
+                  </>
+                ) : isSyncingExecutionEvidence ? (
                   <>
                     <LoaderCircle className="h-4 w-4 animate-spin" />
                     Syncing evidence

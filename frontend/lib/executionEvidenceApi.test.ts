@@ -210,3 +210,106 @@ describe("execution evidence API", () => {
     });
   });
 });
+
+
+describe("stored execution evidence API", () => {
+  it("loads a durable repository record", async () => {
+    const stored = successfulResponse().stored;
+
+    const fetcher = vi.fn<
+      (
+        input: RequestInfo | URL,
+        options?: RequestInit,
+      ) => Promise<Response>
+    >();
+
+    fetcher.mockResolvedValue(
+      new Response(
+        JSON.stringify(stored),
+        {
+          status: 200,
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+        },
+      ),
+    );
+
+    const {
+      loadExecutionEvidenceRepository,
+    } = await import(
+      "./executionEvidenceApi"
+    );
+
+    const result =
+      await loadExecutionEvidenceRepository(
+        {
+          apiBaseUrl:
+            "http://127.0.0.1:8000",
+          repositoryKey:
+            "github:owner/repository",
+        },
+        fetcher,
+      );
+
+    expect(result.created).toBe(false);
+    expect(result.stored).toEqual(stored);
+    expect(
+      result.sync.repository_key,
+    ).toBe("github:owner/repository");
+
+    expect(
+      String(fetcher.mock.calls[0][0]),
+    ).toBe(
+      "http://127.0.0.1:8000/v1/execution-evidence/repositories/github%3Aowner/repository",
+    );
+  });
+
+  it("surfaces a missing stored repository", async () => {
+    const fetcher = vi.fn<
+      (
+        input: RequestInfo | URL,
+        options?: RequestInit,
+      ) => Promise<Response>
+    >();
+
+    fetcher.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          detail:
+            "Repository evidence record was not found.",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+        },
+      ),
+    );
+
+    const {
+      loadExecutionEvidenceRepository,
+    } = await import(
+      "./executionEvidenceApi"
+    );
+
+    await expect(
+      loadExecutionEvidenceRepository(
+        {
+          apiBaseUrl:
+            "http://127.0.0.1:8000",
+          repositoryKey:
+            "github:owner/missing",
+        },
+        fetcher,
+      ),
+    ).rejects.toMatchObject({
+      status: 404,
+      message:
+        "Repository evidence record was not found.",
+    });
+  });
+});
