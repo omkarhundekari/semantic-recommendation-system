@@ -17,6 +17,9 @@ from execution_evidence.models import (
 from execution_evidence.snapshot import (
     GitHubRepositorySyncSnapshot,
 )
+from execution_evidence.sqlite_store import (
+    SQLiteRepositoryEvidenceStore,
+)
 from execution_evidence.store import (
     InMemoryRepositoryEvidenceStore,
     RepositoryEvidenceConflictError,
@@ -47,6 +50,7 @@ REPOSITORY_KEY = REFERENCE.repository_key
     params=[
         "in-memory",
         "json",
+        "sqlite",
     ],
 )
 def store_factory(
@@ -56,10 +60,19 @@ def store_factory(
     if request.param == "in-memory":
         return InMemoryRepositoryEvidenceStore
 
-    store_path = tmp_path / "repositories.json"
+    if request.param == "json":
+        store_path = (
+            tmp_path / "repositories.json"
+        )
 
-    return lambda: JsonRepositoryEvidenceStore(
-        store_path
+        return lambda: JsonRepositoryEvidenceStore(
+            store_path
+        )
+
+    database_path = tmp_path / "solvyn.db"
+
+    return lambda: SQLiteRepositoryEvidenceStore(
+        database_path
     )
 
 
