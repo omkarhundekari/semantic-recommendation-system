@@ -24,6 +24,7 @@ EXPECTED_TABLES = {
     "repository_sync_states",
     "repository_sync_snapshots",
     "execution_jobs",
+    "execution_evidence_import_receipts",
 }
 
 EXPECTED_INDEXES = {
@@ -34,6 +35,7 @@ EXPECTED_INDEXES = {
     "idx_attributions_evidence",
     "idx_jobs_workspace_status",
     "idx_jobs_repository_status",
+    "idx_import_receipts_source_hash",
 }
 
 
@@ -603,6 +605,76 @@ def test_existing_attributions_survive_version_two_migration(
         assert row["status"] == "accepted"
         assert row["decided_at"] == (
             "2026-07-13T12:00:00Z"
+        )
+    finally:
+        connection.close()
+
+
+def test_schema_persists_import_receipt(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        connection.execute(
+            """
+            INSERT INTO execution_evidence_import_receipts (
+                receipt_id,
+                source_type,
+                source_identifier,
+                source_root_hash,
+                canonicalization_version,
+                report_version,
+                repository_count,
+                evidence_count,
+                attribution_count,
+                deterministic_report_json,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "receipt-1",
+                "json",
+                "repositories.json",
+                "abc123",
+                1,
+                1,
+                2,
+                4,
+                1,
+                '{"verified":true}',
+                "2026-07-13T12:00:00Z",
+            ),
+        )
+
+        row = connection.execute(
+            """
+            SELECT
+                source_root_hash,
+                repository_count,
+                deterministic_report_json
+            FROM execution_evidence_import_receipts
+            WHERE receipt_id = ?
+            """,
+            ("receipt-1",),
+        ).fetchone()
+
+        assert row is not None
+        assert row["source_root_hash"] == "abc123"
+        assert row["repository_count"] == 2
+        assert (
+            row["deterministic_report_json"]
+            == '{"verified":true}'
         )
     finally:
         connection.close()

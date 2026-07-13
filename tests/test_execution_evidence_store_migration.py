@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from pathlib import Path
 
 import pytest
@@ -336,3 +337,157 @@ def test_cleanup_removes_all_sqlite_artifacts(
         assert not Path(
             f"{database_path}{suffix}"
         ).exists()
+
+
+def test_receipt_round_trip(
+    tmp_path: Path,
+):
+    from execution_evidence.store_migration import (
+        build_migration_receipt,
+        persist_migration_receipt,
+        verify_migration_receipt,
+    )
+
+    source = InMemoryRepositoryEvidenceStore()
+    source.restore([_record(revision=7)])
+
+    report = (
+        dry_run_repository_evidence_migration(
+            source=source,
+            destination_directory=tmp_path,
+        )
+    ).model_copy(
+        update={"source_type": "json"},
+        deep=True,
+    )
+
+    database_path = tmp_path / "receipt.db"
+    SQLiteRepositoryEvidenceStore(
+        database_path
+    )
+
+    receipt = build_migration_receipt(
+        report=report,
+        source_identifier="repositories.json",
+        created_at=(
+            "2026-07-13T12:00:00+00:00"
+        ),
+    )
+
+    persist_migration_receipt(
+        database_path=database_path,
+        receipt=receipt,
+    )
+    verify_migration_receipt(
+        database_path=database_path,
+        receipt=receipt,
+    )
+
+
+def test_destination_preflight_rejects_stale_sidecar(
+    tmp_path: Path,
+):
+    from execution_evidence.store_migration import (
+        assert_destination_artifacts_absent,
+    )
+
+    database_path = tmp_path / "solvyn.db"
+    Path(
+        f"{database_path}-wal"
+    ).write_text(
+        "stale",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        RepositoryEvidenceMigrationError,
+        match="already exist",
+    ):
+        assert_destination_artifacts_absent(
+            database_path
+        )
+
+
+def test_migration_lock_rejects_second_holder(
+    tmp_path: Path,
+):
+    from execution_evidence.store_migration import (
+        RepositoryEvidenceMigrationLock,
+    )
+
+    lock_path = tmp_path / "migration.lock"
+
+    with RepositoryEvidenceMigrationLock(
+        lock_path
+    ):
+        with pytest.raises(
+            RepositoryEvidenceMigrationError,
+            match="appears to be running",
+        ):
+            with RepositoryEvidenceMigrationLock(
+                lock_path
+            ):
+                pass
+
+    assert not lock_path.exists()
+
+
+def test_json_dry_run_writes_report_without_destination(
+    tmp_path: Path,
+):
+    from execution_evidence.json_store import (
+        JsonRepositoryEvidenceStore,
+    )
+    from execution_evidence.store_migration import (
+        dry_run_json_to_sqlite_migration,
+    )
+
+    source_path = tmp_path / "repositories.json"
+    destination_path = tmp_path / "solvyn.db"
+    report_path = tmp_path / "migration-report.json"
+
+    JsonRepositoryEvidenceStore(
+        source_path
+    ).restore(
+        [
+            _record(revision=0),
+            _record(
+                reference=SECOND_REFERENCE,
+                revision=9,
+                with_attribution=False,
+            ),
+        ]
+    )
+
+    report = dry_run_json_to_sqlite_migration(
+        source_path=source_path,
+        destination_path=destination_path,
+        report_path=report_path,
+        created_at=(
+            "2026-07-13T12:00:00+00:00"
+        ),
+    )
+
+    assert report.verified is True
+    assert report.source_type == "json"
+    assert report_path.exists()
+    assert not destination_path.exists()
+    assert not Path(
+        f"{destination_path}-wal"
+    ).exists()
+    assert not Path(
+        f"{destination_path}-shm"
+    ).exists()
+    assert not destination_path.with_name(
+        f".{destination_path.name}.migration.lock"
+    ).exists()
+
+    stored_report = json.loads(
+        report_path.read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert stored_report == report.model_dump(
+        mode="json"
+    )
