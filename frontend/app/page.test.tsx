@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -56,6 +57,7 @@ function readBlob(blob: Blob): Promise<string> {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -979,5 +981,59 @@ describe("workspace backup UI", () => {
         WORKSPACE_STORAGE_KEY,
       ),
     ).not.toBeNull();
+  });
+
+  it("refreshes relative save freshness as time passes", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(
+      new Date("2026-07-13T00:00:30.000Z"),
+    );
+
+    window.localStorage.setItem(
+      WORKSPACE_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Refresh save freshness over time",
+        result: {
+          status: "ready",
+          directions: [],
+        },
+        selectedDirectionId: null,
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {},
+        decisionAnswers: {},
+        completedGuidedStepIds: [],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-13T00:00:00.000Z",
+      }),
+    );
+
+    const { unmount } = render(<Home />);
+
+    expect(
+      screen.getByText("Saved just now"),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
+    expect(
+      screen.getByText("Saved just now"),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
+
+    expect(
+      screen.getByText("Saved 1 min ago"),
+    ).toBeInTheDocument();
+
+    unmount();
+
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

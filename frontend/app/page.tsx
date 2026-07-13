@@ -510,6 +510,8 @@ export default function Home() {
     useState<string | null>(
       savedWorkspace?.savedAt ?? null,
     );
+  const [workspaceFreshnessNow, setWorkspaceFreshnessNow] =
+    useState(() => new Date());
   const [workspaceTransferFeedback, setWorkspaceTransferFeedback] =
     useState<WorkspaceTransferFeedback>(null);
   const [pendingImportedWorkspace, setPendingImportedWorkspace] =
@@ -529,6 +531,26 @@ export default function Home() {
 
   const [shouldScrollToHelpChooser, setShouldScrollToHelpChooser] =
     useState(false);
+
+  useEffect(() => {
+    if (
+      workspaceSaveStatus !== "saved" ||
+      !lastWorkspaceSavedAt
+    ) {
+      return;
+    }
+
+    const freshnessInterval = window.setInterval(() => {
+      setWorkspaceFreshnessNow(new Date());
+    }, 60_000);
+
+    return () => {
+      window.clearInterval(freshnessInterval);
+    };
+  }, [
+    workspaceSaveStatus,
+    lastWorkspaceSavedAt,
+  ]);
 
   const createCurrentWorkspaceSnapshot = useCallback(
     (
@@ -585,6 +607,7 @@ export default function Home() {
 
       if (saved) {
         setLastWorkspaceSavedAt(savedAt);
+        setWorkspaceFreshnessNow(new Date(savedAt));
         setWorkspaceSaveStatus("saved");
       } else {
         setWorkspaceSaveStatus("error");
@@ -1037,6 +1060,7 @@ export default function Home() {
     setAdaptationDecisions(workspace.adaptationDecisions);
     setAdaptationEvidence(workspace.adaptationEvidence);
     setLastWorkspaceSavedAt(workspace.savedAt);
+    setWorkspaceFreshnessNow(new Date());
   }
 
   function applyImportedWorkspace(
@@ -1124,7 +1148,10 @@ export default function Home() {
   }
 
   const workspaceSaveFreshness =
-    formatWorkspaceSaveFreshness(lastWorkspaceSavedAt);
+    formatWorkspaceSaveFreshness(
+      lastWorkspaceSavedAt,
+      workspaceFreshnessNow,
+    );
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#07111f] text-slate-100">
