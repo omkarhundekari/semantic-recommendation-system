@@ -56,14 +56,26 @@ from schemas.product_models import (
 from source_router import retrieve_evidence
 
 from execution_evidence.api_models import (
+    EvidenceAttributionAttachRequest,
+    EvidenceAttributionDetachRequest,
+    EvidenceAttributionDetachResponse,
     RepositoryEvidenceSyncRequest,
 )
 from execution_evidence.coordinator import (
     StatefulGitHubSyncCoordinator,
     StatefulGitHubSyncResult,
 )
+from execution_evidence.attribution import (
+    AttributionMutationResult,
+    EvidenceAttributionService,
+    ExecutionEvidenceNotFoundError,
+    RepositoryEvidenceNotFoundError,
+)
 from execution_evidence.github_client import (
     GitHubExecutionEvidenceClient,
+)
+from execution_evidence.models import (
+    EvidenceAttribution,
 )
 from execution_evidence.service import (
     GitHubExecutionEvidenceService,
@@ -149,6 +161,13 @@ def get_execution_evidence_coordinator(
 
     return StatefulGitHubSyncCoordinator(
         service=service,
+        store=get_execution_evidence_store(),
+    )
+
+
+def get_execution_evidence_attribution_service(
+) -> EvidenceAttributionService:
+    return EvidenceAttributionService(
         store=get_execution_evidence_store(),
     )
 
@@ -416,6 +435,102 @@ def sync_execution_evidence_repository(
     except ValueError as error:
         raise HTTPException(
             status_code=422,
+            detail=str(error),
+        ) from error
+
+
+@app.post(
+    "/v1/execution-evidence/attributions",
+    response_model=AttributionMutationResult,
+)
+def attach_execution_evidence_attribution(
+    request: EvidenceAttributionAttachRequest,
+    service: EvidenceAttributionService = Depends(
+        get_execution_evidence_attribution_service
+    ),
+) -> AttributionMutationResult:
+    try:
+        return service.attach(
+            repository_key=request.repository_key,
+            evidence_key=request.evidence_key,
+            roadmap_node_id=request.roadmap_node_id,
+            rationale=request.rationale,
+            decided_at=datetime.now(timezone.utc),
+            expected_revision=request.expected_revision,
+        )
+    except (
+        RepositoryEvidenceNotFoundError,
+        ExecutionEvidenceNotFoundError,
+    ) as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        ) from error
+    except RepositoryEvidenceConflictError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+
+
+@app.delete(
+    "/v1/execution-evidence/attributions",
+    response_model=EvidenceAttributionDetachResponse,
+)
+def detach_execution_evidence_attribution(
+    request: EvidenceAttributionDetachRequest,
+    service: EvidenceAttributionService = Depends(
+        get_execution_evidence_attribution_service
+    ),
+) -> EvidenceAttributionDetachResponse:
+    try:
+        removed = service.detach(
+            repository_key=request.repository_key,
+            evidence_key=request.evidence_key,
+            roadmap_node_id=request.roadmap_node_id,
+            removed_at=datetime.now(timezone.utc),
+            expected_revision=request.expected_revision,
+        )
+    except RepositoryEvidenceNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        ) from error
+    except RepositoryEvidenceConflictError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+
+    return EvidenceAttributionDetachResponse(
+        removed=removed,
+    )
+
+
+@app.get(
+    "/v1/execution-evidence/attributions",
+    response_model=List[EvidenceAttribution],
+)
+def list_execution_evidence_attributions(
+    repository_key: str,
+    roadmap_node_id: Optional[str] = None,
+    service: EvidenceAttributionService = Depends(
+        get_execution_evidence_attribution_service
+    ),
+) -> List[EvidenceAttribution]:
+    try:
+        if roadmap_node_id is not None:
+            return service.list_for_roadmap_node(
+                repository_key=repository_key,
+                roadmap_node_id=roadmap_node_id,
+            )
+
+        return service.list_for_repository(
+            repository_key
+        )
+    except RepositoryEvidenceNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
             detail=str(error),
         ) from error
 
