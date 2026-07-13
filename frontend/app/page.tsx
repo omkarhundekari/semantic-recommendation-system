@@ -55,6 +55,13 @@ import {
 import {
   formatWorkspaceSaveFreshness,
 } from "@/lib/workspaceSaveFreshness";
+import {
+  ExecutionEvidenceApiError,
+  getExecutionEvidenceCounts,
+  syncExecutionEvidence,
+  type ExecutionEvidenceSyncResponse,
+  type ExecutionEvidenceType,
+} from "@/lib/executionEvidenceApi";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -465,6 +472,13 @@ export default function Home() {
   const [timeAvailable, setTimeAvailable] = useState("3 weeks");
   const [targetRole, setTargetRole] = useState("");
   const [preferredStack, setPreferredStack] = useState("");
+  const [repositoryUrl, setRepositoryUrl] = useState("");
+  const [executionEvidenceResult, setExecutionEvidenceResult] =
+    useState<ExecutionEvidenceSyncResponse | null>(null);
+  const [executionEvidenceError, setExecutionEvidenceError] =
+    useState("");
+  const [isSyncingExecutionEvidence, setIsSyncingExecutionEvidence] =
+    useState(false);
   const [result, setResult] = useState<IntelligenceResponse | null>(
     savedWorkspace?.result ?? null,
   );
@@ -790,6 +804,32 @@ export default function Home() {
       );
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function syncRepositoryExecutionEvidence(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+    setExecutionEvidenceError("");
+    setExecutionEvidenceResult(null);
+    setIsSyncingExecutionEvidence(true);
+
+    try {
+      const syncResult = await syncExecutionEvidence({
+        apiBaseUrl: API_BASE_URL,
+        repositoryUrl,
+      });
+
+      setExecutionEvidenceResult(syncResult);
+    } catch (caughtError) {
+      setExecutionEvidenceError(
+        caughtError instanceof ExecutionEvidenceApiError
+          ? caughtError.message
+          : "The repository could not be synchronized.",
+      );
+    } finally {
+      setIsSyncingExecutionEvidence(false);
     }
   }
 
@@ -1457,6 +1497,223 @@ export default function Home() {
             <span>Three distinct directions, not a generic list.</span>
           </div>
         </motion.div>
+
+        <section
+          aria-labelledby="execution-evidence-title"
+          className="border-t border-white/10 py-12"
+        >
+          <div className="rounded-[2rem] border border-white/10 bg-slate-950/45 p-6 shadow-2xl shadow-sky-950/20 backdrop-blur-xl sm:p-8">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-100">
+                  <GitBranch className="h-3.5 w-3.5" />
+                  Execution evidence
+                </div>
+
+                <h2
+                  id="execution-evidence-title"
+                  className="mt-4 text-2xl font-semibold tracking-tight text-white"
+                >
+                  Ground your roadmap in real repository activity
+                </h2>
+
+                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400">
+                  Connect a public GitHub repository to collect commits, pull
+                  requests, releases, and workflow runs as traceable proof of
+                  execution.
+                </p>
+              </div>
+
+              {executionEvidenceResult && (
+                <span
+                  className={`w-fit rounded-full border px-3 py-1.5 text-xs font-medium ${
+                    executionEvidenceResult.sync.status === "succeeded"
+                      ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-100"
+                      : executionEvidenceResult.sync.status ===
+                          "partially_succeeded"
+                        ? "border-amber-300/20 bg-amber-400/10 text-amber-100"
+                        : "border-rose-300/20 bg-rose-400/10 text-rose-100"
+                  }`}
+                >
+                  {executionEvidenceResult.sync.status === "succeeded"
+                    ? "Sync completed"
+                    : executionEvidenceResult.sync.status ===
+                        "partially_succeeded"
+                      ? "Sync partially completed"
+                      : "Sync failed"}
+                </span>
+              )}
+            </div>
+
+            <form
+              onSubmit={syncRepositoryExecutionEvidence}
+              className="mt-7 flex flex-col gap-3 sm:flex-row"
+            >
+              <label className="flex-1">
+                <span className="sr-only">
+                  Public GitHub repository URL
+                </span>
+                <input
+                  value={repositoryUrl}
+                  onChange={(event) =>
+                    setRepositoryUrl(event.target.value)
+                  }
+                  placeholder="https://github.com/owner/repository"
+                  aria-label="Public GitHub repository URL"
+                  className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-sky-300/40"
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={isSyncingExecutionEvidence}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-300/25 bg-sky-400/15 px-5 py-3 text-sm font-semibold text-sky-100 transition hover:bg-sky-400/25 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSyncingExecutionEvidence ? (
+                  <>
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Syncing evidence
+                  </>
+                ) : (
+                  <>
+                    <GitBranch className="h-4 w-4" />
+                    Sync execution evidence
+                  </>
+                )}
+              </button>
+            </form>
+
+            {executionEvidenceError && (
+              <div
+                role="alert"
+                className="mt-4 flex items-start gap-2 rounded-2xl border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                {executionEvidenceError}
+              </div>
+            )}
+
+            {executionEvidenceResult && (() => {
+              const counts = getExecutionEvidenceCounts(
+                executionEvidenceResult,
+              );
+              const evidenceLabels: Record<
+                ExecutionEvidenceType,
+                string
+              > = {
+                commit: "Commits",
+                pull_request: "Pull requests",
+                release: "Releases",
+                workflow_run: "Workflow runs",
+              };
+              const recentEvidence =
+                executionEvidenceResult.stored.evidence.slice(0, 5);
+
+              return (
+                <div className="mt-7">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {(
+                      Object.keys(
+                        evidenceLabels,
+                      ) as ExecutionEvidenceType[]
+                    ).map((evidenceType) => (
+                      <div
+                        key={evidenceType}
+                        className="rounded-2xl border border-white/10 bg-white/[0.035] p-4"
+                      >
+                        <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
+                          {evidenceLabels[evidenceType]}
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold text-white">
+                          {counts[evidenceType]}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {executionEvidenceResult.sync.failed_types.length > 0 && (
+                    <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+                      Some evidence sources could not be synchronized:{" "}
+                      {executionEvidenceResult.sync.failed_types
+                        .map(
+                          (evidenceType) =>
+                            evidenceLabels[evidenceType],
+                        )
+                        .join(", ")}
+                      .
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">
+                        Recent evidence
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {
+                          executionEvidenceResult.stored.repository
+                            .owner
+                        }
+                        /
+                        {
+                          executionEvidenceResult.stored.repository
+                            .repository
+                        }{" "}
+                        · revision{" "}
+                        {executionEvidenceResult.stored.revision}
+                      </p>
+                    </div>
+
+                    <a
+                      href={
+                        executionEvidenceResult.stored.repository
+                          .canonical_url
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-medium text-sky-300 transition hover:text-sky-200"
+                    >
+                      Open repository
+                    </a>
+                  </div>
+
+                  {recentEvidence.length > 0 ? (
+                    <div className="mt-3 divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
+                      {recentEvidence.map((item) => (
+                        <a
+                          key={`${item.evidence_type}:${item.external_id}`}
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-start justify-between gap-4 bg-white/[0.025] px-4 py-3 transition hover:bg-white/[0.05]"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-slate-100">
+                              {item.title}
+                            </p>
+                            <p className="mt-1 text-xs capitalize text-slate-500">
+                              {item.evidence_type.replaceAll(
+                                "_",
+                                " ",
+                              )}
+                            </p>
+                          </div>
+
+                          <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-500" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-4 text-sm text-slate-400">
+                      The repository synchronized successfully, but no
+                      supported execution evidence was returned.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </section>
 
         {result && result.status !== "ready" && (
           <section
