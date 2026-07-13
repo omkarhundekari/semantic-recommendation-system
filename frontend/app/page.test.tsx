@@ -637,11 +637,15 @@ describe("workspace backup UI", () => {
       new Date("2026-07-12T18:00:00.000Z"),
     );
 
-    expect(
-      screen.getByText(
-        `Saved locally · ${restoredSaveTime}`,
-      ),
-    ).toBeInTheDocument();
+    const restoredStatus = screen.getByText(
+      `Saved at ${restoredSaveTime}`,
+    );
+
+    expect(restoredStatus).toBeInTheDocument();
+    expect(restoredStatus).toHaveAttribute(
+      "title",
+      expect.stringMatching(/^Last saved /),
+    );
 
     expect(
       screen.queryByText(
@@ -961,7 +965,7 @@ describe("workspace backup UI", () => {
       () => {
         expect(
           screen.getByText(
-            /^Saved locally · /,
+            "Saved just now",
           ),
         ).toBeInTheDocument();
       },

@@ -52,6 +52,9 @@ import {
 import {
   sanitizeWorkspaceReferences,
 } from "@/lib/workspaceReferenceSanitizer";
+import {
+  formatWorkspaceSaveFreshness,
+} from "@/lib/workspaceSaveFreshness";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -259,23 +262,6 @@ type WorkspaceTransferFeedback = {
   status: "success" | "error";
   message: string;
 } | null;
-
-function formatWorkspaceSaveTime(savedAt: string | null): string | null {
-  if (!savedAt) {
-    return null;
-  }
-
-  const savedDate = new Date(savedAt);
-
-  if (Number.isNaN(savedDate.getTime())) {
-    return null;
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(savedDate);
-}
 
 function readSavedWorkspace(): SavedWorkspace | null {
   if (typeof window === "undefined") {
@@ -1137,6 +1123,9 @@ export default function Home() {
     resetWorkspacePresentationState();
   }
 
+  const workspaceSaveFreshness =
+    formatWorkspaceSaveFreshness(lastWorkspaceSavedAt);
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#07111f] text-slate-100">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(56,189,248,0.16),transparent_34%),radial-gradient(circle_at_88%_78%,rgba(129,140,248,0.12),transparent_28%),radial-gradient(circle_at_8%_86%,rgba(16,185,129,0.08),transparent_25%)]" />
@@ -1172,6 +1161,12 @@ export default function Home() {
                 <span
                   role="status"
                   aria-live="polite"
+                  title={
+                    workspaceSaveStatus === "saved" &&
+                    workspaceSaveFreshness
+                      ? `Last saved ${workspaceSaveFreshness.exactTimestamp}`
+                      : undefined
+                  }
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
                     workspaceSaveStatus === "error"
                       ? "border-rose-300/20 bg-rose-400/10 text-rose-200"
@@ -1192,15 +1187,8 @@ export default function Home() {
                     ? "Unable to save locally"
                     : workspaceSaveStatus === "saving"
                       ? "Saving..."
-                      : `Saved locally${
-                          formatWorkspaceSaveTime(
-                            lastWorkspaceSavedAt,
-                          )
-                            ? ` · ${formatWorkspaceSaveTime(
-                                lastWorkspaceSavedAt,
-                              )}`
-                            : ""
-                        }`}
+                      : workspaceSaveFreshness?.label ??
+                        "Saved locally"}
                 </span>
               )}
 
