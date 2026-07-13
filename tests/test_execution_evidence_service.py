@@ -405,3 +405,177 @@ def test_service_rejects_mismatched_repository_state():
             ),
             observed_at=OBSERVED_AT,
         )
+
+
+def test_service_uses_snapshot_etags_and_returns_updated_snapshot():
+    from execution_evidence.snapshot import (
+        GitHubRepositorySyncSnapshot,
+        GitHubSourceSyncSnapshot,
+    )
+
+    previous_snapshot = GitHubRepositorySyncSnapshot(
+        repository_key=REPOSITORY_KEY,
+        sources={
+            "commit": GitHubSourceSyncSnapshot(
+                status="succeeded",
+                etag='"old-commit-etag"',
+            ),
+            "pull_request": GitHubSourceSyncSnapshot(
+                status="succeeded",
+                etag='"old-pr-etag"',
+            ),
+        },
+    )
+
+    client = FakeGitHubClient(
+        results={
+            "commit": GitHubFetchResult(
+                payloads=[_commit_payload("abc123")],
+                etag='"new-commit-etag"',
+                pages_fetched=1,
+            ),
+            "pull_request": GitHubFetchResult(
+                not_modified=True,
+                etag='"old-pr-etag"',
+            ),
+        }
+    )
+
+    service = GitHubExecutionEvidenceService(
+        client=client
+    )
+
+    result = service.sync_repository(
+        repository_url=REPOSITORY_URL,
+        existing_evidence=[],
+        previous_state=None,
+        previous_snapshot=previous_snapshot,
+        observed_at=OBSERVED_AT,
+    )
+
+    calls = {
+        call["evidence_type"]: call
+        for call in client.calls
+    }
+
+    assert (
+        calls["commit"]["etag"]
+        == '"old-commit-etag"'
+    )
+    assert (
+        calls["pull_request"]["etag"]
+        == '"old-pr-etag"'
+    )
+
+    assert result.sync_snapshot is not None
+    assert (
+        result.sync_snapshot.sources["commit"].etag
+        == '"new-commit-etag"'
+    )
+    assert (
+        result.sync_snapshot.sources["commit"].status
+        == "succeeded"
+    )
+    assert (
+        result.sync_snapshot.sources["pull_request"].status
+        == "not_modified"
+    )
+    assert (
+        result.sync_snapshot.sources["pull_request"].etag
+        == '"old-pr-etag"'
+    )
+
+
+def test_service_snapshot_records_rate_limit_failure():
+    from execution_evidence.github_client import (
+        GitHubRateLimit,
+    )
+    from execution_evidence.snapshot import (
+        GitHubRepositorySyncSnapshot,
+        GitHubSourceSyncSnapshot,
+    )
+
+    previous_success = datetime.fromisoformat(
+        "2026-07-12T12:00:00+00:00"
+    )
+
+    previous_snapshot = GitHubRepositorySyncSnapshot(
+        repository_key=REPOSITORY_KEY,
+        sources={
+            "workflow_run": GitHubSourceSyncSnapshot(
+                status="succeeded",
+                etag='"workflow-etag"',
+                last_attempted_at=previous_success,
+                last_succeeded_at=previous_success,
+            )
+        },
+    )
+
+    client = FakeGitHubClient(
+        errors={
+            "workflow_run": GitHubClientError(
+                "GitHub rate limit exceeded.",
+                status_code=403,
+                rate_limit=GitHubRateLimit(
+                    remaining=0,
+                    reset_epoch=1783900000,
+                ),
+            )
+        }
+    )
+
+    service = GitHubExecutionEvidenceService(
+        client=client
+    )
+
+    result = service.sync_repository(
+        repository_url=REPOSITORY_URL,
+        existing_evidence=[],
+        previous_state=None,
+        previous_snapshot=previous_snapshot,
+        observed_at=OBSERVED_AT,
+    )
+
+    assert result.sync_snapshot is not None
+
+    source = result.sync_snapshot.sources[
+        "workflow_run"
+    ]
+
+    assert source.status == "failed"
+    assert source.etag == '"workflow-etag"'
+    assert source.last_attempted_at == OBSERVED_AT
+    assert source.last_succeeded_at == previous_success
+    assert source.rate_limit.remaining == 0
+    assert (
+        source.error_message
+        == "GitHub rate limit exceeded."
+    )
+
+
+def test_service_rejects_mismatched_repository_snapshot():
+    from execution_evidence.snapshot import (
+        GitHubRepositorySyncSnapshot,
+    )
+
+    service = GitHubExecutionEvidenceService(
+        client=FakeGitHubClient()
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="snapshot does not match",
+    ):
+        service.sync_repository(
+            repository_url=REPOSITORY_URL,
+            existing_evidence=[],
+            previous_state=None,
+            previous_snapshot=(
+                GitHubRepositorySyncSnapshot(
+                    repository_key=(
+                        "github:other/repository"
+                    ),
+                )
+            ),
+            observed_at=OBSERVED_AT,
+        )

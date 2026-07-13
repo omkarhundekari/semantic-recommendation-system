@@ -11,6 +11,9 @@ from execution_evidence.models import (
     ExecutionEvidenceItem,
     RepositorySyncState,
 )
+from execution_evidence.snapshot import (
+    GitHubRepositorySyncSnapshot,
+)
 
 
 BatchStatus = Literal["succeeded", "failed"]
@@ -43,6 +46,9 @@ class GitHubSyncResult(BaseModel):
     ]
     evidence: List[ExecutionEvidenceItem]
     sync_state: RepositorySyncState
+    sync_snapshot: Optional[
+        GitHubRepositorySyncSnapshot
+    ] = None
     synced_counts: Dict[EvidenceType, int]
     failed_types: List[EvidenceType]
     errors: Dict[EvidenceType, str]
@@ -57,6 +63,9 @@ def apply_github_sync(
     attempted_at: datetime,
     latest_commit_sha: Optional[str] = None,
     cursor: Optional[str] = None,
+    sync_snapshot: Optional[
+        GitHubRepositorySyncSnapshot
+    ] = None,
 ) -> GitHubSyncResult:
     batch_list = list(batches)
 
@@ -140,6 +149,7 @@ def apply_github_sync(
         status=overall_status,
         evidence=merged_evidence,
         sync_state=sync_state,
+        sync_snapshot=sync_snapshot,
         synced_counts=synced_counts,
         failed_types=[
             batch.evidence_type

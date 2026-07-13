@@ -7,6 +7,7 @@ from execution_evidence.github_client import (
     GitHubClientError,
     GitHubExecutionEvidenceClient,
     GitHubFetchResult,
+    GitHubRateLimit,
 )
 from execution_evidence.github_normalization import (
     GitHubPayloadError,
@@ -19,6 +20,11 @@ from execution_evidence.models import (
     EvidenceType,
     ExecutionEvidenceItem,
     RepositorySyncState,
+)
+from execution_evidence.snapshot import (
+    GitHubRepositorySyncSnapshot,
+    GitHubSourceSyncObservation,
+    update_github_sync_snapshot,
 )
 from execution_evidence.sync import (
     GitHubSyncBatch,
@@ -42,6 +48,9 @@ class GitHubExecutionEvidenceService:
         existing_evidence: Iterable[ExecutionEvidenceItem],
         previous_state: Optional[RepositorySyncState],
         observed_at: datetime,
+        previous_snapshot: Optional[
+            GitHubRepositorySyncSnapshot
+        ] = None,
         etags: Optional[Dict[EvidenceType, str]] = None,
         since: Optional[str] = None,
     ) -> GitHubSyncResult:
@@ -51,14 +60,30 @@ class GitHubExecutionEvidenceService:
         state = previous_state or RepositorySyncState(
             repository_key=repository_key,
         )
+        snapshot = (
+            previous_snapshot
+            or GitHubRepositorySyncSnapshot(
+                repository_key=repository_key,
+            )
+        )
 
         if state.repository_key != repository_key:
             raise ValueError(
-                "Repository sync state does not match the requested repository."
+                "Repository sync state does not match "
+                "the requested repository."
             )
 
-        etag_map = etags or {}
+        if snapshot.repository_key != repository_key:
+            raise ValueError(
+                "Repository sync snapshot does not match "
+                "the requested repository."
+            )
+
+        etag_map = snapshot.etags()
+        etag_map.update(etags or {})
+
         batches = []
+        observations = []
 
         fetchers = {
             "commit": lambda: self._client.fetch_commits(
@@ -66,23 +91,29 @@ class GitHubExecutionEvidenceService:
                 etag=etag_map.get("commit"),
                 since=since,
             ),
-            "pull_request": lambda: self._client.fetch_pull_requests(
-                reference,
-                etag=etag_map.get("pull_request"),
+            "pull_request": (
+                lambda: self._client.fetch_pull_requests(
+                    reference,
+                    etag=etag_map.get("pull_request"),
+                )
             ),
             "release": lambda: self._client.fetch_releases(
                 reference,
                 etag=etag_map.get("release"),
             ),
-            "workflow_run": lambda: self._client.fetch_workflow_runs(
-                reference,
-                etag=etag_map.get("workflow_run"),
+            "workflow_run": (
+                lambda: self._client.fetch_workflow_runs(
+                    reference,
+                    etag=etag_map.get("workflow_run"),
+                )
             ),
         }
 
         latest_commit_sha = state.latest_commit_sha
 
         for evidence_type, fetcher in fetchers.items():
+            fetch_result = None
+
             try:
                 fetch_result = fetcher()
                 batch = self._build_batch(
@@ -91,8 +122,32 @@ class GitHubExecutionEvidenceService:
                     fetch_result=fetch_result,
                     observed_at=observed_at,
                 )
+                observation = GitHubSourceSyncObservation(
+                    evidence_type=evidence_type,
+                    status=(
+                        "not_modified"
+                        if fetch_result.not_modified
+                        else "succeeded"
+                    ),
+                    observed_at=observed_at,
+                    etag=fetch_result.etag,
+                    pages_fetched=fetch_result.pages_fetched,
+                    rate_limit=fetch_result.rate_limit,
+                )
+            except GitHubClientError as error:
+                batch = GitHubSyncBatch(
+                    evidence_type=evidence_type,
+                    status="failed",
+                    error_message=str(error),
+                )
+                observation = GitHubSourceSyncObservation(
+                    evidence_type=evidence_type,
+                    status="failed",
+                    observed_at=observed_at,
+                    error_message=str(error),
+                    rate_limit=error.rate_limit,
+                )
             except (
-                GitHubClientError,
                 GitHubPayloadError,
                 ValueError,
             ) as error:
@@ -101,12 +156,42 @@ class GitHubExecutionEvidenceService:
                     status="failed",
                     error_message=str(error),
                 )
+                observation = GitHubSourceSyncObservation(
+                    evidence_type=evidence_type,
+                    status="failed",
+                    observed_at=observed_at,
+                    error_message=str(error),
+                    etag=(
+                        fetch_result.etag
+                        if fetch_result
+                        else None
+                    ),
+                    pages_fetched=(
+                        fetch_result.pages_fetched
+                        if fetch_result
+                        else 0
+                    ),
+                    rate_limit=(
+                        fetch_result.rate_limit
+                        if fetch_result
+                        else GitHubRateLimit()
+                    ),
+                )
 
             batches.append(batch)
+            observations.append(observation)
 
-            if evidence_type == "commit" and batch.status == "succeeded":
-                if batch.items:
-                    latest_commit_sha = batch.items[0].external_id
+            if (
+                evidence_type == "commit"
+                and batch.status == "succeeded"
+                and batch.items
+            ):
+                latest_commit_sha = batch.items[0].external_id
+
+        updated_snapshot = update_github_sync_snapshot(
+            previous=snapshot,
+            observations=observations,
+        )
 
         return apply_github_sync(
             repository_key=repository_key,
@@ -116,6 +201,7 @@ class GitHubExecutionEvidenceService:
             attempted_at=observed_at,
             latest_commit_sha=latest_commit_sha,
             cursor=since,
+            sync_snapshot=updated_snapshot,
         )
 
     @staticmethod
