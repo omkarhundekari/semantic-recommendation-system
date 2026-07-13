@@ -86,6 +86,7 @@ from execution_evidence.json_store import (
 from execution_evidence.store import (
     RepositoryEvidenceConflictError,
     RepositoryEvidenceStore,
+    StoredRepositoryEvidence,
 )
 
 
@@ -409,6 +410,29 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
         options.append("Help me choose")
 
     return options
+
+
+@app.get(
+    "/v1/execution-evidence/repositories/{repository_key:path}",
+    response_model=StoredRepositoryEvidence,
+)
+def get_execution_evidence_repository(
+    repository_key: str,
+    store: RepositoryEvidenceStore = Depends(
+        get_execution_evidence_store
+    ),
+) -> StoredRepositoryEvidence:
+    record = store.load(repository_key)
+
+    if record is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Repository evidence record was not found."
+            ),
+        )
+
+    return record
 
 
 @app.post(

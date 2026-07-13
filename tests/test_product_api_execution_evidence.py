@@ -237,3 +237,115 @@ def test_sync_endpoint_requires_repository_url(
     )
 
     assert response.status_code == 422
+
+
+class FakeRepositoryEvidenceStore:
+    def __init__(
+        self,
+        *,
+        record=None,
+    ):
+        self.record = record
+        self.load_calls = []
+
+    def load(self, repository_key):
+        self.load_calls.append(repository_key)
+        return self.record
+
+
+def test_repository_endpoint_returns_stored_evidence(
+    client,
+):
+    record = _successful_result().stored
+    store = FakeRepositoryEvidenceStore(
+        record=record,
+    )
+
+    from product_api import (
+        get_execution_evidence_store,
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_store
+    ] = lambda: store
+
+    response = client.get(
+        (
+            "/v1/execution-evidence/repositories/"
+            "github:omkarhundekari/"
+            "semantic-recommendation-system"
+        )
+    )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+
+    assert payload["revision"] == 0
+    assert payload["repository"]["owner"] == (
+        "omkarhundekari"
+    )
+    assert payload["evidence"][0]["external_id"] == (
+        "abc123"
+    )
+    assert payload["attributions"] == []
+
+    assert store.load_calls == [
+        (
+            "github:omkarhundekari/"
+            "semantic-recommendation-system"
+        )
+    ]
+
+
+def test_repository_endpoint_maps_missing_record_to_404(
+    client,
+):
+    store = FakeRepositoryEvidenceStore()
+
+    from product_api import (
+        get_execution_evidence_store,
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_store
+    ] = lambda: store
+
+    response = client.get(
+        (
+            "/v1/execution-evidence/repositories/"
+            "github:owner/missing"
+        )
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": (
+            "Repository evidence record was not found."
+        )
+    }
+
+
+def test_repository_endpoint_preserves_repository_key_path(
+    client,
+):
+    store = FakeRepositoryEvidenceStore()
+
+    from product_api import (
+        get_execution_evidence_store,
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_store
+    ] = lambda: store
+
+    client.get(
+        (
+            "/v1/execution-evidence/repositories/"
+            "github:MixedCase/Repository"
+        )
+    )
+
+    assert store.load_calls == [
+        "github:MixedCase/Repository"
+    ]
