@@ -291,3 +291,68 @@ describe("execution evidence attribution controls", () => {
     );
   });
 });
+
+
+describe("execution evidence attribution stage availability", () => {
+  it("removes already-linked stages from the selector", () => {
+    render(
+      <ExecutionEvidenceAttributionControls
+        apiBaseUrl="http://127.0.0.1:8000"
+        repositoryKey="github:owner/repository"
+        revision={1}
+        evidence={EVIDENCE}
+        roadmapStages={STAGES}
+        attributions={[ATTRIBUTION]}
+        onAttributionsChanged={vi.fn()}
+      />,
+    );
+
+    const selector =
+      screen.getByLabelText(
+        "Roadmap stage for Implement repository attribution",
+      );
+
+    expect(selector).not.toHaveTextContent(
+      "Build the MVP",
+    );
+    expect(selector).toHaveTextContent(
+      "Validate the system",
+    );
+  });
+
+  it("shows complete-link feedback when every stage is linked", () => {
+    const validateAttribution: EvidenceAttribution =
+      {
+        ...ATTRIBUTION,
+        roadmap_node_id:
+          "validate-system",
+      };
+
+    render(
+      <ExecutionEvidenceAttributionControls
+        apiBaseUrl="http://127.0.0.1:8000"
+        repositoryKey="github:owner/repository"
+        revision={2}
+        evidence={EVIDENCE}
+        roadmapStages={STAGES}
+        attributions={[
+          ATTRIBUTION,
+          validateAttribution,
+        ]}
+        onAttributionsChanged={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "This evidence is linked to every roadmap stage.",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("button", {
+        name: "Attach to stage",
+      }),
+    ).not.toBeInTheDocument();
+  });
+});

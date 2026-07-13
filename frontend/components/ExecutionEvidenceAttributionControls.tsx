@@ -70,6 +70,32 @@ export default function ExecutionEvidenceAttributionControls({
     ],
   );
 
+  const linkedStageIds = useMemo(
+    () =>
+      new Set(
+        linkedAttributions.map(
+          (attribution) =>
+            attribution.roadmap_node_id,
+        ),
+      ),
+    [linkedAttributions],
+  );
+
+  const availableRoadmapStages =
+    useMemo(
+      () =>
+        roadmapStages.filter(
+          (stage) =>
+            !linkedStageIds.has(
+              stage.id,
+            ),
+        ),
+      [
+        roadmapStages,
+        linkedStageIds,
+      ],
+    );
+
   const [selectedStageId, setSelectedStageId] =
     useState("");
   const [error, setError] = useState("");
@@ -164,51 +190,62 @@ export default function ExecutionEvidenceAttributionControls({
 
   return (
     <div className="mt-3 border-t border-white/10 pt-3">
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <label className="flex-1">
-          <span className="sr-only">
-            Roadmap stage for {evidence.title}
-          </span>
+      {availableRoadmapStages.length > 0 ? (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <label className="flex-1">
+            <span className="sr-only">
+              Roadmap stage for {evidence.title}
+            </span>
 
-          <select
-            value={selectedStageId}
-            onChange={(event) =>
-              setSelectedStageId(
-                event.target.value,
-              )
-            }
-            aria-label={`Roadmap stage for ${evidence.title}`}
-            className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs text-slate-200 outline-none"
-          >
-            <option value="">
-              Choose roadmap stage
-            </option>
-
-            {roadmapStages.map((stage) => (
-              <option
-                key={stage.id}
-                value={stage.id}
-              >
-                {stage.title}
+            <select
+              value={selectedStageId}
+              onChange={(event) =>
+                setSelectedStageId(
+                  event.target.value,
+                )
+              }
+              aria-label={`Roadmap stage for ${evidence.title}`}
+              className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs text-slate-200 outline-none"
+            >
+              <option value="">
+                Choose roadmap stage
               </option>
-            ))}
-          </select>
-        </label>
 
-        <button
-          type="button"
-          onClick={() => {
-            void attachSelectedStage();
-          }}
-          disabled={pendingStageId !== null}
-          className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {pendingStageId === selectedStageId &&
-          selectedStageId
-            ? "Attaching..."
-            : "Attach to stage"}
-        </button>
-      </div>
+              {availableRoadmapStages.map(
+                (stage) => (
+                  <option
+                    key={stage.id}
+                    value={stage.id}
+                  >
+                    {stage.title}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            onClick={() => {
+              void attachSelectedStage();
+            }}
+            disabled={
+              pendingStageId !== null
+            }
+            className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {pendingStageId ===
+              selectedStageId &&
+            selectedStageId
+              ? "Attaching..."
+              : "Attach to stage"}
+          </button>
+        </div>
+      ) : (
+        <p className="text-xs leading-5 text-emerald-200">
+          This evidence is linked to every roadmap stage.
+        </p>
+      )}
 
       {linkedAttributions.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
