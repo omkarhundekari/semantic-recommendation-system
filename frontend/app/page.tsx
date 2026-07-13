@@ -68,6 +68,10 @@ import type {
   EvidenceAttribution,
 } from "@/lib/executionEvidenceAttributionApi";
 import ExecutionEvidenceAttributionControls from "@/components/ExecutionEvidenceAttributionControls";
+import RoadmapEvidenceCoverageSummary from "@/components/RoadmapEvidenceCoverageSummary";
+import {
+  buildRoadmapEvidenceCoverage,
+} from "@/lib/roadmapEvidenceCoverage";
 import {
   readExecutionEvidenceRepositoryKey,
   removeExecutionEvidenceRepositoryKey,
@@ -968,6 +972,27 @@ export default function Home() {
         });
     }, 80);
   }
+
+  const roadmapEvidenceCoverage = useMemo(
+    () =>
+      buildRoadmapEvidenceCoverage({
+        roadmapStages:
+          selectedDirection?.roadmap.map(
+            (node) => ({
+              id: node.id,
+              title: node.title,
+            }),
+          ) ?? [],
+        attributions:
+          executionEvidenceResult?.stored
+            .attributions ?? [],
+      }),
+    [
+      selectedDirection,
+      executionEvidenceResult?.stored
+        .attributions,
+    ],
+  );
 
   const roadmapProgress = useMemo(
     () =>
@@ -2550,7 +2575,14 @@ export default function Home() {
                           )}
                         </div>
 
-                        <div className="min-w-64 rounded-2xl border border-white/[0.07] bg-slate-950/35 p-4">
+                        <div className="grid min-w-64 gap-3">
+                          <RoadmapEvidenceCoverageSummary
+                            coverage={
+                              roadmapEvidenceCoverage
+                            }
+                          />
+
+                          <div className="rounded-2xl border border-white/[0.07] bg-slate-950/35 p-4">
                           <div className="flex items-center justify-between gap-4">
                             <p className="text-sm text-slate-300">
                               Overall progress
@@ -2586,6 +2618,7 @@ export default function Home() {
                               </span>{" "}
                               proof entries saved
                             </p>
+                          </div>
                           </div>
                         </div>
                       </div>
@@ -2768,11 +2801,41 @@ export default function Home() {
                                     {node.purpose}
                                   </p>
 
-                                  {guidedStepCount > 0 && (
-                                    <p className="mt-3 inline-flex rounded-full border border-emerald-300/15 bg-emerald-400/[0.06] px-2.5 py-1 text-xs font-medium text-emerald-100">
-                                      {completedGuidedStepCount}/{guidedStepCount} guided steps
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {guidedStepCount > 0 && (
+                                      <p className="inline-flex rounded-full border border-emerald-300/15 bg-emerald-400/[0.06] px-2.5 py-1 text-xs font-medium text-emerald-100">
+                                        {completedGuidedStepCount}/{guidedStepCount} guided steps
+                                      </p>
+                                    )}
+
+                                    <p
+                                      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${
+                                        roadmapEvidenceCoverage
+                                          .stageCoverage[
+                                            node.id
+                                          ]
+                                          ?.isCovered
+                                          ? "border-sky-300/20 bg-sky-400/[0.08] text-sky-100"
+                                          : "border-amber-300/20 bg-amber-400/[0.08] text-amber-100"
+                                      }`}
+                                    >
+                                      {roadmapEvidenceCoverage
+                                        .stageCoverage[
+                                          node.id
+                                        ]
+                                        ?.acceptedEvidenceCount ??
+                                        0}{" "}
+                                      linked proof
+                                      {(roadmapEvidenceCoverage
+                                        .stageCoverage[
+                                          node.id
+                                        ]
+                                        ?.acceptedEvidenceCount ??
+                                        0) === 1
+                                        ? ""
+                                        : "s"}
                                     </p>
-                                  )}
+                                  </div>
                                 </div>
 
                                 <div className="relative z-10 hidden h-10 w-10 place-items-center sm:grid">
@@ -3555,6 +3618,24 @@ function RoadmapDetailPanel({
         <p className="mt-3 text-sm leading-6 text-slate-400">
           {activeNode.objective ?? activeNode.purpose}
         </p>
+
+        {activeExecutionEvidence.length === 0 && (
+          <div className="mt-5 flex gap-3 rounded-2xl border border-amber-300/15 bg-amber-400/[0.05] p-4">
+            <Target className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+
+            <div>
+              <p className="text-sm font-semibold text-amber-100">
+                This stage needs execution proof
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-amber-100/70">
+                Link a commit, pull request, release, or workflow
+                run that demonstrates progress for this roadmap
+                stage.
+              </p>
+            </div>
+          </div>
+        )}
 
         {activeNode.why_it_matters && (
           <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
