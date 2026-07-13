@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 1
+CURRENT_SQLITE_SCHEMA_VERSION = 2
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -198,11 +198,91 @@ CREATE INDEX idx_jobs_repository_status
 """
 
 
+ALLOW_PENDING_ATTRIBUTIONS_SQL = """
+ALTER TABLE evidence_attributions
+    RENAME TO evidence_attributions_v1;
+
+CREATE TABLE evidence_attributions (
+    attribution_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    repository_id INTEGER NOT NULL,
+    evidence_key TEXT NOT NULL,
+    roadmap_node_id TEXT NOT NULL,
+    source TEXT NOT NULL,
+    confidence REAL NOT NULL
+        CHECK (
+            confidence >= 0.0
+            AND confidence <= 1.0
+        ),
+    rationale TEXT NOT NULL,
+    status TEXT NOT NULL,
+    decided_at TEXT,
+    payload_json TEXT NOT NULL,
+    position INTEGER NOT NULL
+        CHECK (position >= 0),
+    FOREIGN KEY (repository_id)
+        REFERENCES repositories(repository_id)
+        ON DELETE CASCADE,
+    UNIQUE (
+        repository_id,
+        evidence_key,
+        roadmap_node_id
+    )
+);
+
+INSERT INTO evidence_attributions (
+    attribution_id,
+    repository_id,
+    evidence_key,
+    roadmap_node_id,
+    source,
+    confidence,
+    rationale,
+    status,
+    decided_at,
+    payload_json,
+    position
+)
+SELECT
+    attribution_id,
+    repository_id,
+    evidence_key,
+    roadmap_node_id,
+    source,
+    confidence,
+    rationale,
+    status,
+    decided_at,
+    payload_json,
+    position
+FROM evidence_attributions_v1;
+
+DROP TABLE evidence_attributions_v1;
+
+CREATE INDEX idx_attributions_repository_stage
+    ON evidence_attributions(
+        repository_id,
+        roadmap_node_id,
+        status
+    );
+
+CREATE INDEX idx_attributions_evidence
+    ON evidence_attributions(
+        repository_id,
+        evidence_key
+    );
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
         name="create_execution_evidence_schema",
         sql=INITIAL_SCHEMA_SQL,
+    ),
+    SQLiteMigration(
+        version=2,
+        name="allow_pending_evidence_attributions",
+        sql=ALLOW_PENDING_ATTRIBUTIONS_SQL,
     ),
 )
 

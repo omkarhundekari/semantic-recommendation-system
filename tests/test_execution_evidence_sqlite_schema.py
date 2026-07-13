@@ -369,3 +369,240 @@ def test_migration_versions_are_contiguous():
             CURRENT_SQLITE_SCHEMA_VERSION + 1,
         )
     )
+
+
+def test_schema_allows_pending_attribution_without_decision_time(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                'local',
+                '2026-07-13T12:00:00Z',
+                '2026-07-13T12:00:00Z'
+            )
+            """
+        )
+
+        cursor = connection.execute(
+            """
+            INSERT INTO repositories (
+                workspace_id,
+                repository_key,
+                provider,
+                owner,
+                repository_name,
+                canonical_url,
+                revision,
+                aggregate_schema_version,
+                saved_at,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                'local',
+                'github:owner/repository',
+                'github',
+                'owner',
+                'repository',
+                'https://github.com/owner/repository',
+                0,
+                2,
+                '2026-07-13T12:00:00Z',
+                '2026-07-13T12:00:00Z',
+                '2026-07-13T12:00:00Z'
+            )
+            """
+        )
+
+        repository_id = cursor.lastrowid
+
+        connection.execute(
+            """
+            INSERT INTO evidence_attributions (
+                repository_id,
+                evidence_key,
+                roadmap_node_id,
+                source,
+                confidence,
+                rationale,
+                status,
+                decided_at,
+                payload_json,
+                position
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                repository_id,
+                "github:owner/repository:commit:abc",
+                "build-mvp",
+                "deterministic",
+                0.8,
+                "Matched roadmap terminology.",
+                "suggested",
+                None,
+                "{}",
+                0,
+            ),
+        )
+
+        row = connection.execute(
+            """
+            SELECT decided_at, status
+            FROM evidence_attributions
+            WHERE repository_id = ?
+            """,
+            (repository_id,),
+        ).fetchone()
+
+        assert row["decided_at"] is None
+        assert row["status"] == "suggested"
+    finally:
+        connection.close()
+
+
+def test_existing_attributions_survive_version_two_migration(
+    tmp_path: Path,
+    monkeypatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            (MIGRATIONS[0],),
+        )
+        apply_execution_evidence_migrations(
+            connection
+        )
+
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                'local',
+                '2026-07-13T12:00:00Z',
+                '2026-07-13T12:00:00Z'
+            )
+            """
+        )
+
+        cursor = connection.execute(
+            """
+            INSERT INTO repositories (
+                workspace_id,
+                repository_key,
+                provider,
+                owner,
+                repository_name,
+                canonical_url,
+                revision,
+                aggregate_schema_version,
+                saved_at,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                'local',
+                'github:owner/repository',
+                'github',
+                'owner',
+                'repository',
+                'https://github.com/owner/repository',
+                0,
+                2,
+                '2026-07-13T12:00:00Z',
+                '2026-07-13T12:00:00Z',
+                '2026-07-13T12:00:00Z'
+            )
+            """
+        )
+
+        repository_id = cursor.lastrowid
+
+        connection.execute(
+            """
+            INSERT INTO evidence_attributions (
+                repository_id,
+                evidence_key,
+                roadmap_node_id,
+                source,
+                confidence,
+                rationale,
+                status,
+                decided_at,
+                payload_json,
+                position
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                repository_id,
+                "github:owner/repository:commit:abc",
+                "build-mvp",
+                "manual",
+                1.0,
+                "",
+                "accepted",
+                "2026-07-13T12:00:00Z",
+                "{}",
+                0,
+            ),
+        )
+
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS,
+        )
+        apply_execution_evidence_migrations(
+            connection
+        )
+
+        row = connection.execute(
+            """
+            SELECT
+                evidence_key,
+                roadmap_node_id,
+                status,
+                decided_at
+            FROM evidence_attributions
+            """
+        ).fetchone()
+
+        assert row["evidence_key"] == (
+            "github:owner/repository:commit:abc"
+        )
+        assert row["roadmap_node_id"] == "build-mvp"
+        assert row["status"] == "accepted"
+        assert row["decided_at"] == (
+            "2026-07-13T12:00:00Z"
+        )
+    finally:
+        connection.close()
