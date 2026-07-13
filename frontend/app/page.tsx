@@ -40,6 +40,7 @@ import {
 } from "@/lib/acceptedAdaptationReadiness";
 import { validateProof } from "@/lib/proofValidation";
 import {
+  CURRENT_WORKSPACE_SCHEMA_VERSION,
   createWorkspaceBackup,
   createWorkspaceBackupFilename,
   importWorkspaceBackup,
@@ -522,10 +523,43 @@ export default function Home() {
   const [shouldScrollToHelpChooser, setShouldScrollToHelpChooser] =
     useState(false);
 
+  const createCurrentWorkspaceSnapshot = useCallback(
+    (
+      savedAt: string,
+      readyResult: IntelligenceResponse,
+    ): SavedWorkspace => ({
+      schemaVersion: CURRENT_WORKSPACE_SCHEMA_VERSION,
+      goal,
+      result: readyResult,
+      selectedDirectionId,
+      activeRoadmapNodeId,
+      completedRoadmapNodeIds,
+      guidedStepProofs,
+      decisionAnswers,
+      completedGuidedStepIds,
+      adaptationDecisions,
+      adaptationEvidence,
+      savedAt,
+    }),
+    [
+      goal,
+      selectedDirectionId,
+      activeRoadmapNodeId,
+      completedRoadmapNodeIds,
+      guidedStepProofs,
+      decisionAnswers,
+      completedGuidedStepIds,
+      adaptationDecisions,
+      adaptationEvidence,
+    ],
+  );
+
   useEffect(() => {
     if (!result || result.status !== "ready") {
       return;
     }
+
+    const readyResult = result;
 
     const savingTimeout = window.setTimeout(() => {
       setWorkspaceSaveStatus("saving");
@@ -535,19 +569,10 @@ export default function Home() {
       const saved =
         writeWorkspaceToStorage<IntelligenceResponse>(
           window.localStorage,
-          {
-            goal,
-            result,
-            selectedDirectionId,
-            activeRoadmapNodeId,
-            completedRoadmapNodeIds,
-            guidedStepProofs,
-            decisionAnswers,
-            completedGuidedStepIds,
-            adaptationDecisions,
-            adaptationEvidence,
-            savedAt: new Date().toISOString(),
-          },
+          createCurrentWorkspaceSnapshot(
+            new Date().toISOString(),
+            readyResult,
+          ),
         );
 
       setWorkspaceSaveStatus(saved ? "saved" : "error");
@@ -558,16 +583,8 @@ export default function Home() {
       window.clearTimeout(saveTimeout);
     };
   }, [
-    goal,
     result,
-    selectedDirectionId,
-    activeRoadmapNodeId,
-    completedRoadmapNodeIds,
-    guidedStepProofs,
-    decisionAnswers,
-    completedGuidedStepIds,
-    adaptationDecisions,
-    adaptationEvidence,
+    createCurrentWorkspaceSnapshot,
   ]);
 
   const clarificationSectionRef = useCallback(
@@ -955,19 +972,9 @@ export default function Home() {
     }
 
     const savedAt = new Date().toISOString();
-    const backup = createWorkspaceBackup<IntelligenceResponse>({
-      goal,
-      result,
-      selectedDirectionId,
-      activeRoadmapNodeId,
-      completedRoadmapNodeIds,
-      guidedStepProofs,
-      decisionAnswers,
-      completedGuidedStepIds,
-      adaptationDecisions,
-      adaptationEvidence,
-      savedAt,
-    });
+    const backup = createWorkspaceBackup<IntelligenceResponse>(
+      createCurrentWorkspaceSnapshot(savedAt, result),
+    );
     const filename = createWorkspaceBackupFilename(
       selectedDirection?.title ?? goal,
       savedAt,
