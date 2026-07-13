@@ -503,6 +503,8 @@ export default function Home() {
     useState<WorkspaceTransferFeedback>(null);
   const [pendingImportedWorkspace, setPendingImportedWorkspace] =
     useState<SavedWorkspace | null>(null);
+  const [showClearWorkspaceConfirmation, setShowClearWorkspaceConfirmation] =
+    useState(false);
 
   const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
     string | null
@@ -1074,6 +1076,7 @@ export default function Home() {
   }
 
   function clearSavedWorkspace() {
+    setShowClearWorkspaceConfirmation(false);
     removeWorkspaceFromStorage(window.localStorage);
     setWorkspaceSaveStatus("idle");
     setGoal("");
@@ -1930,7 +1933,9 @@ export default function Home() {
 
                           <button
                             type="button"
-                            onClick={clearSavedWorkspace}
+                            onClick={() =>
+                              setShowClearWorkspaceConfirmation(true)
+                            }
                             className="w-full rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-rose-300/30 hover:bg-rose-400/10 hover:text-rose-100"
                           >
                             Start over
@@ -1939,6 +1944,46 @@ export default function Home() {
 
                       </div>
                     </div>
+
+                    {showClearWorkspaceConfirmation && (
+                      <section
+                        aria-labelledby="clear-workspace-title"
+                        className="mt-6 rounded-2xl border border-rose-300/20 bg-rose-400/[0.07] p-4 text-sm text-rose-50"
+                      >
+                        <h3
+                          id="clear-workspace-title"
+                          className="font-semibold text-white"
+                        >
+                          Clear this workspace?
+                        </h3>
+
+                        <p className="mt-2 leading-6 text-rose-100/80">
+                          This removes the current project, roadmap progress,
+                          decisions, and saved evidence from this browser.
+                          Export the workspace first if you need a backup.
+                        </p>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={clearSavedWorkspace}
+                            className="rounded-xl border border-rose-200/30 bg-rose-300/15 px-4 py-2 text-xs font-semibold text-rose-50 transition hover:bg-rose-300/25"
+                          >
+                            Clear workspace
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowClearWorkspaceConfirmation(false)
+                            }
+                            className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </section>
+                    )}
 
                     <div className="mt-8 rounded-2xl border border-sky-300/15 bg-sky-400/[0.04] p-5">
                       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">

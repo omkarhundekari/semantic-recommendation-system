@@ -387,6 +387,25 @@ describe("workspace backup UI", () => {
       }),
     );
 
+    expect(
+      screen.getByRole("heading", {
+        name: "Clear this workspace?",
+        level: 3,
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      window.localStorage.getItem(
+        WORKSPACE_STORAGE_KEY,
+      ),
+    ).not.toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Clear workspace",
+      }),
+    );
+
     await waitFor(() => {
       expect(
         window.localStorage.getItem(
@@ -804,5 +823,96 @@ describe("workspace backup UI", () => {
         "Workspace imported successfully. Its progress and evidence have been restored.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("preserves the current workspace when reset is cancelled", async () => {
+    window.localStorage.setItem(
+      WORKSPACE_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Keep this workspace after reset cancellation",
+        result: {
+          status: "ready",
+          directions: [
+            {
+              id: "keep-reset-workspace",
+              title: "Reset Cancellation Workspace",
+              summary:
+                "A saved project used to verify reset cancellation.",
+              scope:
+                "Preserve the current project when reset is cancelled.",
+              estimated_effort: "3 weeks",
+              portfolio_tier: "strong",
+              difficulty: "intermediate",
+              career_signal: "high",
+              why_it_fits:
+                "Confirms destructive actions require explicit approval.",
+              mvp_steps: ["Preserve the workspace"],
+              advanced_extensions: [],
+              tech_stack: ["React", "TypeScript"],
+              target_roles: ["Frontend Engineer"],
+              roadmap: [],
+              risks: [],
+              repairs_applied: [],
+              verification: {
+                status: "verified",
+                score: 3,
+                max_score: 3,
+                warnings: [],
+              },
+            },
+          ],
+        },
+        selectedDirectionId: "keep-reset-workspace",
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {},
+        decisionAnswers: {},
+        completedGuidedStepIds: [],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-12T18:00:00.000Z",
+      }),
+    );
+
+    render(<Home />);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Start over",
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Clear this workspace?",
+        level: 3,
+      }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Cancel",
+      }),
+    );
+
+    expect(
+      screen.queryByRole("heading", {
+        name: "Clear this workspace?",
+        level: 3,
+      }),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.getByDisplayValue(
+        "Keep this workspace after reset cancellation",
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      window.localStorage.getItem(
+        WORKSPACE_STORAGE_KEY,
+      ),
+    ).not.toBeNull();
   });
 });
