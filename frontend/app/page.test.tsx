@@ -629,4 +629,180 @@ describe("workspace backup UI", () => {
       ).toBe("saved-retrieval");
     });
   });
+
+  it("preserves the current project when workspace replacement is cancelled", async () => {
+    window.localStorage.setItem(
+      WORKSPACE_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Keep this current workspace",
+        result: {
+          status: "ready",
+          directions: [],
+        },
+        selectedDirectionId: null,
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {},
+        decisionAnswers: {},
+        completedGuidedStepIds: [],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-12T18:00:00.000Z",
+      }),
+    );
+
+    render(<Home />);
+
+    expect(
+      screen.getByDisplayValue("Keep this current workspace"),
+    ).toBeInTheDocument();
+
+    uploadJson(
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Do not apply this imported workspace",
+        result: {
+          status: "ready",
+          directions: [],
+        },
+        selectedDirectionId: null,
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {},
+        decisionAnswers: {},
+        completedGuidedStepIds: [],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-12T19:00:00.000Z",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Replace the current workspace?",
+        level: 2,
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Do not apply this imported workspace"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Cancel",
+      }),
+    );
+
+    expect(
+      screen.queryByRole("heading", {
+        name: "Replace the current workspace?",
+        level: 2,
+      }),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.getByDisplayValue("Keep this current workspace"),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByDisplayValue(
+        "Do not apply this imported workspace",
+      ),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByText(
+        "Workspace imported successfully. Its progress and evidence have been restored.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("replaces an open project only after explicit confirmation", async () => {
+    window.localStorage.setItem(
+      WORKSPACE_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Original open workspace",
+        result: {
+          status: "ready",
+          directions: [],
+        },
+        selectedDirectionId: null,
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {},
+        decisionAnswers: {},
+        completedGuidedStepIds: [],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-12T18:00:00.000Z",
+      }),
+    );
+
+    render(<Home />);
+
+    uploadJson(
+      JSON.stringify({
+        schemaVersion: 2,
+        goal: "Confirmed replacement workspace",
+        result: {
+          status: "ready",
+          directions: [],
+        },
+        selectedDirectionId: null,
+        activeRoadmapNodeId: null,
+        completedRoadmapNodeIds: [],
+        guidedStepProofs: {},
+        decisionAnswers: {},
+        completedGuidedStepIds: [],
+        adaptationDecisions: {},
+        adaptationEvidence: {},
+        savedAt: "2026-07-12T19:00:00.000Z",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Replace the current workspace?",
+        level: 2,
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByDisplayValue("Original open workspace"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Replace workspace",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByDisplayValue(
+          "Confirmed replacement workspace",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    expect(
+      screen.queryByDisplayValue("Original open workspace"),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("heading", {
+        name: "Replace the current workspace?",
+        level: 2,
+      }),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.getByText(
+        "Workspace imported successfully. Its progress and evidence have been restored.",
+      ),
+    ).toBeInTheDocument();
+  });
 });

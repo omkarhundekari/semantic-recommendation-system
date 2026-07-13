@@ -501,6 +501,8 @@ export default function Home() {
     );
   const [workspaceTransferFeedback, setWorkspaceTransferFeedback] =
     useState<WorkspaceTransferFeedback>(null);
+  const [pendingImportedWorkspace, setPendingImportedWorkspace] =
+    useState<SavedWorkspace | null>(null);
 
   const [expandedWhyDirectionId, setExpandedWhyDirectionId] = useState<
     string | null
@@ -984,6 +986,49 @@ export default function Home() {
     });
   }
 
+  function applyImportedWorkspace(
+    workspace: SavedWorkspace,
+  ) {
+    setGoal(workspace.goal);
+    setResult(workspace.result);
+    setSelectedDirectionId(workspace.selectedDirectionId);
+    setActiveRoadmapNodeId(workspace.activeRoadmapNodeId);
+    setCompletedRoadmapNodeIds(
+      workspace.completedRoadmapNodeIds,
+    );
+    setGuidedStepProofs(workspace.guidedStepProofs);
+    setDecisionAnswers(workspace.decisionAnswers);
+    setCompletedGuidedStepIds(
+      workspace.completedGuidedStepIds,
+    );
+    setAdaptationDecisions(workspace.adaptationDecisions);
+    setAdaptationEvidence(workspace.adaptationEvidence);
+    setExpandedWhyDirectionId(null);
+    setPendingImportedWorkspace(null);
+    setRevealedArtifacts({
+      summary: false,
+      interviewStory: false,
+      readme: false,
+      passport: false,
+    });
+    setError("");
+    setWorkspaceSaveStatus("saving");
+    setWorkspaceTransferFeedback({
+      status: "success",
+      message:
+        "Workspace imported successfully. Its progress and evidence have been restored.",
+    });
+
+    window.setTimeout(() => {
+      document
+        .getElementById("project-roadmap")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+    }, 80);
+  }
+
   async function importWorkspaceFile(
     event: ChangeEvent<HTMLInputElement>,
   ) {
@@ -1011,43 +1056,13 @@ export default function Home() {
         importResult.workspace,
       );
 
-      setGoal(workspace.goal);
-      setResult(workspace.result);
-      setSelectedDirectionId(workspace.selectedDirectionId);
-      setActiveRoadmapNodeId(workspace.activeRoadmapNodeId);
-      setCompletedRoadmapNodeIds(
-        workspace.completedRoadmapNodeIds,
-      );
-      setGuidedStepProofs(workspace.guidedStepProofs);
-      setDecisionAnswers(workspace.decisionAnswers);
-      setCompletedGuidedStepIds(
-        workspace.completedGuidedStepIds,
-      );
-      setAdaptationDecisions(workspace.adaptationDecisions);
-      setAdaptationEvidence(workspace.adaptationEvidence);
-      setExpandedWhyDirectionId(null);
-      setRevealedArtifacts({
-        summary: false,
-        interviewStory: false,
-        readme: false,
-        passport: false,
-      });
-      setError("");
-      setWorkspaceSaveStatus("saving");
-      setWorkspaceTransferFeedback({
-        status: "success",
-        message:
-          "Workspace imported successfully. Its progress and evidence have been restored.",
-      });
+      if (result?.status === "ready") {
+        setPendingImportedWorkspace(workspace);
+        setWorkspaceTransferFeedback(null);
+        return;
+      }
 
-      window.setTimeout(() => {
-        document
-          .getElementById("project-roadmap")
-          ?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-      }, 80);
+      applyImportedWorkspace(workspace);
     } catch {
       setWorkspaceTransferFeedback({
         status: "error",
@@ -1072,6 +1087,7 @@ export default function Home() {
     setAdaptationDecisions({});
     setAdaptationEvidence({});
     setWorkspaceTransferFeedback(null);
+    setPendingImportedWorkspace(null);
     setRevealedArtifacts({
       summary: false,
       interviewStory: false,
@@ -1159,6 +1175,54 @@ export default function Home() {
           >
             {workspaceTransferFeedback.message}
           </p>
+        )}
+
+        {pendingImportedWorkspace && (
+          <section
+            aria-labelledby="replace-workspace-title"
+            className="mt-5 rounded-2xl border border-amber-300/20 bg-amber-400/[0.07] p-4 text-sm text-amber-50"
+          >
+            <h2
+              id="replace-workspace-title"
+              className="font-semibold text-white"
+            >
+              Replace the current workspace?
+            </h2>
+
+            <p className="mt-2 leading-6 text-amber-100/80">
+              Importing{" "}
+              <span className="font-medium text-amber-50">
+                {pendingImportedWorkspace.goal ||
+                  "the selected workspace"}
+              </span>{" "}
+              will replace the project currently open in this browser.
+              Export the current workspace first if you need a backup.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  applyImportedWorkspace(
+                    pendingImportedWorkspace,
+                  )
+                }
+                className="rounded-xl border border-amber-200/30 bg-amber-300/15 px-4 py-2 text-xs font-semibold text-amber-50 transition hover:bg-amber-300/25"
+              >
+                Replace workspace
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setPendingImportedWorkspace(null)
+                }
+                className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+              >
+                Cancel
+              </button>
+            </div>
+          </section>
         )}
 
         <motion.div
