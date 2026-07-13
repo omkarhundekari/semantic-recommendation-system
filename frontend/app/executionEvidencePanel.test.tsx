@@ -163,6 +163,12 @@ describe("execution evidence panel", () => {
       screen.getByText("owner/repository · revision 0"),
     ).toBeInTheDocument();
 
+    expect(
+      screen.getAllByText(
+        /Generate and select a project direction before attaching/,
+      ),
+    ).toHaveLength(2);
+
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });

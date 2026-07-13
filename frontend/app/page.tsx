@@ -59,9 +59,14 @@ import {
   ExecutionEvidenceApiError,
   getExecutionEvidenceCounts,
   syncExecutionEvidence,
+  type ExecutionEvidenceItem,
   type ExecutionEvidenceSyncResponse,
   type ExecutionEvidenceType,
 } from "@/lib/executionEvidenceApi";
+import type {
+  EvidenceAttribution,
+} from "@/lib/executionEvidenceAttributionApi";
+import ExecutionEvidenceAttributionControls from "@/components/ExecutionEvidenceAttributionControls";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -1680,27 +1685,77 @@ export default function Home() {
                   {recentEvidence.length > 0 ? (
                     <div className="mt-3 divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
                       {recentEvidence.map((item) => (
-                        <a
+                        <div
                           key={`${item.evidence_type}:${item.external_id}`}
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-start justify-between gap-4 bg-white/[0.025] px-4 py-3 transition hover:bg-white/[0.05]"
+                          className="bg-white/[0.025] px-4 py-3"
                         >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-slate-100">
-                              {item.title}
-                            </p>
-                            <p className="mt-1 text-xs capitalize text-slate-500">
-                              {item.evidence_type.replaceAll(
-                                "_",
-                                " ",
-                              )}
-                            </p>
-                          </div>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-start justify-between gap-4 transition hover:opacity-90"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-slate-100">
+                                {item.title}
+                              </p>
+                              <p className="mt-1 text-xs capitalize text-slate-500">
+                                {item.evidence_type.replaceAll(
+                                  "_",
+                                  " ",
+                                )}
+                              </p>
+                            </div>
 
-                          <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-500" />
-                        </a>
+                            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-500" />
+                          </a>
+
+                          <ExecutionEvidenceAttributionControls
+                            apiBaseUrl={API_BASE_URL}
+                            repositoryKey={
+                              executionEvidenceResult.sync
+                                .repository_key
+                            }
+                            revision={
+                              executionEvidenceResult.stored
+                                .revision
+                            }
+                            evidence={item}
+                            roadmapStages={
+                              selectedDirection?.roadmap.map(
+                                (node) => ({
+                                  id: node.id,
+                                  title: node.title,
+                                }),
+                              ) ?? []
+                            }
+                            attributions={
+                              executionEvidenceResult.stored
+                                .attributions
+                            }
+                            onAttributionsChanged={({
+                              attributions,
+                              revision,
+                            }) => {
+                              setExecutionEvidenceResult(
+                                (current) => {
+                                  if (!current) {
+                                    return current;
+                                  }
+
+                                  return {
+                                    ...current,
+                                    stored: {
+                                      ...current.stored,
+                                      revision,
+                                      attributions,
+                                    },
+                                  };
+                                },
+                              );
+                            }}
+                          />
+                        </div>
                       ))}
                     </div>
                   ) : (
@@ -2650,6 +2705,14 @@ export default function Home() {
                       <RoadmapDetailPanel
                         direction={selectedDirection}
                         activeNodeId={activeRoadmapNodeId}
+                        executionEvidence={
+                          executionEvidenceResult?.stored.evidence ??
+                          []
+                        }
+                        evidenceAttributions={
+                          executionEvidenceResult?.stored
+                            .attributions ?? []
+                        }
                         adaptations={roadmapAdaptations.adaptations}
                         adaptationDecisions={adaptationDecisions}
                         adaptationEvidence={adaptationEvidence}
@@ -3205,6 +3268,8 @@ function SummarySection({
 function RoadmapDetailPanel({
   direction,
   activeNodeId,
+  executionEvidence,
+  evidenceAttributions,
   adaptations,
   adaptationDecisions,
   adaptationEvidence,
@@ -3221,6 +3286,8 @@ function RoadmapDetailPanel({
 }: {
   direction: Direction;
   activeNodeId: string | null;
+  executionEvidence: ExecutionEvidenceItem[];
+  evidenceAttributions: EvidenceAttribution[];
   adaptations: RoadmapAdaptation[];
   adaptationDecisions: AdaptationDecisionMap;
   adaptationEvidence: Record<string, string>;
@@ -3310,6 +3377,33 @@ function RoadmapDetailPanel({
     (adaptation) => adaptation.targetStageId === activeNode.id,
   );
 
+  const activeEvidenceAttributions =
+    evidenceAttributions.filter(
+      (attribution) =>
+        attribution.roadmap_node_id === activeNode.id &&
+        attribution.status === "accepted",
+    );
+
+  const activeExecutionEvidence =
+    activeEvidenceAttributions
+      .map((attribution) =>
+        executionEvidence.find(
+          (item) =>
+            [
+              item.provider,
+              item.repository_full_name.toLowerCase(),
+              item.evidence_type,
+              item.external_id,
+            ].join(":") === attribution.evidence_key,
+        ),
+      )
+      .filter(
+        (
+          item,
+        ): item is ExecutionEvidenceItem =>
+          item !== undefined,
+      );
+
   return (
     <AnimatePresence mode="wait">
       <motion.aside
@@ -3377,6 +3471,43 @@ function RoadmapDetailPanel({
             <p className="mt-2 text-sm leading-6 text-slate-300">
               {activeNode.why_it_matters}
             </p>
+          </div>
+        )}
+
+        {activeExecutionEvidence.length > 0 && (
+          <div className="mt-5 rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.06] p-4">
+            <div className="flex items-center gap-2">
+              <GitBranch className="h-4 w-4 text-emerald-300" />
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200">
+                Linked execution proof
+              </p>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              {activeExecutionEvidence.map((item) => (
+                <a
+                  key={`${item.evidence_type}:${item.external_id}`}
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-start justify-between gap-3 rounded-xl border border-white/[0.06] bg-slate-950/30 px-3 py-2.5 transition hover:border-emerald-300/25 hover:bg-emerald-300/[0.06]"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-emerald-50">
+                      {item.title}
+                    </p>
+                    <p className="mt-1 text-xs capitalize text-emerald-100/55">
+                      {item.evidence_type.replaceAll(
+                        "_",
+                        " ",
+                      )}
+                    </p>
+                  </div>
+
+                  <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300/70" />
+                </a>
+              ))}
+            </div>
           </div>
         )}
 
