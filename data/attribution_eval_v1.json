@@ -1126,6 +1126,994 @@
       },
       "expected_roadmap_node_ids": [],
       "expected_abstain": true
+    },
+    {
+      "case_id": "retrieval-ambiguous-cross-stage",
+      "repository_id": "retrieval-service",
+      "evidence": {
+        "provider": "github",
+        "repository_full_name": "solvyn/retrieval-service",
+        "evidence_type": "commit",
+        "external_id": "adversarial-1",
+        "title": "Improve retrieval quality",
+        "description": "Updates retrieval logic and evaluation.",
+        "url": "https://github.com/solvyn/retrieval-service/actions/runs/adversarial-1",
+        "occurred_at": "2026-07-13T12:00:00Z",
+        "metadata": {},
+        "first_seen_at": "2026-07-13T12:00:00Z",
+        "last_seen_at": "2026-07-13T12:00:00Z"
+      },
+      "roadmap": {
+        "snapshot_version": 1,
+        "canonicalization_version": 1,
+        "roadmap_hash": "3b336e3244d6ac13fb04fa5f9eec5e7d53ec67c4795769d43502711581a272e6",
+        "stages": [
+          {
+            "stage_id": "define",
+            "position": 0,
+            "content_hash": "4db8484ae7aad40d1b4cee554be91bd95fef8ee0b04ab8def2e872e0db28f9a6",
+            "content": {
+              "id": "define",
+              "title": "Define retrieval requirements",
+              "purpose": "Choose document inputs, user query, retrieval output, and success metric.",
+              "tasks": [
+                "Write measurable retrieval requirements."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "mvp",
+            "position": 1,
+            "content_hash": "58113eeb94e45bf4d2cbb13089325ef9c26f637a232712b61799d65f8a42f76a",
+            "content": {
+              "id": "mvp",
+              "title": "Build retrieval MVP",
+              "purpose": "Implement document ingestion, indexing, search, and retrieval result output.",
+              "tasks": [
+                "Build document ingestion.",
+                "Implement search indexing.",
+                "Return ranked retrieval results."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "validate",
+            "position": 2,
+            "content_hash": "a66856164a97fe2387e8dd80e6a82b7f2ac3e2779a93253b2f8b901fb95a17b9",
+            "content": {
+              "id": "validate",
+              "title": "Validate retrieval quality",
+              "purpose": "Run evaluation questions and measure retrieval precision and failure cases.",
+              "tasks": [
+                "Run retrieval evaluation questions.",
+                "Measure retrieval precision."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "package",
+            "position": 3,
+            "content_hash": "3e908fa10d22ca38f3844a50b092439dd344bcee8b34650f246bb4406e1553f0",
+            "content": {
+              "id": "package",
+              "title": "Package retrieval project",
+              "purpose": "Publish architecture documentation, a demo, README, and release.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          }
+        ]
+      },
+      "expected_roadmap_node_ids": [],
+      "expected_abstain": true
+    },
+    {
+      "case_id": "retrieval-generic-workflow",
+      "repository_id": "retrieval-service",
+      "evidence": {
+        "provider": "github",
+        "repository_full_name": "solvyn/retrieval-service",
+        "evidence_type": "workflow_run",
+        "external_id": "adversarial-2",
+        "title": "CI",
+        "description": "Build and test completed.",
+        "url": "https://github.com/solvyn/retrieval-service/actions/runs/adversarial-2",
+        "occurred_at": "2026-07-13T12:00:00Z",
+        "metadata": {
+          "conclusion": "success",
+          "branch": "main"
+        },
+        "first_seen_at": "2026-07-13T12:00:00Z",
+        "last_seen_at": "2026-07-13T12:00:00Z"
+      },
+      "roadmap": {
+        "snapshot_version": 1,
+        "canonicalization_version": 1,
+        "roadmap_hash": "3b336e3244d6ac13fb04fa5f9eec5e7d53ec67c4795769d43502711581a272e6",
+        "stages": [
+          {
+            "stage_id": "define",
+            "position": 0,
+            "content_hash": "4db8484ae7aad40d1b4cee554be91bd95fef8ee0b04ab8def2e872e0db28f9a6",
+            "content": {
+              "id": "define",
+              "title": "Define retrieval requirements",
+              "purpose": "Choose document inputs, user query, retrieval output, and success metric.",
+              "tasks": [
+                "Write measurable retrieval requirements."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "mvp",
+            "position": 1,
+            "content_hash": "58113eeb94e45bf4d2cbb13089325ef9c26f637a232712b61799d65f8a42f76a",
+            "content": {
+              "id": "mvp",
+              "title": "Build retrieval MVP",
+              "purpose": "Implement document ingestion, indexing, search, and retrieval result output.",
+              "tasks": [
+                "Build document ingestion.",
+                "Implement search indexing.",
+                "Return ranked retrieval results."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "validate",
+            "position": 2,
+            "content_hash": "a66856164a97fe2387e8dd80e6a82b7f2ac3e2779a93253b2f8b901fb95a17b9",
+            "content": {
+              "id": "validate",
+              "title": "Validate retrieval quality",
+              "purpose": "Run evaluation questions and measure retrieval precision and failure cases.",
+              "tasks": [
+                "Run retrieval evaluation questions.",
+                "Measure retrieval precision."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "package",
+            "position": 3,
+            "content_hash": "3e908fa10d22ca38f3844a50b092439dd344bcee8b34650f246bb4406e1553f0",
+            "content": {
+              "id": "package",
+              "title": "Package retrieval project",
+              "purpose": "Publish architecture documentation, a demo, README, and release.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          }
+        ]
+      },
+      "expected_roadmap_node_ids": [],
+      "expected_abstain": true
+    },
+    {
+      "case_id": "retrieval-misleading-mvp-label",
+      "repository_id": "retrieval-service",
+      "evidence": {
+        "provider": "github",
+        "repository_full_name": "solvyn/retrieval-service",
+        "evidence_type": "pull_request",
+        "external_id": "adversarial-3",
+        "title": "Document evaluation failures",
+        "description": "Adds retrieval precision failure notes.",
+        "url": "https://github.com/solvyn/retrieval-service/actions/runs/adversarial-3",
+        "occurred_at": "2026-07-13T12:00:00Z",
+        "metadata": {
+          "state": "closed",
+          "merged": true,
+          "labels": [
+            "mvp"
+          ]
+        },
+        "first_seen_at": "2026-07-13T12:00:00Z",
+        "last_seen_at": "2026-07-13T12:00:00Z"
+      },
+      "roadmap": {
+        "snapshot_version": 1,
+        "canonicalization_version": 1,
+        "roadmap_hash": "3b336e3244d6ac13fb04fa5f9eec5e7d53ec67c4795769d43502711581a272e6",
+        "stages": [
+          {
+            "stage_id": "define",
+            "position": 0,
+            "content_hash": "4db8484ae7aad40d1b4cee554be91bd95fef8ee0b04ab8def2e872e0db28f9a6",
+            "content": {
+              "id": "define",
+              "title": "Define retrieval requirements",
+              "purpose": "Choose document inputs, user query, retrieval output, and success metric.",
+              "tasks": [
+                "Write measurable retrieval requirements."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "mvp",
+            "position": 1,
+            "content_hash": "58113eeb94e45bf4d2cbb13089325ef9c26f637a232712b61799d65f8a42f76a",
+            "content": {
+              "id": "mvp",
+              "title": "Build retrieval MVP",
+              "purpose": "Implement document ingestion, indexing, search, and retrieval result output.",
+              "tasks": [
+                "Build document ingestion.",
+                "Implement search indexing.",
+                "Return ranked retrieval results."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "validate",
+            "position": 2,
+            "content_hash": "a66856164a97fe2387e8dd80e6a82b7f2ac3e2779a93253b2f8b901fb95a17b9",
+            "content": {
+              "id": "validate",
+              "title": "Validate retrieval quality",
+              "purpose": "Run evaluation questions and measure retrieval precision and failure cases.",
+              "tasks": [
+                "Run retrieval evaluation questions.",
+                "Measure retrieval precision."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "package",
+            "position": 3,
+            "content_hash": "3e908fa10d22ca38f3844a50b092439dd344bcee8b34650f246bb4406e1553f0",
+            "content": {
+              "id": "package",
+              "title": "Package retrieval project",
+              "purpose": "Publish architecture documentation, a demo, README, and release.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          }
+        ]
+      },
+      "expected_roadmap_node_ids": [
+        "validate"
+      ],
+      "expected_abstain": false
+    },
+    {
+      "case_id": "pipeline-merge-only-pr",
+      "repository_id": "delivery-pipeline",
+      "evidence": {
+        "provider": "github",
+        "repository_full_name": "solvyn/delivery-pipeline",
+        "evidence_type": "pull_request",
+        "external_id": "adversarial-4",
+        "title": "Merge main into deployment branch",
+        "description": "Resolve merge conflicts.",
+        "url": "https://github.com/solvyn/delivery-pipeline/actions/runs/adversarial-4",
+        "occurred_at": "2026-07-13T12:00:00Z",
+        "metadata": {
+          "state": "closed",
+          "merged": true
+        },
+        "first_seen_at": "2026-07-13T12:00:00Z",
+        "last_seen_at": "2026-07-13T12:00:00Z"
+      },
+      "roadmap": {
+        "snapshot_version": 1,
+        "canonicalization_version": 1,
+        "roadmap_hash": "433cc06ff0b792a041e86b365b9fa1d062c310c3480511e8072686fc337731a1",
+        "stages": [
+          {
+            "stage_id": "define",
+            "position": 0,
+            "content_hash": "02b6c9d41614485e87b1e586c08bbdee8cbd792db1708ae60a817b3841f47f69",
+            "content": {
+              "id": "define",
+              "title": "Define delivery requirements",
+              "purpose": "Specify deployment targets, release requirements, and operational checks.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "mvp",
+            "position": 1,
+            "content_hash": "263c822eb37060a29b6c840a208d0155fef5b781425cfaae2c49e82c310f3282",
+            "content": {
+              "id": "mvp",
+              "title": "Build delivery pipeline",
+              "purpose": "Implement build automation and deployment workflow configuration.",
+              "tasks": [
+                "Create the build workflow.",
+                "Implement deployment automation."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "validate",
+            "position": 2,
+            "content_hash": "01693b70dee8031e0ec1131ad9edce4dbd2bc66c0cb6ec505fca1ff993597af5",
+            "content": {
+              "id": "validate",
+              "title": "Validate delivery pipeline",
+              "purpose": "Run automated tests, deployment checks, and rollback verification.",
+              "tasks": [
+                "Execute integration tests.",
+                "Verify deployment rollback."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "package",
+            "position": 3,
+            "content_hash": "00638a656f7ef79944bf9ef2cb2d4582958bf17a56b1ad7a9bfe3e3f48a12715",
+            "content": {
+              "id": "package",
+              "title": "Publish production release",
+              "purpose": "Publish release notes, deployment documentation, and a versioned release.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          }
+        ]
+      },
+      "expected_roadmap_node_ids": [],
+      "expected_abstain": true
+    },
+    {
+      "case_id": "pipeline-weak-release",
+      "repository_id": "delivery-pipeline",
+      "evidence": {
+        "provider": "github",
+        "repository_full_name": "solvyn/delivery-pipeline",
+        "evidence_type": "release",
+        "external_id": "adversarial-5",
+        "title": "v2.1.0",
+        "description": "Minor updates.",
+        "url": "https://github.com/solvyn/delivery-pipeline/actions/runs/adversarial-5",
+        "occurred_at": "2026-07-13T12:00:00Z",
+        "metadata": {
+          "tag_name": "v2.1.0"
+        },
+        "first_seen_at": "2026-07-13T12:00:00Z",
+        "last_seen_at": "2026-07-13T12:00:00Z"
+      },
+      "roadmap": {
+        "snapshot_version": 1,
+        "canonicalization_version": 1,
+        "roadmap_hash": "433cc06ff0b792a041e86b365b9fa1d062c310c3480511e8072686fc337731a1",
+        "stages": [
+          {
+            "stage_id": "define",
+            "position": 0,
+            "content_hash": "02b6c9d41614485e87b1e586c08bbdee8cbd792db1708ae60a817b3841f47f69",
+            "content": {
+              "id": "define",
+              "title": "Define delivery requirements",
+              "purpose": "Specify deployment targets, release requirements, and operational checks.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "mvp",
+            "position": 1,
+            "content_hash": "263c822eb37060a29b6c840a208d0155fef5b781425cfaae2c49e82c310f3282",
+            "content": {
+              "id": "mvp",
+              "title": "Build delivery pipeline",
+              "purpose": "Implement build automation and deployment workflow configuration.",
+              "tasks": [
+                "Create the build workflow.",
+                "Implement deployment automation."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "validate",
+            "position": 2,
+            "content_hash": "01693b70dee8031e0ec1131ad9edce4dbd2bc66c0cb6ec505fca1ff993597af5",
+            "content": {
+              "id": "validate",
+              "title": "Validate delivery pipeline",
+              "purpose": "Run automated tests, deployment checks, and rollback verification.",
+              "tasks": [
+                "Execute integration tests.",
+                "Verify deployment rollback."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "package",
+            "position": 3,
+            "content_hash": "00638a656f7ef79944bf9ef2cb2d4582958bf17a56b1ad7a9bfe3e3f48a12715",
+            "content": {
+              "id": "package",
+              "title": "Publish production release",
+              "purpose": "Publish release notes, deployment documentation, and a versioned release.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          }
+        ]
+      },
+      "expected_roadmap_node_ids": [],
+      "expected_abstain": true
+    },
+    {
+      "case_id": "pipeline-cross-stage-change",
+      "repository_id": "delivery-pipeline",
+      "evidence": {
+        "provider": "github",
+        "repository_full_name": "solvyn/delivery-pipeline",
+        "evidence_type": "commit",
+        "external_id": "adversarial-6",
+        "title": "Add deployment checks and release notes",
+        "description": "Updates rollback validation and production documentation.",
+        "url": "https://github.com/solvyn/delivery-pipeline/actions/runs/adversarial-6",
+        "occurred_at": "2026-07-13T12:00:00Z",
+        "metadata": {},
+        "first_seen_at": "2026-07-13T12:00:00Z",
+        "last_seen_at": "2026-07-13T12:00:00Z"
+      },
+      "roadmap": {
+        "snapshot_version": 1,
+        "canonicalization_version": 1,
+        "roadmap_hash": "433cc06ff0b792a041e86b365b9fa1d062c310c3480511e8072686fc337731a1",
+        "stages": [
+          {
+            "stage_id": "define",
+            "position": 0,
+            "content_hash": "02b6c9d41614485e87b1e586c08bbdee8cbd792db1708ae60a817b3841f47f69",
+            "content": {
+              "id": "define",
+              "title": "Define delivery requirements",
+              "purpose": "Specify deployment targets, release requirements, and operational checks.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "mvp",
+            "position": 1,
+            "content_hash": "263c822eb37060a29b6c840a208d0155fef5b781425cfaae2c49e82c310f3282",
+            "content": {
+              "id": "mvp",
+              "title": "Build delivery pipeline",
+              "purpose": "Implement build automation and deployment workflow configuration.",
+              "tasks": [
+                "Create the build workflow.",
+                "Implement deployment automation."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "validate",
+            "position": 2,
+            "content_hash": "01693b70dee8031e0ec1131ad9edce4dbd2bc66c0cb6ec505fca1ff993597af5",
+            "content": {
+              "id": "validate",
+              "title": "Validate delivery pipeline",
+              "purpose": "Run automated tests, deployment checks, and rollback verification.",
+              "tasks": [
+                "Execute integration tests.",
+                "Verify deployment rollback."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "package",
+            "position": 3,
+            "content_hash": "00638a656f7ef79944bf9ef2cb2d4582958bf17a56b1ad7a9bfe3e3f48a12715",
+            "content": {
+              "id": "package",
+              "title": "Publish production release",
+              "purpose": "Publish release notes, deployment documentation, and a versioned release.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          }
+        ]
+      },
+      "expected_roadmap_node_ids": [],
+      "expected_abstain": true
+    },
+    {
+      "case_id": "retrieval-reverted-feature",
+      "repository_id": "retrieval-service",
+      "evidence": {
+        "provider": "github",
+        "repository_full_name": "solvyn/retrieval-service",
+        "evidence_type": "commit",
+        "external_id": "adversarial-7",
+        "title": "Revert document ingestion implementation",
+        "description": "Removes retrieval indexing after failures.",
+        "url": "https://github.com/solvyn/retrieval-service/actions/runs/adversarial-7",
+        "occurred_at": "2026-07-13T12:00:00Z",
+        "metadata": {},
+        "first_seen_at": "2026-07-13T12:00:00Z",
+        "last_seen_at": "2026-07-13T12:00:00Z"
+      },
+      "roadmap": {
+        "snapshot_version": 1,
+        "canonicalization_version": 1,
+        "roadmap_hash": "3b336e3244d6ac13fb04fa5f9eec5e7d53ec67c4795769d43502711581a272e6",
+        "stages": [
+          {
+            "stage_id": "define",
+            "position": 0,
+            "content_hash": "4db8484ae7aad40d1b4cee554be91bd95fef8ee0b04ab8def2e872e0db28f9a6",
+            "content": {
+              "id": "define",
+              "title": "Define retrieval requirements",
+              "purpose": "Choose document inputs, user query, retrieval output, and success metric.",
+              "tasks": [
+                "Write measurable retrieval requirements."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "mvp",
+            "position": 1,
+            "content_hash": "58113eeb94e45bf4d2cbb13089325ef9c26f637a232712b61799d65f8a42f76a",
+            "content": {
+              "id": "mvp",
+              "title": "Build retrieval MVP",
+              "purpose": "Implement document ingestion, indexing, search, and retrieval result output.",
+              "tasks": [
+                "Build document ingestion.",
+                "Implement search indexing.",
+                "Return ranked retrieval results."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "validate",
+            "position": 2,
+            "content_hash": "a66856164a97fe2387e8dd80e6a82b7f2ac3e2779a93253b2f8b901fb95a17b9",
+            "content": {
+              "id": "validate",
+              "title": "Validate retrieval quality",
+              "purpose": "Run evaluation questions and measure retrieval precision and failure cases.",
+              "tasks": [
+                "Run retrieval evaluation questions.",
+                "Measure retrieval precision."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "package",
+            "position": 3,
+            "content_hash": "3e908fa10d22ca38f3844a50b092439dd344bcee8b34650f246bb4406e1553f0",
+            "content": {
+              "id": "package",
+              "title": "Package retrieval project",
+              "purpose": "Publish architecture documentation, a demo, README, and release.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          }
+        ]
+      },
+      "expected_roadmap_node_ids": [],
+      "expected_abstain": true
+    },
+    {
+      "case_id": "pipeline-unrelated-security-change",
+      "repository_id": "delivery-pipeline",
+      "evidence": {
+        "provider": "github",
+        "repository_full_name": "solvyn/delivery-pipeline",
+        "evidence_type": "commit",
+        "external_id": "adversarial-8",
+        "title": "Rotate repository access token",
+        "description": "Updates secret storage configuration.",
+        "url": "https://github.com/solvyn/delivery-pipeline/actions/runs/adversarial-8",
+        "occurred_at": "2026-07-13T12:00:00Z",
+        "metadata": {},
+        "first_seen_at": "2026-07-13T12:00:00Z",
+        "last_seen_at": "2026-07-13T12:00:00Z"
+      },
+      "roadmap": {
+        "snapshot_version": 1,
+        "canonicalization_version": 1,
+        "roadmap_hash": "433cc06ff0b792a041e86b365b9fa1d062c310c3480511e8072686fc337731a1",
+        "stages": [
+          {
+            "stage_id": "define",
+            "position": 0,
+            "content_hash": "02b6c9d41614485e87b1e586c08bbdee8cbd792db1708ae60a817b3841f47f69",
+            "content": {
+              "id": "define",
+              "title": "Define delivery requirements",
+              "purpose": "Specify deployment targets, release requirements, and operational checks.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "mvp",
+            "position": 1,
+            "content_hash": "263c822eb37060a29b6c840a208d0155fef5b781425cfaae2c49e82c310f3282",
+            "content": {
+              "id": "mvp",
+              "title": "Build delivery pipeline",
+              "purpose": "Implement build automation and deployment workflow configuration.",
+              "tasks": [
+                "Create the build workflow.",
+                "Implement deployment automation."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "validate",
+            "position": 2,
+            "content_hash": "01693b70dee8031e0ec1131ad9edce4dbd2bc66c0cb6ec505fca1ff993597af5",
+            "content": {
+              "id": "validate",
+              "title": "Validate delivery pipeline",
+              "purpose": "Run automated tests, deployment checks, and rollback verification.",
+              "tasks": [
+                "Execute integration tests.",
+                "Verify deployment rollback."
+              ],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          },
+          {
+            "stage_id": "package",
+            "position": 3,
+            "content_hash": "00638a656f7ef79944bf9ef2cb2d4582958bf17a56b1ad7a9bfe3e3f48a12715",
+            "content": {
+              "id": "package",
+              "title": "Publish production release",
+              "purpose": "Publish release notes, deployment documentation, and a versioned release.",
+              "tasks": [],
+              "stage_type": null,
+              "objective": null,
+              "why_it_matters": null,
+              "commands": [],
+              "expected_outputs": [],
+              "acceptance_criteria": [],
+              "validation_checks": [],
+              "common_errors": [],
+              "portfolio_artifact": null,
+              "unlock_condition": null,
+              "guided_steps": []
+            }
+          }
+        ]
+      },
+      "expected_roadmap_node_ids": [],
+      "expected_abstain": true
     }
   ]
 }
