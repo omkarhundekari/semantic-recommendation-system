@@ -1037,7 +1037,7 @@ def _build_verified_json_migration_database(
         )
     ).model_copy(
         update={
-            "source_type": "json",
+            "source_type": "json_import",
             "dry_run": dry_run,
         },
         deep=True,

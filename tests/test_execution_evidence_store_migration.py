@@ -470,7 +470,7 @@ def test_json_dry_run_writes_report_without_destination(
     )
 
     assert report.verified is True
-    assert report.source_type == "json"
+    assert report.source_type == "json_import"
     assert report_path.exists()
     assert not destination_path.exists()
     assert not Path(
