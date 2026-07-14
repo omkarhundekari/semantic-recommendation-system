@@ -449,6 +449,7 @@ def test_project_status_endpoint_is_idempotent(
         "project_id": stored.project_id,
         "previous_status": "archived",
         "current_status": "archived",
+        "revision": 1,
         "transition": None,
     }
     assert history.status_code == 200
@@ -588,3 +589,57 @@ def test_project_lifecycle_api_requires_trusted_sqlite(
         app.dependency_overrides.clear()
 
     assert response.status_code == 503
+
+def test_project_status_endpoint_rejects_stale_revision(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+    stored = _create_lifecycle_project(runtime)
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            first = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={
+                    "status": "archived",
+                    "expected_revision": 0,
+                },
+            )
+            stale = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={
+                    "status": "deleted",
+                    "expected_revision": 0,
+                },
+            )
+            history = client.get(
+                f"/v1/projects/"
+                f"{stored.project_id}/"
+                "status-transitions"
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert first.status_code == 200
+    assert first.json()["revision"] == 1
+
+    assert stale.status_code == 409
+    assert stale.json() == {
+        "detail": (
+            "Project revision conflict: "
+            "expected 0, found 1."
+        )
+    }
+
+    assert history.status_code == 200
+    transitions = history.json()
+    assert len(transitions) == 1
+    assert transitions[0]["new_status"] == "archived"

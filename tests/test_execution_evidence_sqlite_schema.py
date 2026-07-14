@@ -369,6 +369,174 @@ def test_failed_migration_rolls_back_schema_changes(
         connection.close()
 
 
+def test_project_lifecycle_revision_defaults_to_zero(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                'local',
+                '2026-07-14T12:00:00Z',
+                '2026-07-14T12:00:00Z'
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO projects (
+                project_id,
+                workspace_id,
+                title,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                'proj_revision',
+                'local',
+                'Revision project',
+                'active',
+                '2026-07-14T12:00:00Z',
+                '2026-07-14T12:00:00Z'
+            )
+            """
+        )
+
+        revision = connection.execute(
+            """
+            SELECT revision
+            FROM projects
+            WHERE project_id = 'proj_revision'
+            """
+        ).fetchone()["revision"]
+
+        assert revision == 0
+    finally:
+        connection.close()
+
+
+def test_version_nine_project_upgrades_with_zero_revision(
+    tmp_path: Path,
+    monkeypatch,
+):
+    import execution_evidence.sqlite_schema as schema
+
+    database_path = tmp_path / "solvyn.db"
+    current_migrations = schema.MIGRATIONS
+
+    monkeypatch.setattr(
+        schema,
+        "MIGRATIONS",
+        current_migrations[:-1],
+    )
+
+    version = schema.initialize_execution_evidence_database(
+        database_path
+    )
+
+    assert version == 9
+
+    connection = (
+        schema.connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                'local',
+                '2026-07-14T12:00:00Z',
+                '2026-07-14T12:00:00Z'
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO projects (
+                project_id,
+                workspace_id,
+                title,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                'proj_existing',
+                'local',
+                'Existing project',
+                'archived',
+                '2026-07-14T12:00:00Z',
+                '2026-07-14T13:00:00Z'
+            )
+            """
+        )
+    finally:
+        connection.close()
+
+    monkeypatch.setattr(
+        schema,
+        "MIGRATIONS",
+        current_migrations,
+    )
+
+    upgraded_version = (
+        schema.initialize_execution_evidence_database(
+            database_path
+        )
+    )
+
+    connection = (
+        schema.connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        project = connection.execute(
+            """
+            SELECT
+                project_id,
+                title,
+                status,
+                revision
+            FROM projects
+            WHERE project_id = 'proj_existing'
+            """
+        ).fetchone()
+    finally:
+        connection.close()
+
+    assert upgraded_version == 10
+    assert project is not None
+    assert project["project_id"] == "proj_existing"
+    assert project["title"] == "Existing project"
+    assert project["status"] == "archived"
+    assert project["revision"] == 0
+
+
 def test_migration_versions_are_contiguous():
     versions = [
         migration.version

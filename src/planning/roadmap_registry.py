@@ -38,6 +38,12 @@ class ProjectStatusTransitionError(
     pass
 
 
+class ProjectRevisionConflictError(
+    RoadmapSnapshotConflictError
+):
+    pass
+
+
 ProjectStatus = Literal[
     "active",
     "archived",
@@ -59,6 +65,7 @@ class ProjectStatusMutationResult(BaseModel):
     project_id: str = Field(min_length=1)
     previous_status: ProjectStatus
     current_status: ProjectStatus
+    revision: int = Field(ge=0)
     transition: Optional[
         ProjectStatusTransition
     ] = None
@@ -83,6 +90,7 @@ class StoredRoadmapSnapshot(BaseModel):
         min_length=1,
     )
     project_status: ProjectStatus = "active"
+    project_revision: int = Field(default=0, ge=0)
     snapshot: RoadmapSnapshot
     created_at: datetime
     supersedes_id: Optional[str] = None
@@ -171,6 +179,7 @@ class RoadmapSnapshotRegistry(ABC):
         new_status: ProjectStatus,
         changed_at: datetime,
         reason: Optional[str] = None,
+        expected_revision: Optional[int] = None,
     ) -> ProjectStatusMutationResult:
         raise NotImplementedError
 
@@ -476,6 +485,7 @@ class SQLiteRoadmapSnapshotRegistry(
                 SELECT
                     project.project_id,
                     project.status AS project_status,
+                    project.revision AS project_revision,
                     roadmap.roadmap_snapshot_id,
                     roadmap.project_direction_id,
                     roadmap.response_direction_id,
@@ -517,6 +527,7 @@ class SQLiteRoadmapSnapshotRegistry(
         new_status: ProjectStatus,
         changed_at: datetime,
         reason: Optional[str] = None,
+        expected_revision: Optional[int] = None,
     ) -> ProjectStatusMutationResult:
         normalized_project_id = project_id.strip()
         normalized_reason = (
@@ -539,7 +550,8 @@ class SQLiteRoadmapSnapshotRegistry(
                 SELECT
                     project_row_id,
                     project_id,
-                    status
+                    status,
+                    revision
                 FROM projects
                 WHERE
                     workspace_id = ?
@@ -557,6 +569,20 @@ class SQLiteRoadmapSnapshotRegistry(
                 )
 
             previous_status = str(project["status"])
+            current_revision = int(
+                project["revision"]
+            )
+
+            if (
+                expected_revision is not None
+                and expected_revision
+                != current_revision
+            ):
+                raise ProjectRevisionConflictError(
+                    "Project revision conflict: "
+                    f"expected {expected_revision}, "
+                    f"found {current_revision}."
+                )
 
             if previous_status == new_status:
                 result = ProjectStatusMutationResult(
@@ -564,6 +590,7 @@ class SQLiteRoadmapSnapshotRegistry(
                     project_id=normalized_project_id,
                     previous_status=previous_status,
                     current_status=previous_status,
+                    revision=current_revision,
                     transition=None,
                 )
                 connection.execute("COMMIT")
@@ -607,15 +634,21 @@ class SQLiteRoadmapSnapshotRegistry(
                 UPDATE projects
                 SET
                     status = ?,
+                    revision = revision + 1,
                     updated_at = ?
-                WHERE project_row_id = ?
+                WHERE
+                    project_row_id = ?
+                    AND revision = ?
                 """,
                 (
                     transition.new_status,
                     transition.changed_at.isoformat(),
                     int(project["project_row_id"]),
+                    current_revision,
                 ),
             )
+
+            next_revision = current_revision + 1
 
             connection.execute(
                 """
@@ -650,6 +683,7 @@ class SQLiteRoadmapSnapshotRegistry(
                     transition.previous_status
                 ),
                 current_status=transition.new_status,
+                revision=next_revision,
                 transition=transition,
             )
 
@@ -657,6 +691,7 @@ class SQLiteRoadmapSnapshotRegistry(
             return result.model_copy(deep=True)
         except (
             ProjectNotFoundError,
+            ProjectRevisionConflictError,
             ProjectStatusTransitionError,
         ):
             self._rollback(connection)
@@ -767,6 +802,7 @@ class SQLiteRoadmapSnapshotRegistry(
             SELECT
                 project.project_id,
                 project.status AS project_status,
+                project.revision AS project_revision,
                 roadmap.roadmap_snapshot_id,
                 roadmap.project_direction_id,
                 roadmap.response_direction_id,
@@ -803,6 +839,7 @@ class SQLiteRoadmapSnapshotRegistry(
             SELECT
                 project.project_id,
                 project.status AS project_status,
+                project.revision AS project_revision,
                 roadmap.roadmap_snapshot_id,
                 roadmap.project_direction_id,
                 roadmap.response_direction_id,
@@ -842,6 +879,7 @@ class SQLiteRoadmapSnapshotRegistry(
             SELECT
                 project.project_id,
                 project.status AS project_status,
+                project.revision AS project_revision,
                 roadmap.roadmap_snapshot_id,
                 roadmap.project_direction_id,
                 roadmap.response_direction_id,
@@ -904,6 +942,9 @@ class SQLiteRoadmapSnapshotRegistry(
             ),
             title=row["title"],
             project_status=row["project_status"],
+            project_revision=int(
+                row["project_revision"]
+            ),
             snapshot=(
                 RoadmapSnapshot.model_validate_json(
                     row["snapshot_json"]

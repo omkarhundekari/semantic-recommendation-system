@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 9
+CURRENT_SQLITE_SCHEMA_VERSION = 10
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -893,6 +893,13 @@ END;
 """
 
 
+ADD_PROJECT_LIFECYCLE_REVISION_SQL = """
+ALTER TABLE projects
+ADD COLUMN revision INTEGER NOT NULL DEFAULT 0
+    CHECK (revision >= 0);
+"""
+
+
 CREATE_PROJECT_STATUS_TRANSITIONS_SQL = """
 CREATE TABLE project_status_transitions (
     transition_id TEXT PRIMARY KEY,
@@ -1098,6 +1105,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=9,
         name="create_project_status_transition_audit",
         sql=CREATE_PROJECT_STATUS_TRANSITIONS_SQL,
+    ),
+    SQLiteMigration(
+        version=10,
+        name="add_project_lifecycle_revision",
+        sql=ADD_PROJECT_LIFECYCLE_REVISION_SQL,
     ),
 )
 

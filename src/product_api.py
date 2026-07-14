@@ -41,6 +41,7 @@ from planning.roadmap_execution_enrichment import (
 )
 from planning.roadmap_registry import (
     ProjectNotFoundError,
+    ProjectRevisionConflictError,
     ProjectStatus,
     ProjectStatusMutationResult,
     ProjectStatusTransition,
@@ -421,6 +422,10 @@ class ProjectStatusTransitionRequest(BaseModel):
     reason: Optional[str] = Field(
         default=None,
         max_length=1000,
+    )
+    expected_revision: Optional[int] = Field(
+        default=None,
+        ge=0,
     )
 
 
@@ -1107,6 +1112,9 @@ def transition_project_status(
                     timezone.utc
                 ),
                 reason=request.reason,
+                expected_revision=(
+                    request.expected_revision
+                ),
             )
         )
     except ProjectNotFoundError as error:
@@ -1114,7 +1122,10 @@ def transition_project_status(
             status_code=404,
             detail=str(error),
         ) from error
-    except ProjectStatusTransitionError as error:
+    except (
+        ProjectRevisionConflictError,
+        ProjectStatusTransitionError,
+    ) as error:
         raise HTTPException(
             status_code=409,
             detail=str(error),

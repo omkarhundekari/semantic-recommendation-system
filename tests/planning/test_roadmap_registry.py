@@ -7,6 +7,7 @@ import pytest
 
 from planning.roadmap_registry import (
     ProjectNotFoundError,
+    ProjectRevisionConflictError,
     ProjectStatusTransitionError,
     RoadmapSnapshotConflictError,
     SQLiteRoadmapSnapshotRegistry,
@@ -916,6 +917,7 @@ def test_project_status_transition_is_audited(
     assert result.project_id == stored.project_id
     assert result.previous_status == "active"
     assert result.current_status == "archived"
+    assert result.revision == 1
     assert transition is not None
     assert transition.project_id == stored.project_id
     assert transition.previous_status == "active"
@@ -961,6 +963,7 @@ def test_project_status_transition_is_idempotent(
     assert result.project_id == stored.project_id
     assert result.previous_status == "active"
     assert result.current_status == "active"
+    assert result.revision == 0
     assert result.transition is None
     assert registry.list_project_status_transitions(
         stored.project_id
@@ -1121,6 +1124,63 @@ def test_deleted_project_cannot_transition(
             new_status=target_status,
             changed_at=CREATED_AT,
         )
+
+
+def test_project_status_transition_rejects_stale_revision(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+    stored = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_revision",
+            response_direction_id="direction-one",
+            title="Revision project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+
+    first = registry.transition_project_status(
+        stored.project_id,
+        new_status="archived",
+        changed_at=CREATED_AT,
+        expected_revision=0,
+    )
+
+    assert first.revision == 1
+
+    with pytest.raises(
+        ProjectRevisionConflictError,
+        match="expected 0, found 1",
+    ):
+        registry.transition_project_status(
+            stored.project_id,
+            new_status="deleted",
+            changed_at=datetime(
+                2026,
+                7,
+                14,
+                19,
+                0,
+                tzinfo=timezone.utc,
+            ),
+            expected_revision=0,
+        )
+
+    loaded = registry.load(
+        stored.project_direction_id
+    )
+
+    assert loaded is not None
+    assert loaded.project_status == "archived"
+    assert loaded.project_revision == 1
+    assert len(
+        registry.list_project_status_transitions(
+            stored.project_id
+        )
+    ) == 1
 
 
 def test_project_status_transition_is_workspace_scoped(
