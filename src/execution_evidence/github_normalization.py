@@ -2,8 +2,16 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional
+from urllib.parse import urlparse
 
 from execution_evidence.models import ExecutionEvidenceItem
+
+
+MAX_TITLE_LENGTH = 500
+MAX_DESCRIPTION_LENGTH = 20_000
+MAX_METADATA_TEXT_LENGTH = 500
+MAX_LABEL_COUNT = 50
+MAX_LABEL_LENGTH = 100
 
 
 class GitHubPayloadError(ValueError):
@@ -32,12 +40,12 @@ def normalize_commit(
         repository_full_name=repository_full_name,
         evidence_type="commit",
         external_id=sha,
-        title=_first_line(message),
-        description=message,
-        url=_required_text(payload, "html_url"),
+        title=_bounded_title(_first_line(message)),
+        description=_bounded_description(message),
+        url=_required_github_url(payload, "html_url"),
         occurred_at=occurred_at,
         metadata={
-            "author_login": _optional_text(author.get("login")),
+            "author_login": _bounded_metadata_text(author.get("login")),
             "additions": _optional_int(stats.get("additions")),
             "deletions": _optional_int(stats.get("deletions")),
             "changed_files": _optional_int(
@@ -69,26 +77,23 @@ def normalize_pull_request(
         repository_full_name=repository_full_name,
         evidence_type="pull_request",
         external_id=str(number),
-        title=title,
-        description=_optional_text(payload.get("body")),
-        url=_required_text(payload, "html_url"),
+        title=_bounded_title(title),
+        description=_bounded_description(
+            _optional_text(payload.get("body"))
+        ),
+        url=_required_github_url(payload, "html_url"),
         occurred_at=merged_at or created_at,
         metadata={
-            "state": _optional_text(payload.get("state")),
+            "state": _bounded_metadata_text(payload.get("state")),
             "merged": bool(payload.get("merged_at")),
             "draft": bool(payload.get("draft", False)),
-            "base_branch": _optional_text(
+            "base_branch": _bounded_metadata_text(
                 _nested_value(payload, "base", "ref")
             ),
-            "head_branch": _optional_text(
+            "head_branch": _bounded_metadata_text(
                 _nested_value(payload, "head", "ref")
             ),
-            "labels": [
-                str(label.get("name"))
-                for label in labels
-                if isinstance(label, dict)
-                and label.get("name")
-            ],
+            "labels": _normalized_labels(labels),
             "additions": _optional_int(payload.get("additions")),
             "deletions": _optional_int(payload.get("deletions")),
             "changed_files": _optional_int(
@@ -120,13 +125,15 @@ def normalize_release(
         repository_full_name=repository_full_name,
         evidence_type="release",
         external_id=str(release_id),
-        title=name or tag_name,
-        description=_optional_text(payload.get("body")),
-        url=_required_text(payload, "html_url"),
+        title=_bounded_title(name or tag_name),
+        description=_bounded_description(
+            _optional_text(payload.get("body"))
+        ),
+        url=_required_github_url(payload, "html_url"),
         occurred_at=occurred_at,
         metadata={
             "tag_name": tag_name,
-            "target_commitish": _optional_text(
+            "target_commitish": _bounded_metadata_text(
                 payload.get("target_commitish")
             ),
             "draft": bool(payload.get("draft", False)),
@@ -155,20 +162,22 @@ def normalize_workflow_run(
         repository_full_name=repository_full_name,
         evidence_type="workflow_run",
         external_id=str(run_id),
-        title=name,
-        description=_optional_text(
-            payload.get("display_title")
+        title=_bounded_title(name),
+        description=_bounded_description(
+            _optional_text(
+                payload.get("display_title")
+            )
         ),
-        url=_required_text(payload, "html_url"),
+        url=_required_github_url(payload, "html_url"),
         occurred_at=occurred_at,
         metadata={
-            "status": _optional_text(payload.get("status")),
-            "conclusion": _optional_text(
+            "status": _bounded_metadata_text(payload.get("status")),
+            "conclusion": _bounded_metadata_text(
                 payload.get("conclusion")
             ),
-            "event": _optional_text(payload.get("event")),
-            "branch": _optional_text(payload.get("head_branch")),
-            "head_sha": _optional_text(payload.get("head_sha")),
+            "event": _bounded_metadata_text(payload.get("event")),
+            "branch": _bounded_metadata_text(payload.get("head_branch")),
+            "head_sha": _bounded_metadata_text(payload.get("head_sha")),
             "run_number": _optional_int(
                 payload.get("run_number")
             ),
@@ -232,12 +241,45 @@ def _required_text(
 ) -> str:
     value = payload.get(key)
 
-    if value is None or not str(value).strip():
+    if value is None:
         raise GitHubPayloadError(
             f"GitHub payload field '{key}' must be non-empty."
         )
 
-    return str(value).strip()
+    normalized = _clean_text(value)
+
+    if not normalized:
+        raise GitHubPayloadError(
+            f"GitHub payload field '{key}' must be non-empty."
+        )
+
+    return normalized
+
+
+def _required_github_url(
+    payload: Dict[str, Any],
+    key: str,
+) -> str:
+    value = _required_text(payload, key)
+    parsed = urlparse(value)
+
+    if (
+        parsed.scheme.lower() != "https"
+        or (parsed.hostname or "").lower() != "github.com"
+        or not parsed.path
+    ):
+        raise GitHubPayloadError(
+            f"GitHub payload field '{key}' must be an "
+            "https://github.com URL."
+        )
+
+    if parsed.username or parsed.password or parsed.port:
+        raise GitHubPayloadError(
+            f"GitHub payload field '{key}' contains "
+            "unsupported URL authority components."
+        )
+
+    return value
 
 
 def _required_value(
@@ -307,14 +349,103 @@ def _parse_datetime(value: str) -> datetime:
 
 
 def _first_line(value: str) -> str:
-    return value.splitlines()[0].strip()
+    lines = _clean_text(value).splitlines()
+
+    for line in lines:
+        if line.strip():
+            return line.strip()
+
+    return ""
 
 
 def _optional_text(value: Any) -> str:
     if value is None:
         return ""
 
-    return str(value).strip()
+    return _clean_text(value)
+
+
+def _clean_text(value: Any) -> str:
+    text = str(value).replace("\r\n", "\n").replace(
+        "\r",
+        "\n",
+    )
+
+    cleaned = "".join(
+        character
+        for character in text
+        if (
+            character in {"\n", "\t"}
+            or ord(character) >= 32
+            and ord(character) != 127
+        )
+    )
+
+    return cleaned.strip()
+
+
+def _truncate_text(
+    value: str,
+    maximum_length: int,
+) -> str:
+    if len(value) <= maximum_length:
+        return value
+
+    return value[:maximum_length]
+
+
+def _bounded_title(value: str) -> str:
+    title = _truncate_text(
+        _clean_text(value),
+        MAX_TITLE_LENGTH,
+    ).strip()
+
+    if not title:
+        raise GitHubPayloadError(
+            "Normalized GitHub evidence title must be non-empty."
+        )
+
+    return title
+
+
+def _bounded_description(value: str) -> str:
+    return _truncate_text(
+        _clean_text(value),
+        MAX_DESCRIPTION_LENGTH,
+    )
+
+
+def _bounded_metadata_text(value: Any) -> str:
+    return _truncate_text(
+        _optional_text(value),
+        MAX_METADATA_TEXT_LENGTH,
+    )
+
+
+def _normalized_labels(
+    labels: Any,
+) -> List[str]:
+    if not isinstance(labels, list):
+        return []
+
+    normalized: List[str] = []
+
+    for label in labels:
+        if len(normalized) >= MAX_LABEL_COUNT:
+            break
+
+        if not isinstance(label, dict):
+            continue
+
+        name = _truncate_text(
+            _optional_text(label.get("name")),
+            MAX_LABEL_LENGTH,
+        )
+
+        if name:
+            normalized.append(name)
+
+    return normalized
 
 
 def _optional_int(value: Any) -> Optional[int]:
