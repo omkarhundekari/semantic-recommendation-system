@@ -103,6 +103,22 @@ class RoadmapSnapshotRegistry(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def load_by_snapshot_id(
+        self,
+        roadmap_snapshot_id: str,
+    ) -> Optional[StoredRoadmapSnapshot]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def load_by_durable_identity(
+        self,
+        *,
+        project_id: str,
+        roadmap_snapshot_id: str,
+    ) -> Optional[StoredRoadmapSnapshot]:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_snapshots(
         self,
     ) -> List[StoredRoadmapSnapshot]:
@@ -296,6 +312,71 @@ class SQLiteRoadmapSnapshotRegistry(
         finally:
             connection.close()
 
+    def load_by_snapshot_id(
+        self,
+        roadmap_snapshot_id: str,
+    ) -> Optional[StoredRoadmapSnapshot]:
+        connection = self._connect()
+
+        try:
+            record = (
+                self._load_by_snapshot_id_on_connection(
+                    connection,
+                    roadmap_snapshot_id.strip(),
+                )
+            )
+
+            return (
+                record.model_copy(deep=True)
+                if record is not None
+                else None
+            )
+        except (
+            sqlite3.Error,
+            ValueError,
+        ) as error:
+            raise RoadmapRegistryError(
+                "Could not load roadmap snapshot "
+                "by durable snapshot ID."
+            ) from error
+        finally:
+            connection.close()
+
+    def load_by_durable_identity(
+        self,
+        *,
+        project_id: str,
+        roadmap_snapshot_id: str,
+    ) -> Optional[StoredRoadmapSnapshot]:
+        connection = self._connect()
+
+        try:
+            record = (
+                self._load_by_durable_identity_on_connection(
+                    connection,
+                    project_id=project_id.strip(),
+                    roadmap_snapshot_id=(
+                        roadmap_snapshot_id.strip()
+                    ),
+                )
+            )
+
+            return (
+                record.model_copy(deep=True)
+                if record is not None
+                else None
+            )
+        except (
+            sqlite3.Error,
+            ValueError,
+        ) as error:
+            raise RoadmapRegistryError(
+                "Could not load roadmap snapshot "
+                "by durable identity."
+            ) from error
+        finally:
+            connection.close()
+
     def list_snapshots(
         self,
     ) -> List[StoredRoadmapSnapshot]:
@@ -374,6 +455,84 @@ class SQLiteRoadmapSnapshotRegistry(
             return None
 
         return self._record_from_row(row)
+
+    def _load_by_snapshot_id_on_connection(
+        self,
+        connection: sqlite3.Connection,
+        roadmap_snapshot_id: str,
+    ) -> Optional[StoredRoadmapSnapshot]:
+        row = connection.execute(
+            """
+            SELECT
+                project.project_id,
+                roadmap.roadmap_snapshot_id,
+                roadmap.project_direction_id,
+                roadmap.response_direction_id,
+                roadmap.title,
+                roadmap.snapshot_json,
+                roadmap.created_at,
+                roadmap.supersedes_id
+            FROM roadmap_registry AS roadmap
+            JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
+            WHERE
+                roadmap.workspace_id = ?
+                AND roadmap.roadmap_snapshot_id = ?
+            """,
+            (
+                self._workspace_id,
+                roadmap_snapshot_id,
+            ),
+        ).fetchone()
+
+        return (
+            self._record_from_row(row)
+            if row is not None
+            else None
+        )
+
+    def _load_by_durable_identity_on_connection(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        project_id: str,
+        roadmap_snapshot_id: str,
+    ) -> Optional[StoredRoadmapSnapshot]:
+        row = connection.execute(
+            """
+            SELECT
+                project.project_id,
+                roadmap.roadmap_snapshot_id,
+                roadmap.project_direction_id,
+                roadmap.response_direction_id,
+                roadmap.title,
+                roadmap.snapshot_json,
+                roadmap.created_at,
+                roadmap.supersedes_id
+            FROM roadmap_registry AS roadmap
+            JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
+            WHERE
+                roadmap.workspace_id = ?
+                AND project.workspace_id = ?
+                AND project.project_id = ?
+                AND roadmap.roadmap_snapshot_id = ?
+            """,
+            (
+                self._workspace_id,
+                self._workspace_id,
+                project_id,
+                roadmap_snapshot_id,
+            ),
+        ).fetchone()
+
+        return (
+            self._record_from_row(row)
+            if row is not None
+            else None
+        )
 
     @staticmethod
     def _record_from_row(

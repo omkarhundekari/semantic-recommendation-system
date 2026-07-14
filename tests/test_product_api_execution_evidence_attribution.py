@@ -132,6 +132,8 @@ class FakeRoadmapRegistry:
         self.record = record
         self.error = error
         self.load_calls = []
+        self.durable_load_calls = []
+        self.durable_load_calls = []
 
     def load(
         self,
@@ -148,6 +150,96 @@ class FakeRoadmapRegistry:
             self.record is not None
             and self.record.project_direction_id
             == project_direction_id
+        ):
+            return self.record
+
+        return None
+
+    def load_by_snapshot_id(
+        self,
+        roadmap_snapshot_id: str,
+    ):
+        if self.error is not None:
+            raise self.error
+
+        if (
+            self.record is not None
+            and self.record.roadmap_snapshot_id
+            == roadmap_snapshot_id
+        ):
+            return self.record
+
+        return None
+
+    def load_by_durable_identity(
+        self,
+        *,
+        project_id: str,
+        roadmap_snapshot_id: str,
+    ):
+        self.durable_load_calls.append(
+            {
+                "project_id": project_id,
+                "roadmap_snapshot_id": (
+                    roadmap_snapshot_id
+                ),
+            }
+        )
+
+        if self.error is not None:
+            raise self.error
+
+        if (
+            self.record is not None
+            and self.record.project_id
+            == project_id
+            and self.record.roadmap_snapshot_id
+            == roadmap_snapshot_id
+        ):
+            return self.record
+
+        return None
+
+    def load_by_snapshot_id(
+        self,
+        roadmap_snapshot_id: str,
+    ):
+        if self.error is not None:
+            raise self.error
+
+        if (
+            self.record is not None
+            and self.record.roadmap_snapshot_id
+            == roadmap_snapshot_id
+        ):
+            return self.record
+
+        return None
+
+    def load_by_durable_identity(
+        self,
+        *,
+        project_id: str,
+        roadmap_snapshot_id: str,
+    ):
+        self.durable_load_calls.append(
+            {
+                "project_id": project_id,
+                "roadmap_snapshot_id": (
+                    roadmap_snapshot_id
+                ),
+            }
+        )
+
+        if self.error is not None:
+            raise self.error
+
+        if (
+            self.record is not None
+            and self.record.project_id
+            == project_id
+            and self.record.roadmap_snapshot_id
+            == roadmap_snapshot_id
         ):
             return self.record
 
@@ -958,7 +1050,7 @@ def test_attribution_request_identity_fields_are_trimmed(
     ]
 
 
-def test_attach_endpoint_requires_project_direction_id(
+def test_attach_endpoint_requires_roadmap_identity(
     client,
 ):
     response = client.post(
@@ -1127,3 +1219,231 @@ def test_list_endpoint_validates_supplied_durable_identity(
 
     assert response.status_code == 200
     assert len(response.json()) == 1
+
+def test_attach_endpoint_accepts_durable_identity_only(
+    client,
+):
+    service = FakeAttributionService(
+        attach_result=AttributionMutationResult(
+            stored=_stored_record(),
+            attribution=ATTRIBUTION,
+            created=True,
+        )
+    )
+    registry = FakeRoadmapRegistry()
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+    app.dependency_overrides[
+        get_roadmap_snapshot_registry
+    ] = lambda: registry
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": ROADMAP_SNAPSHOT_ID,
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 200
+    assert registry.load_calls == []
+    assert registry.durable_load_calls == [
+        {
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": ROADMAP_SNAPSHOT_ID,
+        }
+    ]
+
+    call = service.attach_calls[0]
+
+    assert (
+        call["project_direction_id"]
+        == PROJECT_DIRECTION_ID
+    )
+    assert call["project_id"] == PROJECT_ID
+    assert (
+        call["roadmap_snapshot_id"]
+        == ROADMAP_SNAPSHOT_ID
+    )
+
+
+def test_detach_endpoint_accepts_durable_identity_only(
+    client,
+):
+    service = FakeAttributionService(
+        detach_result=True
+    )
+    registry = FakeRoadmapRegistry()
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+    app.dependency_overrides[
+        get_roadmap_snapshot_registry
+    ] = lambda: registry
+
+    response = client.request(
+        "DELETE",
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": ROADMAP_SNAPSHOT_ID,
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "removed": True,
+    }
+    assert (
+        service.detach_calls[0][
+            "project_direction_id"
+        ]
+        == PROJECT_DIRECTION_ID
+    )
+
+
+def test_list_endpoint_accepts_durable_identity_only(
+    client,
+):
+    service = FakeAttributionService(
+        list_result=[ATTRIBUTION]
+    )
+    registry = FakeRoadmapRegistry()
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+    app.dependency_overrides[
+        get_roadmap_snapshot_registry
+    ] = lambda: registry
+
+    response = client.get(
+        "/v1/execution-evidence/attributions",
+        params={
+            "repository_key": REPOSITORY_KEY,
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": ROADMAP_SNAPSHOT_ID,
+        },
+    )
+
+    assert response.status_code == 200
+    assert service.list_repository_calls == [
+        {
+            "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+        }
+    ]
+
+
+def test_list_node_endpoint_accepts_durable_identity_only(
+    client,
+):
+    service = FakeAttributionService(
+        list_result=[ATTRIBUTION]
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    response = client.get(
+        "/v1/execution-evidence/attributions",
+        params={
+            "repository_key": REPOSITORY_KEY,
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": ROADMAP_SNAPSHOT_ID,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 200
+    assert service.list_node_calls == [
+        {
+            "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "roadmap_node_id": "build-mvp",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        "project_id",
+        "roadmap_snapshot_id",
+    ],
+)
+def test_attach_endpoint_rejects_partial_durable_identity(
+    client,
+    field_name,
+):
+    payload = {
+        "repository_key": REPOSITORY_KEY,
+        "evidence_key": EVIDENCE.evidence_key,
+        "roadmap_node_id": "build-mvp",
+    }
+    payload[field_name] = (
+        PROJECT_ID
+        if field_name == "project_id"
+        else ROADMAP_SNAPSHOT_ID
+    )
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json=payload,
+    )
+
+    assert response.status_code == 422
+
+
+def test_attach_endpoint_rejects_missing_roadmap_identity(
+    client,
+):
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_attach_endpoint_rejects_conflicting_direction_alias(
+    client,
+):
+    service = FakeAttributionService()
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": ROADMAP_SNAPSHOT_ID,
+            "project_direction_id": "wrong-direction",
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 404
+    assert service.attach_calls == []

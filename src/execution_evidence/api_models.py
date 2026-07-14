@@ -6,6 +6,7 @@ from pydantic import (
     BaseModel,
     Field,
     StringConstraints,
+    model_validator,
 )
 
 
@@ -32,14 +33,47 @@ class RepositoryEvidenceSyncRequest(BaseModel):
     )
 
 
-class EvidenceAttributionAttachRequest(BaseModel):
-    project_direction_id: NonBlankIdentifier
+class AttributionIdentityRequest(BaseModel):
+    project_direction_id: Optional[
+        NonBlankIdentifier
+    ] = None
     project_id: Optional[
         NonBlankIdentifier
     ] = None
     roadmap_snapshot_id: Optional[
         NonBlankIdentifier
     ] = None
+
+    @model_validator(mode="after")
+    def validate_roadmap_identity(
+        self,
+    ) -> "AttributionIdentityRequest":
+        has_project_id = self.project_id is not None
+        has_snapshot_id = (
+            self.roadmap_snapshot_id is not None
+        )
+
+        if has_project_id != has_snapshot_id:
+            raise ValueError(
+                "project_id and roadmap_snapshot_id "
+                "must be supplied together."
+            )
+
+        if (
+            self.project_direction_id is None
+            and not has_project_id
+        ):
+            raise ValueError(
+                "A durable roadmap identity or "
+                "project_direction_id is required."
+            )
+
+        return self
+
+
+class EvidenceAttributionAttachRequest(
+    AttributionIdentityRequest
+):
     repository_key: NonBlankIdentifier
     evidence_key: NonBlankIdentifier
     roadmap_node_id: NonBlankIdentifier
@@ -50,14 +84,9 @@ class EvidenceAttributionAttachRequest(BaseModel):
     )
 
 
-class EvidenceAttributionDetachRequest(BaseModel):
-    project_direction_id: NonBlankIdentifier
-    project_id: Optional[
-        NonBlankIdentifier
-    ] = None
-    roadmap_snapshot_id: Optional[
-        NonBlankIdentifier
-    ] = None
+class EvidenceAttributionDetachRequest(
+    AttributionIdentityRequest
+):
     repository_key: NonBlankIdentifier
     evidence_key: NonBlankIdentifier
     roadmap_node_id: NonBlankIdentifier
@@ -67,16 +96,10 @@ class EvidenceAttributionDetachRequest(BaseModel):
     )
 
 
-
-class EvidenceAttributionListQuery(BaseModel):
+class EvidenceAttributionListQuery(
+    AttributionIdentityRequest
+):
     repository_key: NonBlankIdentifier
-    project_direction_id: NonBlankIdentifier
-    project_id: Optional[
-        NonBlankIdentifier
-    ] = None
-    roadmap_snapshot_id: Optional[
-        NonBlankIdentifier
-    ] = None
     roadmap_node_id: Optional[
         NonBlankIdentifier
     ] = None

@@ -697,7 +697,7 @@ def _load_trusted_attribution_roadmap(
     roadmap_registry: Optional[
         RoadmapSnapshotRegistry
     ],
-    project_direction_id: str,
+    project_direction_id: Optional[str] = None,
     project_id: Optional[str] = None,
     roadmap_snapshot_id: Optional[str] = None,
 ):
@@ -712,51 +712,114 @@ def _load_trusted_attribution_roadmap(
             ),
         )
 
+    has_durable_identity = (
+        project_id is not None
+        and roadmap_snapshot_id is not None
+    )
+
     try:
-        stored_roadmap = roadmap_registry.load(
-            project_direction_id
-        )
+        if has_durable_identity:
+            durable_roadmap = (
+                roadmap_registry
+                .load_by_durable_identity(
+                    project_id=project_id,
+                    roadmap_snapshot_id=(
+                        roadmap_snapshot_id
+                    ),
+                )
+            )
+
+            if project_direction_id is None:
+                stored_roadmap = durable_roadmap
+            else:
+                legacy_roadmap = roadmap_registry.load(
+                    project_direction_id
+                )
+
+                if legacy_roadmap is None:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=(
+                            "Trusted project direction "
+                            "snapshot was not found."
+                        ),
+                    )
+
+                if legacy_roadmap.project_id != project_id:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=(
+                            "project_id does not match the "
+                            "trusted project direction "
+                            "snapshot."
+                        ),
+                    )
+
+                if (
+                    legacy_roadmap.roadmap_snapshot_id
+                    != roadmap_snapshot_id
+                ):
+                    raise HTTPException(
+                        status_code=409,
+                        detail=(
+                            "roadmap_snapshot_id does not "
+                            "match the trusted project "
+                            "direction snapshot."
+                        ),
+                    )
+
+                if durable_roadmap is None:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=(
+                            "Durable roadmap identity does "
+                            "not resolve to the trusted "
+                            "project direction snapshot."
+                        ),
+                    )
+
+                stored_roadmap = durable_roadmap
+        else:
+            stored_roadmap = roadmap_registry.load(
+                project_direction_id
+            )
+    except HTTPException:
+        raise
     except RoadmapRegistryError as error:
         raise HTTPException(
             status_code=503,
             detail=(
                 "Trusted roadmap storage could not "
-                "validate the requested project direction."
+                "validate the requested roadmap identity."
             ),
         ) from error
 
     if stored_roadmap is None:
-        raise HTTPException(
-            status_code=404,
-            detail=(
+        if project_direction_id is not None:
+            detail = (
                 "Trusted project direction snapshot "
                 "was not found."
-            ),
+            )
+        else:
+            detail = (
+                "Trusted roadmap snapshot was not found."
+            )
+
+        raise HTTPException(
+            status_code=404,
+            detail=detail,
         )
 
     if (
-        project_id is not None
-        and stored_roadmap.project_id
-        != project_id
+        project_direction_id is not None
+        and stored_roadmap.project_direction_id
+        != project_direction_id
     ):
         raise HTTPException(
             status_code=409,
             detail=(
-                "project_id does not match the trusted "
-                "project direction snapshot."
-            ),
-        )
-
-    if (
-        roadmap_snapshot_id is not None
-        and stored_roadmap.roadmap_snapshot_id
-        != roadmap_snapshot_id
-    ):
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                "roadmap_snapshot_id does not match the "
-                "trusted project direction snapshot."
+                "project_direction_id does not match "
+                "the trusted durable roadmap identity."
             ),
         )
 
@@ -876,10 +939,7 @@ def detach_execution_evidence_attribution(
         get_roadmap_snapshot_registry
     ),
 ) -> EvidenceAttributionDetachResponse:
-    if (
-        request.project_id is not None
-        or request.roadmap_snapshot_id is not None
-    ):
+    stored_roadmap = (
         _load_trusted_attribution_roadmap(
             roadmap_registry=roadmap_registry,
             project_direction_id=(
@@ -890,6 +950,7 @@ def detach_execution_evidence_attribution(
                 request.roadmap_snapshot_id
             ),
         )
+    )
 
     try:
         removed = service.detach(
@@ -897,7 +958,7 @@ def detach_execution_evidence_attribution(
             evidence_key=request.evidence_key,
             roadmap_node_id=request.roadmap_node_id,
             project_direction_id=(
-                request.project_direction_id
+                stored_roadmap.project_direction_id
             ),
             removed_at=datetime.now(timezone.utc),
             expected_revision=request.expected_revision,
@@ -933,10 +994,7 @@ def list_execution_evidence_attributions(
         get_roadmap_snapshot_registry
     ),
 ) -> List[EvidenceAttribution]:
-    if (
-        query.project_id is not None
-        or query.roadmap_snapshot_id is not None
-    ):
+    stored_roadmap = (
         _load_trusted_attribution_roadmap(
             roadmap_registry=roadmap_registry,
             project_direction_id=(
@@ -947,13 +1005,14 @@ def list_execution_evidence_attributions(
                 query.roadmap_snapshot_id
             ),
         )
+    )
 
     try:
         if query.roadmap_node_id is not None:
             return service.list_for_roadmap_node(
                 repository_key=query.repository_key,
                 project_direction_id=(
-                    query.project_direction_id
+                    stored_roadmap.project_direction_id
                 ),
                 roadmap_node_id=query.roadmap_node_id,
             )
@@ -961,7 +1020,7 @@ def list_execution_evidence_attributions(
         return service.list_for_repository(
             query.repository_key,
             project_direction_id=(
-                query.project_direction_id
+                stored_roadmap.project_direction_id
             ),
         )
     except RepositoryEvidenceNotFoundError as error:

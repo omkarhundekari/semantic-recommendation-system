@@ -496,3 +496,99 @@ def test_registry_backfills_manual_record_identity(
     )
 
     assert loaded == saved
+
+
+def _durable_record() -> StoredRoadmapSnapshot:
+    return StoredRoadmapSnapshot(
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        project_direction_id="direction-one",
+        response_direction_id="direction-one",
+        title="Durable roadmap",
+        snapshot=_snapshot(
+            purpose="Build the MVP."
+        ),
+        created_at=CREATED_AT,
+    )
+
+
+def test_registry_loads_same_record_by_all_identities(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+    stored = registry.create(_durable_record())
+
+    assert (
+        registry.load(
+            stored.project_direction_id
+        )
+        == stored
+    )
+    assert (
+        registry.load_by_snapshot_id(
+            stored.roadmap_snapshot_id
+        )
+        == stored
+    )
+    assert (
+        registry.load_by_durable_identity(
+            project_id=stored.project_id,
+            roadmap_snapshot_id=(
+                stored.roadmap_snapshot_id
+            ),
+        )
+        == stored
+    )
+
+
+def test_registry_rejects_wrong_project_for_snapshot(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+    stored = registry.create(_durable_record())
+
+    assert (
+        registry.load_by_durable_identity(
+            project_id="proj_wrong",
+            roadmap_snapshot_id=(
+                stored.roadmap_snapshot_id
+            ),
+        )
+        is None
+    )
+
+
+def test_registry_durable_lookup_is_workspace_isolated(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    first = SQLiteRoadmapSnapshotRegistry(
+        database_path,
+        workspace_id="workspace-one",
+    )
+    second = SQLiteRoadmapSnapshotRegistry(
+        database_path,
+        workspace_id="workspace-two",
+    )
+
+    stored = first.create(_durable_record())
+
+    assert (
+        second.load_by_snapshot_id(
+            stored.roadmap_snapshot_id
+        )
+        is None
+    )
+    assert (
+        second.load_by_durable_identity(
+            project_id=stored.project_id,
+            roadmap_snapshot_id=(
+                stored.roadmap_snapshot_id
+            ),
+        )
+        is None
+    )
