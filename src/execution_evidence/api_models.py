@@ -34,6 +34,12 @@ class RepositoryEvidenceSyncRequest(BaseModel):
 
 class EvidenceAttributionAttachRequest(BaseModel):
     project_direction_id: NonBlankIdentifier
+    project_id: Optional[
+        NonBlankIdentifier
+    ] = None
+    roadmap_snapshot_id: Optional[
+        NonBlankIdentifier
+    ] = None
     repository_key: NonBlankIdentifier
     evidence_key: NonBlankIdentifier
     roadmap_node_id: NonBlankIdentifier
@@ -46,6 +52,12 @@ class EvidenceAttributionAttachRequest(BaseModel):
 
 class EvidenceAttributionDetachRequest(BaseModel):
     project_direction_id: NonBlankIdentifier
+    project_id: Optional[
+        NonBlankIdentifier
+    ] = None
+    roadmap_snapshot_id: Optional[
+        NonBlankIdentifier
+    ] = None
     repository_key: NonBlankIdentifier
     evidence_key: NonBlankIdentifier
     roadmap_node_id: NonBlankIdentifier
@@ -59,6 +71,12 @@ class EvidenceAttributionDetachRequest(BaseModel):
 class EvidenceAttributionListQuery(BaseModel):
     repository_key: NonBlankIdentifier
     project_direction_id: NonBlankIdentifier
+    project_id: Optional[
+        NonBlankIdentifier
+    ] = None
+    roadmap_snapshot_id: Optional[
+        NonBlankIdentifier
+    ] = None
     roadmap_node_id: Optional[
         NonBlankIdentifier
     ] = None

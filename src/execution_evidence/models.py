@@ -85,6 +85,14 @@ class EvidenceAttribution(BaseModel):
         default=None,
         min_length=1,
     )
+    project_id: Optional[str] = Field(
+        default=None,
+        min_length=1,
+    )
+    roadmap_snapshot_id: Optional[str] = Field(
+        default=None,
+        min_length=1,
+    )
     project_direction_id: Optional[str] = Field(
         default=None,
         min_length=1,

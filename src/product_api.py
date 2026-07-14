@@ -692,35 +692,29 @@ def sync_execution_evidence_repository(
         ) from error
 
 
-@app.post(
-    "/v1/execution-evidence/attributions",
-    response_model=AttributionMutationResult,
-)
-def attach_execution_evidence_attribution(
-    request: EvidenceAttributionAttachRequest,
-    service: EvidenceAttributionService = Depends(
-        get_execution_evidence_attribution_service
-    ),
+def _load_trusted_attribution_roadmap(
+    *,
     roadmap_registry: Optional[
         RoadmapSnapshotRegistry
-    ] = Depends(
-        get_roadmap_snapshot_registry
-    ),
-) -> AttributionMutationResult:
+    ],
+    project_direction_id: str,
+    project_id: Optional[str] = None,
+    roadmap_snapshot_id: Optional[str] = None,
+):
     if roadmap_registry is None:
         raise HTTPException(
             status_code=503,
             detail=(
                 "Trusted roadmap attribution is "
                 "unavailable. Migrate execution evidence "
-                "storage to trusted SQLite before "
-                "attaching evidence."
+                "storage to trusted SQLite before using "
+                "durable attribution identities."
             ),
         )
 
     try:
         stored_roadmap = roadmap_registry.load(
-            request.project_direction_id
+            project_direction_id
         )
     except RoadmapRegistryError as error:
         raise HTTPException(
@@ -739,6 +733,63 @@ def attach_execution_evidence_attribution(
                 "was not found."
             ),
         )
+
+    if (
+        project_id is not None
+        and stored_roadmap.project_id
+        != project_id
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "project_id does not match the trusted "
+                "project direction snapshot."
+            ),
+        )
+
+    if (
+        roadmap_snapshot_id is not None
+        and stored_roadmap.roadmap_snapshot_id
+        != roadmap_snapshot_id
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "roadmap_snapshot_id does not match the "
+                "trusted project direction snapshot."
+            ),
+        )
+
+    return stored_roadmap
+
+
+@app.post(
+    "/v1/execution-evidence/attributions",
+    response_model=AttributionMutationResult,
+)
+def attach_execution_evidence_attribution(
+    request: EvidenceAttributionAttachRequest,
+    service: EvidenceAttributionService = Depends(
+        get_execution_evidence_attribution_service
+    ),
+    roadmap_registry: Optional[
+        RoadmapSnapshotRegistry
+    ] = Depends(
+        get_roadmap_snapshot_registry
+    ),
+) -> AttributionMutationResult:
+    stored_roadmap = (
+        _load_trusted_attribution_roadmap(
+            roadmap_registry=roadmap_registry,
+            project_direction_id=(
+                request.project_direction_id
+            ),
+            project_id=request.project_id,
+            roadmap_snapshot_id=(
+                request.roadmap_snapshot_id
+            ),
+        )
+    )
 
     roadmap_stage = next(
         (
@@ -783,8 +834,12 @@ def attach_execution_evidence_attribution(
             repository_key=request.repository_key,
             evidence_key=request.evidence_key,
             roadmap_node_id=request.roadmap_node_id,
+            project_id=stored_roadmap.project_id,
+            roadmap_snapshot_id=(
+                stored_roadmap.roadmap_snapshot_id
+            ),
             project_direction_id=(
-                request.project_direction_id
+                stored_roadmap.project_direction_id
             ),
             roadmap_context=roadmap_context,
             rationale=request.rationale,
@@ -815,7 +870,27 @@ def detach_execution_evidence_attribution(
     service: EvidenceAttributionService = Depends(
         get_execution_evidence_attribution_service
     ),
+    roadmap_registry: Optional[
+        RoadmapSnapshotRegistry
+    ] = Depends(
+        get_roadmap_snapshot_registry
+    ),
 ) -> EvidenceAttributionDetachResponse:
+    if (
+        request.project_id is not None
+        or request.roadmap_snapshot_id is not None
+    ):
+        _load_trusted_attribution_roadmap(
+            roadmap_registry=roadmap_registry,
+            project_direction_id=(
+                request.project_direction_id
+            ),
+            project_id=request.project_id,
+            roadmap_snapshot_id=(
+                request.roadmap_snapshot_id
+            ),
+        )
+
     try:
         removed = service.detach(
             repository_key=request.repository_key,
@@ -852,7 +927,27 @@ def list_execution_evidence_attributions(
     service: EvidenceAttributionService = Depends(
         get_execution_evidence_attribution_service
     ),
+    roadmap_registry: Optional[
+        RoadmapSnapshotRegistry
+    ] = Depends(
+        get_roadmap_snapshot_registry
+    ),
 ) -> List[EvidenceAttribution]:
+    if (
+        query.project_id is not None
+        or query.roadmap_snapshot_id is not None
+    ):
+        _load_trusted_attribution_roadmap(
+            roadmap_registry=roadmap_registry,
+            project_direction_id=(
+                query.project_direction_id
+            ),
+            project_id=query.project_id,
+            roadmap_snapshot_id=(
+                query.roadmap_snapshot_id
+            ),
+        )
+
     try:
         if query.roadmap_node_id is not None:
             return service.list_for_roadmap_node(

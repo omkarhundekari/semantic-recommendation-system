@@ -17,6 +17,7 @@ from execution_evidence.models import (
     EvidenceAttribution,
     ExecutionEvidenceItem,
     RepositorySyncState,
+    RoadmapAttributionContext,
 )
 from planning.roadmap_registry import (
     RoadmapRegistryError,
@@ -50,8 +51,12 @@ REFERENCE = parse_github_repository_url(
 
 REPOSITORY_KEY = REFERENCE.repository_key
 PROJECT_DIRECTION_ID = "trusted-project-direction"
+PROJECT_ID = "proj_trusted"
+ROADMAP_SNAPSHOT_ID = "snap_trusted"
 
 TRUSTED_ROADMAP = StoredRoadmapSnapshot(
+    project_id=PROJECT_ID,
+    roadmap_snapshot_id=ROADMAP_SNAPSHOT_ID,
     project_direction_id=PROJECT_DIRECTION_ID,
     response_direction_id="direction-1",
     title="Trusted project direction",
@@ -966,3 +971,159 @@ def test_attach_endpoint_requires_project_direction_id(
     )
 
     assert response.status_code == 422
+
+
+def test_attach_endpoint_returns_durable_identity(
+    client,
+):
+    durable_attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_id=PROJECT_ID,
+        roadmap_snapshot_id=ROADMAP_SNAPSHOT_ID,
+        project_direction_id=PROJECT_DIRECTION_ID,
+        evidence_key=EVIDENCE.evidence_key,
+        roadmap_node_id="build-mvp",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=NOW,
+        roadmap_context=RoadmapAttributionContext(
+            roadmap_hash="a" * 64,
+            roadmap_stage_hash="b" * 64,
+            roadmap_node_id="build-mvp",
+            snapshot_version=1,
+            canonicalization_version=1,
+        ),
+    )
+    service = FakeAttributionService(
+        attach_result=AttributionMutationResult(
+            stored=_stored_record(),
+            attribution=durable_attribution,
+            created=True,
+        )
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()["attribution"]
+
+    assert payload["project_id"] == PROJECT_ID
+    assert (
+        payload["roadmap_snapshot_id"]
+        == ROADMAP_SNAPSHOT_ID
+    )
+    assert (
+        payload["project_direction_id"]
+        == PROJECT_DIRECTION_ID
+    )
+
+    call = service.attach_calls[0]
+
+    assert call["project_id"] == PROJECT_ID
+    assert (
+        call["roadmap_snapshot_id"]
+        == ROADMAP_SNAPSHOT_ID
+    )
+
+
+@pytest.mark.parametrize(
+    ("field_name", "field_value", "detail"),
+    [
+        (
+            "project_id",
+            "proj_wrong",
+            (
+                "project_id does not match the trusted "
+                "project direction snapshot."
+            ),
+        ),
+        (
+            "roadmap_snapshot_id",
+            "snap_wrong",
+            (
+                "roadmap_snapshot_id does not match the "
+                "trusted project direction snapshot."
+            ),
+        ),
+    ],
+)
+def test_attach_endpoint_rejects_mismatched_durable_identity(
+    client,
+    field_name,
+    field_value,
+    detail,
+):
+    service = FakeAttributionService()
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    payload = {
+        "project_id": PROJECT_ID,
+        "roadmap_snapshot_id": ROADMAP_SNAPSHOT_ID,
+        "project_direction_id": PROJECT_DIRECTION_ID,
+        "repository_key": REPOSITORY_KEY,
+        "evidence_key": EVIDENCE.evidence_key,
+        "roadmap_node_id": "build-mvp",
+    }
+    payload[field_name] = field_value
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json=payload,
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": detail,
+    }
+    assert service.attach_calls == []
+
+
+def test_list_endpoint_validates_supplied_durable_identity(
+    client,
+):
+    service = FakeAttributionService(
+        list_result=[ATTRIBUTION]
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    response = client.get(
+        "/v1/execution-evidence/attributions",
+        params={
+            "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1

@@ -249,3 +249,40 @@ def test_roadmap_context_rejects_invalid_hashes():
             snapshot_version=1,
             canonicalization_version=1,
         )
+
+
+def test_attribution_preserves_durable_project_identity():
+    context = RoadmapAttributionContext(
+        roadmap_hash="a" * 64,
+        roadmap_stage_hash="b" * 64,
+        roadmap_node_id="validate",
+        snapshot_version=1,
+        canonicalization_version=1,
+    )
+
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-123",
+        project_id="proj_123",
+        roadmap_snapshot_id="snap_123",
+        project_direction_id="direction-123",
+        evidence_key="github:owner/repo:commit:abc123",
+        roadmap_node_id="validate",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        roadmap_context=context,
+    )
+
+    restored = EvidenceAttribution.model_validate_json(
+        attribution.model_dump_json()
+    )
+
+    assert restored.project_id == "proj_123"
+    assert (
+        restored.roadmap_snapshot_id
+        == "snap_123"
+    )
+    assert (
+        restored.project_direction_id
+        == "direction-123"
+    )

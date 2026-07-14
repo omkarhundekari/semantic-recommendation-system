@@ -53,6 +53,8 @@ class EvidenceAttributionService:
         roadmap_node_id: str,
         decided_at: datetime,
         rationale: str = "",
+        project_id: Optional[str] = None,
+        roadmap_snapshot_id: Optional[str] = None,
         project_direction_id: Optional[str] = None,
         roadmap_context: Optional[
             RoadmapAttributionContext
@@ -110,6 +112,16 @@ class EvidenceAttributionService:
                 str(uuid4())
                 if normalized_project_direction_id
                 is not None
+                else None
+            ),
+            project_id=(
+                project_id.strip()
+                if project_id
+                else None
+            ),
+            roadmap_snapshot_id=(
+                roadmap_snapshot_id.strip()
+                if roadmap_snapshot_id
                 else None
             ),
             project_direction_id=(
