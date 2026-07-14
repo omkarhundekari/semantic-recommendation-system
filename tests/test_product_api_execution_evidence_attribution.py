@@ -425,6 +425,40 @@ def test_detach_endpoint_maps_conflict_to_409(
     }
 
 
+
+def test_detach_endpoint_maps_missing_repository_to_404(
+    client,
+):
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: FakeAttributionService(
+        error=RepositoryEvidenceNotFoundError(
+            "Repository evidence record was not found."
+        )
+    )
+
+    response = client.request(
+        "DELETE",
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+            "expected_revision": 1,
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": (
+            "Repository evidence record was not found."
+        )
+    }
+
+
 def test_list_endpoint_returns_repository_links(
     client,
 ):
