@@ -730,6 +730,123 @@ def test_attach_endpoint_maps_registry_failure_to_503(
     assert response.status_code == 503
 
 
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        "project_direction_id",
+        "repository_key",
+        "evidence_key",
+        "roadmap_node_id",
+    ],
+)
+def test_attach_endpoint_rejects_blank_identity_fields(
+    client,
+    field_name,
+):
+    service = FakeAttributionService()
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    payload = {
+        "project_direction_id": PROJECT_DIRECTION_ID,
+        "repository_key": REPOSITORY_KEY,
+        "evidence_key": EVIDENCE.evidence_key,
+        "roadmap_node_id": "build-mvp",
+    }
+    payload[field_name] = "   "
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    assert service.attach_calls == []
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        "project_direction_id",
+        "repository_key",
+        "evidence_key",
+        "roadmap_node_id",
+    ],
+)
+def test_detach_endpoint_rejects_blank_identity_fields(
+    client,
+    field_name,
+):
+    service = FakeAttributionService()
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    payload = {
+        "project_direction_id": PROJECT_DIRECTION_ID,
+        "repository_key": REPOSITORY_KEY,
+        "evidence_key": EVIDENCE.evidence_key,
+        "roadmap_node_id": "build-mvp",
+    }
+    payload[field_name] = "   "
+
+    response = client.request(
+        "DELETE",
+        "/v1/execution-evidence/attributions",
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    assert service.detach_calls == []
+
+
+def test_attribution_request_identity_fields_are_trimmed(
+    client,
+):
+    service = FakeAttributionService(
+        detach_result=False
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    response = client.request(
+        "DELETE",
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_direction_id": (
+                f"  {PROJECT_DIRECTION_ID}  "
+            ),
+            "repository_key": f"  {REPOSITORY_KEY}  ",
+            "evidence_key": (
+                f"  {EVIDENCE.evidence_key}  "
+            ),
+            "roadmap_node_id": "  build-mvp  ",
+        },
+    )
+
+    assert response.status_code == 200
+    assert service.detach_calls == [
+        {
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "removed_at": (
+                service.detach_calls[0]["removed_at"]
+            ),
+            "expected_revision": None,
+        }
+    ]
+
+
 def test_attach_endpoint_requires_project_direction_id(
     client,
 ):

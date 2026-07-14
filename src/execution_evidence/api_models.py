@@ -1,8 +1,21 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Annotated, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import (
+    BaseModel,
+    Field,
+    StringConstraints,
+)
+
+
+NonBlankIdentifier = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        min_length=1,
+    ),
+]
 
 
 class RepositoryEvidenceSyncRequest(BaseModel):
@@ -20,10 +33,10 @@ class RepositoryEvidenceSyncRequest(BaseModel):
 
 
 class EvidenceAttributionAttachRequest(BaseModel):
-    project_direction_id: str = Field(min_length=1)
-    repository_key: str = Field(min_length=1)
-    evidence_key: str = Field(min_length=1)
-    roadmap_node_id: str = Field(min_length=1)
+    project_direction_id: NonBlankIdentifier
+    repository_key: NonBlankIdentifier
+    evidence_key: NonBlankIdentifier
+    roadmap_node_id: NonBlankIdentifier
     rationale: str = ""
     expected_revision: Optional[int] = Field(
         default=None,
@@ -32,10 +45,10 @@ class EvidenceAttributionAttachRequest(BaseModel):
 
 
 class EvidenceAttributionDetachRequest(BaseModel):
-    project_direction_id: str = Field(min_length=1)
-    repository_key: str = Field(min_length=1)
-    evidence_key: str = Field(min_length=1)
-    roadmap_node_id: str = Field(min_length=1)
+    project_direction_id: NonBlankIdentifier
+    repository_key: NonBlankIdentifier
+    evidence_key: NonBlankIdentifier
+    roadmap_node_id: NonBlankIdentifier
     expected_revision: Optional[int] = Field(
         default=None,
         ge=-1,
