@@ -552,6 +552,49 @@ def test_list_endpoint_maps_missing_repository_to_404(
     assert response.status_code == 404
 
 
+
+def test_list_node_endpoint_maps_missing_repository_to_404(
+    client,
+):
+    service = FakeAttributionService(
+        error=RepositoryEvidenceNotFoundError(
+            "Repository evidence record was not found."
+        )
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    response = client.get(
+        "/v1/execution-evidence/attributions",
+        params={
+            "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": (
+            "Repository evidence record was not found."
+        )
+    }
+    assert service.list_node_calls == [
+        {
+            "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "roadmap_node_id": "build-mvp",
+        }
+    ]
+    assert service.list_repository_calls == []
+
+
 def test_attach_endpoint_maps_context_conflict_to_409(
     client,
 ):
