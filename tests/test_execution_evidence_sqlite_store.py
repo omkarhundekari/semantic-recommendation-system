@@ -552,3 +552,183 @@ def test_sqlite_store_derives_durable_attribution_identity(
     ).load(REFERENCE.repository_key)
 
     assert loaded == saved
+
+
+def test_sqlite_store_resolves_attribution_by_durable_identity(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    trusted = registry.create(
+        StoredRoadmapSnapshot(
+            project_id="proj_one",
+            roadmap_snapshot_id="snap_one",
+            project_direction_id="direction-one",
+            response_direction_id="direction-one",
+            title="Trusted direction",
+            snapshot=RoadmapSnapshot(
+                roadmap_hash="a" * 64,
+                snapshot_version=1,
+                canonicalization_version=1,
+                stages=[
+                    RoadmapStageSnapshot(
+                        stage_id="persist-evidence",
+                        position=0,
+                        content_hash="b" * 64,
+                        content={
+                            "id": "persist-evidence",
+                            "title": "Persist evidence",
+                        },
+                    )
+                ],
+            ),
+            created_at=SAVED_AT,
+        )
+    )
+
+    record = _record()
+    evidence = record.evidence[0]
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_id=trusted.project_id,
+        roadmap_snapshot_id=(
+            trusted.roadmap_snapshot_id
+        ),
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=_trusted_context(),
+    )
+
+    saved = SQLiteRepositoryEvidenceStore(
+        database_path
+    ).save(
+        record.model_copy(
+            update={
+                "attributions": [attribution],
+            },
+            deep=True,
+        )
+    )
+
+    stored = saved.attributions[0]
+
+    assert stored.project_id == "proj_one"
+    assert stored.roadmap_snapshot_id == "snap_one"
+    assert (
+        stored.project_direction_id
+        == "direction-one"
+    )
+
+
+def test_sqlite_store_rejects_conflicting_direction_alias(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    trusted = registry.create(
+        StoredRoadmapSnapshot(
+            project_id="proj_one",
+            roadmap_snapshot_id="snap_one",
+            project_direction_id="direction-one",
+            response_direction_id="direction-one",
+            title="Trusted direction",
+            snapshot=RoadmapSnapshot(
+                roadmap_hash="a" * 64,
+                snapshot_version=1,
+                canonicalization_version=1,
+                stages=[
+                    RoadmapStageSnapshot(
+                        stage_id="persist-evidence",
+                        position=0,
+                        content_hash="b" * 64,
+                        content={
+                            "id": "persist-evidence",
+                            "title": "Persist evidence",
+                        },
+                    )
+                ],
+            ),
+            created_at=SAVED_AT,
+        )
+    )
+
+    record = _record()
+    evidence = record.evidence[0]
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_id=trusted.project_id,
+        roadmap_snapshot_id=(
+            trusted.roadmap_snapshot_id
+        ),
+        project_direction_id="wrong-direction",
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=_trusted_context(),
+    )
+
+    with pytest.raises(
+        SQLiteRepositoryEvidenceStoreError,
+        match=(
+            "project_direction_id does not match "
+            "the trusted durable roadmap identity"
+        ),
+    ):
+        SQLiteRepositoryEvidenceStore(
+            database_path
+        ).save(
+            record.model_copy(
+                update={
+                    "attributions": [attribution],
+                },
+                deep=True,
+            )
+        )
+
+
+def test_sqlite_store_rejects_unknown_durable_identity(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    store = SQLiteRepositoryEvidenceStore(
+        database_path
+    )
+    record = _record()
+    evidence = record.evidence[0]
+
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_id="missing-project",
+        roadmap_snapshot_id="missing-snapshot",
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=_trusted_context(),
+    )
+
+    with pytest.raises(
+        SQLiteRepositoryEvidenceStoreError,
+        match="unknown roadmap snapshot",
+    ):
+        store.save(
+            record.model_copy(
+                update={
+                    "attributions": [attribution],
+                },
+                deep=True,
+            )
+        )

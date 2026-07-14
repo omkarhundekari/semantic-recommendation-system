@@ -1747,3 +1747,219 @@ def test_version_seven_rejects_partial_attribution_identity(
             )
     finally:
         connection.close()
+
+
+def test_version_eight_uses_durable_attribution_indexes(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        rows = connection.execute(
+            """
+            SELECT name, sql
+            FROM sqlite_master
+            WHERE
+                type = 'index'
+                AND name IN (
+                    'idx_attributions_scoped_identity',
+                    'idx_attributions_repository_stage',
+                    'idx_attributions_evidence'
+                )
+            ORDER BY name
+            """
+        ).fetchall()
+
+        statements = {
+            row["name"]: " ".join(
+                str(row["sql"]).split()
+            )
+            for row in rows
+        }
+
+        assert set(statements) == {
+            "idx_attributions_scoped_identity",
+            "idx_attributions_repository_stage",
+            "idx_attributions_evidence",
+        }
+
+        scoped_sql = statements[
+            "idx_attributions_scoped_identity"
+        ]
+
+        assert "project_id" in scoped_sql
+        assert "roadmap_snapshot_id" in scoped_sql
+        assert (
+            "project_direction_id"
+            not in scoped_sql
+        )
+
+        for name in (
+            "idx_attributions_repository_stage",
+            "idx_attributions_evidence",
+        ):
+            assert "project_id" in statements[name]
+            assert (
+                "roadmap_snapshot_id"
+                in statements[name]
+            )
+            assert (
+                "project_direction_id"
+                not in statements[name]
+            )
+    finally:
+        connection.close()
+
+
+def test_version_eight_preserves_legacy_identity_index(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        row = connection.execute(
+            """
+            SELECT sql
+            FROM sqlite_master
+            WHERE
+                type = 'index'
+                AND name =
+                    'idx_attributions_legacy_identity'
+            """
+        ).fetchone()
+
+        assert row is not None
+        sql = " ".join(str(row["sql"]).split())
+
+        assert "project_direction_id IS NULL" in sql
+        assert "project_id" not in sql
+        assert "roadmap_snapshot_id" not in sql
+    finally:
+        connection.close()
+
+
+def test_version_eight_rejects_durable_identity_collisions(
+    tmp_path: Path,
+    monkeypatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS[:7],
+        )
+        apply_execution_evidence_migrations(connection)
+
+        repository_id = _insert_workspace_and_repository(
+            connection,
+            workspace_id="local",
+            repository_key="github:owner/repository",
+        )
+
+        first_registry_id = (
+            _insert_roadmap_registry_record(
+                connection,
+                workspace_id="local",
+                project_direction_id="direction-one",
+            )
+        )
+
+        roadmap = connection.execute(
+            """
+            SELECT
+                project.project_id,
+                roadmap.roadmap_snapshot_id
+            FROM roadmap_registry AS roadmap
+            JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
+            WHERE roadmap.roadmap_registry_id = ?
+            """,
+            (first_registry_id,),
+        ).fetchone()
+
+        connection.execute(
+            "DROP INDEX idx_attributions_scoped_identity"
+        )
+
+        statement = """
+            INSERT INTO evidence_attributions (
+                attribution_id,
+                repository_id,
+                roadmap_registry_id,
+                project_id,
+                roadmap_snapshot_id,
+                project_direction_id,
+                evidence_key,
+                roadmap_node_id,
+                source,
+                confidence,
+                rationale,
+                status,
+                decided_at,
+                payload_json,
+                position
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+        """
+
+        for position, attribution_id in enumerate(
+            ("attribution-one", "attribution-two")
+        ):
+            connection.execute(
+                statement,
+                (
+                    attribution_id,
+                    repository_id,
+                    first_registry_id,
+                    roadmap["project_id"],
+                    roadmap["roadmap_snapshot_id"],
+                    "direction-one",
+                    "github:owner/repository:commit:abc",
+                    "build-mvp",
+                    "manual",
+                    1.0,
+                    "",
+                    "accepted",
+                    "2026-07-14T12:00:00Z",
+                    "{}",
+                    position,
+                ),
+            )
+
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS,
+        )
+
+        with pytest.raises(SQLiteMigrationError):
+            apply_execution_evidence_migrations(
+                connection
+            )
+
+        assert (
+            get_execution_evidence_schema_version(
+                connection
+            )
+            == 7
+        )
+    finally:
+        connection.close()

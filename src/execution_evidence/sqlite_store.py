@@ -774,10 +774,42 @@ class SQLiteRepositoryEvidenceStore(
         ):
             roadmap_registry_id = None
 
-            if (
+            has_durable_scope = (
+                attribution.project_id is not None
+                and attribution.roadmap_snapshot_id
+                is not None
+            )
+            has_direction_scope = (
                 attribution.project_direction_id
                 is not None
-            ):
+            )
+
+            if has_durable_scope:
+                registry_row = connection.execute(
+                    """
+                    SELECT
+                        roadmap.roadmap_registry_id,
+                        roadmap.project_direction_id,
+                        roadmap.roadmap_snapshot_id,
+                        project.project_id
+                    FROM roadmap_registry AS roadmap
+                    JOIN projects AS project
+                        ON project.project_row_id =
+                            roadmap.project_row_id
+                    WHERE
+                        roadmap.workspace_id = ?
+                        AND project.workspace_id = ?
+                        AND project.project_id = ?
+                        AND roadmap.roadmap_snapshot_id = ?
+                    """,
+                    (
+                        self._workspace_id,
+                        self._workspace_id,
+                        attribution.project_id,
+                        attribution.roadmap_snapshot_id,
+                    ),
+                ).fetchone()
+            elif has_direction_scope:
                 registry_row = connection.execute(
                     """
                     SELECT
@@ -798,7 +830,10 @@ class SQLiteRepositoryEvidenceStore(
                         attribution.project_direction_id,
                     ),
                 ).fetchone()
+            else:
+                registry_row = None
 
+            if has_durable_scope or has_direction_scope:
                 if registry_row is None:
                     raise (
                         SQLiteRepositoryEvidenceStoreError(
@@ -813,7 +848,6 @@ class SQLiteRepositoryEvidenceStore(
                         "roadmap_registry_id"
                     ]
                 )
-
                 trusted_project_id = str(
                     registry_row["project_id"]
                 )
@@ -822,31 +856,24 @@ class SQLiteRepositoryEvidenceStore(
                         "roadmap_snapshot_id"
                     ]
                 )
+                trusted_direction_id = str(
+                    registry_row[
+                        "project_direction_id"
+                    ]
+                )
 
                 if (
-                    attribution.project_id is not None
-                    and attribution.project_id
-                    != trusted_project_id
-                ):
-                    raise (
-                        SQLiteRepositoryEvidenceStoreError(
-                            "Project-scoped attribution "
-                            "project_id does not match the "
-                            "trusted roadmap snapshot."
-                        )
-                    )
-
-                if (
-                    attribution.roadmap_snapshot_id
+                    attribution.project_direction_id
                     is not None
-                    and attribution.roadmap_snapshot_id
-                    != trusted_snapshot_id
+                    and attribution.project_direction_id
+                    != trusted_direction_id
                 ):
                     raise (
                         SQLiteRepositoryEvidenceStoreError(
                             "Project-scoped attribution "
-                            "roadmap_snapshot_id does not "
-                            "match the trusted roadmap."
+                            "project_direction_id does not "
+                            "match the trusted durable "
+                            "roadmap identity."
                         )
                     )
 
@@ -859,10 +886,8 @@ class SQLiteRepositoryEvidenceStore(
                             "roadmap_snapshot_id": (
                                 trusted_snapshot_id
                             ),
-                            "project_direction_id": str(
-                                registry_row[
-                                    "project_direction_id"
-                                ]
+                            "project_direction_id": (
+                                trusted_direction_id
                             ),
                         },
                         deep=True,

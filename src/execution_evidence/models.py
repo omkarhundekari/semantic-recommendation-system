@@ -122,8 +122,30 @@ class EvidenceAttribution(BaseModel):
                 "roadmap_node_id."
             )
 
-        if (
+        has_project_id = self.project_id is not None
+        has_snapshot_id = (
+            self.roadmap_snapshot_id is not None
+        )
+
+        if has_project_id != has_snapshot_id:
+            raise ValueError(
+                "Durable attribution identity requires "
+                "both project_id and "
+                "roadmap_snapshot_id."
+            )
+
+        has_durable_scope = (
+            has_project_id and has_snapshot_id
+        )
+        has_direction_scope = (
             self.project_direction_id is not None
+        )
+        has_project_scope = (
+            has_durable_scope or has_direction_scope
+        )
+
+        if (
+            has_project_scope
             and self.attribution_id is None
         ):
             raise ValueError(
@@ -132,7 +154,7 @@ class EvidenceAttribution(BaseModel):
             )
 
         if (
-            self.project_direction_id is not None
+            has_project_scope
             and self.roadmap_context is None
         ):
             raise ValueError(
@@ -142,11 +164,11 @@ class EvidenceAttribution(BaseModel):
 
         if (
             self.attribution_id is not None
-            and self.project_direction_id is None
+            and not has_project_scope
         ):
             raise ValueError(
-                "Attribution ID requires "
-                "project_direction_id."
+                "Attribution ID requires a durable "
+                "or direction roadmap identity."
             )
 
         return self

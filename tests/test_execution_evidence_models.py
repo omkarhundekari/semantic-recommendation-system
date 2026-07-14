@@ -287,3 +287,93 @@ def test_attribution_preserves_durable_project_identity():
         restored.project_direction_id
         == "direction-123"
     )
+
+
+def test_attribution_accepts_durable_identity_without_alias():
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        evidence_key=(
+            "github:owner/repository:commit:abc123"
+        ),
+        roadmap_node_id="validate",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=None,
+        roadmap_context=RoadmapAttributionContext(
+            roadmap_hash="a" * 64,
+            roadmap_stage_hash="b" * 64,
+            roadmap_node_id="validate",
+            snapshot_version=1,
+            canonicalization_version=1,
+        ),
+    )
+
+    assert attribution.durable_scope == (
+        "proj_one",
+        "snap_one",
+    )
+    assert attribution.project_direction_id is None
+
+
+@pytest.mark.parametrize(
+    ("project_id", "roadmap_snapshot_id"),
+    [
+        ("proj_one", None),
+        (None, "snap_one"),
+    ],
+)
+def test_attribution_rejects_partial_durable_identity(
+    project_id,
+    roadmap_snapshot_id,
+):
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Durable attribution identity requires "
+            "both project_id and roadmap_snapshot_id"
+        ),
+    ):
+        EvidenceAttribution(
+            attribution_id="attribution-one",
+            project_id=project_id,
+            roadmap_snapshot_id=roadmap_snapshot_id,
+            evidence_key=(
+                "github:owner/repository:commit:abc123"
+            ),
+            roadmap_node_id="validate",
+            source="manual",
+            confidence=1.0,
+            status="accepted",
+            decided_at=None,
+            roadmap_context=RoadmapAttributionContext(
+                roadmap_hash="a" * 64,
+                roadmap_stage_hash="b" * 64,
+                roadmap_node_id="validate",
+                snapshot_version=1,
+                canonicalization_version=1,
+            ),
+        )
+
+
+def test_attribution_id_rejects_missing_roadmap_scope():
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Attribution ID requires a durable "
+            "or direction roadmap identity"
+        ),
+    ):
+        EvidenceAttribution(
+            attribution_id="attribution-one",
+            evidence_key=(
+                "github:owner/repository:commit:abc123"
+            ),
+            roadmap_node_id="validate",
+            source="manual",
+            confidence=1.0,
+            status="accepted",
+            decided_at=None,
+        )

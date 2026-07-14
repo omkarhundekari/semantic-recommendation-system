@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 7
+CURRENT_SQLITE_SCHEMA_VERSION = 8
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -893,6 +893,92 @@ END;
 """
 
 
+MAKE_DURABLE_ATTRIBUTION_IDENTITY_CANONICAL_SQL = """
+CREATE TEMP TABLE durable_attribution_identity_guard (
+    invalid_count INTEGER NOT NULL
+        CHECK (invalid_count = 0)
+);
+
+INSERT INTO durable_attribution_identity_guard (
+    invalid_count
+)
+SELECT COUNT(*)
+FROM (
+    SELECT
+        repository_id,
+        project_id,
+        roadmap_snapshot_id,
+        evidence_key,
+        roadmap_node_id
+    FROM evidence_attributions
+    WHERE
+        project_id IS NOT NULL
+        AND roadmap_snapshot_id IS NOT NULL
+    GROUP BY
+        repository_id,
+        project_id,
+        roadmap_snapshot_id,
+        evidence_key,
+        roadmap_node_id
+    HAVING COUNT(*) > 1
+);
+
+DROP TABLE durable_attribution_identity_guard;
+
+DROP INDEX idx_attributions_scoped_identity;
+DROP INDEX idx_attributions_repository_stage;
+DROP INDEX idx_attributions_evidence;
+DROP INDEX idx_attributions_durable_snapshot;
+
+CREATE UNIQUE INDEX
+    idx_attributions_scoped_identity
+ON evidence_attributions(
+    repository_id,
+    project_id,
+    roadmap_snapshot_id,
+    evidence_key,
+    roadmap_node_id
+)
+WHERE
+    project_id IS NOT NULL
+    AND roadmap_snapshot_id IS NOT NULL;
+
+CREATE INDEX idx_attributions_repository_stage
+ON evidence_attributions(
+    repository_id,
+    project_id,
+    roadmap_snapshot_id,
+    roadmap_node_id,
+    status
+)
+WHERE
+    project_id IS NOT NULL
+    AND roadmap_snapshot_id IS NOT NULL;
+
+CREATE INDEX idx_attributions_evidence
+ON evidence_attributions(
+    repository_id,
+    project_id,
+    roadmap_snapshot_id,
+    evidence_key
+)
+WHERE
+    project_id IS NOT NULL
+    AND roadmap_snapshot_id IS NOT NULL;
+
+CREATE INDEX idx_attributions_durable_snapshot
+ON evidence_attributions(
+    project_id,
+    roadmap_snapshot_id,
+    roadmap_node_id,
+    status
+)
+WHERE
+    project_id IS NOT NULL
+    AND roadmap_snapshot_id IS NOT NULL;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -929,6 +1015,13 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         name="persist_durable_attribution_identities",
         sql=(
             PERSIST_DURABLE_ATTRIBUTION_IDENTITIES_SQL
+        ),
+    ),
+    SQLiteMigration(
+        version=8,
+        name="make_durable_attribution_identity_canonical",
+        sql=(
+            MAKE_DURABLE_ATTRIBUTION_IDENTITY_CANONICAL_SQL
         ),
     ),
 )
