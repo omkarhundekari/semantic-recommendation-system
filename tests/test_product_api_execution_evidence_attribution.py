@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,6 +18,14 @@ from execution_evidence.models import (
     ExecutionEvidenceItem,
     RepositorySyncState,
 )
+from planning.roadmap_registry import (
+    RoadmapRegistryError,
+    StoredRoadmapSnapshot,
+)
+from planning.roadmap_snapshot import (
+    RoadmapSnapshot,
+    RoadmapStageSnapshot,
+)
 from execution_evidence.snapshot import (
     GitHubRepositorySyncSnapshot,
 )
@@ -27,6 +36,7 @@ from execution_evidence.store import (
 from product_api import (
     app,
     get_execution_evidence_attribution_service,
+    get_roadmap_snapshot_registry,
 )
 
 
@@ -39,6 +49,30 @@ REFERENCE = parse_github_repository_url(
 )
 
 REPOSITORY_KEY = REFERENCE.repository_key
+PROJECT_DIRECTION_ID = "trusted-project-direction"
+
+TRUSTED_ROADMAP = StoredRoadmapSnapshot(
+    project_direction_id=PROJECT_DIRECTION_ID,
+    response_direction_id="direction-1",
+    title="Trusted project direction",
+    snapshot=RoadmapSnapshot(
+        roadmap_hash="a" * 64,
+        stages=[
+            RoadmapStageSnapshot(
+                stage_id="build-mvp",
+                position=0,
+                content_hash="b" * 64,
+                content={
+                    "id": "build-mvp",
+                    "title": "Build the MVP",
+                },
+            )
+        ],
+    ),
+    created_at=datetime.fromisoformat(
+        "2026-07-13T12:00:00+00:00"
+    ),
+)
 
 EVIDENCE = ExecutionEvidenceItem(
     repository_full_name=REFERENCE.full_name,
@@ -79,6 +113,40 @@ def _stored_record(
         revision=revision,
         saved_at=NOW,
     )
+
+
+class FakeRoadmapRegistry:
+    def __init__(
+        self,
+        *,
+        record: Optional[
+            StoredRoadmapSnapshot
+        ] = TRUSTED_ROADMAP,
+        error: Optional[Exception] = None,
+    ):
+        self.record = record
+        self.error = error
+        self.load_calls = []
+
+    def load(
+        self,
+        project_direction_id: str,
+    ):
+        self.load_calls.append(
+            project_direction_id
+        )
+
+        if self.error is not None:
+            raise self.error
+
+        if (
+            self.record is not None
+            and self.record.project_direction_id
+            == project_direction_id
+        ):
+            return self.record
+
+        return None
 
 
 class FakeAttributionService:
@@ -140,6 +208,10 @@ class FakeAttributionService:
 
 @pytest.fixture
 def client():
+    app.dependency_overrides[
+        get_roadmap_snapshot_registry
+    ] = lambda: FakeRoadmapRegistry()
+
     with TestClient(app) as test_client:
         yield test_client
 
@@ -164,6 +236,9 @@ def test_attach_endpoint_returns_updated_record(
     response = client.post(
         "/v1/execution-evidence/attributions",
         json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
             "repository_key": REPOSITORY_KEY,
             "evidence_key": EVIDENCE.evidence_key,
             "roadmap_node_id": "build-mvp",
@@ -191,6 +266,18 @@ def test_attach_endpoint_returns_updated_record(
     assert call["evidence_key"] == EVIDENCE.evidence_key
     assert call["expected_revision"] == 0
     assert call["decided_at"].tzinfo
+    assert (
+        call["roadmap_context"].roadmap_hash
+        == TRUSTED_ROADMAP.snapshot.roadmap_hash
+    )
+    assert (
+        call["roadmap_context"].roadmap_stage_hash
+        == TRUSTED_ROADMAP.snapshot.stages[0].content_hash
+    )
+    assert (
+        call["roadmap_context"].roadmap_node_id
+        == "build-mvp"
+    )
 
 
 def test_attach_endpoint_maps_missing_evidence_to_404(
@@ -207,6 +294,9 @@ def test_attach_endpoint_maps_missing_evidence_to_404(
     response = client.post(
         "/v1/execution-evidence/attributions",
         json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
             "repository_key": REPOSITORY_KEY,
             "evidence_key": EVIDENCE.evidence_key,
             "roadmap_node_id": "build-mvp",
@@ -235,6 +325,9 @@ def test_attach_endpoint_maps_conflict_to_409(
     response = client.post(
         "/v1/execution-evidence/attributions",
         json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
             "repository_key": REPOSITORY_KEY,
             "evidence_key": EVIDENCE.evidence_key,
             "roadmap_node_id": "build-mvp",
@@ -259,6 +352,9 @@ def test_detach_endpoint_returns_removal_status(
         "DELETE",
         "/v1/execution-evidence/attributions",
         json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
             "repository_key": REPOSITORY_KEY,
             "evidence_key": EVIDENCE.evidence_key,
             "roadmap_node_id": "build-mvp",
@@ -368,6 +464,9 @@ def test_attach_endpoint_maps_context_conflict_to_409(
     response = client.post(
         "/v1/execution-evidence/attributions",
         json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
             "repository_key": REPOSITORY_KEY,
             "evidence_key": EVIDENCE.evidence_key,
             "roadmap_node_id": "build-mvp",
@@ -381,3 +480,120 @@ def test_attach_endpoint_maps_context_conflict_to_409(
             "with different roadmap identity context."
         )
     }
+
+
+
+def test_attach_endpoint_requires_trusted_registry(
+    client,
+):
+    app.dependency_overrides[
+        get_roadmap_snapshot_registry
+    ] = lambda: None
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 503
+    assert "trusted SQLite" in response.json()["detail"]
+
+
+def test_attach_endpoint_rejects_unknown_project_snapshot(
+    client,
+):
+    app.dependency_overrides[
+        get_roadmap_snapshot_registry
+    ] = lambda: FakeRoadmapRegistry(
+        record=None
+    )
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_direction_id": "unknown",
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": (
+            "Trusted project direction snapshot "
+            "was not found."
+        )
+    }
+
+
+def test_attach_endpoint_rejects_node_outside_snapshot(
+    client,
+):
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "unknown-stage",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": (
+            "Roadmap node does not belong to the "
+            "trusted project direction snapshot."
+        )
+    }
+
+
+def test_attach_endpoint_maps_registry_failure_to_503(
+    client,
+):
+    app.dependency_overrides[
+        get_roadmap_snapshot_registry
+    ] = lambda: FakeRoadmapRegistry(
+        error=RoadmapRegistryError(
+            "Registry unavailable."
+        )
+    )
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 503
+
+
+def test_attach_endpoint_requires_project_direction_id(
+    client,
+):
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 422

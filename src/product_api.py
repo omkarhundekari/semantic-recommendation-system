@@ -86,6 +86,7 @@ from execution_evidence.github_client import (
 )
 from execution_evidence.models import (
     EvidenceAttribution,
+    RoadmapAttributionContext,
 )
 from execution_evidence.service import (
     GitHubExecutionEvidenceService,
@@ -699,12 +700,89 @@ def attach_execution_evidence_attribution(
     service: EvidenceAttributionService = Depends(
         get_execution_evidence_attribution_service
     ),
+    roadmap_registry: Optional[
+        RoadmapSnapshotRegistry
+    ] = Depends(
+        get_roadmap_snapshot_registry
+    ),
 ) -> AttributionMutationResult:
+    if roadmap_registry is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted roadmap attribution is "
+                "unavailable. Migrate execution evidence "
+                "storage to trusted SQLite before "
+                "attaching evidence."
+            ),
+        )
+
+    try:
+        stored_roadmap = roadmap_registry.load(
+            request.project_direction_id
+        )
+    except RoadmapRegistryError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted roadmap storage could not "
+                "validate the requested project direction."
+            ),
+        ) from error
+
+    if stored_roadmap is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Trusted project direction snapshot "
+                "was not found."
+            ),
+        )
+
+    roadmap_stage = next(
+        (
+            stage
+            for stage in stored_roadmap.snapshot.stages
+            if (
+                stage.stage_id
+                == request.roadmap_node_id
+            )
+        ),
+        None,
+    )
+
+    if roadmap_stage is None:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Roadmap node does not belong to the "
+                "trusted project direction snapshot."
+            ),
+        )
+
+    roadmap_context = RoadmapAttributionContext(
+        roadmap_hash=(
+            stored_roadmap.snapshot.roadmap_hash
+        ),
+        roadmap_stage_hash=(
+            roadmap_stage.content_hash
+        ),
+        roadmap_node_id=roadmap_stage.stage_id,
+        snapshot_version=(
+            stored_roadmap.snapshot.snapshot_version
+        ),
+        canonicalization_version=(
+            stored_roadmap.snapshot
+            .canonicalization_version
+        ),
+    )
+
     try:
         return service.attach(
             repository_key=request.repository_key,
             evidence_key=request.evidence_key,
             roadmap_node_id=request.roadmap_node_id,
+            roadmap_context=roadmap_context,
             rationale=request.rationale,
             decided_at=datetime.now(timezone.utc),
             expected_revision=request.expected_revision,

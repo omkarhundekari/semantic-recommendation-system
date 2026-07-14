@@ -20,6 +20,7 @@ class RepositoryEvidenceSyncRequest(BaseModel):
 
 
 class EvidenceAttributionAttachRequest(BaseModel):
+    project_direction_id: str = Field(min_length=1)
     repository_key: str = Field(min_length=1)
     evidence_key: str = Field(min_length=1)
     roadmap_node_id: str = Field(min_length=1)
