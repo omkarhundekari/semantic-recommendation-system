@@ -952,6 +952,32 @@ def write_migration_report_atomically(
         ) from error
 
 
+def validate_json_migration_source(
+    source_path: Path | str,
+    *,
+    allow_missing_empty_source: bool = False,
+) -> Path:
+    path = Path(source_path)
+
+    if path.exists():
+        if not path.is_file():
+            raise RepositoryEvidenceMigrationError(
+                "JSON migration source must be a file: "
+                f"{path}."
+            )
+
+        return path
+
+    if allow_missing_empty_source:
+        return path
+
+    raise RepositoryEvidenceMigrationError(
+        "JSON migration source does not exist: "
+        f"{path}. Refusing to interpret a missing "
+        "operator-supplied path as an empty store."
+    )
+
+
 def _temporary_migration_database_path(
     destination_path: Path,
 ) -> Path:
@@ -1351,8 +1377,14 @@ def dry_run_json_to_sqlite_migration(
     destination_path: Path | str,
     report_path: Path | str,
     created_at: str,
+    allow_missing_empty_source: bool = False,
 ) -> RepositoryEvidenceMigrationReport:
-    source_file = Path(source_path)
+    source_file = validate_json_migration_source(
+        source_path,
+        allow_missing_empty_source=(
+            allow_missing_empty_source
+        ),
+    )
     destination_file = Path(
         destination_path
     )
@@ -1406,12 +1438,18 @@ def promote_json_to_sqlite_migration(
     destination_path: Path | str,
     report_path: Path | str,
     created_at: str,
+    allow_missing_empty_source: bool = False,
 ) -> RepositoryEvidenceMigrationReport:
     from execution_evidence.json_store import (
         JsonRepositoryEvidenceStore,
     )
 
-    source_file = Path(source_path)
+    source_file = validate_json_migration_source(
+        source_path,
+        allow_missing_empty_source=(
+            allow_missing_empty_source
+        ),
+    )
     destination_file = Path(
         destination_path
     )

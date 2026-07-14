@@ -49,6 +49,15 @@ def parse_args() -> argparse.Namespace:
             "disposable dry run is performed."
         ),
     )
+    parser.add_argument(
+        "--allow-missing-empty-source",
+        action="store_true",
+        help=(
+            "Treat a missing JSON source as an empty "
+            "store. Intended only for development and "
+            "explicit empty-store testing."
+        ),
+    )
 
     return parser.parse_args()
 
@@ -69,6 +78,9 @@ def main() -> int:
                     ),
                     report_path=args.report_path,
                     created_at=created_at,
+                    allow_missing_empty_source=(
+                        args.allow_missing_empty_source
+                    ),
                 )
             )
             status = "promoted"
@@ -81,6 +93,9 @@ def main() -> int:
                     ),
                     report_path=args.report_path,
                     created_at=created_at,
+                    allow_missing_empty_source=(
+                        args.allow_missing_empty_source
+                    ),
                 )
             )
             status = "verified"

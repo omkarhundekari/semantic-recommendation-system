@@ -804,3 +804,76 @@ def test_finalization_rejects_nonempty_wal_sidecar(
         finalize_sqlite_database_for_promotion(
             database_path
         )
+
+
+def test_json_migration_rejects_missing_source_by_default(
+    tmp_path: Path,
+):
+    from execution_evidence.store_migration import (
+        dry_run_json_to_sqlite_migration,
+    )
+
+    source_path = tmp_path / "missing.json"
+    destination_path = tmp_path / "solvyn.db"
+    report_path = tmp_path / "report.json"
+
+    with pytest.raises(
+        RepositoryEvidenceMigrationError,
+        match="source does not exist",
+    ):
+        dry_run_json_to_sqlite_migration(
+            source_path=source_path,
+            destination_path=destination_path,
+            report_path=report_path,
+            created_at=(
+                "2026-07-13T12:00:00+00:00"
+            ),
+        )
+
+    assert not destination_path.exists()
+    assert not report_path.exists()
+
+
+def test_json_migration_allows_explicit_missing_empty_source(
+    tmp_path: Path,
+):
+    from execution_evidence.store_migration import (
+        dry_run_json_to_sqlite_migration,
+    )
+
+    source_path = tmp_path / "missing.json"
+    destination_path = tmp_path / "solvyn.db"
+    report_path = tmp_path / "report.json"
+
+    report = dry_run_json_to_sqlite_migration(
+        source_path=source_path,
+        destination_path=destination_path,
+        report_path=report_path,
+        created_at=(
+            "2026-07-13T12:00:00+00:00"
+        ),
+        allow_missing_empty_source=True,
+    )
+
+    assert report.verified is True
+    assert report.repository_count == 0
+    assert report.evidence_count == 0
+    assert report.attribution_count == 0
+    assert report_path.exists()
+    assert not destination_path.exists()
+
+
+def test_json_migration_rejects_directory_source(
+    tmp_path: Path,
+):
+    from execution_evidence.store_migration import (
+        validate_json_migration_source,
+    )
+
+    with pytest.raises(
+        RepositoryEvidenceMigrationError,
+        match="must be a file",
+    ):
+        validate_json_migration_source(
+            tmp_path
+        )
