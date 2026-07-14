@@ -19,7 +19,7 @@ from execution_evidence.snapshot import (
 )
 
 
-CURRENT_EVIDENCE_STORE_SCHEMA_VERSION = 2
+CURRENT_EVIDENCE_STORE_SCHEMA_VERSION = 3
 
 
 class StoredRepositoryEvidence(BaseModel):
@@ -75,7 +75,7 @@ class StoredRepositoryEvidence(BaseModel):
             for item in self.evidence
         }
         attribution_keys = [
-            attribution.attribution_key
+            attribution.attribution_identity
             for attribution in self.attributions
         ]
 

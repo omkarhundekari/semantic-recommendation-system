@@ -81,6 +81,14 @@ class RoadmapAttributionContext(BaseModel):
 
 
 class EvidenceAttribution(BaseModel):
+    attribution_id: Optional[str] = Field(
+        default=None,
+        min_length=1,
+    )
+    project_direction_id: Optional[str] = Field(
+        default=None,
+        min_length=1,
+    )
     evidence_key: str = Field(min_length=1)
     roadmap_node_id: str = Field(min_length=1)
     source: AttributionSource
@@ -93,7 +101,7 @@ class EvidenceAttribution(BaseModel):
     ] = None
 
     @model_validator(mode="after")
-    def validate_roadmap_context(
+    def validate_identity(
         self,
     ) -> "EvidenceAttribution":
         if (
@@ -106,7 +114,44 @@ class EvidenceAttribution(BaseModel):
                 "roadmap_node_id."
             )
 
+        if (
+            self.project_direction_id is not None
+            and self.attribution_id is None
+        ):
+            raise ValueError(
+                "Project-scoped attribution requires "
+                "attribution_id."
+            )
+
+        if (
+            self.project_direction_id is not None
+            and self.roadmap_context is None
+        ):
+            raise ValueError(
+                "Project-scoped attribution requires "
+                "trusted roadmap context."
+            )
+
+        if (
+            self.attribution_id is not None
+            and self.project_direction_id is None
+        ):
+            raise ValueError(
+                "Attribution ID requires "
+                "project_direction_id."
+            )
+
         return self
+
+    @property
+    def attribution_identity(
+        self,
+    ) -> tuple[Optional[str], str, str]:
+        return (
+            self.project_direction_id,
+            self.evidence_key,
+            self.roadmap_node_id,
+        )
 
     @property
     def attribution_key(self) -> str:

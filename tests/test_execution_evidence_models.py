@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from execution_evidence.models import (
     EvidenceAttribution,
     ExecutionEvidenceItem,
+    RoadmapAttributionContext,
 )
 
 
@@ -59,6 +60,117 @@ def test_attribution_identity_is_evidence_and_roadmap_specific():
     assert attribution.attribution_key == (
         "github:owner/repo:commit:abc123:validate"
     )
+
+
+def test_project_scoped_attribution_has_stable_identity():
+    context = RoadmapAttributionContext(
+        roadmap_hash="a" * 64,
+        roadmap_stage_hash="b" * 64,
+        roadmap_node_id="validate",
+        snapshot_version=1,
+        canonicalization_version=1,
+    )
+
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-123",
+        project_direction_id="project-123",
+        evidence_key="github:owner/repo:commit:abc123",
+        roadmap_node_id="validate",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        roadmap_context=context,
+    )
+
+    assert attribution.attribution_identity == (
+        "project-123",
+        "github:owner/repo:commit:abc123",
+        "validate",
+    )
+
+
+def test_same_evidence_and_stage_can_belong_to_two_projects():
+    first = EvidenceAttribution(
+        attribution_id="attribution-1",
+        project_direction_id="project-1",
+        evidence_key="github:owner/repo:commit:abc123",
+        roadmap_node_id="build-mvp",
+        source="manual",
+        confidence=1.0,
+        roadmap_context=RoadmapAttributionContext(
+            roadmap_hash="a" * 64,
+            roadmap_stage_hash="b" * 64,
+            roadmap_node_id="build-mvp",
+            snapshot_version=1,
+            canonicalization_version=1,
+        ),
+    )
+    second = first.model_copy(
+        update={
+            "attribution_id": "attribution-2",
+            "project_direction_id": "project-2",
+        }
+    )
+
+    assert (
+        first.attribution_identity
+        != second.attribution_identity
+    )
+
+
+def test_project_scope_requires_stable_attribution_id():
+    with pytest.raises(
+        ValidationError,
+        match="requires attribution_id",
+    ):
+        EvidenceAttribution(
+            project_direction_id="project-123",
+            evidence_key="github:owner/repo:commit:abc123",
+            roadmap_node_id="build-mvp",
+            source="manual",
+            confidence=1.0,
+            roadmap_context=RoadmapAttributionContext(
+                roadmap_hash="a" * 64,
+                roadmap_stage_hash="b" * 64,
+                roadmap_node_id="build-mvp",
+                snapshot_version=1,
+                canonicalization_version=1,
+            ),
+        )
+
+
+def test_project_scope_requires_trusted_context():
+    with pytest.raises(
+        ValidationError,
+        match="requires trusted roadmap context",
+    ):
+        EvidenceAttribution(
+            attribution_id="attribution-123",
+            project_direction_id="project-123",
+            evidence_key="github:owner/repo:commit:abc123",
+            roadmap_node_id="build-mvp",
+            source="manual",
+            confidence=1.0,
+        )
+
+
+def test_legacy_contextual_attribution_remains_readable():
+    attribution = EvidenceAttribution(
+        evidence_key="github:owner/repo:commit:abc123",
+        roadmap_node_id="build-mvp",
+        source="manual",
+        confidence=1.0,
+        roadmap_context=RoadmapAttributionContext(
+            roadmap_hash="a" * 64,
+            roadmap_stage_hash="b" * 64,
+            roadmap_node_id="build-mvp",
+            snapshot_version=1,
+            canonicalization_version=1,
+        ),
+    )
+
+    assert attribution.attribution_id is None
+    assert attribution.project_direction_id is None
 
 
 def test_attribution_rejects_invalid_confidence():
