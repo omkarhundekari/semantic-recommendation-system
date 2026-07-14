@@ -152,11 +152,42 @@ class EvidenceAttribution(BaseModel):
         return self
 
     @property
-    def attribution_identity(
+    def durable_scope(
         self,
-    ) -> tuple[Optional[str], str, str]:
+    ) -> Optional[tuple[str, str]]:
+        if (
+            self.project_id is None
+            or self.roadmap_snapshot_id is None
+        ):
+            return None
+
         return (
-            self.project_direction_id,
+            self.project_id,
+            self.roadmap_snapshot_id,
+        )
+
+    @property
+    def attribution_identity(self) -> tuple[str, ...]:
+        durable_scope = self.durable_scope
+
+        if durable_scope is not None:
+            return (
+                "durable",
+                *durable_scope,
+                self.evidence_key,
+                self.roadmap_node_id,
+            )
+
+        if self.project_direction_id is not None:
+            return (
+                "direction",
+                self.project_direction_id,
+                self.evidence_key,
+                self.roadmap_node_id,
+            )
+
+        return (
+            "legacy",
             self.evidence_key,
             self.roadmap_node_id,
         )

@@ -957,6 +957,10 @@ def detach_execution_evidence_attribution(
             repository_key=request.repository_key,
             evidence_key=request.evidence_key,
             roadmap_node_id=request.roadmap_node_id,
+            project_id=stored_roadmap.project_id,
+            roadmap_snapshot_id=(
+                stored_roadmap.roadmap_snapshot_id
+            ),
             project_direction_id=(
                 stored_roadmap.project_direction_id
             ),
@@ -1011,6 +1015,10 @@ def list_execution_evidence_attributions(
         if query.roadmap_node_id is not None:
             return service.list_for_roadmap_node(
                 repository_key=query.repository_key,
+                project_id=stored_roadmap.project_id,
+                roadmap_snapshot_id=(
+                    stored_roadmap.roadmap_snapshot_id
+                ),
                 project_direction_id=(
                     stored_roadmap.project_direction_id
                 ),
@@ -1019,6 +1027,10 @@ def list_execution_evidence_attributions(
 
         return service.list_for_repository(
             query.repository_key,
+            project_id=stored_roadmap.project_id,
+            roadmap_snapshot_id=(
+                stored_roadmap.roadmap_snapshot_id
+            ),
             project_direction_id=(
                 stored_roadmap.project_direction_id
             ),

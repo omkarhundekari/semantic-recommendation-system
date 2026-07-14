@@ -807,3 +807,210 @@ def test_project_listing_excludes_legacy_attributions():
         filtered[0].project_direction_id
         == "project-one"
     )
+
+
+def test_durable_identity_is_canonical_over_direction_alias():
+    first = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        project_direction_id="direction-old",
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=NOW,
+        roadmap_context=_roadmap_context(),
+    )
+    second = first.model_copy(
+        update={
+            "attribution_id": "attribution-two",
+            "project_direction_id": "direction-new",
+        },
+        deep=True,
+    )
+
+    assert (
+        first.attribution_identity
+        == second.attribution_identity
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="duplicate attributions",
+    ):
+        StoredRepositoryEvidence(
+            repository=REFERENCE,
+            evidence=[_evidence()],
+            attributions=[first, second],
+            sync_state=RepositorySyncState(
+                repository_key=REPOSITORY_KEY,
+            ),
+            sync_snapshot=GitHubRepositorySyncSnapshot(
+                repository_key=REPOSITORY_KEY,
+            ),
+            saved_at=NOW,
+        )
+
+
+def test_same_direction_alias_can_identify_distinct_snapshots():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(store=store)
+
+    first = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        project_direction_id="direction-one",
+        roadmap_context=_roadmap_context(),
+        decided_at=NOW,
+    )
+    second = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_two",
+        project_direction_id="direction-one",
+        roadmap_context=_roadmap_context(),
+        decided_at=LATER,
+    )
+
+    assert first.created is True
+    assert second.created is True
+    assert len(
+        service.list_for_repository(REPOSITORY_KEY)
+    ) == 2
+
+
+def test_durable_duplicate_attach_is_idempotent():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(store=store)
+
+    first = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        project_direction_id="direction-one",
+        roadmap_context=_roadmap_context(),
+        decided_at=NOW,
+    )
+    second = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        project_direction_id="direction-one",
+        roadmap_context=_roadmap_context(),
+        decided_at=LATER,
+    )
+
+    assert first.created is True
+    assert second.created is False
+    assert (
+        second.attribution.attribution_id
+        == first.attribution.attribution_id
+    )
+
+
+def test_detach_accepts_durable_scope():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(store=store)
+
+    attached = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        project_direction_id="direction-one",
+        roadmap_context=_roadmap_context(),
+        decided_at=NOW,
+    )
+
+    removed = service.detach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        removed_at=LATER,
+        expected_revision=attached.stored.revision,
+    )
+
+    assert removed is True
+    assert (
+        service.list_for_repository(REPOSITORY_KEY)
+        == []
+    )
+
+
+def test_repository_listing_accepts_durable_scope():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(store=store)
+
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        project_direction_id="direction-one",
+        roadmap_context=_roadmap_context(),
+        decided_at=NOW,
+    )
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_id="proj_two",
+        roadmap_snapshot_id="snap_two",
+        project_direction_id="direction-two",
+        roadmap_context=_roadmap_context(),
+        decided_at=LATER,
+    )
+
+    filtered = service.list_for_repository(
+        REPOSITORY_KEY,
+        project_id="proj_two",
+        roadmap_snapshot_id="snap_two",
+    )
+
+    assert len(filtered) == 1
+    assert filtered[0].project_id == "proj_two"
+
+
+@pytest.mark.parametrize(
+    ("project_id", "roadmap_snapshot_id"),
+    [
+        ("proj_one", None),
+        (None, "snap_one"),
+    ],
+)
+def test_service_rejects_partial_durable_scope(
+    project_id,
+    roadmap_snapshot_id,
+):
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(store=store)
+
+    with pytest.raises(
+        ValueError,
+        match="must be supplied together",
+    ):
+        service.list_for_repository(
+            REPOSITORY_KEY,
+            project_id=project_id,
+            roadmap_snapshot_id=roadmap_snapshot_id,
+        )

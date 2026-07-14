@@ -288,11 +288,17 @@ class FakeAttributionService:
         self,
         repository_key,
         *,
+        project_id=None,
+        roadmap_snapshot_id=None,
         project_direction_id=None,
     ):
         self.list_repository_calls.append(
             {
                 "repository_key": repository_key,
+                "project_id": project_id,
+                "roadmap_snapshot_id": (
+                    roadmap_snapshot_id
+                ),
                 "project_direction_id": (
                     project_direction_id
                 ),
@@ -481,6 +487,11 @@ def test_detach_endpoint_returns_removal_status(
     call = service.detach_calls[0]
 
     assert call["expected_revision"] == 1
+    assert call["project_id"] == PROJECT_ID
+    assert (
+        call["roadmap_snapshot_id"]
+        == ROADMAP_SNAPSHOT_ID
+    )
     assert (
         call["project_direction_id"]
         == PROJECT_DIRECTION_ID
@@ -584,6 +595,10 @@ def test_list_endpoint_returns_repository_links(
     assert service.list_repository_calls == [
         {
             "repository_key": REPOSITORY_KEY,
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
             "project_direction_id": (
                 PROJECT_DIRECTION_ID
             ),
@@ -617,6 +632,10 @@ def test_list_endpoint_filters_by_roadmap_node(
     assert service.list_node_calls == [
         {
             "repository_key": REPOSITORY_KEY,
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
             "project_direction_id": (
                 PROJECT_DIRECTION_ID
             ),
@@ -688,6 +707,10 @@ def test_list_endpoint_trims_repository_scope(
     assert service.list_repository_calls == [
         {
             "repository_key": REPOSITORY_KEY,
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
             "project_direction_id": (
                 PROJECT_DIRECTION_ID
             ),
@@ -722,6 +745,10 @@ def test_list_node_endpoint_trims_identity_fields(
     assert service.list_node_calls == [
         {
             "repository_key": REPOSITORY_KEY,
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
             "project_direction_id": (
                 PROJECT_DIRECTION_ID
             ),
@@ -789,6 +816,10 @@ def test_list_node_endpoint_maps_missing_repository_to_404(
     assert service.list_node_calls == [
         {
             "repository_key": REPOSITORY_KEY,
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
             "project_direction_id": (
                 PROJECT_DIRECTION_ID
             ),
@@ -1039,6 +1070,10 @@ def test_attribution_request_identity_fields_are_trimmed(
             "repository_key": REPOSITORY_KEY,
             "evidence_key": EVIDENCE.evidence_key,
             "roadmap_node_id": "build-mvp",
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
             "project_direction_id": (
                 PROJECT_DIRECTION_ID
             ),
@@ -1304,6 +1339,16 @@ def test_detach_endpoint_accepts_durable_identity_only(
         "removed": True,
     }
     assert (
+        service.detach_calls[0]["project_id"]
+        == PROJECT_ID
+    )
+    assert (
+        service.detach_calls[0][
+            "roadmap_snapshot_id"
+        ]
+        == ROADMAP_SNAPSHOT_ID
+    )
+    assert (
         service.detach_calls[0][
             "project_direction_id"
         ]
@@ -1339,6 +1384,10 @@ def test_list_endpoint_accepts_durable_identity_only(
     assert service.list_repository_calls == [
         {
             "repository_key": REPOSITORY_KEY,
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
             "project_direction_id": (
                 PROJECT_DIRECTION_ID
             ),
@@ -1371,6 +1420,10 @@ def test_list_node_endpoint_accepts_durable_identity_only(
     assert service.list_node_calls == [
         {
             "repository_key": REPOSITORY_KEY,
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": (
+                ROADMAP_SNAPSHOT_ID
+            ),
             "project_direction_id": (
                 PROJECT_DIRECTION_ID
             ),

@@ -83,6 +83,7 @@ def test_project_scoped_attribution_has_stable_identity():
     )
 
     assert attribution.attribution_identity == (
+        "direction",
         "project-123",
         "github:owner/repo:commit:abc123",
         "validate",
