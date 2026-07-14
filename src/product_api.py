@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from feasibility_scorer import score_project_feasibility
@@ -847,13 +847,46 @@ def detach_execution_evidence_attribution(
     response_model=List[EvidenceAttribution],
 )
 def list_execution_evidence_attributions(
-    repository_key: str,
-    project_direction_id: str,
-    roadmap_node_id: Optional[str] = None,
+    repository_key: str = Query(min_length=1),
+    project_direction_id: str = Query(min_length=1),
+    roadmap_node_id: Optional[str] = Query(
+        default=None,
+        min_length=1,
+    ),
     service: EvidenceAttributionService = Depends(
         get_execution_evidence_attribution_service
     ),
 ) -> List[EvidenceAttribution]:
+    repository_key = repository_key.strip()
+    project_direction_id = project_direction_id.strip()
+    roadmap_node_id = (
+        roadmap_node_id.strip()
+        if roadmap_node_id is not None
+        else None
+    )
+
+    blank_fields = [
+        field_name
+        for field_name, value in (
+            ("repository_key", repository_key),
+            (
+                "project_direction_id",
+                project_direction_id,
+            ),
+            ("roadmap_node_id", roadmap_node_id),
+        )
+        if value == ""
+    ]
+
+    if blank_fields:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Attribution query identifiers must not "
+                "be blank."
+            ),
+        )
+
     try:
         if roadmap_node_id is not None:
             return service.list_for_roadmap_node(

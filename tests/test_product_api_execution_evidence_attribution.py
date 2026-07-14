@@ -528,6 +528,112 @@ def test_list_endpoint_filters_by_roadmap_node(
     ]
 
 
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        "repository_key",
+        "project_direction_id",
+        "roadmap_node_id",
+    ],
+)
+def test_list_endpoint_rejects_blank_identity_fields(
+    client,
+    field_name,
+):
+    service = FakeAttributionService()
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    params = {
+        "repository_key": REPOSITORY_KEY,
+        "project_direction_id": (
+            PROJECT_DIRECTION_ID
+        ),
+        "roadmap_node_id": "build-mvp",
+    }
+    params[field_name] = "   "
+
+    response = client.get(
+        "/v1/execution-evidence/attributions",
+        params=params,
+    )
+
+    assert response.status_code == 422
+    assert service.list_repository_calls == []
+    assert service.list_node_calls == []
+
+
+def test_list_endpoint_trims_repository_scope(
+    client,
+):
+    service = FakeAttributionService(
+        list_result=[ATTRIBUTION]
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    response = client.get(
+        "/v1/execution-evidence/attributions",
+        params={
+            "repository_key": f"  {REPOSITORY_KEY}  ",
+            "project_direction_id": (
+                f"  {PROJECT_DIRECTION_ID}  "
+            ),
+        },
+    )
+
+    assert response.status_code == 200
+    assert service.list_repository_calls == [
+        {
+            "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+        }
+    ]
+    assert service.list_node_calls == []
+
+
+def test_list_node_endpoint_trims_identity_fields(
+    client,
+):
+    service = FakeAttributionService(
+        list_result=[ATTRIBUTION]
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+
+    response = client.get(
+        "/v1/execution-evidence/attributions",
+        params={
+            "repository_key": f"  {REPOSITORY_KEY}  ",
+            "project_direction_id": (
+                f"  {PROJECT_DIRECTION_ID}  "
+            ),
+            "roadmap_node_id": "  build-mvp  ",
+        },
+    )
+
+    assert response.status_code == 200
+    assert service.list_node_calls == [
+        {
+            "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "roadmap_node_id": "build-mvp",
+        }
+    ]
+    assert service.list_repository_calls == []
+
+
 def test_list_endpoint_maps_missing_repository_to_404(
     client,
 ):
