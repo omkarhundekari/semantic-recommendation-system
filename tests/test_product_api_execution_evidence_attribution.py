@@ -187,9 +187,19 @@ class FakeAttributionService:
 
         return self.detach_result
 
-    def list_for_repository(self, repository_key):
+    def list_for_repository(
+        self,
+        repository_key,
+        *,
+        project_direction_id=None,
+    ):
         self.list_repository_calls.append(
-            repository_key
+            {
+                "repository_key": repository_key,
+                "project_direction_id": (
+                    project_direction_id
+                ),
+            }
         )
 
         if self.error is not None:
@@ -265,6 +275,10 @@ def test_attach_endpoint_returns_updated_record(
     assert call["repository_key"] == REPOSITORY_KEY
     assert call["evidence_key"] == EVIDENCE.evidence_key
     assert call["expected_revision"] == 0
+    assert (
+        call["project_direction_id"]
+        == PROJECT_DIRECTION_ID
+    )
     assert call["decided_at"].tzinfo
     assert (
         call["roadmap_context"].roadmap_hash
@@ -370,6 +384,10 @@ def test_detach_endpoint_returns_removal_status(
     call = service.detach_calls[0]
 
     assert call["expected_revision"] == 1
+    assert (
+        call["project_direction_id"]
+        == PROJECT_DIRECTION_ID
+    )
     assert call["removed_at"].tzinfo
 
 
@@ -388,6 +406,9 @@ def test_list_endpoint_returns_repository_links(
         "/v1/execution-evidence/attributions",
         params={
             "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
         },
     )
 
@@ -396,7 +417,12 @@ def test_list_endpoint_returns_repository_links(
         EVIDENCE.evidence_key
     )
     assert service.list_repository_calls == [
-        REPOSITORY_KEY
+        {
+            "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+        }
     ]
 
 
@@ -415,6 +441,9 @@ def test_list_endpoint_filters_by_roadmap_node(
         "/v1/execution-evidence/attributions",
         params={
             "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
             "roadmap_node_id": "build-mvp",
         },
     )
@@ -423,6 +452,9 @@ def test_list_endpoint_filters_by_roadmap_node(
     assert service.list_node_calls == [
         {
             "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
             "roadmap_node_id": "build-mvp",
         }
     ]
@@ -443,6 +475,9 @@ def test_list_endpoint_maps_missing_repository_to_404(
         "/v1/execution-evidence/attributions",
         params={
             "repository_key": REPOSITORY_KEY,
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
         },
     )
 

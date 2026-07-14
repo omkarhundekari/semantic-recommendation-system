@@ -782,6 +782,9 @@ def attach_execution_evidence_attribution(
             repository_key=request.repository_key,
             evidence_key=request.evidence_key,
             roadmap_node_id=request.roadmap_node_id,
+            project_direction_id=(
+                request.project_direction_id
+            ),
             roadmap_context=roadmap_context,
             rationale=request.rationale,
             decided_at=datetime.now(timezone.utc),
@@ -817,6 +820,9 @@ def detach_execution_evidence_attribution(
             repository_key=request.repository_key,
             evidence_key=request.evidence_key,
             roadmap_node_id=request.roadmap_node_id,
+            project_direction_id=(
+                request.project_direction_id
+            ),
             removed_at=datetime.now(timezone.utc),
             expected_revision=request.expected_revision,
         )
@@ -842,6 +848,7 @@ def detach_execution_evidence_attribution(
 )
 def list_execution_evidence_attributions(
     repository_key: str,
+    project_direction_id: str,
     roadmap_node_id: Optional[str] = None,
     service: EvidenceAttributionService = Depends(
         get_execution_evidence_attribution_service
@@ -851,11 +858,17 @@ def list_execution_evidence_attributions(
         if roadmap_node_id is not None:
             return service.list_for_roadmap_node(
                 repository_key=repository_key,
+                project_direction_id=(
+                    project_direction_id
+                ),
                 roadmap_node_id=roadmap_node_id,
             )
 
         return service.list_for_repository(
-            repository_key
+            repository_key,
+            project_direction_id=(
+                project_direction_id
+            ),
         )
     except RepositoryEvidenceNotFoundError as error:
         raise HTTPException(

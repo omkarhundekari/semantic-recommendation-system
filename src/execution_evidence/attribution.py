@@ -158,19 +158,27 @@ class EvidenceAttributionService:
         evidence_key: str,
         roadmap_node_id: str,
         removed_at: datetime,
+        project_direction_id: Optional[str] = None,
         expected_revision: Optional[int] = None,
     ) -> bool:
         record = self._load_record(repository_key)
-        attribution_key = (
-            f"{evidence_key}:{roadmap_node_id}"
+        normalized_project_direction_id = (
+            project_direction_id.strip()
+            if project_direction_id
+            else None
+        )
+        attribution_identity = (
+            normalized_project_direction_id,
+            evidence_key,
+            roadmap_node_id,
         )
 
         remaining = [
             attribution
             for attribution in record.attributions
             if (
-                attribution.attribution_key
-                != attribution_key
+                attribution.attribution_identity
+                != attribution_identity
             )
         ]
 
@@ -201,12 +209,24 @@ class EvidenceAttributionService:
     def list_for_repository(
         self,
         repository_key: str,
+        *,
+        project_direction_id: Optional[str] = None,
     ) -> List[EvidenceAttribution]:
         record = self._load_record(repository_key)
+        normalized_project_direction_id = (
+            project_direction_id.strip()
+            if project_direction_id
+            else None
+        )
 
         return [
             attribution.model_copy(deep=True)
             for attribution in record.attributions
+            if (
+                project_direction_id is None
+                or attribution.project_direction_id
+                == normalized_project_direction_id
+            )
         ]
 
     def list_for_roadmap_node(
@@ -214,11 +234,15 @@ class EvidenceAttributionService:
         *,
         repository_key: str,
         roadmap_node_id: str,
+        project_direction_id: Optional[str] = None,
     ) -> List[EvidenceAttribution]:
         return [
             attribution
             for attribution in self.list_for_repository(
-                repository_key
+                repository_key,
+                project_direction_id=(
+                    project_direction_id
+                ),
             )
             if (
                 attribution.roadmap_node_id

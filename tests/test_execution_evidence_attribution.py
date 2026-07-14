@@ -684,3 +684,126 @@ def test_same_evidence_stage_can_be_scoped_to_two_projects():
             REPOSITORY_KEY
         )
     ) == 2
+
+
+def test_detach_removes_only_matching_project_scope():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+
+    first = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_direction_id="project-one",
+        roadmap_context=_roadmap_context(),
+        decided_at=NOW,
+    )
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_direction_id="project-two",
+        roadmap_context=_roadmap_context(),
+        decided_at=LATER,
+    )
+
+    removed = service.detach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_direction_id="project-one",
+        removed_at=LATER,
+        expected_revision=first.stored.revision + 1,
+    )
+
+    remaining = service.list_for_repository(
+        REPOSITORY_KEY
+    )
+
+    assert removed is True
+    assert len(remaining) == 1
+    assert (
+        remaining[0].project_direction_id
+        == "project-two"
+    )
+
+
+def test_repository_listing_filters_project_scope():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_direction_id="project-one",
+        roadmap_context=_roadmap_context(),
+        decided_at=NOW,
+    )
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_direction_id="project-two",
+        roadmap_context=_roadmap_context(),
+        decided_at=LATER,
+    )
+
+    filtered = service.list_for_repository(
+        REPOSITORY_KEY,
+        project_direction_id="project-two",
+    )
+
+    assert len(filtered) == 1
+    assert (
+        filtered[0].project_direction_id
+        == "project-two"
+    )
+
+
+def test_project_listing_excludes_legacy_attributions():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        decided_at=NOW,
+    )
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="validate-system",
+        project_direction_id="project-one",
+        roadmap_context=(
+            _roadmap_context().model_copy(
+                update={
+                    "roadmap_node_id": (
+                        "validate-system"
+                    ),
+                }
+            )
+        ),
+        decided_at=LATER,
+    )
+
+    filtered = service.list_for_repository(
+        REPOSITORY_KEY,
+        project_direction_id="project-one",
+    )
+
+    assert len(filtered) == 1
+    assert (
+        filtered[0].project_direction_id
+        == "project-one"
+    )
