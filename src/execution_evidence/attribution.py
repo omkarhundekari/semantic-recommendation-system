@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from execution_evidence.models import (
     EvidenceAttribution,
+    RoadmapAttributionContext,
 )
 from execution_evidence.store import (
     RepositoryEvidenceStore,
@@ -44,6 +45,9 @@ class EvidenceAttributionService:
         roadmap_node_id: str,
         decided_at: datetime,
         rationale: str = "",
+        roadmap_context: Optional[
+            RoadmapAttributionContext
+        ] = None,
         expected_revision: Optional[int] = None,
     ) -> AttributionMutationResult:
         record = self._load_record(repository_key)
@@ -60,6 +64,7 @@ class EvidenceAttributionService:
             rationale=rationale,
             status="accepted",
             decided_at=decided_at,
+            roadmap_context=roadmap_context,
         )
 
         existing = next(

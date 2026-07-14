@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 EvidenceType = Literal[
@@ -68,6 +68,18 @@ class ExecutionEvidenceItem(BaseModel):
         )
 
 
+class RoadmapAttributionContext(BaseModel):
+    roadmap_hash: str = Field(
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    roadmap_stage_hash: str = Field(
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    roadmap_node_id: str = Field(min_length=1)
+    snapshot_version: int = Field(ge=1)
+    canonicalization_version: int = Field(ge=1)
+
+
 class EvidenceAttribution(BaseModel):
     evidence_key: str = Field(min_length=1)
     roadmap_node_id: str = Field(min_length=1)
@@ -76,6 +88,25 @@ class EvidenceAttribution(BaseModel):
     rationale: str = ""
     status: AttributionStatus = "suggested"
     decided_at: Optional[datetime] = None
+    roadmap_context: Optional[
+        RoadmapAttributionContext
+    ] = None
+
+    @model_validator(mode="after")
+    def validate_roadmap_context(
+        self,
+    ) -> "EvidenceAttribution":
+        if (
+            self.roadmap_context is not None
+            and self.roadmap_context.roadmap_node_id
+            != self.roadmap_node_id
+        ):
+            raise ValueError(
+                "Roadmap attribution context must match "
+                "roadmap_node_id."
+            )
+
+        return self
 
     @property
     def attribution_key(self) -> str:

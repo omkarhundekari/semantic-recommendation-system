@@ -69,3 +69,71 @@ def test_attribution_rejects_invalid_confidence():
             source="deterministic",
             confidence=1.2,
         )
+
+
+def test_attribution_preserves_roadmap_identity_context():
+    from execution_evidence.models import (
+        RoadmapAttributionContext,
+    )
+
+    context = RoadmapAttributionContext(
+        roadmap_hash="a" * 64,
+        roadmap_stage_hash="b" * 64,
+        roadmap_node_id="mvp",
+        snapshot_version=1,
+        canonicalization_version=1,
+    )
+
+    attribution = EvidenceAttribution(
+        evidence_key="github:owner/repo:commit:abc123",
+        roadmap_node_id="mvp",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        roadmap_context=context,
+    )
+
+    restored = EvidenceAttribution.model_validate_json(
+        attribution.model_dump_json()
+    )
+
+    assert restored.roadmap_context == context
+
+
+def test_attribution_rejects_mismatched_roadmap_context():
+    from execution_evidence.models import (
+        RoadmapAttributionContext,
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="must match roadmap_node_id",
+    ):
+        EvidenceAttribution(
+            evidence_key="github:owner/repo:commit:abc123",
+            roadmap_node_id="mvp",
+            source="manual",
+            confidence=1.0,
+            roadmap_context=RoadmapAttributionContext(
+                roadmap_hash="a" * 64,
+                roadmap_stage_hash="b" * 64,
+                roadmap_node_id="validate",
+                snapshot_version=1,
+                canonicalization_version=1,
+            ),
+        )
+
+
+def test_roadmap_context_rejects_invalid_hashes():
+    from execution_evidence.models import (
+        RoadmapAttributionContext,
+    )
+
+    with pytest.raises(ValidationError):
+        RoadmapAttributionContext(
+            roadmap_hash="not-a-hash",
+            roadmap_stage_hash="b" * 64,
+            roadmap_node_id="mvp",
+            snapshot_version=1,
+            canonicalization_version=1,
+        )

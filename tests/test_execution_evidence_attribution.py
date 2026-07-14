@@ -400,3 +400,64 @@ def test_record_rejects_duplicate_attributions():
             ),
             saved_at=NOW,
         )
+
+
+def test_attach_stamps_trusted_roadmap_context():
+    from execution_evidence.models import (
+        RoadmapAttributionContext,
+    )
+
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+
+    context = RoadmapAttributionContext(
+        roadmap_hash="a" * 64,
+        roadmap_stage_hash="b" * 64,
+        roadmap_node_id="build-mvp",
+        snapshot_version=1,
+        canonicalization_version=1,
+    )
+
+    result = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        roadmap_context=context,
+        decided_at=NOW,
+    )
+
+    assert (
+        result.attribution.roadmap_context
+        == context
+    )
+
+    loaded = store.load(REPOSITORY_KEY)
+
+    assert loaded is not None
+    assert (
+        loaded.attributions[0].roadmap_context
+        == context
+    )
+
+
+def test_legacy_attach_remains_context_optional():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+
+    result = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        decided_at=NOW,
+    )
+
+    assert (
+        result.attribution.roadmap_context
+        is None
+    )
