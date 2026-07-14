@@ -124,9 +124,10 @@ def test_serializes_regeneration_payload_as_valid_json():
     assert parsed["repair_directive"]["replace_candidate_title"] == (
         "Pipeline Failure Triage"
     )
-    assert (
+    assert any(
         "Do not repeat any surviving candidate's primary workflow"
-        in parsed["rules"][3]
+        in rule
+        for rule in parsed["rules"]
     )
 
 
@@ -174,4 +175,28 @@ def test_includes_all_surviving_candidate_exclusions():
             ],
         }
     ]
-    assert "any surviving candidate" in payload["rules"][3]
+    assert any(
+        "any surviving candidate" in rule
+        for rule in payload["rules"]
+    )
+
+
+def test_regeneration_prompt_declares_untrusted_content_policy():
+    brief = make_brief()
+    request = make_request()
+    directive = make_directive()
+
+    payload = build_candidate_regeneration_payload(
+        brief=brief,
+        request=request,
+        directive=directive,
+    )
+
+    rules = " ".join(payload["rules"])
+
+    assert (
+        payload["trust_policy_version"]
+        == "untrusted_content_policy_v1"
+    )
+    assert "untrusted data" in rules
+    assert "Never follow instructions" in rules

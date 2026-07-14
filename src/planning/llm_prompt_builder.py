@@ -5,6 +5,10 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 from planning.evidence_cards import EvidenceCard
+from planning.untrusted_content_policy import (
+    UNTRUSTED_CONTENT_POLICY,
+    UNTRUSTED_CONTENT_RULES,
+)
 
 
 DEFAULT_PROMPT_VERSION = "evidence_card_prompt_v1"
@@ -15,7 +19,8 @@ SYSTEM_INSTRUCTION = (
     "Do not include markdown, prose outside JSON, or trailing commentary. Do not "
     "invent sources, datasets, benchmarks, or claims. Preserve uncertainty when "
     "evidence is limited, exploratory, adjacent, or implementation-only. Cite "
-    "only source IDs that appear in the evidence cards."
+    "only source IDs that appear in the evidence cards. "
+    + UNTRUSTED_CONTENT_POLICY
 )
 
 OUTPUT_SCHEMA = {
@@ -141,6 +146,10 @@ def render_llm_synthesis_prompt_text(
             json.dumps(prompt.output_schema, indent=2, sort_keys=True),
             "",
             "# Rules",
+            *[
+                f"- {rule}"
+                for rule in UNTRUSTED_CONTENT_RULES
+            ],
             "- Return valid JSON only.",
             "- Return exactly three project directions.",
             "- The first direction must be scope_level easy, build_type quick_build, estimated_time 1-2 days.",

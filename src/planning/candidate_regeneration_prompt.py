@@ -8,6 +8,10 @@ from planning.planner_models import EvidenceBrief
 from planning.semantic_diversification_repair import (
     DiversificationRepairDirective,
 )
+from planning.untrusted_content_policy import (
+    UNTRUSTED_CONTENT_POLICY_VERSION,
+    UNTRUSTED_CONTENT_RULES,
+)
 
 
 REGENERATION_PROMPT_VERSION = "v1"
@@ -35,11 +39,15 @@ def build_candidate_regeneration_payload(
     ]
 
     return {
+        "trust_policy_version": (
+            UNTRUSTED_CONTENT_POLICY_VERSION
+        ),
         "task": (
             "Generate exactly one replacement software project direction "
             "for a semantically overlapping candidate."
         ),
         "rules": [
+            *UNTRUSTED_CONTENT_RULES,
             "Return exactly one candidate object.",
             "Use only source IDs that exist in the evidence brief.",
             (

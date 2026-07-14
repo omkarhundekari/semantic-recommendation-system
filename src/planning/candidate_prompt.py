@@ -3,6 +3,10 @@ from typing import Dict
 
 from planning.planner_models import EvidenceBrief
 from planning.candidate_models import CandidateGenerationRequest
+from planning.untrusted_content_policy import (
+    UNTRUSTED_CONTENT_POLICY_VERSION,
+    UNTRUSTED_CONTENT_RULES,
+)
 
 
 CANDIDATE_GENERATION_PROMPT_VERSION = "v1"
@@ -13,11 +17,15 @@ def build_candidate_generation_payload(
     request: CandidateGenerationRequest,
 ) -> Dict:
     return {
+        "trust_policy_version": (
+            UNTRUSTED_CONTENT_POLICY_VERSION
+        ),
         "task": (
             "Generate exactly three distinct, buildable software project "
             "directions from the evidence brief."
         ),
         "rules": [
+            *UNTRUSTED_CONTENT_RULES,
             "Use only source IDs that exist in the evidence brief.",
             "Cite only sources directly material to that candidate; do not cite every available source by default.",
             "Treat sources marked support_scope=adjacent_planning as optional planning context, not core evidence support.",
