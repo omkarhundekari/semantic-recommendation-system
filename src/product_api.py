@@ -39,7 +39,12 @@ from planning.roadmap_execution_enrichment import (
     enrich_roadmap_for_execution,
 )
 from planning.roadmap_registry import (
+    RoadmapRegistryError,
     RoadmapSnapshotRegistry,
+    create_stored_roadmap_snapshot,
+)
+from planning.roadmap_snapshot import (
+    build_roadmap_snapshot,
 )
 from planning.llm_synthesis_demo import (
     build_default_output_path,
@@ -50,8 +55,10 @@ from schemas.product_models import (
     EvidenceReference,
     PipelineStep,
     ProjectDirection,
+    ProjectIntelligencePersistence,
     ProjectIntelligenceRequest,
     ProjectIntelligenceResponse,
+    RoadmapRegistryPersistenceStatus,
     RoadmapStage,
     VerificationResult,
     SynthesisDemoRequest,
@@ -853,13 +860,40 @@ def run_synthesis_demo_endpoint(request: SynthesisDemoRequest) -> Dict:
     }
 
 
-@app.post(
-    "/v1/project-intelligence",
-    response_model=ProjectIntelligenceResponse,
-)
+def _project_intelligence_persistence(
+    *,
+    status: str,
+    remediation: Optional[str],
+) -> ProjectIntelligencePersistence:
+    return ProjectIntelligencePersistence(
+        roadmap_registry=(
+            RoadmapRegistryPersistenceStatus(
+                status=status,
+                remediation=remediation,
+            )
+        )
+    )
+
+
 def generate_project_intelligence(
     request: ProjectIntelligenceRequest,
+    *,
+    roadmap_registry: Optional[
+        RoadmapSnapshotRegistry
+    ] = None,
+    roadmap_registry_status: str = (
+        "unavailable_error"
+    ),
+    roadmap_registry_remediation: Optional[str] = (
+        "Trusted roadmap persistence was not "
+        "provided for this generation."
+    ),
 ) -> ProjectIntelligenceResponse:
+    persistence = _project_intelligence_persistence(
+        status=roadmap_registry_status,
+        remediation=roadmap_registry_remediation,
+    )
+
     query = request.goal.strip()
     constraints = request.constraints.model_dump()
     selected_direction = (
@@ -887,6 +921,7 @@ def generate_project_intelligence(
 
     if correction_metadata.get("query_requires_confirmation"):
         return ProjectIntelligenceResponse(
+            persistence=persistence,
             status="needs_correction_confirmation",
             query=query,
             corrected_query=corrected_query,
@@ -930,6 +965,7 @@ def generate_project_intelligence(
         )
 
         return ProjectIntelligenceResponse(
+            persistence=persistence,
             status="needs_clarification",
             query=query,
             corrected_query=corrected_query,
@@ -1049,6 +1085,7 @@ def generate_project_intelligence(
         )
 
         return ProjectIntelligenceResponse(
+            persistence=persistence,
             status="needs_clarification",
             query=query,
             corrected_query=corrected_query,
@@ -1247,6 +1284,61 @@ def generate_project_intelligence(
             )
         )
 
+    if roadmap_registry is not None:
+        created_at = datetime.now(timezone.utc)
+        snapshot_records = [
+            create_stored_roadmap_snapshot(
+                response_direction_id=direction.id,
+                title=direction.title,
+                snapshot=build_roadmap_snapshot(
+                    direction.roadmap
+                ),
+                created_at=created_at,
+            )
+            for direction in directions
+        ]
+
+        try:
+            stored_snapshots = (
+                roadmap_registry.create_many(
+                    snapshot_records
+                )
+            )
+        except RoadmapRegistryError:
+            persistence = (
+                _project_intelligence_persistence(
+                    status="unavailable_error",
+                    remediation=(
+                        "Project directions were generated "
+                        "successfully, but their trusted "
+                        "roadmap identities could not be "
+                        "persisted. Retry registration "
+                        "before using attribution features."
+                    ),
+                )
+            )
+        else:
+            directions = [
+                direction.model_copy(
+                    update={
+                        "project_direction_id": (
+                            stored.project_direction_id
+                        )
+                    },
+                    deep=True,
+                )
+                for direction, stored in zip(
+                    directions,
+                    stored_snapshots,
+                )
+            ]
+            persistence = (
+                _project_intelligence_persistence(
+                    status="ready",
+                    remediation=None,
+                )
+            )
+
     write_decision_trace_artifact(
         query=corrected_query,
         traces=[
@@ -1268,6 +1360,7 @@ def generate_project_intelligence(
     )
 
     return ProjectIntelligenceResponse(
+        persistence=persistence,
         status="ready",
         query=query,
         corrected_query=corrected_query,
@@ -1320,4 +1413,26 @@ def generate_project_intelligence(
         ),
         directions=directions,
         pipeline=pipeline,
+    )
+
+
+@app.post(
+    "/v1/project-intelligence",
+    response_model=ProjectIntelligenceResponse,
+)
+def generate_project_intelligence_endpoint(
+    request: ProjectIntelligenceRequest,
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> ProjectIntelligenceResponse:
+    return generate_project_intelligence(
+        request,
+        roadmap_registry=runtime.roadmap_registry,
+        roadmap_registry_status=(
+            runtime.roadmap_registry_status
+        ),
+        roadmap_registry_remediation=(
+            runtime.remediation
+        ),
     )

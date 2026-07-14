@@ -1,4 +1,25 @@
-from product_api import build_roadmap
+from pathlib import Path
+
+from fastapi.testclient import TestClient
+
+from execution_evidence.json_store import (
+    JsonRepositoryEvidenceStore,
+)
+from execution_evidence.storage_service import (
+    ExecutionEvidenceStorageRuntime,
+)
+from execution_evidence.trusted_store import (
+    initialize_fresh_trusted_store,
+)
+from product_api import (
+    app,
+    build_roadmap,
+    generate_project_intelligence,
+    get_execution_evidence_storage_runtime,
+)
+from execution_evidence.storage_service import (
+    TrustedSQLiteStorageService,
+)
 
 
 def test_rag_idea_receives_a_rag_specific_problem_definition_stage():
@@ -101,3 +122,152 @@ def test_project_api_returns_playbook_aware_frontend_roadmap_missions():
     assert "component architecture" in roadmap_text
     assert "react" in roadmap_text
     assert "python, fastapi, postgresql" not in roadmap_text
+
+
+
+def test_direct_generation_does_not_mint_uncommitted_identity():
+    from schemas.product_models import (
+        ProjectIntelligenceRequest,
+    )
+
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal=(
+                "Build a RAG evaluation project "
+                "for question answering"
+            ),
+        )
+    )
+
+    assert response.status == "ready"
+    assert (
+        response.persistence.roadmap_registry.status
+        == "unavailable_error"
+    )
+    assert all(
+        direction.project_direction_id is None
+        for direction in response.directions
+    )
+
+
+def test_endpoint_atomically_registers_ready_roadmaps(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-13T12:00:00+00:00",
+    )
+    service = TrustedSQLiteStorageService(
+        database_path
+    )
+    runtime = ExecutionEvidenceStorageRuntime(
+        evidence_store=(
+            service.build_repository_evidence_store()
+        ),
+        trusted_sqlite_service=service,
+        roadmap_registry=(
+            service.build_roadmap_snapshot_registry()
+        ),
+        roadmap_registry_status="ready",
+        remediation=None,
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/v1/project-intelligence",
+                json={
+                    "goal": (
+                        "Build a RAG evaluation project "
+                        "for question answering"
+                    )
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert payload["response_schema_version"] == 2
+    assert payload["status"] == "ready"
+    assert payload["persistence"] == {
+        "roadmap_registry": {
+            "status": "ready",
+            "remediation": None,
+        }
+    }
+
+    project_direction_ids = [
+        direction["project_direction_id"]
+        for direction in payload["directions"]
+    ]
+
+    assert len(project_direction_ids) == 3
+    assert all(project_direction_ids)
+    assert len(set(project_direction_ids)) == 3
+
+    stored = runtime.roadmap_registry.list_snapshots()
+
+    assert len(stored) == 3
+    assert {
+        record.project_direction_id
+        for record in stored
+    } == set(project_direction_ids)
+
+
+def test_endpoint_reports_legacy_registry_unavailable(
+    tmp_path: Path,
+):
+    json_store = JsonRepositoryEvidenceStore(
+        tmp_path / "repositories.json"
+    )
+    runtime = ExecutionEvidenceStorageRuntime(
+        evidence_store=json_store,
+        trusted_sqlite_service=None,
+        roadmap_registry=None,
+        roadmap_registry_status=(
+            "unavailable_legacy_store"
+        ),
+        remediation=(
+            "Migrate the legacy JSON store."
+        ),
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/v1/project-intelligence",
+                json={
+                    "goal": (
+                        "Build a React frontend "
+                        "portfolio project"
+                    )
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert (
+        payload["persistence"]["roadmap_registry"][
+            "status"
+        ]
+        == "unavailable_legacy_store"
+    )
+    assert all(
+        direction["project_direction_id"] is None
+        for direction in payload["directions"]
+    )

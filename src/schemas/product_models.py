@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -102,6 +102,7 @@ class VerificationResult(BaseModel):
 
 class ProjectDirection(BaseModel):
     id: str
+    project_direction_id: Optional[str] = None
     title: str
     summary: str
     scope: str
@@ -167,6 +168,7 @@ class PresentationProjectDirection(BaseModel):
 
 class FrontendProjectDirection(BaseModel):
     id: str
+    project_direction_id: Optional[str] = None
     title: str
     tier: str
     level: str
@@ -207,7 +209,41 @@ class SynthesisStatus(BaseModel):
     safety_pipeline: Dict[str, bool] = Field(default_factory=dict)
 
 
+class RoadmapRegistryPersistenceStatus(BaseModel):
+    status: Literal[
+        "ready",
+        "unavailable_legacy_store",
+        "unavailable_error",
+    ]
+    remediation: Optional[str] = None
+
+
+class ProjectIntelligencePersistence(BaseModel):
+    roadmap_registry: RoadmapRegistryPersistenceStatus
+
+
+def default_project_intelligence_persistence(
+) -> ProjectIntelligencePersistence:
+    return ProjectIntelligencePersistence(
+        roadmap_registry=(
+            RoadmapRegistryPersistenceStatus(
+                status="unavailable_error",
+                remediation=(
+                    "Trusted roadmap persistence was "
+                    "not provided for this generation."
+                ),
+            )
+        )
+    )
+
+
 class ProjectIntelligenceResponse(BaseModel):
+    response_schema_version: int = 2
+    persistence: ProjectIntelligencePersistence = Field(
+        default_factory=(
+            default_project_intelligence_persistence
+        )
+    )
     status: str
     query: str
     corrected_query: Optional[str] = None
