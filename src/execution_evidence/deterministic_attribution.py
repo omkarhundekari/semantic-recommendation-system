@@ -53,6 +53,11 @@ STOP_WORDS = {
     "your",
 }
 
+EXPLICIT_REVERT_TITLE_TERMS = {
+    "revert",
+    "reverted",
+}
+
 LOW_VALUE_TERMS = {
     "chore",
     "cleanup",
@@ -160,10 +165,17 @@ def suggest_deterministic_attribution(
         6,
     )
 
-    decision, abstention_reason = _decide(
-        selected=selected,
-        score_margin=score_margin,
-    )
+    if _is_explicit_revert(evidence.title):
+        decision = "abstain"
+        abstention_reason = (
+            "Explicitly reverted work does not count as "
+            "positive roadmap progress."
+        )
+    else:
+        decision, abstention_reason = _decide(
+            selected=selected,
+            score_margin=score_margin,
+        )
 
     return DeterministicAttributionSuggestion(
         evidence_key=evidence.evidence_key,
@@ -330,6 +342,23 @@ def _score_stage(
         score=score,
         matched_terms=matched_terms,
         signals=signals,
+    )
+
+
+def _is_explicit_revert(title: str) -> bool:
+    normalized_tokens = TOKEN_PATTERN.findall(
+        unicodedata.normalize(
+            "NFKC",
+            title,
+        ).casefold()
+    )
+
+    if not normalized_tokens:
+        return False
+
+    return (
+        normalized_tokens[0]
+        in EXPLICIT_REVERT_TITLE_TERMS
     )
 
 

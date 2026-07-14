@@ -368,3 +368,51 @@ def test_invalid_top_k_is_rejected():
             roadmap=_roadmap(),
             top_k=0,
         )
+
+
+def test_explicit_revert_always_abstains():
+    result = suggest_deterministic_attribution(
+        evidence=_evidence(
+            title=(
+                "Revert document ingestion "
+                "implementation"
+            ),
+            description=(
+                "Removes retrieval indexing after "
+                "validation failures."
+            ),
+        ),
+        roadmap=_roadmap(),
+    )
+
+    assert result.top_score >= 0.20
+    assert result.decision == "abstain"
+    assert (
+        result.abstention_reason
+        == (
+            "Explicitly reverted work does not count as "
+            "positive roadmap progress."
+        )
+    )
+
+
+def test_revert_feature_work_is_not_mistaken_for_a_revert():
+    result = suggest_deterministic_attribution(
+        evidence=_evidence(
+            title=(
+                "Add revert handling to retrieval "
+                "workflow"
+            ),
+            description=(
+                "Implements rollback support for "
+                "document ingestion."
+            ),
+        ),
+        roadmap=_roadmap(),
+    )
+
+    assert result.decision == "suggest"
+    assert (
+        result.candidates[0].roadmap_node_id
+        == "mvp"
+    )
