@@ -8,6 +8,7 @@ from execution_evidence.github_repository import (
 )
 from execution_evidence.models import (
     EvidenceAttribution,
+    RoadmapAttributionContext,
     ExecutionEvidenceItem,
     RepositorySyncState,
 )
@@ -162,6 +163,93 @@ def test_record_rejects_duplicate_attributions():
             attributions=[
                 attribution,
                 attribution.model_copy(deep=True),
+            ],
+            **_base_record_payload(),
+        )
+
+
+def _durable_attribution(
+    *,
+    evidence_key: str,
+    project_id: str,
+    roadmap_snapshot_id: str,
+    attribution_id: str,
+) -> EvidenceAttribution:
+    return EvidenceAttribution(
+        attribution_id=attribution_id,
+        project_id=project_id,
+        roadmap_snapshot_id=roadmap_snapshot_id,
+        evidence_key=evidence_key,
+        roadmap_node_id="build-mvp",
+        source="manual",
+        confidence=1.0,
+        rationale="",
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=RoadmapAttributionContext(
+            roadmap_hash="a" * 64,
+            roadmap_stage_hash="b" * 64,
+            roadmap_node_id="build-mvp",
+            snapshot_version=1,
+            canonicalization_version=1,
+        ),
+    )
+
+
+def test_record_allows_same_link_across_durable_snapshots():
+    evidence = _evidence()
+
+    first = _durable_attribution(
+        evidence_key=evidence.evidence_key,
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        attribution_id="attribution-one",
+    )
+    second = _durable_attribution(
+        evidence_key=evidence.evidence_key,
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_two",
+        attribution_id="attribution-two",
+    )
+
+    record = StoredRepositoryEvidence(
+        evidence=[evidence],
+        attributions=[first, second],
+        **_base_record_payload(),
+    )
+
+    assert len(record.attributions) == 2
+    assert {
+        attribution.roadmap_snapshot_id
+        for attribution in record.attributions
+    } == {"snap_one", "snap_two"}
+
+
+def test_record_rejects_duplicate_link_in_durable_snapshot():
+    evidence = _evidence()
+    attribution = _durable_attribution(
+        evidence_key=evidence.evidence_key,
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        attribution_id="attribution-one",
+    )
+
+    duplicate = attribution.model_copy(
+        update={
+            "attribution_id": "attribution-two",
+        },
+        deep=True,
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="duplicate attributions",
+    ):
+        StoredRepositoryEvidence(
+            evidence=[evidence],
+            attributions=[
+                attribution,
+                duplicate,
             ],
             **_base_record_payload(),
         )

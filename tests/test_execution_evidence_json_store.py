@@ -12,8 +12,10 @@ from execution_evidence.json_store import (
     RepositoryEvidenceStoreError,
 )
 from execution_evidence.models import (
+    EvidenceAttribution,
     ExecutionEvidenceItem,
     RepositorySyncState,
+    RoadmapAttributionContext,
 )
 from execution_evidence.snapshot import (
     GitHubRepositorySyncSnapshot,
@@ -206,4 +208,60 @@ def test_json_store_replaces_file_atomically(
         tmp_path.glob(
             ".repositories.json.*.tmp"
         )
+    )
+
+
+def test_json_store_preserves_durable_attribution_identity(
+    tmp_path: Path,
+):
+    store_path = tmp_path / "repositories.json"
+    record = _record()
+    evidence = record.evidence[0]
+
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+        project_direction_id="direction-one",
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        rationale="Accepted manually.",
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=RoadmapAttributionContext(
+            roadmap_hash="a" * 64,
+            roadmap_stage_hash="b" * 64,
+            roadmap_node_id="persist-evidence",
+            snapshot_version=1,
+            canonicalization_version=1,
+        ),
+    )
+
+    saved = JsonRepositoryEvidenceStore(
+        store_path
+    ).save(
+        record.model_copy(
+            update={
+                "attributions": [attribution],
+            },
+            deep=True,
+        )
+    )
+
+    loaded = JsonRepositoryEvidenceStore(
+        store_path
+    ).load(REPOSITORY_KEY)
+
+    assert loaded == saved
+    assert loaded is not None
+
+    stored = loaded.attributions[0]
+
+    assert stored.project_id == "proj_one"
+    assert stored.roadmap_snapshot_id == "snap_one"
+    assert (
+        stored.project_direction_id
+        == "direction-one"
     )

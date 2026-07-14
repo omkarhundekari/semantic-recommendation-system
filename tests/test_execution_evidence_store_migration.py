@@ -12,6 +12,7 @@ from execution_evidence.models import (
     EvidenceAttribution,
     ExecutionEvidenceItem,
     RepositorySyncState,
+    RoadmapAttributionContext,
 )
 from execution_evidence.snapshot import (
     GitHubRepositorySyncSnapshot,
@@ -877,3 +878,70 @@ def test_json_migration_rejects_directory_source(
         validate_json_migration_source(
             tmp_path
         )
+
+
+def _record_with_durable_attribution(
+    *,
+    project_id: str,
+    roadmap_snapshot_id: str,
+) -> StoredRepositoryEvidence:
+    record = _record(with_attribution=False)
+    evidence = record.evidence[0]
+
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_id=project_id,
+        roadmap_snapshot_id=roadmap_snapshot_id,
+        project_direction_id="direction-one",
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="stage-one",
+        source="manual",
+        confidence=1.0,
+        rationale="Accepted manually.",
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=RoadmapAttributionContext(
+            roadmap_hash="a" * 64,
+            roadmap_stage_hash="b" * 64,
+            roadmap_node_id="stage-one",
+            snapshot_version=1,
+            canonicalization_version=1,
+        ),
+    )
+
+    return record.model_copy(
+        update={
+            "attributions": [attribution],
+        },
+        deep=True,
+    )
+
+
+def test_canonical_hash_includes_project_id():
+    first = _record_with_durable_attribution(
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+    )
+    second = _record_with_durable_attribution(
+        project_id="proj_two",
+        roadmap_snapshot_id="snap_one",
+    )
+
+    assert hash_repository_evidence(
+        first
+    ) != hash_repository_evidence(second)
+
+
+def test_canonical_hash_includes_roadmap_snapshot_id():
+    first = _record_with_durable_attribution(
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_one",
+    )
+    second = _record_with_durable_attribution(
+        project_id="proj_one",
+        roadmap_snapshot_id="snap_two",
+    )
+
+    assert hash_repository_evidence(
+        first
+    ) != hash_repository_evidence(second)
