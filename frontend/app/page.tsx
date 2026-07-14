@@ -170,6 +170,7 @@ type RoadmapNode = {
 
 type Direction = {
   id: string;
+  project_direction_id: string | null;
   title: string;
   summary: string;
   scope: string;
@@ -205,6 +206,7 @@ type PresentationProjectDirection = {
 
 type FrontendProjectDirection = {
   id: string;
+  project_direction_id: string | null;
   title: string;
   tier: string;
   level: string;
@@ -238,7 +240,19 @@ type EvidenceCoverage = {
   unique_source_count?: number;
 };
 
+type RoadmapRegistryPersistenceStatus =
+  | "ready"
+  | "unavailable_legacy_store"
+  | "unavailable_error";
+
 type IntelligenceResponse = {
+  response_schema_version: number;
+  persistence: {
+    roadmap_registry: {
+      status: RoadmapRegistryPersistenceStatus;
+      remediation: string | null;
+    };
+  };
   status: string;
   clarification_required?: boolean;
   clarification_message?: string;

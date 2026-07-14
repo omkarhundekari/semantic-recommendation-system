@@ -16,7 +16,17 @@ import {
 
 type ReadyResult = {
   status: "ready";
-  directions: unknown[];
+  response_schema_version?: number;
+  persistence?: {
+    roadmap_registry: {
+      status: string;
+      remediation: string | null;
+    };
+  };
+  directions: Array<{
+    id: string;
+    project_direction_id?: string | null;
+  }>;
 };
 
 const readyResult: ReadyResult = {
@@ -28,7 +38,19 @@ describe("workspace persistence", () => {
   it("migrates an unversioned workspace with safe defaults", () => {
     const result = migrateWorkspace<ReadyResult>({
       goal: "Build a retrieval project",
-      result: readyResult,
+      result: {
+        status: "ready",
+        response_schema_version: 1,
+        persistence: {
+          roadmap_registry: {
+            status: "unavailable_error",
+            remediation:
+              "This workspace predates trusted " +
+              "roadmap persistence.",
+          },
+        },
+        directions: [],
+      },
       selectedDirectionId: "retrieval",
       activeRoadmapNodeId: "define",
       completedRoadmapNodeIds: ["define"],
@@ -38,7 +60,19 @@ describe("workspace persistence", () => {
     expect(result).toEqual({
       schemaVersion: CURRENT_WORKSPACE_SCHEMA_VERSION,
       goal: "Build a retrieval project",
-      result: readyResult,
+      result: {
+        status: "ready",
+        response_schema_version: 1,
+        persistence: {
+          roadmap_registry: {
+            status: "unavailable_error",
+            remediation:
+              "This workspace predates trusted " +
+              "roadmap persistence.",
+          },
+        },
+        directions: [],
+      },
       selectedDirectionId: "retrieval",
       activeRoadmapNodeId: "define",
       completedRoadmapNodeIds: ["define"],
@@ -49,6 +83,67 @@ describe("workspace persistence", () => {
       adaptationEvidence: {},
       savedAt: "2026-07-12T18:00:00.000Z",
     });
+  });
+
+  it("preserves trusted roadmap identities", () => {
+    const result = migrateWorkspace<ReadyResult>({
+      schemaVersion: 2,
+      goal: "Build a retrieval project",
+      result: {
+        status: "ready",
+        response_schema_version: 2,
+        persistence: {
+          roadmap_registry: {
+            status: "ready",
+            remediation: null,
+          },
+        },
+        directions: [
+          {
+            id: "direction-1",
+            project_direction_id:
+              "trusted-project-direction",
+          },
+        ],
+      },
+      savedAt: "2026-07-12T18:00:00.000Z",
+    });
+
+    expect(
+      result?.result.response_schema_version,
+    ).toBe(2);
+    expect(
+      result?.result.persistence
+        ?.roadmap_registry.status,
+    ).toBe("ready");
+    expect(
+      result?.result.directions[0]
+        .project_direction_id,
+    ).toBe("trusted-project-direction");
+  });
+
+  it("normalizes missing direction identities to null", () => {
+    const result = migrateWorkspace<ReadyResult>({
+      goal: "Legacy retrieval project",
+      result: {
+        status: "ready",
+        directions: [
+          {
+            id: "direction-1",
+          },
+        ],
+      },
+      savedAt: "2026-07-12T18:00:00.000Z",
+    });
+
+    expect(
+      result?.result.directions[0]
+        .project_direction_id,
+    ).toBeNull();
+    expect(
+      result?.result.persistence
+        ?.roadmap_registry.status,
+    ).toBe("unavailable_error");
   });
 
   it("preserves current adaptation state", () => {

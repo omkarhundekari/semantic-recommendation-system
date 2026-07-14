@@ -55,6 +55,87 @@ function stringRecord(value: unknown): Record<string, string> {
   );
 }
 
+function normalizeDirection(
+  value: unknown,
+): unknown {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  return {
+    ...value,
+    project_direction_id:
+      typeof value.project_direction_id === "string"
+        ? value.project_direction_id
+        : null,
+  };
+}
+
+function normalizeReadyResult(
+  value: UnknownRecord,
+): UnknownRecord {
+  const directions = Array.isArray(value.directions)
+    ? value.directions.map(normalizeDirection)
+    : [];
+
+  const synthesisStatus = isRecord(
+    value.synthesis_status,
+  )
+    ? {
+        ...value.synthesis_status,
+        frontend_project_directions: Array.isArray(
+          value.synthesis_status
+            .frontend_project_directions,
+        )
+          ? value.synthesis_status
+              .frontend_project_directions
+              .map(normalizeDirection)
+          : [],
+      }
+    : value.synthesis_status;
+
+  const persistence = isRecord(value.persistence)
+    && isRecord(value.persistence.roadmap_registry)
+      ? {
+          roadmap_registry: {
+            status:
+              typeof value.persistence
+                .roadmap_registry.status === "string"
+                ? value.persistence
+                    .roadmap_registry.status
+                : "unavailable_error",
+            remediation:
+              typeof value.persistence
+                .roadmap_registry.remediation === "string"
+                ? value.persistence
+                    .roadmap_registry.remediation
+                : null,
+          },
+        }
+      : {
+          roadmap_registry: {
+            status: "unavailable_error",
+            remediation:
+              "This workspace predates trusted roadmap persistence.",
+          },
+        };
+
+  return {
+    ...value,
+    response_schema_version:
+      typeof value.response_schema_version === "number"
+        ? value.response_schema_version
+        : 1,
+    persistence,
+    directions,
+    ...(synthesisStatus !== undefined
+      ? {
+          synthesis_status: synthesisStatus,
+        }
+      : {}),
+  };
+}
+
 function adaptationDecisionMap(
   value: unknown,
 ): AdaptationDecisionMap {
@@ -91,10 +172,14 @@ export function migrateWorkspace<TResult>(
     return null;
   }
 
+  const normalizedResult = normalizeReadyResult(
+    value.result,
+  );
+
   return {
     schemaVersion: CURRENT_WORKSPACE_SCHEMA_VERSION,
     goal: stringValue(value.goal),
-    result: value.result as TResult,
+    result: normalizedResult as TResult,
     selectedDirectionId: nullableString(
       value.selectedDirectionId,
     ),
