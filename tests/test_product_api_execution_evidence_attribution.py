@@ -391,6 +391,40 @@ def test_detach_endpoint_returns_removal_status(
     assert call["removed_at"].tzinfo
 
 
+
+def test_detach_endpoint_maps_conflict_to_409(
+    client,
+):
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: FakeAttributionService(
+        error=RepositoryEvidenceConflictError(
+            "Repository evidence revision conflict."
+        )
+    )
+
+    response = client.request(
+        "DELETE",
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_direction_id": (
+                PROJECT_DIRECTION_ID
+            ),
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+            "expected_revision": 1,
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": (
+            "Repository evidence revision conflict."
+        )
+    }
+
+
 def test_list_endpoint_returns_repository_links(
     client,
 ):
