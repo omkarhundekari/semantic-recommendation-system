@@ -1411,9 +1411,13 @@ def generate_project_intelligence(
             directions = [
                 direction.model_copy(
                     update={
+                        "project_id": stored.project_id,
+                        "roadmap_snapshot_id": (
+                            stored.roadmap_snapshot_id
+                        ),
                         "project_direction_id": (
                             stored.project_direction_id
-                        )
+                        ),
                     },
                     deep=True,
                 )

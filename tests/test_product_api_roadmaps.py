@@ -145,7 +145,9 @@ def test_direct_generation_does_not_mint_uncommitted_identity():
         == "unavailable_error"
     )
     assert all(
-        direction.project_direction_id is None
+        direction.project_id is None
+        and direction.roadmap_snapshot_id is None
+        and direction.project_direction_id is None
         for direction in response.directions
     )
 
@@ -195,7 +197,7 @@ def test_endpoint_atomically_registers_ready_roadmaps(
     assert response.status_code == 200
     payload = response.json()
 
-    assert payload["response_schema_version"] == 2
+    assert payload["response_schema_version"] == 3
     assert payload["status"] == "ready"
     assert payload["persistence"] == {
         "roadmap_registry": {
@@ -204,22 +206,42 @@ def test_endpoint_atomically_registers_ready_roadmaps(
         }
     }
 
-    project_direction_ids = [
-        direction["project_direction_id"]
+    response_identities = {
+        direction["project_direction_id"]: {
+            "project_id": direction["project_id"],
+            "roadmap_snapshot_id": (
+                direction["roadmap_snapshot_id"]
+            ),
+        }
         for direction in payload["directions"]
-    ]
+    }
 
-    assert len(project_direction_ids) == 3
-    assert all(project_direction_ids)
-    assert len(set(project_direction_ids)) == 3
+    assert len(response_identities) == 3
+    assert all(response_identities)
+    assert all(
+        identity["project_id"]
+        for identity in response_identities.values()
+    )
+    assert all(
+        identity["roadmap_snapshot_id"]
+        for identity in response_identities.values()
+    )
 
     stored = runtime.roadmap_registry.list_snapshots()
 
     assert len(stored) == 3
-    assert {
-        record.project_direction_id
+
+    stored_identities = {
+        record.project_direction_id: {
+            "project_id": record.project_id,
+            "roadmap_snapshot_id": (
+                record.roadmap_snapshot_id
+            ),
+        }
         for record in stored
-    } == set(project_direction_ids)
+    }
+
+    assert response_identities == stored_identities
 
 
 def test_endpoint_reports_legacy_registry_unavailable(
@@ -268,6 +290,8 @@ def test_endpoint_reports_legacy_registry_unavailable(
         == "unavailable_legacy_store"
     )
     assert all(
-        direction["project_direction_id"] is None
+        direction["project_id"] is None
+        and direction["roadmap_snapshot_id"] is None
+        and direction["project_direction_id"] is None
         for direction in payload["directions"]
     )

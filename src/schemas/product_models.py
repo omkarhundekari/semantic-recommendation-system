@@ -102,6 +102,8 @@ class VerificationResult(BaseModel):
 
 class ProjectDirection(BaseModel):
     id: str
+    project_id: Optional[str] = None
+    roadmap_snapshot_id: Optional[str] = None
     project_direction_id: Optional[str] = None
     title: str
     summary: str
@@ -238,7 +240,7 @@ def default_project_intelligence_persistence(
 
 
 class ProjectIntelligenceResponse(BaseModel):
-    response_schema_version: int = 2
+    response_schema_version: int = 3
     persistence: ProjectIntelligencePersistence = Field(
         default_factory=(
             default_project_intelligence_persistence
