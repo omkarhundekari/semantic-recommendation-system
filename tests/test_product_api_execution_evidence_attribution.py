@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from execution_evidence.attribution import (
+    AttributionContextConflictError,
     AttributionMutationResult,
     ExecutionEvidenceNotFoundError,
     RepositoryEvidenceNotFoundError,
@@ -350,3 +351,33 @@ def test_list_endpoint_maps_missing_repository_to_404(
     )
 
     assert response.status_code == 404
+
+
+def test_attach_endpoint_maps_context_conflict_to_409(
+    client,
+):
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: FakeAttributionService(
+        error=AttributionContextConflictError(
+            "Evidence attribution already exists "
+            "with different roadmap identity context."
+        )
+    )
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": (
+            "Evidence attribution already exists "
+            "with different roadmap identity context."
+        )
+    }

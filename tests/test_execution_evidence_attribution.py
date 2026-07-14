@@ -461,3 +461,147 @@ def test_legacy_attach_remains_context_optional():
         result.attribution.roadmap_context
         is None
     )
+
+
+def _roadmap_context(
+    *,
+    roadmap_hash: str = "a" * 64,
+    stage_hash: str = "b" * 64,
+):
+    from execution_evidence.models import (
+        RoadmapAttributionContext,
+    )
+
+    return RoadmapAttributionContext(
+        roadmap_hash=roadmap_hash,
+        roadmap_stage_hash=stage_hash,
+        roadmap_node_id="build-mvp",
+        snapshot_version=1,
+        canonicalization_version=1,
+    )
+
+
+def test_duplicate_attach_with_same_context_is_idempotent():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+    context = _roadmap_context()
+
+    first = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        roadmap_context=context,
+        decided_at=NOW,
+    )
+
+    second = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        roadmap_context=context.model_copy(deep=True),
+        decided_at=LATER,
+    )
+
+    assert first.created is True
+    assert second.created is False
+    assert second.stored.revision == 1
+    assert second.attribution.roadmap_context == context
+
+
+def test_duplicate_attach_rejects_changed_stage_context():
+    from execution_evidence.attribution import (
+        AttributionContextConflictError,
+    )
+
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        roadmap_context=_roadmap_context(),
+        decided_at=NOW,
+    )
+
+    with pytest.raises(
+        AttributionContextConflictError,
+        match="different roadmap identity context",
+    ):
+        service.attach(
+            repository_key=REPOSITORY_KEY,
+            evidence_key=_evidence().evidence_key,
+            roadmap_node_id="build-mvp",
+            roadmap_context=_roadmap_context(
+                stage_hash="c" * 64,
+            ),
+            decided_at=LATER,
+        )
+
+
+def test_legacy_attribution_is_not_silently_upgraded():
+    from execution_evidence.attribution import (
+        AttributionContextConflictError,
+    )
+
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        decided_at=NOW,
+    )
+
+    with pytest.raises(
+        AttributionContextConflictError,
+        match="different roadmap identity context",
+    ):
+        service.attach(
+            repository_key=REPOSITORY_KEY,
+            evidence_key=_evidence().evidence_key,
+            roadmap_node_id="build-mvp",
+            roadmap_context=_roadmap_context(),
+            decided_at=LATER,
+        )
+
+
+def test_contextual_attribution_is_not_silently_downgraded():
+    from execution_evidence.attribution import (
+        AttributionContextConflictError,
+    )
+
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+
+    service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        roadmap_context=_roadmap_context(),
+        decided_at=NOW,
+    )
+
+    with pytest.raises(
+        AttributionContextConflictError,
+        match="different roadmap identity context",
+    ):
+        service.attach(
+            repository_key=REPOSITORY_KEY,
+            evidence_key=_evidence().evidence_key,
+            roadmap_node_id="build-mvp",
+            decided_at=LATER,
+        )

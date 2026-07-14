@@ -10,6 +10,7 @@ from execution_evidence.models import (
     RoadmapAttributionContext,
 )
 from execution_evidence.store import (
+    RepositoryEvidenceConflictError,
     RepositoryEvidenceStore,
     StoredRepositoryEvidence,
 )
@@ -20,6 +21,12 @@ class RepositoryEvidenceNotFoundError(LookupError):
 
 
 class ExecutionEvidenceNotFoundError(LookupError):
+    pass
+
+
+class AttributionContextConflictError(
+    RepositoryEvidenceConflictError
+):
     pass
 
 
@@ -80,6 +87,15 @@ class EvidenceAttributionService:
         )
 
         if existing is not None:
+            if (
+                existing.roadmap_context
+                != attribution.roadmap_context
+            ):
+                raise AttributionContextConflictError(
+                    "Evidence attribution already exists "
+                    "with different roadmap identity context."
+                )
+
             return AttributionMutationResult(
                 stored=record,
                 attribution=existing,
