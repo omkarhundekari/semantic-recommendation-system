@@ -40,3 +40,12 @@ outputs/
 # Accidental API key files
 *_api_key.txt
 openai_key.txt
+
+# Solvyn runtime execution-evidence storage
+data/execution_evidence/repositories.json
+data/execution_evidence/solvyn.db
+data/execution_evidence/solvyn.db-wal
+data/execution_evidence/solvyn.db-shm
+data/execution_evidence/solvyn.db-journal
+data/execution_evidence/.*.migrating*
+data/execution_evidence/.*.migration.lock
