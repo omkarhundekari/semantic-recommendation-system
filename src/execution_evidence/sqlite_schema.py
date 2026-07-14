@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 5
+CURRENT_SQLITE_SCHEMA_VERSION = 6
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -526,6 +526,142 @@ CREATE INDEX idx_import_receipts_source_hash
 """
 
 
+
+CREATE_PROJECT_FOUNDATION_SQL = """
+CREATE TABLE projects (
+    project_row_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id TEXT NOT NULL,
+    workspace_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (
+            status IN (
+                'active',
+                'archived',
+                'deleted'
+            )
+        ),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (workspace_id)
+        REFERENCES workspaces(workspace_id)
+        ON DELETE CASCADE,
+    UNIQUE (workspace_id, project_id)
+);
+
+CREATE INDEX idx_projects_workspace_updated
+    ON projects(
+        workspace_id,
+        updated_at DESC
+    );
+
+ALTER TABLE roadmap_registry
+ADD COLUMN project_row_id INTEGER
+    REFERENCES projects(project_row_id)
+    ON DELETE RESTRICT;
+
+ALTER TABLE roadmap_registry
+ADD COLUMN roadmap_snapshot_id TEXT;
+
+INSERT INTO projects (
+    project_id,
+    workspace_id,
+    title,
+    status,
+    created_at,
+    updated_at
+)
+SELECT
+    'proj_migrated_' || project_direction_id,
+    workspace_id,
+    title,
+    'active',
+    created_at,
+    created_at
+FROM roadmap_registry;
+
+UPDATE roadmap_registry
+SET
+    project_row_id = (
+        SELECT project.project_row_id
+        FROM projects AS project
+        WHERE
+            project.workspace_id =
+                roadmap_registry.workspace_id
+            AND project.project_id =
+                'proj_migrated_' ||
+                roadmap_registry.project_direction_id
+    ),
+    roadmap_snapshot_id = (
+        'snap_migrated_' ||
+        project_direction_id
+    );
+
+CREATE UNIQUE INDEX
+    idx_roadmap_registry_public_snapshot
+ON roadmap_registry(
+    workspace_id,
+    roadmap_snapshot_id
+)
+WHERE roadmap_snapshot_id IS NOT NULL;
+
+CREATE INDEX
+    idx_roadmap_registry_project_created
+ON roadmap_registry(
+    project_row_id,
+    created_at DESC
+)
+WHERE project_row_id IS NOT NULL;
+
+CREATE TRIGGER
+    validate_roadmap_project_scope_insert
+BEFORE INSERT ON roadmap_registry
+WHEN NEW.project_row_id IS NOT NULL
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM projects AS project
+            WHERE
+                project.project_row_id =
+                    NEW.project_row_id
+                AND project.workspace_id =
+                    NEW.workspace_id
+        )
+        THEN RAISE(
+            ABORT,
+            'Roadmap project scope does not match workspace'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    validate_roadmap_project_scope_update
+BEFORE UPDATE OF
+    workspace_id,
+    project_row_id
+ON roadmap_registry
+WHEN NEW.project_row_id IS NOT NULL
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM projects AS project
+            WHERE
+                project.project_row_id =
+                    NEW.project_row_id
+                AND project.workspace_id =
+                    NEW.workspace_id
+        )
+        THEN RAISE(
+            ABORT,
+            'Roadmap project scope does not match workspace'
+        )
+    END;
+END;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -551,6 +687,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=5,
         name="scope_evidence_attributions_by_project",
         sql=SCOPE_ATTRIBUTIONS_BY_PROJECT_SQL,
+    ),
+    SQLiteMigration(
+        version=6,
+        name="create_durable_project_foundation",
+        sql=CREATE_PROJECT_FOUNDATION_SQL,
     ),
 )
 

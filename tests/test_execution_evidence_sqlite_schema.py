@@ -26,6 +26,7 @@ EXPECTED_TABLES = {
     "execution_jobs",
     "execution_evidence_import_receipts",
     "roadmap_registry",
+    "projects",
 }
 
 EXPECTED_INDEXES = {
@@ -42,6 +43,9 @@ EXPECTED_INDEXES = {
     "idx_import_receipts_source_hash",
     "idx_roadmap_registry_workspace_created",
     "idx_roadmap_registry_workspace_hash",
+    "idx_projects_workspace_updated",
+    "idx_roadmap_registry_public_snapshot",
+    "idx_roadmap_registry_project_created",
 }
 
 
@@ -1039,5 +1043,368 @@ def test_scoped_attribution_rejects_cross_workspace_roadmap(
                     0,
                 ),
             )
+    finally:
+        connection.close()
+
+
+def test_version_six_backfills_projects_and_snapshot_ids(
+    tmp_path: Path,
+    monkeypatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS[:5],
+        )
+        apply_execution_evidence_migrations(connection)
+
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                "local",
+                "2026-07-14T12:00:00Z",
+                "2026-07-14T12:00:00Z",
+            ),
+        )
+
+        connection.execute(
+            """
+            INSERT INTO roadmap_registry (
+                workspace_id,
+                project_direction_id,
+                response_direction_id,
+                title,
+                roadmap_hash,
+                snapshot_json,
+                created_at,
+                supersedes_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+            """,
+            (
+                "local",
+                "direction-one",
+                "response-one",
+                "First project",
+                "a" * 64,
+                "{}",
+                "2026-07-14T12:00:00Z",
+            ),
+        )
+
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS,
+        )
+        apply_execution_evidence_migrations(connection)
+
+        row = connection.execute(
+            """
+            SELECT
+                project.project_id,
+                project.workspace_id,
+                project.title,
+                roadmap.project_row_id,
+                roadmap.roadmap_snapshot_id
+            FROM roadmap_registry AS roadmap
+            JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
+            """
+        ).fetchone()
+
+        assert row is not None
+        assert row["project_id"] == (
+            "proj_migrated_direction-one"
+        )
+        assert row["workspace_id"] == "local"
+        assert row["title"] == "First project"
+        assert row["project_row_id"] is not None
+        assert row["roadmap_snapshot_id"] == (
+            "snap_migrated_direction-one"
+        )
+    finally:
+        connection.close()
+
+
+def test_version_six_backfill_is_workspace_isolated(
+    tmp_path: Path,
+    monkeypatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS[:5],
+        )
+        apply_execution_evidence_migrations(connection)
+
+        for workspace_id in (
+            "workspace-one",
+            "workspace-two",
+        ):
+            connection.execute(
+                """
+                INSERT INTO workspaces (
+                    workspace_id,
+                    created_at,
+                    updated_at
+                )
+                VALUES (?, ?, ?)
+                """,
+                (
+                    workspace_id,
+                    "2026-07-14T12:00:00Z",
+                    "2026-07-14T12:00:00Z",
+                ),
+            )
+
+            connection.execute(
+                """
+                INSERT INTO roadmap_registry (
+                    workspace_id,
+                    project_direction_id,
+                    response_direction_id,
+                    title,
+                    roadmap_hash,
+                    snapshot_json,
+                    created_at,
+                    supersedes_id
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+                """,
+                (
+                    workspace_id,
+                    "shared-direction",
+                    "response-direction",
+                    f"Project for {workspace_id}",
+                    "a" * 64,
+                    "{}",
+                    "2026-07-14T12:00:00Z",
+                ),
+            )
+
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS,
+        )
+        apply_execution_evidence_migrations(connection)
+
+        rows = connection.execute(
+            """
+            SELECT
+                project.workspace_id,
+                project.project_id,
+                roadmap.roadmap_snapshot_id
+            FROM roadmap_registry AS roadmap
+            JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
+            ORDER BY project.workspace_id
+            """
+        ).fetchall()
+
+        assert [
+            row["workspace_id"]
+            for row in rows
+        ] == [
+            "workspace-one",
+            "workspace-two",
+        ]
+        assert all(
+            row["project_id"]
+            == "proj_migrated_shared-direction"
+            for row in rows
+        )
+        assert all(
+            row["roadmap_snapshot_id"]
+            == "snap_migrated_shared-direction"
+            for row in rows
+        )
+    finally:
+        connection.close()
+
+
+def test_roadmap_project_scope_rejects_cross_workspace_link(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        for workspace_id in (
+            "project-workspace",
+            "roadmap-workspace",
+        ):
+            connection.execute(
+                """
+                INSERT INTO workspaces (
+                    workspace_id,
+                    created_at,
+                    updated_at
+                )
+                VALUES (?, ?, ?)
+                """,
+                (
+                    workspace_id,
+                    "2026-07-14T12:00:00Z",
+                    "2026-07-14T12:00:00Z",
+                ),
+            )
+
+        cursor = connection.execute(
+            """
+            INSERT INTO projects (
+                project_id,
+                workspace_id,
+                title,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "project-one",
+                "project-workspace",
+                "Foreign project",
+                "active",
+                "2026-07-14T12:00:00Z",
+                "2026-07-14T12:00:00Z",
+            ),
+        )
+        project_row_id = int(cursor.lastrowid)
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match=(
+                "Roadmap project scope does not "
+                "match workspace"
+            ),
+        ):
+            connection.execute(
+                """
+                INSERT INTO roadmap_registry (
+                    workspace_id,
+                    project_direction_id,
+                    response_direction_id,
+                    title,
+                    roadmap_hash,
+                    snapshot_json,
+                    created_at,
+                    supersedes_id,
+                    project_row_id,
+                    roadmap_snapshot_id
+                )
+                VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?
+                )
+                """,
+                (
+                    "roadmap-workspace",
+                    "direction-one",
+                    "response-one",
+                    "Roadmap",
+                    "a" * 64,
+                    "{}",
+                    "2026-07-14T12:00:00Z",
+                    project_row_id,
+                    "snapshot-one",
+                ),
+            )
+    finally:
+        connection.close()
+
+
+def test_public_snapshot_id_is_unique_per_workspace(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                "local",
+                "2026-07-14T12:00:00Z",
+                "2026-07-14T12:00:00Z",
+            ),
+        )
+
+        for direction_id in (
+            "direction-one",
+            "direction-two",
+        ):
+            if direction_id == "direction-two":
+                expectation = pytest.raises(
+                    sqlite3.IntegrityError
+                )
+            else:
+                from contextlib import nullcontext
+                expectation = nullcontext()
+
+            with expectation:
+                connection.execute(
+                    """
+                    INSERT INTO roadmap_registry (
+                        workspace_id,
+                        project_direction_id,
+                        response_direction_id,
+                        title,
+                        roadmap_hash,
+                        snapshot_json,
+                        created_at,
+                        supersedes_id,
+                        roadmap_snapshot_id
+                    )
+                    VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, NULL, ?
+                    )
+                    """,
+                    (
+                        "local",
+                        direction_id,
+                        f"response-{direction_id}",
+                        "Project",
+                        "a" * 64,
+                        "{}",
+                        "2026-07-14T12:00:00Z",
+                        "shared-snapshot-id",
+                    ),
+                )
     finally:
         connection.close()
