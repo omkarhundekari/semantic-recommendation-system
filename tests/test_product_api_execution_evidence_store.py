@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pytest
 
+import product_api
+
 from execution_evidence.github_repository import (
     parse_github_repository_url,
 )
@@ -92,11 +94,29 @@ def test_store_factory_uses_environment_path(
 
 
 def test_store_factory_uses_default_path(
+    tmp_path: Path,
     monkeypatch,
 ):
+    json_path = tmp_path / "repositories.json"
+    sqlite_path = tmp_path / "missing.db"
+
+    monkeypatch.delenv(
+        EXECUTION_EVIDENCE_STORE_BACKEND_ENV,
+        raising=False,
+    )
     monkeypatch.delenv(
         EXECUTION_EVIDENCE_STORE_PATH_ENV,
         raising=False,
+    )
+    monkeypatch.setattr(
+        product_api,
+        "DEFAULT_EXECUTION_EVIDENCE_STORE_PATH",
+        json_path,
+    )
+    monkeypatch.setattr(
+        product_api,
+        "DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH",
+        sqlite_path,
     )
 
     store = build_execution_evidence_store()
@@ -105,10 +125,7 @@ def test_store_factory_uses_default_path(
         store,
         JsonRepositoryEvidenceStore,
     )
-    assert (
-        store.path
-        == DEFAULT_EXECUTION_EVIDENCE_STORE_PATH
-    )
+    assert store.path == json_path
 
 
 def test_factory_created_stores_recover_saved_records(
@@ -139,15 +156,15 @@ def test_api_coordinator_uses_configured_store_singleton():
         coordinator._store
         is get_execution_evidence_store()
     )
-    assert isinstance(
-        coordinator._store,
-        JsonRepositoryEvidenceStore,
-    )
 
 
-def test_store_factory_defaults_to_json_backend(
+def test_store_factory_defaults_to_auto_backend(
+    tmp_path: Path,
     monkeypatch,
 ):
+    json_path = tmp_path / "repositories.json"
+    sqlite_path = tmp_path / "missing.db"
+
     monkeypatch.delenv(
         EXECUTION_EVIDENCE_STORE_BACKEND_ENV,
         raising=False,
@@ -156,12 +173,22 @@ def test_store_factory_defaults_to_json_backend(
         EXECUTION_EVIDENCE_STORE_PATH_ENV,
         raising=False,
     )
+    monkeypatch.setattr(
+        product_api,
+        "DEFAULT_EXECUTION_EVIDENCE_STORE_PATH",
+        json_path,
+    )
+    monkeypatch.setattr(
+        product_api,
+        "DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH",
+        sqlite_path,
+    )
 
     store = build_execution_evidence_store()
 
     assert (
         DEFAULT_EXECUTION_EVIDENCE_STORE_BACKEND
-        == "json"
+        == "auto"
     )
     assert isinstance(
         store,
@@ -217,8 +244,11 @@ def test_store_factory_uses_sqlite_environment_configuration(
 
 
 def test_sqlite_backend_uses_sqlite_default_path(
+    tmp_path: Path,
     monkeypatch,
 ):
+    database_path = tmp_path / "missing.db"
+
     monkeypatch.setenv(
         EXECUTION_EVIDENCE_STORE_BACKEND_ENV,
         "sqlite",
@@ -227,6 +257,11 @@ def test_sqlite_backend_uses_sqlite_default_path(
         EXECUTION_EVIDENCE_STORE_PATH_ENV,
         raising=False,
     )
+    monkeypatch.setattr(
+        product_api,
+        "DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH",
+        database_path,
+    )
 
     with pytest.raises(
         ValueError,
@@ -234,12 +269,7 @@ def test_sqlite_backend_uses_sqlite_default_path(
     ) as error:
         build_execution_evidence_store()
 
-    assert (
-        str(
-            DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH
-        )
-        in str(error.value)
-    )
+    assert str(database_path) in str(error.value)
 
 
 def test_store_factory_rejects_unknown_backend():
@@ -377,3 +407,109 @@ def test_runtime_sqlite_factory_does_not_apply_schema_migrations(
         connection.close()
 
     assert version == 2
+
+
+def test_auto_backend_uses_valid_canonical_sqlite_database(
+    tmp_path: Path,
+    monkeypatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    SQLiteRepositoryEvidenceStore(database_path)
+
+    monkeypatch.delenv(
+        EXECUTION_EVIDENCE_STORE_BACKEND_ENV,
+        raising=False,
+    )
+    monkeypatch.delenv(
+        EXECUTION_EVIDENCE_STORE_PATH_ENV,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        product_api,
+        "DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH",
+        database_path,
+    )
+
+    store = build_execution_evidence_store()
+
+    assert isinstance(
+        store,
+        SQLiteRepositoryEvidenceStore,
+    )
+    assert store.path == database_path
+
+
+def test_auto_backend_rejects_invalid_canonical_sqlite_database(
+    tmp_path: Path,
+    monkeypatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    database_path.write_bytes(b"not-a-sqlite-database")
+
+    monkeypatch.delenv(
+        EXECUTION_EVIDENCE_STORE_BACKEND_ENV,
+        raising=False,
+    )
+    monkeypatch.delenv(
+        EXECUTION_EVIDENCE_STORE_PATH_ENV,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        product_api,
+        "DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH",
+        database_path,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="failed readiness validation",
+    ):
+        build_execution_evidence_store()
+
+
+def test_auto_backend_infers_json_from_explicit_path(
+    tmp_path: Path,
+):
+    store_path = tmp_path / "repositories.json"
+
+    store = build_execution_evidence_store(
+        str(store_path),
+        backend="auto",
+    )
+
+    assert isinstance(
+        store,
+        JsonRepositoryEvidenceStore,
+    )
+    assert store.path == store_path
+
+
+def test_auto_backend_infers_sqlite_from_explicit_path(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    SQLiteRepositoryEvidenceStore(database_path)
+
+    store = build_execution_evidence_store(
+        str(database_path),
+        backend="auto",
+    )
+
+    assert isinstance(
+        store,
+        SQLiteRepositoryEvidenceStore,
+    )
+    assert store.path == database_path
+
+
+def test_auto_backend_rejects_unknown_path_extension(
+    tmp_path: Path,
+):
+    with pytest.raises(
+        ValueError,
+        match=r"requires a \.json or \.db path",
+    ):
+        build_execution_evidence_store(
+            str(tmp_path / "evidence.data"),
+            backend="auto",
+        )

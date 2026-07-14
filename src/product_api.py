@@ -127,7 +127,7 @@ EXECUTION_EVIDENCE_STORE_PATH_ENV = (
     "SOLVYN_EXECUTION_EVIDENCE_STORE_PATH"
 )
 
-DEFAULT_EXECUTION_EVIDENCE_STORE_BACKEND = "json"
+DEFAULT_EXECUTION_EVIDENCE_STORE_BACKEND = "auto"
 
 DEFAULT_EXECUTION_EVIDENCE_STORE_PATH = Path(
     "data/execution_evidence/repositories.json"
@@ -138,6 +138,7 @@ DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH = Path(
 )
 
 SUPPORTED_EXECUTION_EVIDENCE_STORE_BACKENDS = {
+    "auto",
     "json",
     "sqlite",
 }
@@ -181,10 +182,35 @@ def build_execution_evidence_store(
         )
     )
 
-    if configured_path:
-        resolved_path = Path(
-            configured_path
-        )
+    if resolved_backend == "auto":
+        if configured_path:
+            resolved_path = Path(configured_path)
+            suffix = resolved_path.suffix.lower()
+
+            if suffix == ".json":
+                resolved_backend = "json"
+            elif suffix == ".db":
+                resolved_backend = "sqlite"
+            else:
+                raise ValueError(
+                    "Automatic execution evidence storage "
+                    "requires a .json or .db path."
+                )
+        elif (
+            DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH
+            .is_file()
+        ):
+            resolved_backend = "sqlite"
+            resolved_path = (
+                DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH
+            )
+        else:
+            resolved_backend = "json"
+            resolved_path = (
+                DEFAULT_EXECUTION_EVIDENCE_STORE_PATH
+            )
+    elif configured_path:
+        resolved_path = Path(configured_path)
     elif resolved_backend == "sqlite":
         resolved_path = (
             DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH
