@@ -11,6 +11,9 @@ from execution_evidence.storage_readiness import (
     assess_execution_evidence_storage_readiness,
     assess_sqlite_database_readiness,
 )
+from execution_evidence.trusted_store import (
+    initialize_fresh_trusted_store,
+)
 
 
 def test_missing_json_store_is_ready_empty_storage(
@@ -55,7 +58,7 @@ def test_invalid_json_store_is_misconfigured(
     assert readiness.errors
 
 
-def test_initialized_sqlite_without_receipt_is_degraded(
+def test_initialized_sqlite_without_receipt_is_misconfigured(
     tmp_path: Path,
 ):
     database_path = tmp_path / "solvyn.db"
@@ -69,7 +72,7 @@ def test_initialized_sqlite_without_receipt_is_degraded(
         )
     )
 
-    assert readiness.status == "degraded"
+    assert readiness.status == "misconfigured"
     assert readiness.backend == "sqlite"
     assert readiness.integrity_check == "ok"
     assert (
@@ -84,53 +87,15 @@ def test_initialized_sqlite_without_receipt_is_degraded(
     )
 
 
-def test_sqlite_with_receipt_is_ready(
+def test_sqlite_with_valid_trusted_receipt_is_ready(
     tmp_path: Path,
 ):
     database_path = tmp_path / "solvyn.db"
-    SQLiteRepositoryEvidenceStore(
-        database_path
-    )
 
-    connection = sqlite3.connect(
-        str(database_path)
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-13T12:00:00+00:00",
     )
-
-    try:
-        connection.execute(
-            """
-            INSERT INTO execution_evidence_import_receipts (
-                receipt_id,
-                source_type,
-                source_identifier,
-                source_root_hash,
-                canonicalization_version,
-                report_version,
-                repository_count,
-                evidence_count,
-                attribution_count,
-                deterministic_report_json,
-                created_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                "receipt-1",
-                "json",
-                "repositories.json",
-                "abc123",
-                1,
-                1,
-                0,
-                0,
-                0,
-                '{"verified":true}',
-                "2026-07-13T12:00:00Z",
-            ),
-        )
-        connection.commit()
-    finally:
-        connection.close()
 
     readiness = (
         assess_sqlite_database_readiness(
@@ -140,14 +105,21 @@ def test_sqlite_with_receipt_is_ready(
 
     assert readiness.status == "ready"
     assert readiness.migration_receipt_count == 1
+    assert (
+        readiness.checks[
+            "trusted_receipt_present"
+        ]
+        is True
+    )
 
 
 def test_sqlite_schema_mismatch_is_misconfigured(
     tmp_path: Path,
 ):
     database_path = tmp_path / "solvyn.db"
-    SQLiteRepositoryEvidenceStore(
-        database_path
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-13T12:00:00+00:00",
     )
 
     connection = sqlite3.connect(

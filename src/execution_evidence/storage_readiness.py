@@ -16,6 +16,10 @@ from execution_evidence.sqlite_schema import (
 from execution_evidence.sqlite_store import (
     SQLiteRepositoryEvidenceStore,
 )
+from execution_evidence.trusted_store import (
+    TrustedStoreInitializationError,
+    load_valid_trusted_receipt,
+)
 
 
 StorageReadinessStatus = Literal[
@@ -219,7 +223,26 @@ def assess_sqlite_database_readiness(
     foreign_keys_valid = (
         foreign_key_violation_count == 0
     )
-    receipt_present = receipt_count > 0
+    trusted_receipt = None
+    trusted_receipt_validation_failed = False
+
+    if (
+        schema_current
+        and integrity_valid
+        and foreign_keys_valid
+    ):
+        try:
+            trusted_receipt = (
+                load_valid_trusted_receipt(
+                    path
+                )
+            )
+        except TrustedStoreInitializationError:
+            trusted_receipt_validation_failed = True
+
+    trusted_receipt_present = (
+        trusted_receipt is not None
+    )
 
     errors: List[str] = []
     warnings: List[str] = []
@@ -240,10 +263,15 @@ def assess_sqlite_database_readiness(
             "SQLite foreign-key validation failed."
         )
 
-    if not receipt_present:
-        warnings.append(
-            "SQLite database has no verified "
-            "JSON migration receipt."
+    if trusted_receipt_validation_failed:
+        errors.append(
+            "SQLite trusted-store receipts could "
+            "not be validated."
+        )
+    elif not trusted_receipt_present:
+        errors.append(
+            "SQLite database has no valid trusted-store "
+            "initialization or migration receipt."
         )
 
     if errors:
@@ -277,7 +305,10 @@ def assess_sqlite_database_readiness(
                 foreign_keys_valid
             ),
             "migration_receipt_present": (
-                receipt_present
+                trusted_receipt_present
+            ),
+            "trusted_receipt_present": (
+                trusted_receipt_present
             ),
         },
         warnings=warnings,

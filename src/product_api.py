@@ -96,6 +96,10 @@ from execution_evidence.store import (
     RepositoryEvidenceStore,
     StoredRepositoryEvidence,
 )
+from execution_evidence.trusted_store import (
+    TrustedStoreInitializationError,
+    initialize_fresh_trusted_store,
+)
 
 
 app = FastAPI(
@@ -198,17 +202,36 @@ def build_execution_evidence_store(
                 )
         elif (
             DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH
-            .is_file()
+            .exists()
         ):
             resolved_backend = "sqlite"
             resolved_path = (
                 DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH
             )
-        else:
+        elif (
+            DEFAULT_EXECUTION_EVIDENCE_STORE_PATH
+            .exists()
+        ):
             resolved_backend = "json"
             resolved_path = (
                 DEFAULT_EXECUTION_EVIDENCE_STORE_PATH
             )
+        else:
+            resolved_backend = "sqlite"
+            resolved_path = (
+                DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH
+            )
+
+            try:
+                initialize_fresh_trusted_store(
+                    resolved_path
+                )
+            except TrustedStoreInitializationError as error:
+                raise ValueError(
+                    "Could not initialize fresh trusted "
+                    "SQLite execution evidence storage: "
+                    f"{resolved_path}."
+                ) from error
     elif configured_path:
         resolved_path = Path(configured_path)
     elif resolved_backend == "sqlite":
@@ -250,7 +273,7 @@ def build_execution_evidence_store(
         )
     )
 
-    if readiness.status == "misconfigured":
+    if readiness.status != "ready":
         details = "; ".join(
             readiness.errors
         )
