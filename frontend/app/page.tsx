@@ -73,6 +73,9 @@ import {
   buildRoadmapEvidenceCoverage,
 } from "@/lib/roadmapEvidenceCoverage";
 import {
+  selectProjectEvidenceAttributions,
+} from "@/lib/projectEvidenceAttributions";
+import {
   readExecutionEvidenceRepositoryKey,
   removeExecutionEvidenceRepositoryKey,
   writeExecutionEvidenceRepositoryKey,
@@ -987,6 +990,25 @@ export default function Home() {
     }, 80);
   }
 
+  const selectedProjectAttributions =
+    useMemo(
+      () =>
+        selectProjectEvidenceAttributions({
+          attributions:
+            executionEvidenceResult?.stored
+              .attributions ?? [],
+          projectDirectionId:
+            selectedDirection
+              ?.project_direction_id ?? null,
+        }),
+      [
+        selectedDirection
+          ?.project_direction_id,
+        executionEvidenceResult?.stored
+          .attributions,
+      ],
+    );
+
   const roadmapEvidenceCoverage = useMemo(
     () =>
       buildRoadmapEvidenceCoverage({
@@ -998,13 +1020,11 @@ export default function Home() {
             }),
           ) ?? [],
         attributions:
-          executionEvidenceResult?.stored
-            .attributions ?? [],
+          selectedProjectAttributions,
       }),
     [
       selectedDirection,
-      executionEvidenceResult?.stored
-        .attributions,
+      selectedProjectAttributions,
     ],
   );
 
@@ -2890,8 +2910,7 @@ export default function Home() {
                           []
                         }
                         evidenceAttributions={
-                          executionEvidenceResult?.stored
-                            .attributions ?? []
+                          selectedProjectAttributions
                         }
                         adaptations={roadmapAdaptations.adaptations}
                         adaptationDecisions={adaptationDecisions}
