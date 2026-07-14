@@ -49,3 +49,9 @@ data/execution_evidence/solvyn.db-shm
 data/execution_evidence/solvyn.db-journal
 data/execution_evidence/.*.migrating*
 data/execution_evidence/.*.migration.lock
+
+# Local trusted execution-evidence storage
+data/execution_evidence/*.db
+data/execution_evidence/*.db-shm
+data/execution_evidence/*.db-wal
+data/execution_evidence/backups/

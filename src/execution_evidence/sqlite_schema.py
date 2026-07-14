@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 4
+CURRENT_SQLITE_SCHEMA_VERSION = 5
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -318,6 +318,192 @@ CREATE INDEX idx_roadmap_registry_workspace_hash
 """
 
 
+SCOPE_ATTRIBUTIONS_BY_PROJECT_SQL = """
+ALTER TABLE evidence_attributions
+    RENAME TO evidence_attributions_v2;
+
+CREATE TABLE evidence_attributions (
+    attribution_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    attribution_id TEXT,
+    repository_id INTEGER NOT NULL,
+    roadmap_registry_id INTEGER,
+    project_direction_id TEXT,
+    evidence_key TEXT NOT NULL,
+    roadmap_node_id TEXT NOT NULL,
+    source TEXT NOT NULL,
+    confidence REAL NOT NULL
+        CHECK (
+            confidence >= 0.0
+            AND confidence <= 1.0
+        ),
+    rationale TEXT NOT NULL,
+    status TEXT NOT NULL,
+    decided_at TEXT,
+    payload_json TEXT NOT NULL,
+    position INTEGER NOT NULL
+        CHECK (position >= 0),
+    CHECK (
+        (
+            attribution_id IS NULL
+            AND roadmap_registry_id IS NULL
+            AND project_direction_id IS NULL
+        )
+        OR
+        (
+            attribution_id IS NOT NULL
+            AND length(trim(attribution_id)) > 0
+            AND roadmap_registry_id IS NOT NULL
+            AND project_direction_id IS NOT NULL
+            AND length(trim(project_direction_id)) > 0
+        )
+    ),
+    FOREIGN KEY (repository_id)
+        REFERENCES repositories(repository_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (roadmap_registry_id)
+        REFERENCES roadmap_registry(
+            roadmap_registry_id
+        )
+        ON DELETE RESTRICT
+);
+
+INSERT INTO evidence_attributions (
+    attribution_row_id,
+    attribution_id,
+    repository_id,
+    roadmap_registry_id,
+    project_direction_id,
+    evidence_key,
+    roadmap_node_id,
+    source,
+    confidence,
+    rationale,
+    status,
+    decided_at,
+    payload_json,
+    position
+)
+SELECT
+    attribution_id,
+    NULL,
+    repository_id,
+    NULL,
+    NULL,
+    evidence_key,
+    roadmap_node_id,
+    source,
+    confidence,
+    rationale,
+    status,
+    decided_at,
+    payload_json,
+    position
+FROM evidence_attributions_v2;
+
+DROP TABLE evidence_attributions_v2;
+
+CREATE UNIQUE INDEX
+    idx_attributions_public_identity
+ON evidence_attributions(
+    attribution_id
+)
+WHERE attribution_id IS NOT NULL;
+
+CREATE UNIQUE INDEX
+    idx_attributions_scoped_identity
+ON evidence_attributions(
+    repository_id,
+    project_direction_id,
+    evidence_key,
+    roadmap_node_id
+)
+WHERE project_direction_id IS NOT NULL;
+
+CREATE UNIQUE INDEX
+    idx_attributions_legacy_identity
+ON evidence_attributions(
+    repository_id,
+    evidence_key,
+    roadmap_node_id
+)
+WHERE project_direction_id IS NULL;
+
+CREATE INDEX idx_attributions_repository_stage
+    ON evidence_attributions(
+        repository_id,
+        project_direction_id,
+        roadmap_node_id,
+        status
+    );
+
+CREATE INDEX idx_attributions_evidence
+    ON evidence_attributions(
+        repository_id,
+        project_direction_id,
+        evidence_key
+    );
+
+CREATE TRIGGER
+    validate_attribution_roadmap_scope_insert
+BEFORE INSERT ON evidence_attributions
+WHEN NEW.roadmap_registry_id IS NOT NULL
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM repositories AS repository
+            JOIN roadmap_registry AS roadmap
+                ON roadmap.roadmap_registry_id =
+                    NEW.roadmap_registry_id
+            WHERE
+                repository.repository_id =
+                    NEW.repository_id
+                AND roadmap.workspace_id =
+                    repository.workspace_id
+                AND roadmap.project_direction_id =
+                    NEW.project_direction_id
+        )
+        THEN RAISE(
+            ABORT,
+            'Attribution roadmap scope does not match repository workspace'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    validate_attribution_roadmap_scope_update
+BEFORE UPDATE OF
+    repository_id,
+    roadmap_registry_id,
+    project_direction_id
+ON evidence_attributions
+WHEN NEW.roadmap_registry_id IS NOT NULL
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM repositories AS repository
+            JOIN roadmap_registry AS roadmap
+                ON roadmap.roadmap_registry_id =
+                    NEW.roadmap_registry_id
+            WHERE
+                repository.repository_id =
+                    NEW.repository_id
+                AND roadmap.workspace_id =
+                    repository.workspace_id
+                AND roadmap.project_direction_id =
+                    NEW.project_direction_id
+        )
+        THEN RAISE(
+            ABORT,
+            'Attribution roadmap scope does not match repository workspace'
+        )
+    END;
+END;
+"""
+
+
 CREATE_IMPORT_RECEIPTS_SQL = """
 CREATE TABLE execution_evidence_import_receipts (
     receipt_id TEXT PRIMARY KEY,
@@ -360,6 +546,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=4,
         name="create_roadmap_snapshot_registry",
         sql=CREATE_ROADMAP_REGISTRY_SQL,
+    ),
+    SQLiteMigration(
+        version=5,
+        name="scope_evidence_attributions_by_project",
+        sql=SCOPE_ATTRIBUTIONS_BY_PROJECT_SQL,
     ),
 )
 

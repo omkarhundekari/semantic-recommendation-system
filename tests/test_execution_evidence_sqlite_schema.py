@@ -34,6 +34,9 @@ EXPECTED_INDEXES = {
     "idx_evidence_repository_type",
     "idx_attributions_repository_stage",
     "idx_attributions_evidence",
+    "idx_attributions_public_identity",
+    "idx_attributions_scoped_identity",
+    "idx_attributions_legacy_identity",
     "idx_jobs_workspace_status",
     "idx_jobs_repository_status",
     "idx_import_receipts_source_hash",
@@ -679,5 +682,362 @@ def test_schema_persists_import_receipt(
             row["deterministic_report_json"]
             == '{"verified":true}'
         )
+    finally:
+        connection.close()
+
+
+def _insert_workspace_and_repository(
+    connection: sqlite3.Connection,
+    *,
+    workspace_id: str,
+    repository_key: str,
+) -> int:
+    connection.execute(
+        """
+        INSERT INTO workspaces (
+            workspace_id,
+            created_at,
+            updated_at
+        )
+        VALUES (?, ?, ?)
+        """,
+        (
+            workspace_id,
+            "2026-07-14T12:00:00Z",
+            "2026-07-14T12:00:00Z",
+        ),
+    )
+
+    cursor = connection.execute(
+        """
+        INSERT INTO repositories (
+            workspace_id,
+            repository_key,
+            provider,
+            owner,
+            repository_name,
+            canonical_url,
+            revision,
+            aggregate_schema_version,
+            saved_at,
+            created_at,
+            updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            workspace_id,
+            repository_key,
+            "github",
+            "owner",
+            "repository",
+            "https://github.com/owner/repository",
+            0,
+            3,
+            "2026-07-14T12:00:00Z",
+            "2026-07-14T12:00:00Z",
+            "2026-07-14T12:00:00Z",
+        ),
+    )
+
+    return int(cursor.lastrowid)
+
+
+def _insert_roadmap_registry_record(
+    connection: sqlite3.Connection,
+    *,
+    workspace_id: str,
+    project_direction_id: str,
+) -> int:
+    cursor = connection.execute(
+        """
+        INSERT INTO roadmap_registry (
+            workspace_id,
+            project_direction_id,
+            response_direction_id,
+            title,
+            roadmap_hash,
+            snapshot_json,
+            created_at,
+            supersedes_id
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+        """,
+        (
+            workspace_id,
+            project_direction_id,
+            "response-direction",
+            "Project direction",
+            "a" * 64,
+            "{}",
+            "2026-07-14T12:00:00Z",
+        ),
+    )
+
+    return int(cursor.lastrowid)
+
+
+def test_version_five_preserves_existing_attributions_as_legacy(
+    tmp_path: Path,
+    monkeypatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS[:4],
+        )
+        apply_execution_evidence_migrations(connection)
+
+        repository_id = _insert_workspace_and_repository(
+            connection,
+            workspace_id="local",
+            repository_key="github:owner/repository",
+        )
+
+        connection.execute(
+            """
+            INSERT INTO evidence_attributions (
+                repository_id,
+                evidence_key,
+                roadmap_node_id,
+                source,
+                confidence,
+                rationale,
+                status,
+                decided_at,
+                payload_json,
+                position
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                repository_id,
+                "github:owner/repository:commit:abc",
+                "build-mvp",
+                "manual",
+                1.0,
+                "",
+                "accepted",
+                "2026-07-14T12:00:00Z",
+                "{}",
+                0,
+            ),
+        )
+
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS,
+        )
+        apply_execution_evidence_migrations(connection)
+
+        row = connection.execute(
+            """
+            SELECT
+                attribution_row_id,
+                attribution_id,
+                roadmap_registry_id,
+                project_direction_id,
+                evidence_key,
+                roadmap_node_id
+            FROM evidence_attributions
+            """
+        ).fetchone()
+
+        assert row["attribution_row_id"] == 1
+        assert row["attribution_id"] is None
+        assert row["roadmap_registry_id"] is None
+        assert row["project_direction_id"] is None
+        assert row["evidence_key"] == (
+            "github:owner/repository:commit:abc"
+        )
+        assert row["roadmap_node_id"] == "build-mvp"
+    finally:
+        connection.close()
+
+
+def test_scoped_attribution_identity_allows_same_stage_across_projects(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        repository_id = _insert_workspace_and_repository(
+            connection,
+            workspace_id="local",
+            repository_key="github:owner/repository",
+        )
+        first_registry_id = (
+            _insert_roadmap_registry_record(
+                connection,
+                workspace_id="local",
+                project_direction_id="project-one",
+            )
+        )
+        second_registry_id = (
+            _insert_roadmap_registry_record(
+                connection,
+                workspace_id="local",
+                project_direction_id="project-two",
+            )
+        )
+
+        statement = """
+            INSERT INTO evidence_attributions (
+                attribution_id,
+                repository_id,
+                roadmap_registry_id,
+                project_direction_id,
+                evidence_key,
+                roadmap_node_id,
+                source,
+                confidence,
+                rationale,
+                status,
+                decided_at,
+                payload_json,
+                position
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+
+        shared_values = (
+            repository_id,
+            "github:owner/repository:commit:abc",
+            "build-mvp",
+            "manual",
+            1.0,
+            "",
+            "accepted",
+            "2026-07-14T12:00:00Z",
+            "{}",
+        )
+
+        connection.execute(
+            statement,
+            (
+                "attribution-one",
+                shared_values[0],
+                first_registry_id,
+                "project-one",
+                *shared_values[1:],
+                0,
+            ),
+        )
+        connection.execute(
+            statement,
+            (
+                "attribution-two",
+                shared_values[0],
+                second_registry_id,
+                "project-two",
+                *shared_values[1:],
+                1,
+            ),
+        )
+
+        count = connection.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM evidence_attributions
+            """
+        ).fetchone()["count"]
+
+        assert count == 2
+    finally:
+        connection.close()
+
+
+def test_scoped_attribution_rejects_cross_workspace_roadmap(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        repository_id = _insert_workspace_and_repository(
+            connection,
+            workspace_id="repository-workspace",
+            repository_key="github:owner/repository",
+        )
+
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                "roadmap-workspace",
+                "2026-07-14T12:00:00Z",
+                "2026-07-14T12:00:00Z",
+            ),
+        )
+
+        roadmap_registry_id = (
+            _insert_roadmap_registry_record(
+                connection,
+                workspace_id="roadmap-workspace",
+                project_direction_id="foreign-project",
+            )
+        )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="does not match repository workspace",
+        ):
+            connection.execute(
+                """
+                INSERT INTO evidence_attributions (
+                    attribution_id,
+                    repository_id,
+                    roadmap_registry_id,
+                    project_direction_id,
+                    evidence_key,
+                    roadmap_node_id,
+                    source,
+                    confidence,
+                    rationale,
+                    status,
+                    decided_at,
+                    payload_json,
+                    position
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "attribution-one",
+                    repository_id,
+                    roadmap_registry_id,
+                    "foreign-project",
+                    "github:owner/repository:commit:abc",
+                    "build-mvp",
+                    "manual",
+                    1.0,
+                    "",
+                    "accepted",
+                    "2026-07-14T12:00:00Z",
+                    "{}",
+                    0,
+                ),
+            )
     finally:
         connection.close()

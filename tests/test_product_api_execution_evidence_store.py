@@ -23,6 +23,9 @@ from execution_evidence.sqlite_store import (
 from execution_evidence.store import (
     StoredRepositoryEvidence,
 )
+from execution_evidence.sqlite_schema import (
+    CURRENT_SQLITE_SCHEMA_VERSION,
+)
 from execution_evidence.trusted_store import (
     initialize_fresh_trusted_store,
 )
@@ -417,7 +420,9 @@ def test_runtime_sqlite_factory_does_not_apply_schema_migrations(
     finally:
         connection.close()
 
-    assert version == 3
+    assert version == (
+        CURRENT_SQLITE_SCHEMA_VERSION - 1
+    )
 
 
 def test_auto_backend_uses_valid_canonical_sqlite_database(
