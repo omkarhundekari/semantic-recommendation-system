@@ -483,3 +483,152 @@ def test_shared_generic_terms_do_not_create_cross_stage_abstention():
         result.candidates[0].roadmap_node_id
         == "validate"
     )
+
+
+def test_auxiliary_signals_cannot_overrule_stronger_content():
+    result = suggest_deterministic_attribution(
+        evidence=_evidence(
+            evidence_type="pull_request",
+            title="Document evaluation failures",
+            description=(
+                "Adds retrieval precision failure notes."
+            ),
+            metadata={
+                "state": "closed",
+                "merged": True,
+                "labels": ["mvp"],
+            },
+        ),
+        roadmap=_roadmap(),
+    )
+
+    assert result.decision == "suggest"
+    assert (
+        result.candidates[0].roadmap_node_id
+        == "validate"
+    )
+
+
+def test_metadata_only_terms_do_not_create_cross_stage_ambiguity():
+    result = suggest_deterministic_attribution(
+        evidence=_evidence(
+            evidence_type="pull_request",
+            title="Document evaluation failures",
+            description=(
+                "Adds retrieval precision failure notes."
+            ),
+            metadata={
+                "labels": ["mvp"],
+            },
+        ),
+        roadmap=_roadmap(),
+    )
+
+    assert result.decision == "suggest"
+    assert (
+        "mvp"
+        not in result.candidates[0]
+        .content_matched_terms
+    )
+
+
+def test_auxiliary_support_is_capped_by_lexical_support():
+    result = suggest_deterministic_attribution(
+        evidence=_evidence(
+            evidence_type="pull_request",
+            title="Document evaluation failures",
+            description=(
+                "Adds retrieval precision failure notes."
+            ),
+            metadata={
+                "labels": ["mvp"],
+            },
+        ),
+        roadmap=_roadmap(),
+        top_k=4,
+    )
+
+    mvp = next(
+        candidate
+        for candidate in result.candidates
+        if candidate.roadmap_node_id == "mvp"
+    )
+
+    lexical_contribution = sum(
+        signal.contribution
+        for signal in mvp.signals
+        if signal.name in {
+            "title_overlap",
+            "description_overlap",
+        }
+    )
+    auxiliary_contribution = sum(
+        signal.contribution
+        for signal in mvp.signals
+        if signal.name in {
+            "metadata_overlap",
+            "evidence_type_prior",
+        }
+    )
+
+    assert auxiliary_contribution <= (
+        lexical_contribution * 0.25
+        + 0.000001
+    )
+
+
+def test_decisive_content_margin_is_not_overruled_by_auxiliary_signals():
+    result = suggest_deterministic_attribution(
+        evidence=_evidence(
+            evidence_type="pull_request",
+            title="Document evaluation failures",
+            description=(
+                "Adds retrieval precision failure notes."
+            ),
+            metadata={
+                "state": "closed",
+                "merged": True,
+                "labels": ["mvp"],
+            },
+        ),
+        roadmap=_roadmap(),
+    )
+
+    assert result.decision == "suggest"
+    assert (
+        result.candidates[0].roadmap_node_id
+        == "validate"
+    )
+    assert (
+        result.candidates[0].content_score
+        - result.candidates[1].content_score
+        >= 0.06
+    )
+
+
+def test_thin_content_and_total_margins_still_abstain():
+    roadmap = build_roadmap_snapshot(
+        [
+            RoadmapStage(
+                id="mvp-a",
+                title="Build retrieval API",
+                purpose="Implement retrieval output.",
+            ),
+            RoadmapStage(
+                id="mvp-b",
+                title="Build retrieval service",
+                purpose="Implement retrieval output.",
+            ),
+        ]
+    )
+
+    result = suggest_deterministic_attribution(
+        evidence=_evidence(
+            title="Implement retrieval output",
+            description="Build retrieval output.",
+        ),
+        roadmap=roadmap,
+    )
+
+    assert result.decision == "abstain"
+    assert "too close" in result.abstention_reason

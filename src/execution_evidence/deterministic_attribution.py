@@ -17,7 +17,7 @@ from planning.roadmap_snapshot import (
 )
 
 
-DETERMINISTIC_ATTRIBUTION_POLICY_VERSION = 1
+DETERMINISTIC_ATTRIBUTION_POLICY_VERSION = 2
 
 MINIMUM_CANDIDATE_SCORE = 0.20
 MINIMUM_TOP_MARGIN = 0.06
@@ -26,6 +26,8 @@ MAX_MATCHED_TERMS_REPORTED = 12
 
 CROSS_STAGE_MINIMUM_SCORE = 0.30
 CROSS_STAGE_MINIMUM_DISTINCT_TERMS = 2
+
+MAX_AUXILIARY_TO_LEXICAL_RATIO = 0.25
 
 TOKEN_PATTERN = re.compile(r"[^\W_]+", re.UNICODE)
 
@@ -103,7 +105,14 @@ class DeterministicAttributionCandidate(BaseModel):
     roadmap_node_id: str = Field(min_length=1)
     roadmap_context: RoadmapAttributionContext
     score: float = Field(ge=0.0, le=1.0)
+    content_score: float = Field(
+        ge=0.0,
+        le=1.0,
+    )
     matched_terms: List[str] = Field(
+        default_factory=list
+    )
+    content_matched_terms: List[str] = Field(
         default_factory=list
     )
     signals: List[AttributionSignal] = Field(
@@ -255,12 +264,50 @@ def _score_stage(
             )
         )
 
-    metadata_score = _bounded_overlap(
+    raw_metadata_score = _bounded_overlap(
         matched=metadata_matches,
         source=metadata_tokens,
         weight=0.10,
         cap_terms=5,
     )
+
+    raw_prior_score = (
+        STAGE_TYPE_PRIORS
+        .get(evidence.evidence_type, {})
+        .get(stage.stage_id, 0.0)
+    )
+
+    lexical_score = (
+        title_score
+        + description_score
+    )
+    raw_auxiliary_score = (
+        raw_metadata_score
+        + raw_prior_score
+    )
+    auxiliary_cap = (
+        lexical_score
+        * MAX_AUXILIARY_TO_LEXICAL_RATIO
+    )
+
+    if raw_auxiliary_score > 0:
+        auxiliary_scale = min(
+            1.0,
+            auxiliary_cap
+            / raw_auxiliary_score,
+        )
+    else:
+        auxiliary_scale = 0.0
+
+    metadata_score = round(
+        raw_metadata_score * auxiliary_scale,
+        6,
+    )
+    prior_score = round(
+        raw_prior_score * auxiliary_scale,
+        6,
+    )
+
     if metadata_score > 0:
         signals.append(
             AttributionSignal(
@@ -273,11 +320,6 @@ def _score_stage(
             )
         )
 
-    prior_score = (
-        STAGE_TYPE_PRIORS
-        .get(evidence.evidence_type, {})
-        .get(stage.stage_id, 0.0)
-    )
     if prior_score > 0:
         signals.append(
             AttributionSignal(
@@ -329,6 +371,11 @@ def _score_stage(
         6,
     )
 
+    content_matched_terms = sorted(
+        title_matches
+        | description_matches
+    )[:MAX_MATCHED_TERMS_REPORTED]
+
     matched_terms = sorted(
         title_matches
         | description_matches
@@ -349,7 +396,17 @@ def _score_stage(
             ),
         ),
         score=score,
+        content_score=round(
+            min(
+                1.0,
+                max(0.0, lexical_score),
+            ),
+            6,
+        ),
         matched_terms=matched_terms,
+        content_matched_terms=(
+            content_matched_terms
+        ),
         signals=signals,
     )
 
@@ -367,7 +424,9 @@ def _has_cross_stage_ambiguity(
     if top.score < MINIMUM_CANDIDATE_SCORE:
         return False
 
-    top_terms = set(top.matched_terms)
+    top_terms = set(
+        top.content_matched_terms
+    )
 
     for alternative in candidates[1:]:
         if (
@@ -377,7 +436,7 @@ def _has_cross_stage_ambiguity(
             continue
 
         alternative_terms = set(
-            alternative.matched_terms
+            alternative.content_matched_terms
         )
         top_distinct_terms = (
             top_terms - alternative_terms
@@ -446,15 +505,26 @@ def _decide(
             "lexical support.",
         )
 
-    if (
-        len(selected) > 1
-        and score_margin < MINIMUM_TOP_MARGIN
-    ):
-        return (
-            "abstain",
-            "The top roadmap candidates were too close "
-            "to distinguish safely.",
+    if len(selected) > 1:
+        content_score_margin = round(
+            max(
+                0.0,
+                selected[0].content_score
+                - selected[1].content_score,
+            ),
+            6,
         )
+
+        if (
+            score_margin < MINIMUM_TOP_MARGIN
+            and content_score_margin
+            < MINIMUM_TOP_MARGIN
+        ):
+            return (
+                "abstain",
+                "The top roadmap candidates were too close "
+                "to distinguish safely.",
+            )
 
     return "suggest", ""
 
