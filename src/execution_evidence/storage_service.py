@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal, Optional
 
 from execution_evidence.sqlite_store import (
     DEFAULT_WORKSPACE_ID,
     SQLiteRepositoryEvidenceStore,
+)
+from execution_evidence.store import (
+    RepositoryEvidenceStore,
 )
 from execution_evidence.storage_readiness import (
     ExecutionEvidenceStorageReadiness,
@@ -13,6 +18,28 @@ from execution_evidence.storage_readiness import (
 from planning.roadmap_registry import (
     SQLiteRoadmapSnapshotRegistry,
 )
+
+
+RoadmapRegistryRuntimeStatus = Literal[
+    "ready",
+    "unavailable_legacy_store",
+    "unavailable_error",
+]
+
+
+@dataclass(frozen=True)
+class ExecutionEvidenceStorageRuntime:
+    evidence_store: RepositoryEvidenceStore
+    trusted_sqlite_service: Optional[
+        "TrustedSQLiteStorageService"
+    ]
+    roadmap_registry: Optional[
+        SQLiteRoadmapSnapshotRegistry
+    ]
+    roadmap_registry_status: (
+        RoadmapRegistryRuntimeStatus
+    )
+    remediation: Optional[str] = None
 
 
 class TrustedSQLiteStorageServiceError(

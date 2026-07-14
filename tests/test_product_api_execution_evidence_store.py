@@ -32,9 +32,12 @@ from product_api import (
     DEFAULT_SQLITE_EXECUTION_EVIDENCE_STORE_PATH,
     EXECUTION_EVIDENCE_STORE_BACKEND_ENV,
     EXECUTION_EVIDENCE_STORE_PATH_ENV,
+    build_execution_evidence_storage_runtime,
     build_execution_evidence_store,
     get_execution_evidence_coordinator,
+    get_execution_evidence_storage_runtime,
     get_execution_evidence_store,
+    get_roadmap_snapshot_registry,
 )
 
 
@@ -608,3 +611,78 @@ def test_auto_backend_rejects_schema_only_canonical_database(
         match="failed readiness validation",
     ):
         build_execution_evidence_store()
+
+
+
+def test_sqlite_runtime_exposes_shared_roadmap_registry(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-13T12:00:00+00:00",
+    )
+
+    runtime = (
+        build_execution_evidence_storage_runtime(
+            str(database_path),
+            backend="sqlite",
+        )
+    )
+
+    assert (
+        runtime.roadmap_registry_status
+        == "ready"
+    )
+    assert runtime.remediation is None
+    assert runtime.trusted_sqlite_service is not None
+    assert runtime.roadmap_registry is not None
+    assert (
+        runtime.evidence_store.path
+        == database_path
+    )
+    assert (
+        runtime.roadmap_registry.path
+        == database_path
+    )
+
+
+def test_json_runtime_reports_roadmap_registry_unavailable(
+    tmp_path: Path,
+):
+    json_path = tmp_path / "repositories.json"
+
+    runtime = (
+        build_execution_evidence_storage_runtime(
+            str(json_path),
+            backend="json",
+        )
+    )
+
+    assert isinstance(
+        runtime.evidence_store,
+        JsonRepositoryEvidenceStore,
+    )
+    assert runtime.trusted_sqlite_service is None
+    assert runtime.roadmap_registry is None
+    assert (
+        runtime.roadmap_registry_status
+        == "unavailable_legacy_store"
+    )
+    assert "Migrate" in runtime.remediation
+
+
+def test_runtime_singleton_drives_both_dependencies():
+    runtime = (
+        get_execution_evidence_storage_runtime()
+    )
+
+    assert (
+        get_execution_evidence_store()
+        is runtime.evidence_store
+    )
+    assert (
+        get_roadmap_snapshot_registry()
+        is runtime.roadmap_registry
+    )

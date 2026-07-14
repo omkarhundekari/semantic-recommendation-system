@@ -38,6 +38,9 @@ from planning.query_anchor_direction_adapter import (
 from planning.roadmap_execution_enrichment import (
     enrich_roadmap_for_execution,
 )
+from planning.roadmap_registry import (
+    RoadmapSnapshotRegistry,
+)
 from planning.llm_synthesis_demo import (
     build_default_output_path,
     build_default_validation_report_path,
@@ -92,6 +95,7 @@ from execution_evidence.storage_readiness import (
     assess_sqlite_database_readiness,
 )
 from execution_evidence.storage_service import (
+    ExecutionEvidenceStorageRuntime,
     TrustedSQLiteStorageService,
     TrustedSQLiteStorageServiceError,
 )
@@ -152,11 +156,11 @@ SUPPORTED_EXECUTION_EVIDENCE_STORE_BACKENDS = {
 }
 
 
-def build_execution_evidence_store(
+def build_execution_evidence_storage_runtime(
     path: Optional[str] = None,
     *,
     backend: Optional[str] = None,
-) -> RepositoryEvidenceStore:
+) -> ExecutionEvidenceStorageRuntime:
     configured_backend = (
         backend
         or os.getenv(
@@ -254,8 +258,25 @@ def build_execution_evidence_store(
                 "requires a .json path."
             )
 
-        return JsonRepositoryEvidenceStore(
-            resolved_path
+        evidence_store = (
+            JsonRepositoryEvidenceStore(
+                resolved_path
+            )
+        )
+
+        return ExecutionEvidenceStorageRuntime(
+            evidence_store=evidence_store,
+            trusted_sqlite_service=None,
+            roadmap_registry=None,
+            roadmap_registry_status=(
+                "unavailable_legacy_store"
+            ),
+            remediation=(
+                "Migrate the legacy JSON execution "
+                "evidence store to trusted SQLite "
+                "storage before using roadmap "
+                "attribution features."
+            ),
         )
 
     if resolved_path.suffix.lower() != ".db":
@@ -271,16 +292,12 @@ def build_execution_evidence_store(
             f"{resolved_path}."
         )
 
-    readiness = (
-        assess_sqlite_database_readiness(
-            resolved_path
-        )
+    readiness = assess_sqlite_database_readiness(
+        resolved_path
     )
 
     if readiness.status != "ready":
-        details = "; ".join(
-            readiness.errors
-        )
+        details = "; ".join(readiness.errors)
         raise ValueError(
             "SQLite execution evidence storage "
             "failed readiness validation: "
@@ -293,6 +310,14 @@ def build_execution_evidence_store(
                 resolved_path
             )
         )
+        evidence_store = (
+            storage_service
+            .build_repository_evidence_store()
+        )
+        roadmap_registry = (
+            storage_service
+            .build_roadmap_snapshot_registry()
+        )
     except TrustedSQLiteStorageServiceError as error:
         raise ValueError(
             "SQLite execution evidence storage "
@@ -300,20 +325,50 @@ def build_execution_evidence_store(
             "runtime service."
         ) from error
 
-    return (
-        storage_service
-        .build_repository_evidence_store()
+    return ExecutionEvidenceStorageRuntime(
+        evidence_store=evidence_store,
+        trusted_sqlite_service=storage_service,
+        roadmap_registry=roadmap_registry,
+        roadmap_registry_status="ready",
+        remediation=None,
     )
 
 
-_execution_evidence_store = (
-    build_execution_evidence_store()
+def build_execution_evidence_store(
+    path: Optional[str] = None,
+    *,
+    backend: Optional[str] = None,
+) -> RepositoryEvidenceStore:
+    return build_execution_evidence_storage_runtime(
+        path,
+        backend=backend,
+    ).evidence_store
+
+
+_execution_evidence_storage_runtime = (
+    build_execution_evidence_storage_runtime()
 )
+
+
+def get_execution_evidence_storage_runtime(
+) -> ExecutionEvidenceStorageRuntime:
+    return _execution_evidence_storage_runtime
 
 
 def get_execution_evidence_store(
 ) -> RepositoryEvidenceStore:
-    return _execution_evidence_store
+    return (
+        get_execution_evidence_storage_runtime()
+        .evidence_store
+    )
+
+
+def get_roadmap_snapshot_registry(
+) -> Optional[RoadmapSnapshotRegistry]:
+    return (
+        get_execution_evidence_storage_runtime()
+        .roadmap_registry
+    )
 
 
 def get_execution_evidence_coordinator(
