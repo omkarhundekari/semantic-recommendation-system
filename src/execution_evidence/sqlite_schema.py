@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 3
+CURRENT_SQLITE_SCHEMA_VERSION = 4
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -273,6 +273,51 @@ CREATE INDEX idx_attributions_evidence
 """
 
 
+
+CREATE_ROADMAP_REGISTRY_SQL = """
+CREATE TABLE roadmap_registry (
+    roadmap_registry_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    workspace_id TEXT NOT NULL,
+    project_direction_id TEXT NOT NULL,
+    response_direction_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    roadmap_hash TEXT NOT NULL
+        CHECK (length(roadmap_hash) = 64),
+    snapshot_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    supersedes_id TEXT,
+    FOREIGN KEY (workspace_id)
+        REFERENCES workspaces(workspace_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (
+        workspace_id,
+        supersedes_id
+    )
+        REFERENCES roadmap_registry(
+            workspace_id,
+            project_direction_id
+        ),
+    UNIQUE (
+        workspace_id,
+        project_direction_id
+    )
+);
+
+CREATE INDEX idx_roadmap_registry_workspace_created
+    ON roadmap_registry(
+        workspace_id,
+        created_at DESC
+    );
+
+CREATE INDEX idx_roadmap_registry_workspace_hash
+    ON roadmap_registry(
+        workspace_id,
+        roadmap_hash
+    );
+"""
+
+
 CREATE_IMPORT_RECEIPTS_SQL = """
 CREATE TABLE execution_evidence_import_receipts (
     receipt_id TEXT PRIMARY KEY,
@@ -310,6 +355,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=3,
         name="create_execution_evidence_import_receipts",
         sql=CREATE_IMPORT_RECEIPTS_SQL,
+    ),
+    SQLiteMigration(
+        version=4,
+        name="create_roadmap_snapshot_registry",
+        sql=CREATE_ROADMAP_REGISTRY_SQL,
     ),
 )
 

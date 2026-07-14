@@ -25,6 +25,7 @@ EXPECTED_TABLES = {
     "repository_sync_snapshots",
     "execution_jobs",
     "execution_evidence_import_receipts",
+    "roadmap_registry",
 }
 
 EXPECTED_INDEXES = {
@@ -36,6 +37,8 @@ EXPECTED_INDEXES = {
     "idx_jobs_workspace_status",
     "idx_jobs_repository_status",
     "idx_import_receipts_source_hash",
+    "idx_roadmap_registry_workspace_created",
+    "idx_roadmap_registry_workspace_hash",
 }
 
 

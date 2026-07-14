@@ -406,7 +406,7 @@ def test_runtime_sqlite_factory_does_not_apply_schema_migrations(
     finally:
         connection.close()
 
-    assert version == 2
+    assert version == 3
 
 
 def test_auto_backend_uses_valid_canonical_sqlite_database(
