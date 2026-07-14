@@ -91,6 +91,10 @@ from execution_evidence.storage_readiness import (
     assess_execution_evidence_storage_readiness,
     assess_sqlite_database_readiness,
 )
+from execution_evidence.storage_service import (
+    TrustedSQLiteStorageService,
+    TrustedSQLiteStorageServiceError,
+)
 from execution_evidence.store import (
     RepositoryEvidenceConflictError,
     RepositoryEvidenceStore,
@@ -283,9 +287,22 @@ def build_execution_evidence_store(
             f"{details}"
         )
 
-    return SQLiteRepositoryEvidenceStore(
-        resolved_path,
-        initialize_schema=False,
+    try:
+        storage_service = (
+            TrustedSQLiteStorageService(
+                resolved_path
+            )
+        )
+    except TrustedSQLiteStorageServiceError as error:
+        raise ValueError(
+            "SQLite execution evidence storage "
+            "could not initialize its trusted "
+            "runtime service."
+        ) from error
+
+    return (
+        storage_service
+        .build_repository_evidence_store()
     )
 
 
