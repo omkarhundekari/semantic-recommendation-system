@@ -1247,8 +1247,10 @@
           }
         ]
       },
-      "expected_roadmap_node_ids": [],
-      "expected_abstain": true
+      "expected_roadmap_node_ids": [
+        "validate"
+      ],
+      "expected_abstain": false
     },
     {
       "case_id": "retrieval-generic-workflow",
