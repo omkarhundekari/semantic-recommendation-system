@@ -55,5 +55,14 @@ class EvidenceAttributionDetachRequest(BaseModel):
     )
 
 
+
+class EvidenceAttributionListQuery(BaseModel):
+    repository_key: NonBlankIdentifier
+    project_direction_id: NonBlankIdentifier
+    roadmap_node_id: Optional[
+        NonBlankIdentifier
+    ] = None
+
+
 class EvidenceAttributionDetachResponse(BaseModel):
     removed: bool
