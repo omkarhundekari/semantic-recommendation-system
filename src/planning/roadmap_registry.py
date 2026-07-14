@@ -228,6 +228,37 @@ class SQLiteRoadmapSnapshotRegistry(
                     )
                 )
 
+                if identified.supersedes_id is not None:
+                    predecessor = connection.execute(
+                        """
+                        SELECT project_row_id
+                        FROM roadmap_registry
+                        WHERE
+                            workspace_id = ?
+                            AND project_direction_id = ?
+                        """,
+                        (
+                            self._workspace_id,
+                            identified.supersedes_id,
+                        ),
+                    ).fetchone()
+
+                    if predecessor is None:
+                        raise RoadmapSnapshotConflictError(
+                            "Superseded roadmap snapshot "
+                            "does not exist in this workspace."
+                        )
+
+                    if (
+                        int(predecessor["project_row_id"])
+                        != project_row_id
+                    ):
+                        raise RoadmapSnapshotConflictError(
+                            "A roadmap snapshot may supersede "
+                            "only a snapshot from the same "
+                            "durable project."
+                        )
+
                 connection.execute(
                     """
                     INSERT INTO roadmap_registry (

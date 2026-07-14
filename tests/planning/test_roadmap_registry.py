@@ -236,7 +236,7 @@ def test_supersession_requires_same_workspace_record(
 
     with pytest.raises(
         RoadmapSnapshotConflictError,
-        match="constraint conflict",
+        match="does not exist in this workspace",
     ):
         registry.create(
             _record(
@@ -592,3 +592,146 @@ def test_registry_durable_lookup_is_workspace_isolated(
         )
         is None
     )
+
+
+
+def test_supersession_requires_same_durable_project(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+
+    predecessor = create_stored_roadmap_snapshot(
+        project_id="proj_one",
+        response_direction_id="direction-one",
+        title="First project",
+        snapshot=_snapshot(),
+        created_at=CREATED_AT,
+    )
+    stored_predecessor = registry.create(predecessor)
+
+    replacement = create_stored_roadmap_snapshot(
+        project_id="proj_two",
+        response_direction_id="direction-two",
+        title="Second project",
+        snapshot=_snapshot(
+            purpose="Build another project."
+        ),
+        created_at=CREATED_AT,
+        supersedes_id=(
+            stored_predecessor.project_direction_id
+        ),
+    )
+
+    with pytest.raises(
+        RoadmapSnapshotConflictError,
+        match="same durable project",
+    ):
+        registry.create(replacement)
+
+    assert registry.load(
+        stored_predecessor.project_direction_id
+    ) == stored_predecessor
+    assert registry.load(
+        replacement.project_direction_id
+    ) is None
+
+
+def test_supersession_accepts_same_durable_project(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+
+    predecessor = create_stored_roadmap_snapshot(
+        project_id="proj_shared",
+        response_direction_id="direction-one",
+        title="Shared project",
+        snapshot=_snapshot(),
+        created_at=CREATED_AT,
+    )
+    stored_predecessor = registry.create(predecessor)
+
+    replacement = create_stored_roadmap_snapshot(
+        project_id="proj_shared",
+        response_direction_id="direction-two",
+        title="Shared project",
+        snapshot=_snapshot(
+            purpose="Build the replacement roadmap."
+        ),
+        created_at=CREATED_AT,
+        supersedes_id=(
+            stored_predecessor.project_direction_id
+        ),
+    )
+
+    stored_replacement = registry.create(replacement)
+
+    assert (
+        stored_replacement.supersedes_id
+        == stored_predecessor.project_direction_id
+    )
+    assert (
+        stored_replacement.project_id
+        == stored_predecessor.project_id
+        == "proj_shared"
+    )
+    assert registry.load(
+        stored_predecessor.project_direction_id
+    ) == stored_predecessor
+
+
+def test_cross_project_supersession_rolls_back_batch(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+
+    predecessor = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_one",
+            response_direction_id="direction-one",
+            title="First project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+
+    valid = create_stored_roadmap_snapshot(
+        project_id="proj_three",
+        response_direction_id="direction-three",
+        title="Third project",
+        snapshot=_snapshot(
+            purpose="Build a valid independent roadmap."
+        ),
+        created_at=CREATED_AT,
+    )
+    invalid = create_stored_roadmap_snapshot(
+        project_id="proj_two",
+        response_direction_id="direction-two",
+        title="Second project",
+        snapshot=_snapshot(
+            purpose="Build an invalid replacement."
+        ),
+        created_at=CREATED_AT,
+        supersedes_id=predecessor.project_direction_id,
+    )
+
+    with pytest.raises(
+        RoadmapSnapshotConflictError,
+        match="same durable project",
+    ):
+        registry.create_many([valid, invalid])
+
+    assert registry.load(
+        valid.project_direction_id
+    ) is None
+    assert registry.load(
+        invalid.project_direction_id
+    ) is None
+    assert registry.load(
+        predecessor.project_direction_id
+    ) == predecessor
