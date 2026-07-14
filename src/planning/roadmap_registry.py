@@ -4,7 +4,7 @@ import sqlite3
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Literal, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -26,6 +26,13 @@ class RoadmapSnapshotConflictError(
     pass
 
 
+ProjectStatus = Literal[
+    "active",
+    "archived",
+    "deleted",
+]
+
+
 class StoredRoadmapSnapshot(BaseModel):
     project_id: Optional[str] = Field(
         default=None,
@@ -44,6 +51,7 @@ class StoredRoadmapSnapshot(BaseModel):
     title: str = Field(
         min_length=1,
     )
+    project_status: ProjectStatus = "active"
     snapshot: RoadmapSnapshot
     created_at: datetime
     supersedes_id: Optional[str] = None
@@ -418,6 +426,7 @@ class SQLiteRoadmapSnapshotRegistry(
                 """
                 SELECT
                     project.project_id,
+                    project.status AS project_status,
                     roadmap.roadmap_snapshot_id,
                     roadmap.project_direction_id,
                     roadmap.response_direction_id,
@@ -461,6 +470,7 @@ class SQLiteRoadmapSnapshotRegistry(
             """
             SELECT
                 project.project_id,
+                project.status AS project_status,
                 roadmap.roadmap_snapshot_id,
                 roadmap.project_direction_id,
                 roadmap.response_direction_id,
@@ -496,6 +506,7 @@ class SQLiteRoadmapSnapshotRegistry(
             """
             SELECT
                 project.project_id,
+                project.status AS project_status,
                 roadmap.roadmap_snapshot_id,
                 roadmap.project_direction_id,
                 roadmap.response_direction_id,
@@ -534,6 +545,7 @@ class SQLiteRoadmapSnapshotRegistry(
             """
             SELECT
                 project.project_id,
+                project.status AS project_status,
                 roadmap.roadmap_snapshot_id,
                 roadmap.project_direction_id,
                 roadmap.response_direction_id,
@@ -595,6 +607,7 @@ class SQLiteRoadmapSnapshotRegistry(
                 row["response_direction_id"]
             ),
             title=row["title"],
+            project_status=row["project_status"],
             snapshot=(
                 RoadmapSnapshot.model_validate_json(
                     row["snapshot_json"]
@@ -649,7 +662,8 @@ class SQLiteRoadmapSnapshotRegistry(
             """
             SELECT
                 project_row_id,
-                title
+                title,
+                status
             FROM projects
             WHERE
                 workspace_id = ?
@@ -662,6 +676,14 @@ class SQLiteRoadmapSnapshotRegistry(
         ).fetchone()
 
         if existing is not None:
+            project_status = str(existing["status"])
+
+            if project_status != "active":
+                raise RoadmapSnapshotConflictError(
+                    "Cannot create a roadmap snapshot "
+                    f"for a {project_status} project."
+                )
+
             return int(existing["project_row_id"])
 
         cursor = connection.execute(

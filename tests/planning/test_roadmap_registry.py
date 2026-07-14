@@ -735,3 +735,143 @@ def test_cross_project_supersession_rolls_back_batch(
     assert registry.load(
         predecessor.project_direction_id
     ) == predecessor
+
+
+
+@pytest.mark.parametrize(
+    "project_status",
+    ["archived", "deleted"],
+)
+def test_registry_reads_inactive_project_history(
+    tmp_path: Path,
+    project_status: str,
+):
+    database_path = tmp_path / "solvyn.db"
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    stored = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_lifecycle",
+            response_direction_id="direction-one",
+            title="Lifecycle project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+
+    import sqlite3
+
+    connection = sqlite3.connect(
+        str(database_path)
+    )
+    try:
+        connection.execute(
+            """
+            UPDATE projects
+            SET status = ?
+            WHERE project_id = ?
+            """,
+            (
+                project_status,
+                stored.project_id,
+            ),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    by_direction = registry.load(
+        stored.project_direction_id
+    )
+    by_snapshot = registry.load_by_snapshot_id(
+        stored.roadmap_snapshot_id
+    )
+    by_identity = registry.load_by_durable_identity(
+        project_id=stored.project_id,
+        roadmap_snapshot_id=(
+            stored.roadmap_snapshot_id
+        ),
+    )
+    listed = registry.list_snapshots()
+
+    assert by_direction is not None
+    assert by_snapshot is not None
+    assert by_identity is not None
+    assert by_direction.project_status == project_status
+    assert by_snapshot.project_status == project_status
+    assert by_identity.project_status == project_status
+    assert listed[0].project_status == project_status
+
+
+@pytest.mark.parametrize(
+    "project_status",
+    ["archived", "deleted"],
+)
+def test_registry_rejects_new_snapshot_for_inactive_project(
+    tmp_path: Path,
+    project_status: str,
+):
+    database_path = tmp_path / "solvyn.db"
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    stored = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_lifecycle",
+            response_direction_id="direction-one",
+            title="Lifecycle project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+
+    import sqlite3
+
+    connection = sqlite3.connect(
+        str(database_path)
+    )
+    try:
+        connection.execute(
+            """
+            UPDATE projects
+            SET status = ?
+            WHERE project_id = ?
+            """,
+            (
+                project_status,
+                stored.project_id,
+            ),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    replacement = create_stored_roadmap_snapshot(
+        project_id=stored.project_id,
+        response_direction_id="direction-two",
+        title="Lifecycle project",
+        snapshot=_snapshot(
+            purpose="Build another roadmap."
+        ),
+        created_at=CREATED_AT,
+    )
+
+    with pytest.raises(
+        RoadmapSnapshotConflictError,
+        match=(
+            f"Cannot create a roadmap snapshot "
+            f"for a {project_status} project"
+        ),
+    ):
+        registry.create(replacement)
+
+    historical = registry.load(
+        stored.project_direction_id
+    )
+
+    assert historical is not None
+    assert historical.project_status == project_status
+    assert registry.load(
+        replacement.project_direction_id
+    ) is None
