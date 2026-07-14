@@ -126,6 +126,8 @@ class SQLiteRepositoryEvidenceStore(
                     """
                     SELECT
                         attribution_id,
+                        project_id,
+                        roadmap_snapshot_id,
                         project_direction_id,
                         payload_json
                     FROM evidence_attributions
@@ -356,10 +358,12 @@ class SQLiteRepositoryEvidenceStore(
                 repository_id,
                 record.evidence,
             )
-            self._write_attributions(
-                connection,
-                repository_id,
-                record.attributions,
+            stored_attributions = (
+                self._write_attributions(
+                    connection,
+                    repository_id,
+                    record.attributions,
+                )
             )
 
             connection.execute(
@@ -407,6 +411,7 @@ class SQLiteRepositoryEvidenceStore(
             return record.model_copy(
                 update={
                     "revision": next_revision,
+                    "attributions": stored_attributions,
                 },
                 deep=True,
             )
@@ -759,7 +764,11 @@ class SQLiteRepositoryEvidenceStore(
         connection: sqlite3.Connection,
         repository_id: int,
         attributions: List[EvidenceAttribution],
-    ) -> None:
+    ) -> List[EvidenceAttribution]:
+        stored_attributions: List[
+            EvidenceAttribution
+        ] = []
+
         for position, attribution in enumerate(
             attributions
         ):
@@ -771,11 +780,18 @@ class SQLiteRepositoryEvidenceStore(
             ):
                 registry_row = connection.execute(
                     """
-                    SELECT roadmap_registry_id
-                    FROM roadmap_registry
+                    SELECT
+                        roadmap.roadmap_registry_id,
+                        roadmap.project_direction_id,
+                        roadmap.roadmap_snapshot_id,
+                        project.project_id
+                    FROM roadmap_registry AS roadmap
+                    JOIN projects AS project
+                        ON project.project_row_id =
+                            roadmap.project_row_id
                     WHERE
-                        workspace_id = ?
-                        AND project_direction_id = ?
+                        roadmap.workspace_id = ?
+                        AND roadmap.project_direction_id = ?
                     """,
                     (
                         self._workspace_id,
@@ -798,12 +814,73 @@ class SQLiteRepositoryEvidenceStore(
                     ]
                 )
 
+                trusted_project_id = str(
+                    registry_row["project_id"]
+                )
+                trusted_snapshot_id = str(
+                    registry_row[
+                        "roadmap_snapshot_id"
+                    ]
+                )
+
+                if (
+                    attribution.project_id is not None
+                    and attribution.project_id
+                    != trusted_project_id
+                ):
+                    raise (
+                        SQLiteRepositoryEvidenceStoreError(
+                            "Project-scoped attribution "
+                            "project_id does not match the "
+                            "trusted roadmap snapshot."
+                        )
+                    )
+
+                if (
+                    attribution.roadmap_snapshot_id
+                    is not None
+                    and attribution.roadmap_snapshot_id
+                    != trusted_snapshot_id
+                ):
+                    raise (
+                        SQLiteRepositoryEvidenceStoreError(
+                            "Project-scoped attribution "
+                            "roadmap_snapshot_id does not "
+                            "match the trusted roadmap."
+                        )
+                    )
+
+                stored_attribution = (
+                    attribution.model_copy(
+                        update={
+                            "project_id": (
+                                trusted_project_id
+                            ),
+                            "roadmap_snapshot_id": (
+                                trusted_snapshot_id
+                            ),
+                            "project_direction_id": str(
+                                registry_row[
+                                    "project_direction_id"
+                                ]
+                            ),
+                        },
+                        deep=True,
+                    )
+                )
+            else:
+                stored_attribution = (
+                    attribution.model_copy(deep=True)
+                )
+
             connection.execute(
                 """
                 INSERT INTO evidence_attributions (
                     attribution_id,
                     repository_id,
                     roadmap_registry_id,
+                    project_id,
+                    roadmap_snapshot_id,
                     project_direction_id,
                     evidence_key,
                     roadmap_node_id,
@@ -816,30 +893,45 @@ class SQLiteRepositoryEvidenceStore(
                     position
                 )
                 VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 (
-                    attribution.attribution_id,
+                    stored_attribution.attribution_id,
                     repository_id,
                     roadmap_registry_id,
-                    attribution.project_direction_id,
-                    attribution.evidence_key,
-                    attribution.roadmap_node_id,
-                    attribution.source,
-                    attribution.confidence,
-                    attribution.rationale,
-                    attribution.status,
+                    stored_attribution.project_id,
                     (
-                        attribution.decided_at.isoformat()
-                        if attribution.decided_at
+                        stored_attribution
+                        .roadmap_snapshot_id
+                    ),
+                    (
+                        stored_attribution
+                        .project_direction_id
+                    ),
+                    stored_attribution.evidence_key,
+                    stored_attribution.roadmap_node_id,
+                    stored_attribution.source,
+                    stored_attribution.confidence,
+                    stored_attribution.rationale,
+                    stored_attribution.status,
+                    (
+                        stored_attribution
+                        .decided_at.isoformat()
+                        if stored_attribution.decided_at
                         is not None
                         else None
                     ),
-                    attribution.model_dump_json(),
+                    stored_attribution.model_dump_json(),
                     position,
                 ),
             )
+
+            stored_attributions.append(
+                stored_attribution
+            )
+
+        return stored_attributions
 
     @staticmethod
     def _attribution_from_row(
@@ -854,6 +946,10 @@ class SQLiteRepositoryEvidenceStore(
         relational_attribution_id = (
             row["attribution_id"]
         )
+        relational_project_id = row["project_id"]
+        relational_roadmap_snapshot_id = (
+            row["roadmap_snapshot_id"]
+        )
         relational_project_direction_id = (
             row["project_direction_id"]
         )
@@ -861,6 +957,10 @@ class SQLiteRepositoryEvidenceStore(
         if (
             attribution.attribution_id
             != relational_attribution_id
+            or attribution.project_id
+            != relational_project_id
+            or attribution.roadmap_snapshot_id
+            != relational_roadmap_snapshot_id
             or attribution.project_direction_id
             != relational_project_direction_id
         ):

@@ -753,10 +753,85 @@ def _insert_roadmap_registry_record(
     workspace_id: str,
     project_direction_id: str,
 ) -> int:
+    project_table_exists = (
+        connection.execute(
+            """
+            SELECT 1
+            FROM sqlite_master
+            WHERE
+                type = 'table'
+                AND name = 'projects'
+            """
+        ).fetchone()
+        is not None
+    )
+
+    if not project_table_exists:
+        cursor = connection.execute(
+            """
+            INSERT INTO roadmap_registry (
+                workspace_id,
+                project_direction_id,
+                response_direction_id,
+                title,
+                roadmap_hash,
+                snapshot_json,
+                created_at,
+                supersedes_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+            """,
+            (
+                workspace_id,
+                project_direction_id,
+                "response-direction",
+                "Project direction",
+                "a" * 64,
+                "{}",
+                "2026-07-14T12:00:00Z",
+            ),
+        )
+
+        return int(cursor.lastrowid)
+
+    project_id = (
+        "proj_test_" + project_direction_id
+    )
+    roadmap_snapshot_id = (
+        "snap_test_" + project_direction_id
+    )
+
+    project_cursor = connection.execute(
+        """
+        INSERT INTO projects (
+            project_id,
+            workspace_id,
+            title,
+            status,
+            created_at,
+            updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            project_id,
+            workspace_id,
+            "Project direction",
+            "active",
+            "2026-07-14T12:00:00Z",
+            "2026-07-14T12:00:00Z",
+        ),
+    )
+    project_row_id = int(
+        project_cursor.lastrowid
+    )
+
     cursor = connection.execute(
         """
         INSERT INTO roadmap_registry (
             workspace_id,
+            project_row_id,
+            roadmap_snapshot_id,
             project_direction_id,
             response_direction_id,
             title,
@@ -765,10 +840,14 @@ def _insert_roadmap_registry_record(
             created_at,
             supersedes_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+        VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL
+        )
         """,
         (
             workspace_id,
+            project_row_id,
+            roadmap_snapshot_id,
             project_direction_id,
             "response-direction",
             "Project direction",
@@ -901,6 +980,8 @@ def test_scoped_attribution_identity_allows_same_stage_across_projects(
                 attribution_id,
                 repository_id,
                 roadmap_registry_id,
+                project_id,
+                roadmap_snapshot_id,
                 project_direction_id,
                 evidence_key,
                 roadmap_node_id,
@@ -912,7 +993,9 @@ def test_scoped_attribution_identity_allows_same_stage_across_projects(
                 payload_json,
                 position
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
         """
 
         shared_values = (
@@ -933,6 +1016,8 @@ def test_scoped_attribution_identity_allows_same_stage_across_projects(
                 "attribution-one",
                 shared_values[0],
                 first_registry_id,
+                "proj_test_project-one",
+                "snap_test_project-one",
                 "project-one",
                 *shared_values[1:],
                 0,
@@ -944,6 +1029,8 @@ def test_scoped_attribution_identity_allows_same_stage_across_projects(
                 "attribution-two",
                 shared_values[0],
                 second_registry_id,
+                "proj_test_project-two",
+                "snap_test_project-two",
                 "project-two",
                 *shared_values[1:],
                 1,
@@ -1006,7 +1093,10 @@ def test_scoped_attribution_rejects_cross_workspace_roadmap(
 
         with pytest.raises(
             sqlite3.IntegrityError,
-            match="does not match repository workspace",
+            match=(
+                "Attribution durable identity does not "
+                "match trusted roadmap"
+            ),
         ):
             connection.execute(
                 """
@@ -1014,6 +1104,8 @@ def test_scoped_attribution_rejects_cross_workspace_roadmap(
                     attribution_id,
                     repository_id,
                     roadmap_registry_id,
+                    project_id,
+                    roadmap_snapshot_id,
                     project_direction_id,
                     evidence_key,
                     roadmap_node_id,
@@ -1025,12 +1117,16 @@ def test_scoped_attribution_rejects_cross_workspace_roadmap(
                     payload_json,
                     position
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
                 """,
                 (
                     "attribution-one",
                     repository_id,
                     roadmap_registry_id,
+                    "proj_test_foreign-project",
+                    "snap_test_foreign-project",
                     "foreign-project",
                     "github:owner/repository:commit:abc",
                     "build-mvp",
@@ -1406,5 +1502,248 @@ def test_public_snapshot_id_is_unique_per_workspace(
                         "shared-snapshot-id",
                     ),
                 )
+    finally:
+        connection.close()
+
+
+def test_version_seven_backfills_durable_attribution_identity(
+    tmp_path: Path,
+    monkeypatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS[:6],
+        )
+        apply_execution_evidence_migrations(connection)
+
+        repository_id = _insert_workspace_and_repository(
+            connection,
+            workspace_id="local",
+            repository_key="github:owner/repository",
+        )
+
+        roadmap_registry_id = (
+            _insert_roadmap_registry_record(
+                connection,
+                workspace_id="local",
+                project_direction_id="direction-one",
+            )
+        )
+
+        roadmap = connection.execute(
+            """
+            SELECT
+                roadmap.project_row_id,
+                roadmap.roadmap_snapshot_id,
+                project.project_id
+            FROM roadmap_registry AS roadmap
+            JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
+            WHERE roadmap.roadmap_registry_id = ?
+            """,
+            (roadmap_registry_id,),
+        ).fetchone()
+
+        connection.execute(
+            """
+            INSERT INTO evidence_attributions (
+                attribution_id,
+                repository_id,
+                roadmap_registry_id,
+                project_direction_id,
+                evidence_key,
+                roadmap_node_id,
+                source,
+                confidence,
+                rationale,
+                status,
+                decided_at,
+                payload_json,
+                position
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "attribution-one",
+                repository_id,
+                roadmap_registry_id,
+                "direction-one",
+                "github:owner/repository:commit:abc",
+                "build-mvp",
+                "manual",
+                1.0,
+                "",
+                "accepted",
+                "2026-07-14T12:00:00Z",
+                "{}",
+                0,
+            ),
+        )
+
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS,
+        )
+        apply_execution_evidence_migrations(connection)
+
+        row = connection.execute(
+            """
+            SELECT
+                project_id,
+                roadmap_snapshot_id,
+                project_direction_id
+            FROM evidence_attributions
+            """
+        ).fetchone()
+
+        assert row["project_id"] == roadmap["project_id"]
+        assert (
+            row["roadmap_snapshot_id"]
+            == roadmap["roadmap_snapshot_id"]
+        )
+        assert (
+            row["project_direction_id"]
+            == "direction-one"
+        )
+    finally:
+        connection.close()
+
+
+def test_version_seven_keeps_legacy_attribution_unscoped(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        repository_id = _insert_workspace_and_repository(
+            connection,
+            workspace_id="local",
+            repository_key="github:owner/repository",
+        )
+
+        connection.execute(
+            """
+            INSERT INTO evidence_attributions (
+                repository_id,
+                evidence_key,
+                roadmap_node_id,
+                source,
+                confidence,
+                rationale,
+                status,
+                decided_at,
+                payload_json,
+                position
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                repository_id,
+                "github:owner/repository:commit:abc",
+                "build-mvp",
+                "manual",
+                1.0,
+                "",
+                "accepted",
+                "2026-07-14T12:00:00Z",
+                "{}",
+                0,
+            ),
+        )
+
+        row = connection.execute(
+            """
+            SELECT
+                attribution_id,
+                roadmap_registry_id,
+                project_id,
+                roadmap_snapshot_id,
+                project_direction_id
+            FROM evidence_attributions
+            """
+        ).fetchone()
+
+        assert all(
+            row[column] is None
+            for column in (
+                "attribution_id",
+                "roadmap_registry_id",
+                "project_id",
+                "roadmap_snapshot_id",
+                "project_direction_id",
+            )
+        )
+    finally:
+        connection.close()
+
+
+def test_version_seven_rejects_partial_attribution_identity(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        repository_id = _insert_workspace_and_repository(
+            connection,
+            workspace_id="local",
+            repository_key="github:owner/repository",
+        )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="fully scoped or fully legacy",
+        ):
+            connection.execute(
+                """
+                INSERT INTO evidence_attributions (
+                    attribution_id,
+                    repository_id,
+                    project_direction_id,
+                    evidence_key,
+                    roadmap_node_id,
+                    source,
+                    confidence,
+                    rationale,
+                    status,
+                    decided_at,
+                    payload_json,
+                    position
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "attribution-one",
+                    repository_id,
+                    "direction-one",
+                    "github:owner/repository:commit:abc",
+                    "build-mvp",
+                    "manual",
+                    1.0,
+                    "",
+                    "accepted",
+                    "2026-07-14T12:00:00Z",
+                    "{}",
+                    0,
+                ),
+            )
     finally:
         connection.close()

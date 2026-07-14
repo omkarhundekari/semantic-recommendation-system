@@ -10,6 +10,7 @@ from execution_evidence.trusted_store import (
     FRESH_INIT_SOURCE_TYPE,
     JSON_IMPORT_SOURCE_TYPE,
     LEGACY_JSON_IMPORT_SOURCE_TYPE,
+    SQLITE_UPGRADE_SOURCE_TYPE,
     build_fresh_init_report,
     build_fresh_init_receipt,
     initialize_fresh_trusted_store,
@@ -112,6 +113,24 @@ def test_legacy_json_receipt_remains_recognized():
     receipt = build_migration_receipt(
         report=report,
         source_identifier="repositories.json",
+        created_at=CREATED_AT,
+    )
+
+    assert validate_trusted_store_receipt(
+        receipt
+    )
+
+
+
+def test_sqlite_upgrade_receipt_is_recognized():
+    report = build_fresh_init_report().model_copy(
+        update={
+            "source_type": SQLITE_UPGRADE_SOURCE_TYPE,
+        }
+    )
+    receipt = build_migration_receipt(
+        report=report,
+        source_identifier="solvyn.db:schema-6-to-7",
         created_at=CREATED_AT,
     )
 

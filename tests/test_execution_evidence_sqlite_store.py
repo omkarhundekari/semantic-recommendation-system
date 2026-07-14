@@ -475,3 +475,80 @@ def test_sqlite_store_rejects_unknown_project_direction(
                 deep=True,
             )
         )
+
+
+def test_sqlite_store_derives_durable_attribution_identity(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    trusted = registry.create(
+        StoredRoadmapSnapshot(
+            project_id="proj_one",
+            roadmap_snapshot_id="snap_one",
+            project_direction_id="direction-one",
+            response_direction_id="direction-one",
+            title="Trusted direction",
+            snapshot=RoadmapSnapshot(
+                roadmap_hash="a" * 64,
+                snapshot_version=1,
+                canonicalization_version=1,
+                stages=[
+                    RoadmapStageSnapshot(
+                        stage_id="persist-evidence",
+                        position=0,
+                        content_hash="b" * 64,
+                        content={
+                            "id": "persist-evidence",
+                            "title": "Persist evidence",
+                        },
+                    )
+                ],
+            ),
+            created_at=SAVED_AT,
+        )
+    )
+
+    record = _record()
+    evidence = record.evidence[0]
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_direction_id=(
+            trusted.project_direction_id
+        ),
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=_trusted_context(),
+    )
+
+    saved = SQLiteRepositoryEvidenceStore(
+        database_path
+    ).save(
+        record.model_copy(
+            update={
+                "attributions": [attribution],
+            },
+            deep=True,
+        )
+    )
+
+    assert (
+        saved.attributions[0].project_id
+        == "proj_one"
+    )
+    assert (
+        saved.attributions[0].roadmap_snapshot_id
+        == "snap_one"
+    )
+
+    loaded = SQLiteRepositoryEvidenceStore(
+        database_path
+    ).load(REFERENCE.repository_key)
+
+    assert loaded == saved

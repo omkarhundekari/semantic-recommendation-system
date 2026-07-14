@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 6
+CURRENT_SQLITE_SCHEMA_VERSION = 7
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -662,6 +662,237 @@ END;
 """
 
 
+PERSIST_DURABLE_ATTRIBUTION_IDENTITIES_SQL = """
+ALTER TABLE evidence_attributions
+ADD COLUMN project_id TEXT;
+
+ALTER TABLE evidence_attributions
+ADD COLUMN roadmap_snapshot_id TEXT;
+
+UPDATE evidence_attributions
+SET
+    project_id = (
+        SELECT project.project_id
+        FROM roadmap_registry AS roadmap
+        JOIN projects AS project
+            ON project.project_row_id =
+                roadmap.project_row_id
+        WHERE
+            roadmap.roadmap_registry_id =
+                evidence_attributions.roadmap_registry_id
+    ),
+    roadmap_snapshot_id = (
+        SELECT roadmap.roadmap_snapshot_id
+        FROM roadmap_registry AS roadmap
+        WHERE
+            roadmap.roadmap_registry_id =
+                evidence_attributions.roadmap_registry_id
+    )
+WHERE roadmap_registry_id IS NOT NULL;
+
+CREATE TEMP TABLE
+    durable_attribution_migration_guard (
+        invalid_count INTEGER NOT NULL
+            CHECK (invalid_count = 0)
+    );
+
+INSERT INTO durable_attribution_migration_guard (
+    invalid_count
+)
+SELECT COUNT(*)
+FROM evidence_attributions
+WHERE
+    (
+        roadmap_registry_id IS NULL
+        AND (
+            attribution_id IS NOT NULL
+            OR project_id IS NOT NULL
+            OR roadmap_snapshot_id IS NOT NULL
+            OR project_direction_id IS NOT NULL
+        )
+    )
+    OR
+    (
+        roadmap_registry_id IS NOT NULL
+        AND (
+            attribution_id IS NULL
+            OR project_id IS NULL
+            OR roadmap_snapshot_id IS NULL
+            OR project_direction_id IS NULL
+            OR NOT EXISTS (
+                SELECT 1
+                FROM roadmap_registry AS roadmap
+                JOIN projects AS project
+                    ON project.project_row_id =
+                        roadmap.project_row_id
+                WHERE
+                    roadmap.roadmap_registry_id =
+                        evidence_attributions
+                        .roadmap_registry_id
+                    AND roadmap.project_direction_id =
+                        evidence_attributions
+                        .project_direction_id
+                    AND roadmap.roadmap_snapshot_id =
+                        evidence_attributions
+                        .roadmap_snapshot_id
+                    AND project.project_id =
+                        evidence_attributions.project_id
+            )
+        )
+    );
+
+DROP TABLE durable_attribution_migration_guard;
+
+CREATE INDEX
+    idx_attributions_durable_snapshot
+ON evidence_attributions(
+    project_id,
+    roadmap_snapshot_id,
+    roadmap_node_id,
+    status
+)
+WHERE roadmap_snapshot_id IS NOT NULL;
+
+CREATE TRIGGER
+    validate_attribution_identity_set_insert
+BEFORE INSERT ON evidence_attributions
+BEGIN
+    SELECT CASE
+        WHEN NOT (
+            (
+                NEW.attribution_id IS NULL
+                AND NEW.roadmap_registry_id IS NULL
+                AND NEW.project_id IS NULL
+                AND NEW.roadmap_snapshot_id IS NULL
+                AND NEW.project_direction_id IS NULL
+            )
+            OR
+            (
+                NEW.attribution_id IS NOT NULL
+                AND NEW.roadmap_registry_id IS NOT NULL
+                AND NEW.project_id IS NOT NULL
+                AND NEW.roadmap_snapshot_id IS NOT NULL
+                AND NEW.project_direction_id IS NOT NULL
+            )
+        )
+        THEN RAISE(
+            ABORT,
+            'Attribution roadmap identity must be fully scoped or fully legacy'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    validate_attribution_identity_set_update
+BEFORE UPDATE OF
+    attribution_id,
+    roadmap_registry_id,
+    project_id,
+    roadmap_snapshot_id,
+    project_direction_id
+ON evidence_attributions
+BEGIN
+    SELECT CASE
+        WHEN NOT (
+            (
+                NEW.attribution_id IS NULL
+                AND NEW.roadmap_registry_id IS NULL
+                AND NEW.project_id IS NULL
+                AND NEW.roadmap_snapshot_id IS NULL
+                AND NEW.project_direction_id IS NULL
+            )
+            OR
+            (
+                NEW.attribution_id IS NOT NULL
+                AND NEW.roadmap_registry_id IS NOT NULL
+                AND NEW.project_id IS NOT NULL
+                AND NEW.roadmap_snapshot_id IS NOT NULL
+                AND NEW.project_direction_id IS NOT NULL
+            )
+        )
+        THEN RAISE(
+            ABORT,
+            'Attribution roadmap identity must be fully scoped or fully legacy'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    validate_attribution_durable_identity_insert
+BEFORE INSERT ON evidence_attributions
+WHEN NEW.roadmap_registry_id IS NOT NULL
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM repositories AS repository
+            JOIN roadmap_registry AS roadmap
+                ON roadmap.roadmap_registry_id =
+                    NEW.roadmap_registry_id
+            JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
+            WHERE
+                repository.repository_id =
+                    NEW.repository_id
+                AND repository.workspace_id =
+                    roadmap.workspace_id
+                AND roadmap.project_direction_id =
+                    NEW.project_direction_id
+                AND roadmap.roadmap_snapshot_id =
+                    NEW.roadmap_snapshot_id
+                AND project.project_id =
+                    NEW.project_id
+        )
+        THEN RAISE(
+            ABORT,
+            'Attribution durable identity does not match trusted roadmap'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    validate_attribution_durable_identity_update
+BEFORE UPDATE OF
+    repository_id,
+    roadmap_registry_id,
+    project_id,
+    roadmap_snapshot_id,
+    project_direction_id
+ON evidence_attributions
+WHEN NEW.roadmap_registry_id IS NOT NULL
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM repositories AS repository
+            JOIN roadmap_registry AS roadmap
+                ON roadmap.roadmap_registry_id =
+                    NEW.roadmap_registry_id
+            JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
+            WHERE
+                repository.repository_id =
+                    NEW.repository_id
+                AND repository.workspace_id =
+                    roadmap.workspace_id
+                AND roadmap.project_direction_id =
+                    NEW.project_direction_id
+                AND roadmap.roadmap_snapshot_id =
+                    NEW.roadmap_snapshot_id
+                AND project.project_id =
+                    NEW.project_id
+        )
+        THEN RAISE(
+            ABORT,
+            'Attribution durable identity does not match trusted roadmap'
+        )
+    END;
+END;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -692,6 +923,13 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=6,
         name="create_durable_project_foundation",
         sql=CREATE_PROJECT_FOUNDATION_SQL,
+    ),
+    SQLiteMigration(
+        version=7,
+        name="persist_durable_attribution_identities",
+        sql=(
+            PERSIST_DURABLE_ATTRIBUTION_IDENTITIES_SQL
+        ),
     ),
 )
 
