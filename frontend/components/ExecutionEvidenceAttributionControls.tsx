@@ -64,11 +64,14 @@ export default function ExecutionEvidenceAttributionControls({
       attributions.filter(
         (attribution) =>
           attribution.evidence_key ===
-          currentEvidenceKey,
+            currentEvidenceKey &&
+          attribution.project_direction_id ===
+            projectDirectionId,
       ),
     [
       attributions,
       currentEvidenceKey,
+      projectDirectionId,
     ],
   );
 
@@ -152,6 +155,8 @@ export default function ExecutionEvidenceAttributionControls({
     try {
       const response = await detachExecutionEvidence({
         apiBaseUrl,
+        projectDirectionId:
+          projectDirectionId ?? "",
         repositoryKey,
         evidenceKey: currentEvidenceKey,
         roadmapNodeId,
@@ -166,7 +171,9 @@ export default function ExecutionEvidenceAttributionControls({
                 attribution.evidence_key ===
                   currentEvidenceKey &&
                 attribution.roadmap_node_id ===
-                  roadmapNodeId
+                  roadmapNodeId &&
+                attribution.project_direction_id ===
+                  projectDirectionId
               ),
           ),
           revision: revision + 1,

@@ -40,7 +40,13 @@ const EVIDENCE: ExecutionEvidenceItem = {
     "2026-07-13T12:00:00+00:00",
 };
 
+const PROJECT_DIRECTION_ID =
+  "trusted-project-direction";
+
 const ATTRIBUTION: EvidenceAttribution = {
+  attribution_id: "attribution-one",
+  project_direction_id:
+    PROJECT_DIRECTION_ID,
   evidence_key:
     "github:owner/repository:commit:abc123",
   roadmap_node_id: "build-mvp",
@@ -51,9 +57,6 @@ const ATTRIBUTION: EvidenceAttribution = {
   decided_at:
     "2026-07-13T12:00:00+00:00",
 };
-
-const PROJECT_DIRECTION_ID =
-  "trusted-project-direction";
 
 const STAGES = [
   {

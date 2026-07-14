@@ -1,22 +1,11 @@
 import {
   ExecutionEvidenceApiError,
+  type EvidenceAttribution,
 } from "./executionEvidenceApi";
 
-export type EvidenceAttribution = {
-  evidence_key: string;
-  roadmap_node_id: string;
-  source:
-    | "deterministic"
-    | "semantic"
-    | "manual";
-  confidence: number;
-  rationale: string;
-  status:
-    | "suggested"
-    | "accepted"
-    | "rejected";
-  decided_at: string | null;
-};
+export type {
+  EvidenceAttribution,
+} from "./executionEvidenceApi";
 
 export type AttributionMutationResponse = {
   created: boolean;
@@ -135,12 +124,14 @@ export async function attachExecutionEvidence(
 export async function detachExecutionEvidence(
   {
     apiBaseUrl,
+    projectDirectionId,
     repositoryKey,
     evidenceKey,
     roadmapNodeId,
     expectedRevision,
   }: {
     apiBaseUrl: string;
+    projectDirectionId: string;
     repositoryKey: string;
     evidenceKey: string;
     roadmapNodeId: string;
@@ -159,6 +150,8 @@ export async function detachExecutionEvidence(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          project_direction_id:
+            projectDirectionId.trim(),
           repository_key: repositoryKey,
           evidence_key: evidenceKey,
           roadmap_node_id: roadmapNodeId,
@@ -181,17 +174,30 @@ export async function detachExecutionEvidence(
 export async function listExecutionEvidenceAttributions(
   {
     apiBaseUrl,
+    projectDirectionId,
     repositoryKey,
     roadmapNodeId,
   }: {
     apiBaseUrl: string;
+    projectDirectionId: string;
     repositoryKey: string;
     roadmapNodeId?: string | null;
   },
   fetcher: Fetcher = fetch,
 ): Promise<EvidenceAttribution[]> {
+  const normalizedProjectDirectionId =
+    projectDirectionId.trim();
+
+  if (!normalizedProjectDirectionId) {
+    throw new ExecutionEvidenceApiError(
+      "Trusted project identity is required before listing evidence attributions.",
+    );
+  }
+
   const query = new URLSearchParams({
     repository_key: repositoryKey,
+    project_direction_id:
+      normalizedProjectDirectionId,
   });
 
   if (roadmapNodeId) {

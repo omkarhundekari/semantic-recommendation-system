@@ -21,6 +21,9 @@ const EVIDENCE_KEY =
 
 function mutationResponse(): AttributionMutationResponse {
   const attribution = {
+    attribution_id: "attribution-one",
+    project_direction_id:
+      PROJECT_DIRECTION_ID,
     evidence_key: EVIDENCE_KEY,
     roadmap_node_id: "build-mvp",
     source: "manual" as const,
@@ -162,6 +165,8 @@ describe("execution evidence attribution API", () => {
     const result = await detachExecutionEvidence(
       {
         apiBaseUrl: API_BASE_URL,
+        projectDirectionId:
+          PROJECT_DIRECTION_ID,
         repositoryKey: REPOSITORY_KEY,
         evidenceKey: EVIDENCE_KEY,
         roadmapNodeId: "build-mvp",
@@ -176,6 +181,8 @@ describe("execution evidence attribution API", () => {
 
     expect(options?.method).toBe("DELETE");
     expect(JSON.parse(String(options?.body))).toEqual({
+      project_direction_id:
+        PROJECT_DIRECTION_ID,
       repository_key: REPOSITORY_KEY,
       evidence_key: EVIDENCE_KEY,
       roadmap_node_id: "build-mvp",
@@ -210,6 +217,8 @@ describe("execution evidence attribution API", () => {
       await listExecutionEvidenceAttributions(
         {
           apiBaseUrl: API_BASE_URL,
+          projectDirectionId:
+            PROJECT_DIRECTION_ID,
           repositoryKey: REPOSITORY_KEY,
           roadmapNodeId: "build-mvp",
         },
@@ -222,6 +231,9 @@ describe("execution evidence attribution API", () => {
 
     expect(String(requestUrl)).toContain(
       "repository_key=github%3Aowner%2Frepository",
+    );
+    expect(String(requestUrl)).toContain(
+      "project_direction_id=trusted-project-direction",
     );
     expect(String(requestUrl)).toContain(
       "roadmap_node_id=build-mvp",

@@ -34,6 +34,8 @@ describe("roadmap evidence coverage summary", () => {
         roadmapStages: STAGES,
         attributions: [
           {
+            attribution_id: null,
+            project_direction_id: null,
             evidence_key: "commit:1",
             roadmap_node_id: "build",
             source: "manual",
@@ -75,6 +77,8 @@ describe("roadmap evidence coverage summary", () => {
         roadmapStages: STAGES,
         attributions: [
           {
+            attribution_id: null,
+            project_direction_id: null,
             evidence_key: "commit:1",
             roadmap_node_id: "define",
             source: "manual",
@@ -85,6 +89,8 @@ describe("roadmap evidence coverage summary", () => {
               "2026-07-13T12:00:00+00:00",
           },
           {
+            attribution_id: null,
+            project_direction_id: null,
             evidence_key: "commit:2",
             roadmap_node_id: "build",
             source: "manual",

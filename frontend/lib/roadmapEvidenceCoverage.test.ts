@@ -39,6 +39,8 @@ function attribution({
     | "rejected";
 }): EvidenceAttribution {
   return {
+    attribution_id: null,
+    project_direction_id: null,
     evidence_key: evidenceKey,
     roadmap_node_id: stageId,
     source: "manual",

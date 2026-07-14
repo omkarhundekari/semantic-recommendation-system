@@ -4,6 +4,24 @@ export type ExecutionEvidenceType =
   | "release"
   | "workflow_run";
 
+export type EvidenceAttribution = {
+  attribution_id: string | null;
+  project_direction_id: string | null;
+  evidence_key: string;
+  roadmap_node_id: string;
+  source:
+    | "deterministic"
+    | "semantic"
+    | "manual";
+  confidence: number;
+  rationale: string;
+  status:
+    | "suggested"
+    | "accepted"
+    | "rejected";
+  decided_at: string | null;
+};
+
 export type ExecutionEvidenceItem = {
   provider: "github";
   repository_full_name: string;
@@ -83,21 +101,7 @@ export type ExecutionEvidenceSyncResponse = {
     revision: number;
     saved_at: string;
     evidence: ExecutionEvidenceItem[];
-    attributions: Array<{
-      evidence_key: string;
-      roadmap_node_id: string;
-      source:
-        | "deterministic"
-        | "semantic"
-        | "manual";
-      confidence: number;
-      rationale: string;
-      status:
-        | "suggested"
-        | "accepted"
-        | "rejected";
-      decided_at: string | null;
-    }>;
+    attributions: EvidenceAttribution[];
     repository: {
       provider: "github";
       owner: string;
