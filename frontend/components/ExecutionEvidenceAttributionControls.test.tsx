@@ -52,6 +52,9 @@ const ATTRIBUTION: EvidenceAttribution = {
     "2026-07-13T12:00:00+00:00",
 };
 
+const PROJECT_DIRECTION_ID =
+  "trusted-project-direction";
+
 const STAGES = [
   {
     id: "build-mvp",
@@ -72,6 +75,9 @@ describe("execution evidence attribution controls", () => {
     render(
       <ExecutionEvidenceAttributionControls
         apiBaseUrl="http://127.0.0.1:8000"
+        projectDirectionId={
+          PROJECT_DIRECTION_ID
+        }
         repositoryKey="github:owner/repository"
         revision={0}
         evidence={EVIDENCE}
@@ -86,6 +92,33 @@ describe("execution evidence attribution controls", () => {
         /Generate and select a project direction/,
       ),
     ).toBeInTheDocument();
+  });
+
+  it("disables attachment without trusted project identity", () => {
+    render(
+      <ExecutionEvidenceAttributionControls
+        apiBaseUrl="http://127.0.0.1:8000"
+        projectDirectionId={null}
+        repositoryKey="github:owner/repository"
+        revision={0}
+        evidence={EVIDENCE}
+        roadmapStages={STAGES}
+        attributions={[]}
+        onAttributionsChanged={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        /Trusted roadmap attribution is unavailable/,
+      ),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("button", {
+        name: "Attach to stage",
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("attaches evidence to the selected stage", async () => {
@@ -120,6 +153,9 @@ describe("execution evidence attribution controls", () => {
     render(
       <ExecutionEvidenceAttributionControls
         apiBaseUrl="http://127.0.0.1:8000"
+        projectDirectionId={
+          PROJECT_DIRECTION_ID
+        }
         repositoryKey="github:owner/repository"
         revision={0}
         evidence={EVIDENCE}
@@ -160,12 +196,27 @@ describe("execution evidence attribution controls", () => {
         revision: 1,
       });
     });
+
+    const [, options] = vi.mocked(
+      globalThis.fetch,
+    ).mock.calls[0];
+
+    expect(
+      JSON.parse(String(options?.body)),
+    ).toMatchObject({
+      project_direction_id:
+        PROJECT_DIRECTION_ID,
+      roadmap_node_id: "build-mvp",
+    });
   });
 
   it("shows existing attribution links", () => {
     render(
       <ExecutionEvidenceAttributionControls
         apiBaseUrl="http://127.0.0.1:8000"
+        projectDirectionId={
+          PROJECT_DIRECTION_ID
+        }
         repositoryKey="github:owner/repository"
         revision={1}
         evidence={EVIDENCE}
@@ -207,6 +258,9 @@ describe("execution evidence attribution controls", () => {
     render(
       <ExecutionEvidenceAttributionControls
         apiBaseUrl="http://127.0.0.1:8000"
+        projectDirectionId={
+          PROJECT_DIRECTION_ID
+        }
         repositoryKey="github:owner/repository"
         revision={1}
         evidence={EVIDENCE}
@@ -258,6 +312,9 @@ describe("execution evidence attribution controls", () => {
     render(
       <ExecutionEvidenceAttributionControls
         apiBaseUrl="http://127.0.0.1:8000"
+        projectDirectionId={
+          PROJECT_DIRECTION_ID
+        }
         repositoryKey="github:owner/repository"
         revision={0}
         evidence={EVIDENCE}
@@ -298,6 +355,9 @@ describe("execution evidence attribution stage availability", () => {
     render(
       <ExecutionEvidenceAttributionControls
         apiBaseUrl="http://127.0.0.1:8000"
+        projectDirectionId={
+          PROJECT_DIRECTION_ID
+        }
         repositoryKey="github:owner/repository"
         revision={1}
         evidence={EVIDENCE}
@@ -331,6 +391,9 @@ describe("execution evidence attribution stage availability", () => {
     render(
       <ExecutionEvidenceAttributionControls
         apiBaseUrl="http://127.0.0.1:8000"
+        projectDirectionId={
+          PROJECT_DIRECTION_ID
+        }
         repositoryKey="github:owner/repository"
         revision={2}
         evidence={EVIDENCE}

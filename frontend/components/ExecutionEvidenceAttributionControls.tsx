@@ -22,6 +22,7 @@ type RoadmapStageOption = {
 
 type Props = {
   apiBaseUrl: string;
+  projectDirectionId: string | null;
   repositoryKey: string;
   revision: number;
   evidence: ExecutionEvidenceItem;
@@ -49,6 +50,7 @@ function evidenceKey(
 
 export default function ExecutionEvidenceAttributionControls({
   apiBaseUrl,
+  projectDirectionId,
   repositoryKey,
   revision,
   evidence,
@@ -116,6 +118,8 @@ export default function ExecutionEvidenceAttributionControls({
     try {
       const response = await attachExecutionEvidence({
         apiBaseUrl,
+        projectDirectionId:
+          projectDirectionId ?? "",
         repositoryKey,
         evidenceKey: currentEvidenceKey,
         roadmapNodeId: selectedStageId,
@@ -184,6 +188,16 @@ export default function ExecutionEvidenceAttributionControls({
       <p className="mt-3 text-xs leading-5 text-slate-500">
         Generate and select a project direction before
         attaching this evidence to a roadmap stage.
+      </p>
+    );
+  }
+
+  if (!projectDirectionId) {
+    return (
+      <p className="mt-3 text-xs leading-5 text-amber-200">
+        Trusted roadmap attribution is unavailable for
+        this workspace. Generate a new trusted roadmap
+        before attaching evidence.
       </p>
     );
   }

@@ -13,6 +13,8 @@ import {
 } from "./executionEvidenceAttributionApi";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+const PROJECT_DIRECTION_ID =
+  "trusted-project-direction";
 const REPOSITORY_KEY = "github:owner/repository";
 const EVIDENCE_KEY =
   "github:owner/repository:commit:abc123";
@@ -65,6 +67,8 @@ describe("execution evidence attribution API", () => {
     const result = await attachExecutionEvidence(
       {
         apiBaseUrl: API_BASE_URL,
+        projectDirectionId:
+          PROJECT_DIRECTION_ID,
         repositoryKey: REPOSITORY_KEY,
         evidenceKey: EVIDENCE_KEY,
         roadmapNodeId: " build-mvp ",
@@ -80,12 +84,35 @@ describe("execution evidence attribution API", () => {
 
     expect(options?.method).toBe("POST");
     expect(JSON.parse(String(options?.body))).toEqual({
+      project_direction_id:
+        PROJECT_DIRECTION_ID,
       repository_key: REPOSITORY_KEY,
       evidence_key: EVIDENCE_KEY,
       roadmap_node_id: "build-mvp",
       rationale: "Completes the MVP stage.",
       expected_revision: 0,
     });
+  });
+
+  it("requires trusted project identity before attaching", async () => {
+    const fetcher = vi.fn();
+
+    await expect(
+      attachExecutionEvidence(
+        {
+          apiBaseUrl: API_BASE_URL,
+          projectDirectionId: " ",
+          repositoryKey: REPOSITORY_KEY,
+          evidenceKey: EVIDENCE_KEY,
+          roadmapNodeId: "build-mvp",
+        },
+        fetcher,
+      ),
+    ).rejects.toThrow(
+      "Trusted project identity is required before attaching evidence.",
+    );
+
+    expect(fetcher).not.toHaveBeenCalled();
   });
 
   it("requires a roadmap stage before attaching", async () => {
@@ -95,6 +122,8 @@ describe("execution evidence attribution API", () => {
       attachExecutionEvidence(
         {
           apiBaseUrl: API_BASE_URL,
+          projectDirectionId:
+            PROJECT_DIRECTION_ID,
           repositoryKey: REPOSITORY_KEY,
           evidenceKey: EVIDENCE_KEY,
           roadmapNodeId: " ",
@@ -226,6 +255,8 @@ describe("execution evidence attribution API", () => {
       attachExecutionEvidence(
         {
           apiBaseUrl: API_BASE_URL,
+          projectDirectionId:
+            PROJECT_DIRECTION_ID,
           repositoryKey: REPOSITORY_KEY,
           evidenceKey: EVIDENCE_KEY,
           roadmapNodeId: "build-mvp",

@@ -1845,6 +1845,15 @@ export default function Home() {
 
                           <ExecutionEvidenceAttributionControls
                             apiBaseUrl={API_BASE_URL}
+                            projectDirectionId={
+                              result?.persistence
+                                .roadmap_registry.status ===
+                                "ready"
+                                ? selectedDirection
+                                    ?.project_direction_id ??
+                                  null
+                                : null
+                            }
                             repositoryKey={
                               executionEvidenceResult.sync
                                 .repository_key

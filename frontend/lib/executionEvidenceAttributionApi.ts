@@ -70,6 +70,7 @@ async function readApiResponse<T>(
 export async function attachExecutionEvidence(
   {
     apiBaseUrl,
+    projectDirectionId,
     repositoryKey,
     evidenceKey,
     roadmapNodeId,
@@ -77,6 +78,7 @@ export async function attachExecutionEvidence(
     expectedRevision,
   }: {
     apiBaseUrl: string;
+    projectDirectionId: string;
     repositoryKey: string;
     evidenceKey: string;
     roadmapNodeId: string;
@@ -85,6 +87,12 @@ export async function attachExecutionEvidence(
   },
   fetcher: Fetcher = fetch,
 ): Promise<AttributionMutationResponse> {
+  if (!projectDirectionId.trim()) {
+    throw new ExecutionEvidenceApiError(
+      "Trusted project identity is required before attaching evidence.",
+    );
+  }
+
   if (!roadmapNodeId.trim()) {
     throw new ExecutionEvidenceApiError(
       "Choose a roadmap stage before attaching evidence.",
@@ -102,6 +110,8 @@ export async function attachExecutionEvidence(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          project_direction_id:
+            projectDirectionId.trim(),
           repository_key: repositoryKey,
           evidence_key: evidenceKey,
           roadmap_node_id: roadmapNodeId.trim(),
