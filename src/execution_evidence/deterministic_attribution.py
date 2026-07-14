@@ -24,6 +24,9 @@ MINIMUM_TOP_MARGIN = 0.06
 MINIMUM_MATCHED_TERMS = 2
 MAX_MATCHED_TERMS_REPORTED = 12
 
+CROSS_STAGE_MINIMUM_SCORE = 0.30
+CROSS_STAGE_MINIMUM_DISTINCT_TERMS = 2
+
 TOKEN_PATTERN = re.compile(r"[^\W_]+", re.UNICODE)
 
 STOP_WORDS = {
@@ -170,6 +173,12 @@ def suggest_deterministic_attribution(
         abstention_reason = (
             "Explicitly reverted work does not count as "
             "positive roadmap progress."
+        )
+    elif _has_cross_stage_ambiguity(candidates):
+        decision = "abstain"
+        abstention_reason = (
+            "The evidence contains distinct signals for "
+            "multiple roadmap stages."
         )
     else:
         decision, abstention_reason = _decide(
@@ -343,6 +352,49 @@ def _score_stage(
         matched_terms=matched_terms,
         signals=signals,
     )
+
+
+def _has_cross_stage_ambiguity(
+    candidates: List[
+        DeterministicAttributionCandidate
+    ],
+) -> bool:
+    if len(candidates) < 2:
+        return False
+
+    top = candidates[0]
+
+    if top.score < MINIMUM_CANDIDATE_SCORE:
+        return False
+
+    top_terms = set(top.matched_terms)
+
+    for alternative in candidates[1:]:
+        if (
+            alternative.score
+            < CROSS_STAGE_MINIMUM_SCORE
+        ):
+            continue
+
+        alternative_terms = set(
+            alternative.matched_terms
+        )
+        top_distinct_terms = (
+            top_terms - alternative_terms
+        )
+        alternative_distinct_terms = (
+            alternative_terms - top_terms
+        )
+
+        if (
+            len(top_distinct_terms)
+            >= CROSS_STAGE_MINIMUM_DISTINCT_TERMS
+            and len(alternative_distinct_terms)
+            >= CROSS_STAGE_MINIMUM_DISTINCT_TERMS
+        ):
+            return True
+
+    return False
 
 
 def _is_explicit_revert(title: str) -> bool:

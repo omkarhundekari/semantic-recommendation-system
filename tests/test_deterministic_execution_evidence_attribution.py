@@ -416,3 +416,70 @@ def test_revert_feature_work_is_not_mistaken_for_a_revert():
         result.candidates[0].roadmap_node_id
         == "mvp"
     )
+
+
+def test_distinct_cross_stage_signals_abstain():
+    roadmap = build_roadmap_snapshot(
+        [
+            RoadmapStage(
+                id="mvp",
+                title="Build delivery pipeline",
+                purpose=(
+                    "Implement deployment automation."
+                ),
+            ),
+            RoadmapStage(
+                id="validate",
+                title="Validate delivery pipeline",
+                purpose=(
+                    "Run deployment checks and rollback "
+                    "verification."
+                ),
+            ),
+            RoadmapStage(
+                id="package",
+                title="Publish production release",
+                purpose=(
+                    "Publish release notes and production "
+                    "documentation."
+                ),
+            ),
+        ]
+    )
+
+    result = suggest_deterministic_attribution(
+        evidence=_evidence(
+            title=(
+                "Add deployment checks and release notes"
+            ),
+            description=(
+                "Updates rollback validation and "
+                "production documentation."
+            ),
+        ),
+        roadmap=roadmap,
+    )
+
+    assert result.decision == "abstain"
+    assert result.abstention_reason == (
+        "The evidence contains distinct signals for "
+        "multiple roadmap stages."
+    )
+
+
+def test_shared_generic_terms_do_not_create_cross_stage_abstention():
+    result = suggest_deterministic_attribution(
+        evidence=_evidence(
+            title="Improve retrieval quality",
+            description=(
+                "Updates retrieval logic and evaluation."
+            ),
+        ),
+        roadmap=_roadmap(),
+    )
+
+    assert result.decision == "suggest"
+    assert (
+        result.candidates[0].roadmap_node_id
+        == "validate"
+    )
