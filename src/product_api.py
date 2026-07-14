@@ -854,6 +854,16 @@ def attach_execution_evidence_attribution(
         )
     )
 
+    if stored_roadmap.project_status != "active":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Cannot attach new execution evidence "
+                f"to a {stored_roadmap.project_status} "
+                "project."
+            ),
+        )
+
     roadmap_stage = next(
         (
             stage

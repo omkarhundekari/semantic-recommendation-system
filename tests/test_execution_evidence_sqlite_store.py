@@ -32,6 +32,7 @@ from planning.roadmap_snapshot import (
     RoadmapStageSnapshot,
 )
 from execution_evidence.store import (
+    RepositoryEvidenceConflictError,
     RepositoryEvidenceRestoreError,
     StoredRepositoryEvidence,
 )
@@ -844,3 +845,220 @@ def test_referenced_roadmap_snapshot_cannot_be_deleted(
 
     assert remaining == 1
     assert attribution_count == 1
+
+
+
+@pytest.mark.parametrize(
+    "project_status",
+    ["archived", "deleted"],
+)
+def test_sqlite_store_rejects_new_attribution_for_inactive_project(
+    tmp_path: Path,
+    project_status: str,
+):
+    database_path = tmp_path / "solvyn.db"
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    trusted = registry.create(
+        StoredRoadmapSnapshot(
+            project_id="proj_lifecycle",
+            roadmap_snapshot_id="snap_lifecycle",
+            project_direction_id="direction-lifecycle",
+            response_direction_id="direction-lifecycle",
+            title="Lifecycle project",
+            snapshot=RoadmapSnapshot(
+                roadmap_hash="a" * 64,
+                snapshot_version=1,
+                canonicalization_version=1,
+                stages=[
+                    RoadmapStageSnapshot(
+                        stage_id="persist-evidence",
+                        position=0,
+                        content_hash="b" * 64,
+                        content={
+                            "id": "persist-evidence",
+                            "title": "Persist evidence",
+                        },
+                    )
+                ],
+            ),
+            created_at=SAVED_AT,
+        )
+    )
+
+    import sqlite3
+
+    connection = sqlite3.connect(
+        str(database_path)
+    )
+    try:
+        connection.execute(
+            """
+            UPDATE projects
+            SET status = ?
+            WHERE project_id = ?
+            """,
+            (
+                project_status,
+                trusted.project_id,
+            ),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    record = _record()
+    evidence = record.evidence[0]
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-lifecycle",
+        project_id=trusted.project_id,
+        roadmap_snapshot_id=(
+            trusted.roadmap_snapshot_id
+        ),
+        project_direction_id=(
+            trusted.project_direction_id
+        ),
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=_trusted_context(),
+    )
+
+    store = SQLiteRepositoryEvidenceStore(
+        database_path
+    )
+
+    with pytest.raises(
+        RepositoryEvidenceConflictError,
+        match=(
+            f"Cannot attach new execution evidence "
+            f"to a {project_status} project"
+        ),
+    ):
+        store.save(
+            record.model_copy(
+                update={
+                    "attributions": [attribution],
+                },
+                deep=True,
+            )
+        )
+
+    assert store.load(
+        record.repository.repository_key
+    ) is None
+
+
+@pytest.mark.parametrize(
+    "project_status",
+    ["archived", "deleted"],
+)
+def test_sqlite_store_preserves_existing_inactive_project_attribution(
+    tmp_path: Path,
+    project_status: str,
+):
+    database_path = tmp_path / "solvyn.db"
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    trusted = registry.create(
+        StoredRoadmapSnapshot(
+            project_id="proj_lifecycle",
+            roadmap_snapshot_id="snap_lifecycle",
+            project_direction_id="direction-lifecycle",
+            response_direction_id="direction-lifecycle",
+            title="Lifecycle project",
+            snapshot=RoadmapSnapshot(
+                roadmap_hash="a" * 64,
+                snapshot_version=1,
+                canonicalization_version=1,
+                stages=[
+                    RoadmapStageSnapshot(
+                        stage_id="persist-evidence",
+                        position=0,
+                        content_hash="b" * 64,
+                        content={
+                            "id": "persist-evidence",
+                            "title": "Persist evidence",
+                        },
+                    )
+                ],
+            ),
+            created_at=SAVED_AT,
+        )
+    )
+
+    record = _record()
+    evidence = record.evidence[0]
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-lifecycle",
+        project_id=trusted.project_id,
+        roadmap_snapshot_id=(
+            trusted.roadmap_snapshot_id
+        ),
+        project_direction_id=(
+            trusted.project_direction_id
+        ),
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=_trusted_context(),
+    )
+
+    store = SQLiteRepositoryEvidenceStore(
+        database_path
+    )
+    stored = store.save(
+        record.model_copy(
+            update={
+                "attributions": [attribution],
+            },
+            deep=True,
+        )
+    )
+
+    import sqlite3
+
+    connection = sqlite3.connect(
+        str(database_path)
+    )
+    try:
+        connection.execute(
+            """
+            UPDATE projects
+            SET status = ?
+            WHERE project_id = ?
+            """,
+            (
+                project_status,
+                trusted.project_id,
+            ),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    updated = stored.model_copy(
+        update={
+            "saved_at": SAVED_AT,
+        },
+        deep=True,
+    )
+    rewritten = store.save(
+        updated,
+        expected_revision=stored.revision,
+    )
+
+    assert rewritten.attributions == [
+        attribution
+    ]
+    assert store.load(
+        record.repository.repository_key
+    ).attributions == [attribution]

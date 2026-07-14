@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Set
 
 from execution_evidence.models import (
     EvidenceAttribution,
@@ -269,6 +269,24 @@ class SQLiteRepositoryEvidenceStore(
             next_revision = current_revision + 1
             timestamp = record.saved_at.isoformat()
 
+            existing_attribution_ids: Set[str] = set()
+
+            if existing is not None:
+                existing_attribution_ids = {
+                    str(row["attribution_id"])
+                    for row in connection.execute(
+                        """
+                        SELECT attribution_id
+                        FROM evidence_attributions
+                        WHERE repository_id = ?
+                        """,
+                        (
+                            int(existing["repository_id"]),
+                        ),
+                    )
+                    if row["attribution_id"] is not None
+                }
+
             if existing is None:
                 cursor = connection.execute(
                     """
@@ -363,6 +381,9 @@ class SQLiteRepositoryEvidenceStore(
                     connection,
                     repository_id,
                     record.attributions,
+                    existing_attribution_ids=(
+                        existing_attribution_ids
+                    ),
                 )
             )
 
@@ -623,6 +644,7 @@ class SQLiteRepositoryEvidenceStore(
             connection,
             repository_id,
             record.attributions,
+            allow_inactive_scope=True,
         )
 
         connection.execute(
@@ -764,10 +786,18 @@ class SQLiteRepositoryEvidenceStore(
         connection: sqlite3.Connection,
         repository_id: int,
         attributions: List[EvidenceAttribution],
+        *,
+        existing_attribution_ids: Optional[
+            Set[str]
+        ] = None,
+        allow_inactive_scope: bool = False,
     ) -> List[EvidenceAttribution]:
         stored_attributions: List[
             EvidenceAttribution
         ] = []
+        known_attribution_ids = (
+            existing_attribution_ids or set()
+        )
 
         for position, attribution in enumerate(
             attributions
@@ -791,7 +821,8 @@ class SQLiteRepositoryEvidenceStore(
                         roadmap.roadmap_registry_id,
                         roadmap.project_direction_id,
                         roadmap.roadmap_snapshot_id,
-                        project.project_id
+                        project.project_id,
+                        project.status AS project_status
                     FROM roadmap_registry AS roadmap
                     JOIN projects AS project
                         ON project.project_row_id =
@@ -816,7 +847,8 @@ class SQLiteRepositoryEvidenceStore(
                         roadmap.roadmap_registry_id,
                         roadmap.project_direction_id,
                         roadmap.roadmap_snapshot_id,
-                        project.project_id
+                        project.project_id,
+                        project.status AS project_status
                     FROM roadmap_registry AS roadmap
                     JOIN projects AS project
                         ON project.project_row_id =
@@ -861,6 +893,28 @@ class SQLiteRepositoryEvidenceStore(
                         "project_direction_id"
                     ]
                 )
+                project_status = str(
+                    registry_row["project_status"]
+                )
+                attribution_id = (
+                    attribution.attribution_id
+                )
+                is_existing_attribution = (
+                    attribution_id is not None
+                    and attribution_id
+                    in known_attribution_ids
+                )
+
+                if (
+                    project_status != "active"
+                    and not is_existing_attribution
+                    and not allow_inactive_scope
+                ):
+                    raise RepositoryEvidenceConflictError(
+                        "Cannot attach new execution "
+                        "evidence to a "
+                        f"{project_status} project."
+                    )
 
                 if (
                     attribution.project_direction_id

@@ -1500,3 +1500,98 @@ def test_attach_endpoint_rejects_conflicting_direction_alias(
 
     assert response.status_code == 404
     assert service.attach_calls == []
+
+
+
+@pytest.mark.parametrize(
+    "project_status",
+    ["archived", "deleted"],
+)
+def test_attach_endpoint_rejects_inactive_project(
+    client,
+    project_status: str,
+):
+    service = FakeAttributionService()
+    inactive_roadmap = TRUSTED_ROADMAP.model_copy(
+        update={
+            "project_status": project_status,
+        },
+        deep=True,
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+    app.dependency_overrides[
+        get_roadmap_snapshot_registry
+    ] = lambda: FakeRoadmapRegistry(
+        record=inactive_roadmap
+    )
+
+    response = client.post(
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": ROADMAP_SNAPSHOT_ID,
+            "project_direction_id": PROJECT_DIRECTION_ID,
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": (
+            "Cannot attach new execution evidence "
+            f"to a {project_status} project."
+        )
+    }
+    assert service.attach_calls == []
+
+
+@pytest.mark.parametrize(
+    "project_status",
+    ["archived", "deleted"],
+)
+def test_detach_endpoint_allows_inactive_project(
+    client,
+    project_status: str,
+):
+    service = FakeAttributionService(
+        detach_result=True
+    )
+    inactive_roadmap = TRUSTED_ROADMAP.model_copy(
+        update={
+            "project_status": project_status,
+        },
+        deep=True,
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_attribution_service
+    ] = lambda: service
+    app.dependency_overrides[
+        get_roadmap_snapshot_registry
+    ] = lambda: FakeRoadmapRegistry(
+        record=inactive_roadmap
+    )
+
+    response = client.request(
+        "DELETE",
+        "/v1/execution-evidence/attributions",
+        json={
+            "project_id": PROJECT_ID,
+            "roadmap_snapshot_id": ROADMAP_SNAPSHOT_ID,
+            "project_direction_id": PROJECT_DIRECTION_ID,
+            "repository_key": REPOSITORY_KEY,
+            "evidence_key": EVIDENCE.evidence_key,
+            "roadmap_node_id": "build-mvp",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "removed": True,
+    }
+    assert len(service.detach_calls) == 1
