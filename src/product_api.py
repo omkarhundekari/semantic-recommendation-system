@@ -86,6 +86,11 @@ from execution_evidence.json_store import (
 from execution_evidence.sqlite_store import (
     SQLiteRepositoryEvidenceStore,
 )
+from execution_evidence.storage_readiness import (
+    ExecutionEvidenceStorageReadiness,
+    assess_execution_evidence_storage_readiness,
+    assess_sqlite_database_readiness,
+)
 from execution_evidence.store import (
     RepositoryEvidenceConflictError,
     RepositoryEvidenceStore,
@@ -213,8 +218,25 @@ def build_execution_evidence_store(
             f"{resolved_path}."
         )
 
+    readiness = (
+        assess_sqlite_database_readiness(
+            resolved_path
+        )
+    )
+
+    if readiness.status == "misconfigured":
+        details = "; ".join(
+            readiness.errors
+        )
+        raise ValueError(
+            "SQLite execution evidence storage "
+            "failed readiness validation: "
+            f"{details}"
+        )
+
     return SQLiteRepositoryEvidenceStore(
-        resolved_path
+        resolved_path,
+        initialize_schema=False,
     )
 
 
@@ -634,6 +656,22 @@ def list_execution_evidence_attributions(
             status_code=404,
             detail=str(error),
         ) from error
+
+
+@app.get(
+    "/v1/execution-evidence/storage/readiness",
+    response_model=ExecutionEvidenceStorageReadiness,
+)
+def execution_evidence_storage_readiness(
+    store: RepositoryEvidenceStore = Depends(
+        get_execution_evidence_store
+    ),
+) -> ExecutionEvidenceStorageReadiness:
+    return (
+        assess_execution_evidence_storage_readiness(
+            store
+        )
+    )
 
 
 @app.get("/health")

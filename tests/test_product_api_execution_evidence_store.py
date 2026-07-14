@@ -320,3 +320,60 @@ def test_explicit_path_remains_json_compatible_when_backend_omitted(
         JsonRepositoryEvidenceStore,
     )
     assert store.path == store_path
+
+
+def test_runtime_sqlite_factory_does_not_apply_schema_migrations(
+    tmp_path: Path,
+):
+    import sqlite3
+
+    database_path = tmp_path / "outdated.db"
+    SQLiteRepositoryEvidenceStore(
+        database_path
+    )
+
+    connection = sqlite3.connect(
+        str(database_path)
+    )
+
+    try:
+        connection.execute(
+            """
+            DELETE FROM
+                execution_evidence_schema_migrations
+            WHERE version = (
+                SELECT MAX(version)
+                FROM
+                    execution_evidence_schema_migrations
+            )
+            """
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    with pytest.raises(
+        ValueError,
+        match="failed readiness validation",
+    ):
+        build_execution_evidence_store(
+            str(database_path),
+            backend="sqlite",
+        )
+
+    connection = sqlite3.connect(
+        str(database_path)
+    )
+
+    try:
+        version = connection.execute(
+            """
+            SELECT COALESCE(MAX(version), 0)
+            FROM
+                execution_evidence_schema_migrations
+            """
+        ).fetchone()[0]
+    finally:
+        connection.close()
+
+    assert version == 2
