@@ -27,6 +27,14 @@ class RoadmapSnapshotConflictError(
 
 
 class StoredRoadmapSnapshot(BaseModel):
+    project_id: Optional[str] = Field(
+        default=None,
+        min_length=1,
+    )
+    roadmap_snapshot_id: Optional[str] = Field(
+        default=None,
+        min_length=1,
+    )
     project_direction_id: str = Field(
         min_length=1,
     )
@@ -47,9 +55,16 @@ def create_stored_roadmap_snapshot(
     title: str,
     snapshot: RoadmapSnapshot,
     created_at: datetime,
+    project_id: Optional[str] = None,
     supersedes_id: Optional[str] = None,
 ) -> StoredRoadmapSnapshot:
     return StoredRoadmapSnapshot(
+        project_id=(
+            project_id.strip()
+            if project_id is not None
+            else f"proj_{uuid4()}"
+        ),
+        roadmap_snapshot_id=f"snap_{uuid4()}",
         project_direction_id=str(uuid4()),
         response_direction_id=(
             response_direction_id.strip()
@@ -167,13 +182,16 @@ class SQLiteRoadmapSnapshotRegistry(
             stored_records = []
 
             for record in records:
+                identified = self._identify_record(
+                    record
+                )
                 existing = self._load_on_connection(
                     connection,
-                    record.project_direction_id,
+                    identified.project_direction_id,
                 )
 
                 if existing is not None:
-                    if existing == record:
+                    if existing == identified:
                         stored_records.append(
                             existing.model_copy(
                                 deep=True
@@ -187,6 +205,13 @@ class SQLiteRoadmapSnapshotRegistry(
                         "roadmap snapshot."
                     )
 
+                project_row_id = (
+                    self._ensure_project_on_connection(
+                        connection,
+                        identified,
+                    )
+                )
+
                 connection.execute(
                     """
                     INSERT INTO roadmap_registry (
@@ -197,24 +222,30 @@ class SQLiteRoadmapSnapshotRegistry(
                         roadmap_hash,
                         snapshot_json,
                         created_at,
-                        supersedes_id
+                        supersedes_id,
+                        project_row_id,
+                        roadmap_snapshot_id
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    )
                     """,
                     (
                         self._workspace_id,
-                        record.project_direction_id,
-                        record.response_direction_id,
-                        record.title,
-                        record.snapshot.roadmap_hash,
-                        record.snapshot.model_dump_json(),
-                        record.created_at.isoformat(),
-                        record.supersedes_id,
+                        identified.project_direction_id,
+                        identified.response_direction_id,
+                        identified.title,
+                        identified.snapshot.roadmap_hash,
+                        identified.snapshot.model_dump_json(),
+                        identified.created_at.isoformat(),
+                        identified.supersedes_id,
+                        project_row_id,
+                        identified.roadmap_snapshot_id,
                     ),
                 )
 
                 stored_records.append(
-                    record.model_copy(deep=True)
+                    identified.model_copy(deep=True)
                 )
 
             connection.execute("COMMIT")
@@ -274,17 +305,22 @@ class SQLiteRoadmapSnapshotRegistry(
             rows = connection.execute(
                 """
                 SELECT
-                    project_direction_id,
-                    response_direction_id,
-                    title,
-                    snapshot_json,
-                    created_at,
-                    supersedes_id
-                FROM roadmap_registry
-                WHERE workspace_id = ?
+                    project.project_id,
+                    roadmap.roadmap_snapshot_id,
+                    roadmap.project_direction_id,
+                    roadmap.response_direction_id,
+                    roadmap.title,
+                    roadmap.snapshot_json,
+                    roadmap.created_at,
+                    roadmap.supersedes_id
+                FROM roadmap_registry AS roadmap
+                LEFT JOIN projects AS project
+                    ON project.project_row_id =
+                        roadmap.project_row_id
+                WHERE roadmap.workspace_id = ?
                 ORDER BY
-                    created_at DESC,
-                    project_direction_id
+                    roadmap.created_at DESC,
+                    roadmap.project_direction_id
                 """,
                 (self._workspace_id,),
             ).fetchall()
@@ -312,16 +348,21 @@ class SQLiteRoadmapSnapshotRegistry(
         row = connection.execute(
             """
             SELECT
-                project_direction_id,
-                response_direction_id,
-                title,
-                snapshot_json,
-                created_at,
-                supersedes_id
-            FROM roadmap_registry
+                project.project_id,
+                roadmap.roadmap_snapshot_id,
+                roadmap.project_direction_id,
+                roadmap.response_direction_id,
+                roadmap.title,
+                roadmap.snapshot_json,
+                roadmap.created_at,
+                roadmap.supersedes_id
+            FROM roadmap_registry AS roadmap
+            LEFT JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
             WHERE
-                workspace_id = ?
-                AND project_direction_id = ?
+                roadmap.workspace_id = ?
+                AND roadmap.project_direction_id = ?
             """,
             (
                 self._workspace_id,
@@ -338,9 +379,27 @@ class SQLiteRoadmapSnapshotRegistry(
     def _record_from_row(
         row: sqlite3.Row,
     ) -> StoredRoadmapSnapshot:
+        project_direction_id = (
+            row["project_direction_id"]
+        )
+
         return StoredRoadmapSnapshot(
+            project_id=(
+                row["project_id"]
+                or (
+                    "proj_migrated_"
+                    + project_direction_id
+                )
+            ),
+            roadmap_snapshot_id=(
+                row["roadmap_snapshot_id"]
+                or (
+                    "snap_migrated_"
+                    + project_direction_id
+                )
+            ),
             project_direction_id=(
-                row["project_direction_id"]
+                project_direction_id
             ),
             response_direction_id=(
                 row["response_direction_id"]
@@ -354,6 +413,89 @@ class SQLiteRoadmapSnapshotRegistry(
             created_at=row["created_at"],
             supersedes_id=row["supersedes_id"],
         )
+
+    @staticmethod
+    def _identify_record(
+        record: StoredRoadmapSnapshot,
+    ) -> StoredRoadmapSnapshot:
+        project_id = (
+            record.project_id.strip()
+            if record.project_id is not None
+            else (
+                "proj_migrated_"
+                + record.project_direction_id
+            )
+        )
+        roadmap_snapshot_id = (
+            record.roadmap_snapshot_id.strip()
+            if record.roadmap_snapshot_id is not None
+            else (
+                "snap_migrated_"
+                + record.project_direction_id
+            )
+        )
+
+        return record.model_copy(
+            update={
+                "project_id": project_id,
+                "roadmap_snapshot_id": (
+                    roadmap_snapshot_id
+                ),
+            },
+            deep=True,
+        )
+
+    def _ensure_project_on_connection(
+        self,
+        connection: sqlite3.Connection,
+        record: StoredRoadmapSnapshot,
+    ) -> int:
+        if record.project_id is None:
+            raise RoadmapRegistryError(
+                "Roadmap project identity is missing."
+            )
+
+        existing = connection.execute(
+            """
+            SELECT
+                project_row_id,
+                title
+            FROM projects
+            WHERE
+                workspace_id = ?
+                AND project_id = ?
+            """,
+            (
+                self._workspace_id,
+                record.project_id,
+            ),
+        ).fetchone()
+
+        if existing is not None:
+            return int(existing["project_row_id"])
+
+        cursor = connection.execute(
+            """
+            INSERT INTO projects (
+                project_id,
+                workspace_id,
+                title,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, 'active', ?, ?)
+            """,
+            (
+                record.project_id,
+                self._workspace_id,
+                record.title,
+                record.created_at.isoformat(),
+                record.created_at.isoformat(),
+            ),
+        )
+
+        return int(cursor.lastrowid)
 
     def _connect(self) -> sqlite3.Connection:
         try:

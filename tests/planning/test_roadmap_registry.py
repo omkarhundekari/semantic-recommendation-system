@@ -73,7 +73,7 @@ def _record(
     )
 
 
-def test_factory_creates_opaque_project_direction_id():
+def test_factory_creates_opaque_registry_identities():
     record = create_stored_roadmap_snapshot(
         response_direction_id="direction-1",
         title="Evidence Attribution Engine",
@@ -81,6 +81,12 @@ def test_factory_creates_opaque_project_direction_id():
         created_at=CREATED_AT,
     )
 
+    assert record.project_id is not None
+    assert record.project_id.startswith("proj_")
+    assert record.roadmap_snapshot_id is not None
+    assert record.roadmap_snapshot_id.startswith(
+        "snap_"
+    )
     assert record.project_direction_id
     assert (
         record.project_direction_id
@@ -261,7 +267,21 @@ def test_create_many_persists_batch_atomically(
 
     saved = registry.create_many(records)
 
-    assert saved == records
+    assert [
+        record.project_direction_id
+        for record in saved
+    ] == [
+        record.project_direction_id
+        for record in records
+    ]
+    assert all(
+        record.project_id is not None
+        for record in saved
+    )
+    assert all(
+        record.roadmap_snapshot_id is not None
+        for record in saved
+    )
     assert {
         record.project_direction_id
         for record in registry.list_snapshots()
@@ -282,7 +302,7 @@ def test_create_many_rolls_back_entire_batch_on_conflict(
     existing = _record(
         project_direction_id="existing"
     )
-    registry.create(existing)
+    saved_existing = registry.create(existing)
 
     valid_new_record = _record(
         project_direction_id="new-record"
@@ -304,7 +324,10 @@ def test_create_many_rolls_back_entire_batch_on_conflict(
         )
 
     assert registry.load("new-record") is None
-    assert registry.load("existing") == existing
+    assert (
+        registry.load("existing")
+        == saved_existing
+    )
 
 
 def test_create_many_rejects_duplicate_ids_before_writing(
@@ -349,3 +372,127 @@ def test_create_many_is_idempotent_for_exact_batch(
 
     assert second == first
     assert len(registry.list_snapshots()) == 2
+
+
+def test_registry_persists_project_and_snapshot_identity(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+
+    record = create_stored_roadmap_snapshot(
+        response_direction_id="direction-1",
+        title="Evidence Attribution Engine",
+        snapshot=_snapshot(),
+        created_at=CREATED_AT,
+    )
+
+    saved = registry.create(record)
+    loaded = registry.load(
+        record.project_direction_id
+    )
+
+    assert loaded == saved
+    assert loaded is not None
+    assert loaded.project_id == record.project_id
+    assert (
+        loaded.roadmap_snapshot_id
+        == record.roadmap_snapshot_id
+    )
+
+    import sqlite3
+
+    connection = sqlite3.connect(
+        str(database_path)
+    )
+    connection.row_factory = sqlite3.Row
+
+    try:
+        row = connection.execute(
+            """
+            SELECT
+                project.project_id,
+                roadmap.roadmap_snapshot_id
+            FROM roadmap_registry AS roadmap
+            JOIN projects AS project
+                ON project.project_row_id =
+                    roadmap.project_row_id
+            WHERE roadmap.project_direction_id = ?
+            """,
+            (record.project_direction_id,),
+        ).fetchone()
+    finally:
+        connection.close()
+
+    assert row is not None
+    assert row["project_id"] == record.project_id
+    assert (
+        row["roadmap_snapshot_id"]
+        == record.roadmap_snapshot_id
+    )
+
+
+def test_registry_reuses_explicit_project_identity(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+
+    first = create_stored_roadmap_snapshot(
+        project_id="proj_shared",
+        response_direction_id="direction-1",
+        title="Shared project",
+        snapshot=_snapshot(),
+        created_at=CREATED_AT,
+    )
+    second = create_stored_roadmap_snapshot(
+        project_id="proj_shared",
+        response_direction_id="direction-2",
+        title="Shared project",
+        snapshot=_snapshot(
+            purpose="Build the second roadmap."
+        ),
+        created_at=CREATED_AT,
+    )
+
+    saved = registry.create_many(
+        [first, second]
+    )
+
+    assert {
+        record.project_id
+        for record in saved
+    } == {"proj_shared"}
+    assert len(
+        {
+            record.roadmap_snapshot_id
+            for record in saved
+        }
+    ) == 2
+
+
+def test_registry_backfills_manual_record_identity(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+    record = _record()
+
+    saved = registry.create(record)
+
+    assert saved.project_id == (
+        "proj_migrated_project-direction-one"
+    )
+    assert saved.roadmap_snapshot_id == (
+        "snap_migrated_project-direction-one"
+    )
+
+    loaded = registry.load(
+        record.project_direction_id
+    )
+
+    assert loaded == saved
