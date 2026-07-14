@@ -42,6 +42,7 @@ from planning.roadmap_execution_enrichment import (
 from planning.roadmap_registry import (
     ProjectNotFoundError,
     ProjectStatus,
+    ProjectStatusMutationResult,
     ProjectStatusTransition,
     ProjectStatusTransitionError,
     RoadmapRegistryError,
@@ -421,16 +422,6 @@ class ProjectStatusTransitionRequest(BaseModel):
         default=None,
         max_length=1000,
     )
-
-
-class ProjectStatusTransitionResponse(BaseModel):
-    changed: bool
-    project_id: str
-    previous_status: ProjectStatus
-    current_status: ProjectStatus
-    transition: Optional[
-        ProjectStatusTransition
-    ] = None
 
 
 BROAD_PLANNING_DOMAINS = {
@@ -1085,7 +1076,7 @@ def list_execution_evidence_attributions(
 
 @app.post(
     "/v1/projects/{project_id}/status",
-    response_model=ProjectStatusTransitionResponse,
+    response_model=ProjectStatusMutationResult,
 )
 def transition_project_status(
     project_id: str,
@@ -1095,7 +1086,7 @@ def transition_project_status(
     ] = Depends(
         get_roadmap_snapshot_registry
     ),
-) -> ProjectStatusTransitionResponse:
+) -> ProjectStatusMutationResult:
     if roadmap_registry is None:
         raise HTTPException(
             status_code=503,
@@ -1107,7 +1098,7 @@ def transition_project_status(
         )
 
     try:
-        transition = (
+        return (
             roadmap_registry
             .transition_project_status(
                 project_id,
@@ -1136,23 +1127,6 @@ def transition_project_status(
                 "could not complete the transition."
             ),
         ) from error
-
-    if transition is not None:
-        return ProjectStatusTransitionResponse(
-            changed=True,
-            project_id=transition.project_id,
-            previous_status=transition.previous_status,
-            current_status=transition.new_status,
-            transition=transition,
-        )
-
-    return ProjectStatusTransitionResponse(
-        changed=False,
-        project_id=project_id.strip(),
-        previous_status=request.status,
-        current_status=request.status,
-        transition=None,
-    )
 
 
 @app.get(

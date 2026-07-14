@@ -904,13 +904,18 @@ def test_project_status_transition_is_audited(
         tzinfo=timezone.utc,
     )
 
-    transition = registry.transition_project_status(
+    result = registry.transition_project_status(
         stored.project_id,
         new_status="archived",
         changed_at=changed_at,
         reason="Project paused.",
     )
+    transition = result.transition
 
+    assert result.changed is True
+    assert result.project_id == stored.project_id
+    assert result.previous_status == "active"
+    assert result.current_status == "archived"
     assert transition is not None
     assert transition.project_id == stored.project_id
     assert transition.previous_status == "active"
@@ -952,7 +957,11 @@ def test_project_status_transition_is_idempotent(
         reason="No change.",
     )
 
-    assert result is None
+    assert result.changed is False
+    assert result.project_id == stored.project_id
+    assert result.previous_status == "active"
+    assert result.current_status == "active"
+    assert result.transition is None
     assert registry.list_project_status_transitions(
         stored.project_id
     ) == []
@@ -992,9 +1001,14 @@ def test_archived_project_can_be_reactivated(
         ),
     )
 
-    assert reactivated is not None
+    assert reactivated.changed is True
     assert reactivated.previous_status == "archived"
-    assert reactivated.new_status == "active"
+    assert reactivated.current_status == "active"
+    assert reactivated.transition is not None
+    assert (
+        reactivated.transition.new_status
+        == "active"
+    )
 
     replacement = registry.create(
         create_stored_roadmap_snapshot(
@@ -1059,9 +1073,14 @@ def test_project_can_be_soft_deleted(
         ),
     )
 
-    assert transition is not None
+    assert transition.changed is True
     assert transition.previous_status == initial_status
-    assert transition.new_status == "deleted"
+    assert transition.current_status == "deleted"
+    assert transition.transition is not None
+    assert (
+        transition.transition.new_status
+        == "deleted"
+    )
 
 
 @pytest.mark.parametrize(

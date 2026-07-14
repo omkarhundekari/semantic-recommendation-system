@@ -54,6 +54,16 @@ class ProjectStatusTransition(BaseModel):
     reason: Optional[str] = None
 
 
+class ProjectStatusMutationResult(BaseModel):
+    changed: bool
+    project_id: str = Field(min_length=1)
+    previous_status: ProjectStatus
+    current_status: ProjectStatus
+    transition: Optional[
+        ProjectStatusTransition
+    ] = None
+
+
 class StoredRoadmapSnapshot(BaseModel):
     project_id: Optional[str] = Field(
         default=None,
@@ -161,7 +171,7 @@ class RoadmapSnapshotRegistry(ABC):
         new_status: ProjectStatus,
         changed_at: datetime,
         reason: Optional[str] = None,
-    ) -> Optional[ProjectStatusTransition]:
+    ) -> ProjectStatusMutationResult:
         raise NotImplementedError
 
     @abstractmethod
@@ -507,7 +517,7 @@ class SQLiteRoadmapSnapshotRegistry(
         new_status: ProjectStatus,
         changed_at: datetime,
         reason: Optional[str] = None,
-    ) -> Optional[ProjectStatusTransition]:
+    ) -> ProjectStatusMutationResult:
         normalized_project_id = project_id.strip()
         normalized_reason = (
             reason.strip()
@@ -549,8 +559,15 @@ class SQLiteRoadmapSnapshotRegistry(
             previous_status = str(project["status"])
 
             if previous_status == new_status:
+                result = ProjectStatusMutationResult(
+                    changed=False,
+                    project_id=normalized_project_id,
+                    previous_status=previous_status,
+                    current_status=previous_status,
+                    transition=None,
+                )
                 connection.execute("COMMIT")
-                return None
+                return result
 
             allowed_transitions = {
                 "active": {
@@ -626,8 +643,18 @@ class SQLiteRoadmapSnapshotRegistry(
                 ),
             )
 
+            result = ProjectStatusMutationResult(
+                changed=True,
+                project_id=transition.project_id,
+                previous_status=(
+                    transition.previous_status
+                ),
+                current_status=transition.new_status,
+                transition=transition,
+            )
+
             connection.execute("COMMIT")
-            return transition.model_copy(deep=True)
+            return result.model_copy(deep=True)
         except (
             ProjectNotFoundError,
             ProjectStatusTransitionError,
