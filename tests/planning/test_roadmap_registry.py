@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 
 from planning.roadmap_registry import (
+    ProjectNotFoundError,
+    ProjectStatusTransitionError,
     RoadmapSnapshotConflictError,
     SQLiteRoadmapSnapshotRegistry,
     StoredRoadmapSnapshot,
@@ -875,3 +877,283 @@ def test_registry_rejects_new_snapshot_for_inactive_project(
     assert registry.load(
         replacement.project_direction_id
     ) is None
+
+
+
+def test_project_status_transition_is_audited(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+    stored = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_status",
+            response_direction_id="direction-one",
+            title="Lifecycle project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+    changed_at = datetime(
+        2026,
+        7,
+        14,
+        15,
+        0,
+        tzinfo=timezone.utc,
+    )
+
+    transition = registry.transition_project_status(
+        stored.project_id,
+        new_status="archived",
+        changed_at=changed_at,
+        reason="Project paused.",
+    )
+
+    assert transition is not None
+    assert transition.project_id == stored.project_id
+    assert transition.previous_status == "active"
+    assert transition.new_status == "archived"
+    assert transition.changed_at == changed_at
+    assert transition.reason == "Project paused."
+
+    loaded = registry.load(
+        stored.project_direction_id
+    )
+
+    assert loaded is not None
+    assert loaded.project_status == "archived"
+    assert registry.list_project_status_transitions(
+        stored.project_id
+    ) == [transition]
+
+
+def test_project_status_transition_is_idempotent(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+    stored = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_status",
+            response_direction_id="direction-one",
+            title="Lifecycle project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+
+    result = registry.transition_project_status(
+        stored.project_id,
+        new_status="active",
+        changed_at=CREATED_AT,
+        reason="No change.",
+    )
+
+    assert result is None
+    assert registry.list_project_status_transitions(
+        stored.project_id
+    ) == []
+
+
+def test_archived_project_can_be_reactivated(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+    stored = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_status",
+            response_direction_id="direction-one",
+            title="Lifecycle project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+
+    registry.transition_project_status(
+        stored.project_id,
+        new_status="archived",
+        changed_at=CREATED_AT,
+    )
+    reactivated = registry.transition_project_status(
+        stored.project_id,
+        new_status="active",
+        changed_at=datetime(
+            2026,
+            7,
+            14,
+            16,
+            0,
+            tzinfo=timezone.utc,
+        ),
+    )
+
+    assert reactivated is not None
+    assert reactivated.previous_status == "archived"
+    assert reactivated.new_status == "active"
+
+    replacement = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id=stored.project_id,
+            response_direction_id="direction-two",
+            title="Lifecycle project",
+            snapshot=_snapshot(
+                purpose="Resume the project."
+            ),
+            created_at=datetime(
+                2026,
+                7,
+                14,
+                17,
+                0,
+                tzinfo=timezone.utc,
+            ),
+        )
+    )
+
+    assert replacement.project_status == "active"
+
+
+@pytest.mark.parametrize(
+    "initial_status",
+    ["active", "archived"],
+)
+def test_project_can_be_soft_deleted(
+    tmp_path: Path,
+    initial_status: str,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+    stored = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_status",
+            response_direction_id="direction-one",
+            title="Lifecycle project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+
+    if initial_status == "archived":
+        registry.transition_project_status(
+            stored.project_id,
+            new_status="archived",
+            changed_at=CREATED_AT,
+        )
+
+    transition = registry.transition_project_status(
+        stored.project_id,
+        new_status="deleted",
+        changed_at=datetime(
+            2026,
+            7,
+            14,
+            18,
+            0,
+            tzinfo=timezone.utc,
+        ),
+    )
+
+    assert transition is not None
+    assert transition.previous_status == initial_status
+    assert transition.new_status == "deleted"
+
+
+@pytest.mark.parametrize(
+    "target_status",
+    ["active", "archived"],
+)
+def test_deleted_project_cannot_transition(
+    tmp_path: Path,
+    target_status: str,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+    stored = registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_status",
+            response_direction_id="direction-one",
+            title="Lifecycle project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+
+    registry.transition_project_status(
+        stored.project_id,
+        new_status="deleted",
+        changed_at=CREATED_AT,
+    )
+
+    with pytest.raises(
+        ProjectStatusTransitionError,
+        match=(
+            f"deleted -> {target_status}"
+        ),
+    ):
+        registry.transition_project_status(
+            stored.project_id,
+            new_status=target_status,
+            changed_at=CREATED_AT,
+        )
+
+
+def test_project_status_transition_is_workspace_scoped(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    first = SQLiteRoadmapSnapshotRegistry(
+        database_path,
+        workspace_id="workspace-one",
+    )
+    second = SQLiteRoadmapSnapshotRegistry(
+        database_path,
+        workspace_id="workspace-two",
+    )
+    stored = first.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_status",
+            response_direction_id="direction-one",
+            title="Lifecycle project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+
+    with pytest.raises(
+        ProjectNotFoundError,
+        match="not found",
+    ):
+        second.transition_project_status(
+            stored.project_id,
+            new_status="archived",
+            changed_at=CREATED_AT,
+        )
+
+    assert first.load(
+        stored.project_direction_id
+    ).project_status == "active"
+
+
+def test_project_status_transition_requires_existing_project(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+
+    with pytest.raises(
+        ProjectNotFoundError,
+        match="not found",
+    ):
+        registry.transition_project_status(
+            "proj_missing",
+            new_status="archived",
+            changed_at=CREATED_AT,
+        )

@@ -11,6 +11,7 @@ from typing import Dict, Optional, Set
 from execution_evidence.sqlite_schema import (
     CURRENT_SQLITE_SCHEMA_VERSION,
     connect_execution_evidence_database,
+    get_execution_evidence_schema_version,
     initialize_execution_evidence_database,
 )
 from execution_evidence.store_migration import (
@@ -22,8 +23,10 @@ from execution_evidence.store_migration import (
     RepositoryEvidenceMigrationReport,
     build_migration_receipt,
     build_repository_evidence_root_hash,
+    load_repository_evidence_snapshot,
     persist_migration_receipt,
     verify_migration_receipt,
+    verify_repository_evidence_migration,
 )
 
 
@@ -160,6 +163,279 @@ def initialize_fresh_trusted_store(
         return _wait_for_concurrent_initialization(
             path
         )
+
+
+def upgrade_trusted_sqlite_store(
+    database_path: Path | str,
+    *,
+    created_at: Optional[str] = None,
+    backup_path: Optional[Path | str] = None,
+) -> RepositoryEvidenceMigrationReceipt:
+    from execution_evidence.sqlite_store import (
+        SQLiteRepositoryEvidenceStore,
+    )
+
+    path = Path(database_path)
+    lock_path = path.with_name(
+        f".{path.name}.migration.lock"
+    )
+    timestamp = (
+        created_at
+        or datetime.now(
+            timezone.utc
+        ).isoformat()
+    )
+
+    if not path.is_file():
+        raise TrustedStoreInitializationError(
+            "Trusted SQLite upgrade requires an "
+            "existing database."
+        )
+
+    try:
+        with RepositoryEvidenceMigrationLock(
+            lock_path
+        ):
+            previous_receipt = (
+                load_valid_trusted_receipt(path)
+            )
+
+            if previous_receipt is None:
+                raise TrustedStoreInitializationError(
+                    "Existing SQLite database does not "
+                    "contain a valid trusted-store receipt."
+                )
+
+            connection = (
+                connect_execution_evidence_database(path)
+            )
+
+            try:
+                previous_version = (
+                    get_execution_evidence_schema_version(
+                        connection
+                    )
+                )
+            finally:
+                connection.close()
+
+            if (
+                previous_version
+                == CURRENT_SQLITE_SCHEMA_VERSION
+            ):
+                return previous_receipt
+
+            if (
+                previous_version
+                > CURRENT_SQLITE_SCHEMA_VERSION
+            ):
+                raise TrustedStoreInitializationError(
+                    "SQLite database schema is newer "
+                    "than this application supports."
+                )
+
+            source_store = (
+                SQLiteRepositoryEvidenceStore(
+                    path,
+                    initialize_schema=False,
+                )
+            )
+            source_records = (
+                load_repository_evidence_snapshot(
+                    source_store
+                )
+            )
+            source_root_hash = (
+                build_repository_evidence_root_hash(
+                    source_records
+                )
+            )
+
+            resolved_backup_path = (
+                Path(backup_path)
+                if backup_path is not None
+                else path.with_name(
+                    f"{path.stem}.pre-v"
+                    f"{CURRENT_SQLITE_SCHEMA_VERSION}."
+                    f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+                    f"{path.suffix}"
+                )
+            )
+
+            if resolved_backup_path.exists():
+                raise TrustedStoreInitializationError(
+                    "Trusted SQLite upgrade backup "
+                    "already exists."
+                )
+
+            source_connection = (
+                connect_execution_evidence_database(path)
+            )
+
+            try:
+                source_connection.execute(
+                    "PRAGMA wal_checkpoint(FULL)"
+                )
+                backup_connection = sqlite3.connect(
+                    str(resolved_backup_path)
+                )
+
+                try:
+                    source_connection.backup(
+                        backup_connection
+                    )
+                finally:
+                    backup_connection.close()
+            except sqlite3.Error as error:
+                raise TrustedStoreInitializationError(
+                    "Could not create the trusted "
+                    "SQLite upgrade backup."
+                ) from error
+            finally:
+                source_connection.close()
+
+            try:
+                initialize_execution_evidence_database(
+                    path
+                )
+
+                destination = (
+                    SQLiteRepositoryEvidenceStore(
+                        path,
+                        initialize_schema=False,
+                    )
+                )
+                verification = (
+                    verify_repository_evidence_migration(
+                        source_records=source_records,
+                        destination=destination,
+                    )
+                )
+                report = verification.model_copy(
+                    update={
+                        "source_type": (
+                            SQLITE_UPGRADE_SOURCE_TYPE
+                        ),
+                        "destination_type": "sqlite",
+                        "root_hash": source_root_hash,
+                        "verified": True,
+                        "dry_run": False,
+                    },
+                    deep=True,
+                )
+
+                receipt = build_migration_receipt(
+                    report=report,
+                    source_identifier=(
+                        "solvyn:sqlite-upgrade:"
+                        f"{previous_receipt.receipt_id}:"
+                        f"v{previous_version}->"
+                        f"v{CURRENT_SQLITE_SCHEMA_VERSION}"
+                    ),
+                    created_at=timestamp,
+                )
+
+                persist_migration_receipt(
+                    database_path=path,
+                    receipt=receipt,
+                )
+                verify_migration_receipt(
+                    database_path=path,
+                    receipt=receipt,
+                )
+
+                stored = load_valid_trusted_receipt(
+                    path
+                )
+
+                if stored != receipt:
+                    raise TrustedStoreInitializationError(
+                        "SQLite upgrade did not produce "
+                        "a valid trusted receipt."
+                    )
+
+                final_connection = (
+                    connect_execution_evidence_database(
+                        path
+                    )
+                )
+
+                try:
+                    final_version = (
+                        get_execution_evidence_schema_version(
+                            final_connection
+                        )
+                    )
+                finally:
+                    final_connection.close()
+
+                if (
+                    final_version
+                    != CURRENT_SQLITE_SCHEMA_VERSION
+                ):
+                    raise TrustedStoreInitializationError(
+                        "SQLite upgrade did not reach the "
+                        "current schema version."
+                    )
+            except Exception as upgrade_error:
+                try:
+                    restore_source = sqlite3.connect(
+                        str(resolved_backup_path)
+                    )
+                    restore_destination = sqlite3.connect(
+                        str(path)
+                    )
+
+                    try:
+                        restore_source.backup(
+                            restore_destination
+                        )
+                    finally:
+                        restore_destination.close()
+                        restore_source.close()
+
+                    restored_receipt = (
+                        load_valid_trusted_receipt(path)
+                    )
+
+                    if restored_receipt != previous_receipt:
+                        raise TrustedStoreInitializationError(
+                            "SQLite upgrade failed and the "
+                            "trusted backup could not be "
+                            "verified after restoration."
+                        )
+                except Exception as restore_error:
+                    raise TrustedStoreInitializationError(
+                        "SQLite upgrade failed and automatic "
+                        "backup restoration also failed."
+                    ) from restore_error
+
+                if isinstance(
+                    upgrade_error,
+                    TrustedStoreInitializationError,
+                ):
+                    raise upgrade_error
+
+                if isinstance(
+                    upgrade_error,
+                    RepositoryEvidenceMigrationError,
+                ):
+                    raise TrustedStoreInitializationError(
+                        "Could not upgrade the trusted "
+                        "SQLite store."
+                    ) from upgrade_error
+
+                raise TrustedStoreInitializationError(
+                    "Trusted SQLite upgrade failed. The "
+                    "original database was restored."
+                ) from upgrade_error
+
+            return receipt
+    except RepositoryEvidenceMigrationError as error:
+        raise TrustedStoreInitializationError(
+            "Could not upgrade the trusted SQLite "
+            "store."
+        ) from error
 
 
 def load_valid_trusted_receipt(

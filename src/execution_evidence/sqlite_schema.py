@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 8
+CURRENT_SQLITE_SCHEMA_VERSION = 9
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -893,6 +893,76 @@ END;
 """
 
 
+CREATE_PROJECT_STATUS_TRANSITIONS_SQL = """
+CREATE TABLE project_status_transitions (
+    transition_id TEXT PRIMARY KEY,
+    project_row_id INTEGER NOT NULL,
+    workspace_id TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    previous_status TEXT NOT NULL
+        CHECK (
+            previous_status IN (
+                'active',
+                'archived',
+                'deleted'
+            )
+        ),
+    new_status TEXT NOT NULL
+        CHECK (
+            new_status IN (
+                'active',
+                'archived',
+                'deleted'
+            )
+        ),
+    changed_at TEXT NOT NULL,
+    reason TEXT,
+    FOREIGN KEY (project_row_id)
+        REFERENCES projects(project_row_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (workspace_id)
+        REFERENCES workspaces(workspace_id)
+        ON DELETE CASCADE,
+    CHECK (previous_status <> new_status)
+);
+
+CREATE INDEX idx_project_status_transitions_project
+ON project_status_transitions(
+    project_row_id,
+    changed_at DESC
+);
+
+CREATE INDEX idx_project_status_transitions_public
+ON project_status_transitions(
+    workspace_id,
+    project_id,
+    changed_at DESC
+);
+
+CREATE TRIGGER validate_project_status_transition_scope_insert
+BEFORE INSERT ON project_status_transitions
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM projects AS project
+            WHERE
+                project.project_row_id =
+                    NEW.project_row_id
+                AND project.workspace_id =
+                    NEW.workspace_id
+                AND project.project_id =
+                    NEW.project_id
+        )
+        THEN RAISE(
+            ABORT,
+            'Project status transition scope is invalid'
+        )
+    END;
+END;
+"""
+
+
 MAKE_DURABLE_ATTRIBUTION_IDENTITY_CANONICAL_SQL = """
 CREATE TEMP TABLE durable_attribution_identity_guard (
     invalid_count INTEGER NOT NULL
@@ -1023,6 +1093,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         sql=(
             MAKE_DURABLE_ATTRIBUTION_IDENTITY_CANONICAL_SQL
         ),
+    ),
+    SQLiteMigration(
+        version=9,
+        name="create_project_status_transition_audit",
+        sql=CREATE_PROJECT_STATUS_TRANSITIONS_SQL,
     ),
 )
 

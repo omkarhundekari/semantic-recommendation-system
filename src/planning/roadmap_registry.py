@@ -26,11 +26,32 @@ class RoadmapSnapshotConflictError(
     pass
 
 
+class ProjectNotFoundError(
+    RoadmapRegistryError
+):
+    pass
+
+
+class ProjectStatusTransitionError(
+    RoadmapSnapshotConflictError
+):
+    pass
+
+
 ProjectStatus = Literal[
     "active",
     "archived",
     "deleted",
 ]
+
+
+class ProjectStatusTransition(BaseModel):
+    transition_id: str = Field(min_length=1)
+    project_id: str = Field(min_length=1)
+    previous_status: ProjectStatus
+    new_status: ProjectStatus
+    changed_at: datetime
+    reason: Optional[str] = None
 
 
 class StoredRoadmapSnapshot(BaseModel):
@@ -130,6 +151,24 @@ class RoadmapSnapshotRegistry(ABC):
     def list_snapshots(
         self,
     ) -> List[StoredRoadmapSnapshot]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def transition_project_status(
+        self,
+        project_id: str,
+        *,
+        new_status: ProjectStatus,
+        changed_at: datetime,
+        reason: Optional[str] = None,
+    ) -> Optional[ProjectStatusTransition]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_project_status_transitions(
+        self,
+        project_id: str,
+    ) -> List[ProjectStatusTransition]:
         raise NotImplementedError
 
 
@@ -457,6 +496,236 @@ class SQLiteRoadmapSnapshotRegistry(
             raise RoadmapRegistryError(
                 "Could not list roadmap snapshot "
                 "registry records."
+            ) from error
+        finally:
+            connection.close()
+
+    def transition_project_status(
+        self,
+        project_id: str,
+        *,
+        new_status: ProjectStatus,
+        changed_at: datetime,
+        reason: Optional[str] = None,
+    ) -> Optional[ProjectStatusTransition]:
+        normalized_project_id = project_id.strip()
+        normalized_reason = (
+            reason.strip()
+            if reason and reason.strip()
+            else None
+        )
+
+        if not normalized_project_id:
+            raise ValueError(
+                "Project ID must not be empty."
+            )
+
+        connection = self._connect()
+
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            project = connection.execute(
+                """
+                SELECT
+                    project_row_id,
+                    project_id,
+                    status
+                FROM projects
+                WHERE
+                    workspace_id = ?
+                    AND project_id = ?
+                """,
+                (
+                    self._workspace_id,
+                    normalized_project_id,
+                ),
+            ).fetchone()
+
+            if project is None:
+                raise ProjectNotFoundError(
+                    "Project was not found in this workspace."
+                )
+
+            previous_status = str(project["status"])
+
+            if previous_status == new_status:
+                connection.execute("COMMIT")
+                return None
+
+            allowed_transitions = {
+                "active": {
+                    "archived",
+                    "deleted",
+                },
+                "archived": {
+                    "active",
+                    "deleted",
+                },
+                "deleted": set(),
+            }
+
+            if (
+                new_status
+                not in allowed_transitions[
+                    previous_status
+                ]
+            ):
+                raise ProjectStatusTransitionError(
+                    "Project status transition is not "
+                    f"allowed: {previous_status} -> "
+                    f"{new_status}."
+                )
+
+            transition = ProjectStatusTransition(
+                transition_id=f"ptr_{uuid4()}",
+                project_id=normalized_project_id,
+                previous_status=previous_status,
+                new_status=new_status,
+                changed_at=changed_at,
+                reason=normalized_reason,
+            )
+
+            connection.execute(
+                """
+                UPDATE projects
+                SET
+                    status = ?,
+                    updated_at = ?
+                WHERE project_row_id = ?
+                """,
+                (
+                    transition.new_status,
+                    transition.changed_at.isoformat(),
+                    int(project["project_row_id"]),
+                ),
+            )
+
+            connection.execute(
+                """
+                INSERT INTO project_status_transitions (
+                    transition_id,
+                    project_row_id,
+                    workspace_id,
+                    project_id,
+                    previous_status,
+                    new_status,
+                    changed_at,
+                    reason
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    transition.transition_id,
+                    int(project["project_row_id"]),
+                    self._workspace_id,
+                    transition.project_id,
+                    transition.previous_status,
+                    transition.new_status,
+                    transition.changed_at.isoformat(),
+                    transition.reason,
+                ),
+            )
+
+            connection.execute("COMMIT")
+            return transition.model_copy(deep=True)
+        except (
+            ProjectNotFoundError,
+            ProjectStatusTransitionError,
+        ):
+            self._rollback(connection)
+            raise
+        except sqlite3.IntegrityError as error:
+            self._rollback(connection)
+            raise ProjectStatusTransitionError(
+                "Project status transition constraint "
+                "conflict."
+            ) from error
+        except sqlite3.Error as error:
+            self._rollback(connection)
+            raise RoadmapRegistryError(
+                "Could not transition project status."
+            ) from error
+        finally:
+            connection.close()
+
+    def list_project_status_transitions(
+        self,
+        project_id: str,
+    ) -> List[ProjectStatusTransition]:
+        normalized_project_id = project_id.strip()
+
+        if not normalized_project_id:
+            raise ValueError(
+                "Project ID must not be empty."
+            )
+
+        connection = self._connect()
+
+        try:
+            project = connection.execute(
+                """
+                SELECT project_row_id
+                FROM projects
+                WHERE
+                    workspace_id = ?
+                    AND project_id = ?
+                """,
+                (
+                    self._workspace_id,
+                    normalized_project_id,
+                ),
+            ).fetchone()
+
+            if project is None:
+                raise ProjectNotFoundError(
+                    "Project was not found in this workspace."
+                )
+
+            rows = connection.execute(
+                """
+                SELECT
+                    transition_id,
+                    project_id,
+                    previous_status,
+                    new_status,
+                    changed_at,
+                    reason
+                FROM project_status_transitions
+                WHERE
+                    workspace_id = ?
+                    AND project_id = ?
+                ORDER BY
+                    changed_at DESC,
+                    transition_id DESC
+                """,
+                (
+                    self._workspace_id,
+                    normalized_project_id,
+                ),
+            ).fetchall()
+
+            return [
+                ProjectStatusTransition(
+                    transition_id=row["transition_id"],
+                    project_id=row["project_id"],
+                    previous_status=(
+                        row["previous_status"]
+                    ),
+                    new_status=row["new_status"],
+                    changed_at=row["changed_at"],
+                    reason=row["reason"],
+                )
+                for row in rows
+            ]
+        except ProjectNotFoundError:
+            raise
+        except (
+            sqlite3.Error,
+            ValueError,
+        ) as error:
+            raise RoadmapRegistryError(
+                "Could not list project status "
+                "transitions."
             ) from error
         finally:
             connection.close()
