@@ -238,3 +238,114 @@ def test_supersession_requires_same_workspace_record(
                 supersedes_id="missing",
             )
         )
+
+
+def test_create_many_persists_batch_atomically(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+
+    records = [
+        _record(
+            project_direction_id="direction-record-one"
+        ),
+        _record(
+            project_direction_id="direction-record-two"
+        ),
+        _record(
+            project_direction_id="direction-record-three"
+        ),
+    ]
+
+    saved = registry.create_many(records)
+
+    assert saved == records
+    assert {
+        record.project_direction_id
+        for record in registry.list_snapshots()
+    } == {
+        "direction-record-one",
+        "direction-record-two",
+        "direction-record-three",
+    }
+
+
+def test_create_many_rolls_back_entire_batch_on_conflict(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+
+    existing = _record(
+        project_direction_id="existing"
+    )
+    registry.create(existing)
+
+    valid_new_record = _record(
+        project_direction_id="new-record"
+    )
+    conflicting_record = _record(
+        project_direction_id="existing",
+        purpose="Changed immutable roadmap content.",
+    )
+
+    with pytest.raises(
+        RoadmapSnapshotConflictError,
+        match="different immutable",
+    ):
+        registry.create_many(
+            [
+                valid_new_record,
+                conflicting_record,
+            ]
+        )
+
+    assert registry.load("new-record") is None
+    assert registry.load("existing") == existing
+
+
+def test_create_many_rejects_duplicate_ids_before_writing(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+
+    with pytest.raises(
+        RoadmapSnapshotConflictError,
+        match="duplicate project direction IDs",
+    ):
+        registry.create_many(
+            [
+                _record(
+                    project_direction_id="duplicate"
+                ),
+                _record(
+                    project_direction_id="duplicate"
+                ),
+            ]
+        )
+
+    assert registry.list_snapshots() == []
+
+
+def test_create_many_is_idempotent_for_exact_batch(
+    tmp_path: Path,
+):
+    registry = SQLiteRoadmapSnapshotRegistry(
+        tmp_path / "solvyn.db"
+    )
+
+    records = [
+        _record(project_direction_id="first-batch"),
+        _record(project_direction_id="second-batch"),
+    ]
+
+    first = registry.create_many(records)
+    second = registry.create_many(records)
+
+    assert second == first
+    assert len(registry.list_snapshots()) == 2

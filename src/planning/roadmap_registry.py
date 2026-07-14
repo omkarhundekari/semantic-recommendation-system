@@ -74,6 +74,13 @@ class RoadmapSnapshotRegistry(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def create_many(
+        self,
+        records: List[StoredRoadmapSnapshot],
+    ) -> List[StoredRoadmapSnapshot]:
+        raise NotImplementedError
+
+    @abstractmethod
     def load(
         self,
         project_direction_id: str,
@@ -127,6 +134,28 @@ class SQLiteRoadmapSnapshotRegistry(
         self,
         record: StoredRoadmapSnapshot,
     ) -> StoredRoadmapSnapshot:
+        return self.create_many([record])[0]
+
+    def create_many(
+        self,
+        records: List[StoredRoadmapSnapshot],
+    ) -> List[StoredRoadmapSnapshot]:
+        if not records:
+            return []
+
+        project_direction_ids = [
+            record.project_direction_id
+            for record in records
+        ]
+
+        if len(project_direction_ids) != len(
+            set(project_direction_ids)
+        ):
+            raise RoadmapSnapshotConflictError(
+                "A roadmap snapshot batch contains "
+                "duplicate project direction IDs."
+            )
+
         connection = self._connect()
 
         try:
@@ -135,53 +164,61 @@ class SQLiteRoadmapSnapshotRegistry(
                 connection
             )
 
-            existing = self._load_on_connection(
-                connection,
-                record.project_direction_id,
-            )
+            stored_records = []
 
-            if existing is not None:
-                if existing == record:
-                    connection.execute("COMMIT")
-                    return existing.model_copy(
-                        deep=True
+            for record in records:
+                existing = self._load_on_connection(
+                    connection,
+                    record.project_direction_id,
+                )
+
+                if existing is not None:
+                    if existing == record:
+                        stored_records.append(
+                            existing.model_copy(
+                                deep=True
+                            )
+                        )
+                        continue
+
+                    raise RoadmapSnapshotConflictError(
+                        "Project direction ID already "
+                        "references a different immutable "
+                        "roadmap snapshot."
                     )
 
-                raise RoadmapSnapshotConflictError(
-                    "Project direction ID already "
-                    "references a different immutable "
-                    "roadmap snapshot."
+                connection.execute(
+                    """
+                    INSERT INTO roadmap_registry (
+                        workspace_id,
+                        project_direction_id,
+                        response_direction_id,
+                        title,
+                        roadmap_hash,
+                        snapshot_json,
+                        created_at,
+                        supersedes_id
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        self._workspace_id,
+                        record.project_direction_id,
+                        record.response_direction_id,
+                        record.title,
+                        record.snapshot.roadmap_hash,
+                        record.snapshot.model_dump_json(),
+                        record.created_at.isoformat(),
+                        record.supersedes_id,
+                    ),
                 )
 
-            connection.execute(
-                """
-                INSERT INTO roadmap_registry (
-                    workspace_id,
-                    project_direction_id,
-                    response_direction_id,
-                    title,
-                    roadmap_hash,
-                    snapshot_json,
-                    created_at,
-                    supersedes_id
+                stored_records.append(
+                    record.model_copy(deep=True)
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    self._workspace_id,
-                    record.project_direction_id,
-                    record.response_direction_id,
-                    record.title,
-                    record.snapshot.roadmap_hash,
-                    record.snapshot.model_dump_json(),
-                    record.created_at.isoformat(),
-                    record.supersedes_id,
-                ),
-            )
 
             connection.execute("COMMIT")
-
-            return record.model_copy(deep=True)
+            return stored_records
         except RoadmapSnapshotConflictError:
             self._rollback(connection)
             raise
@@ -195,7 +232,7 @@ class SQLiteRoadmapSnapshotRegistry(
             self._rollback(connection)
             raise RoadmapRegistryError(
                 "Could not create roadmap snapshot "
-                "registry record."
+                "registry records."
             ) from error
         finally:
             connection.close()
