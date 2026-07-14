@@ -732,3 +732,115 @@ def test_sqlite_store_rejects_unknown_durable_identity(
                 deep=True,
             )
         )
+
+
+def test_referenced_roadmap_snapshot_cannot_be_deleted(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    trusted = registry.create(
+        StoredRoadmapSnapshot(
+            project_id="proj_one",
+            roadmap_snapshot_id="snap_one",
+            project_direction_id="direction-one",
+            response_direction_id="direction-one",
+            title="Trusted direction",
+            snapshot=RoadmapSnapshot(
+                roadmap_hash="a" * 64,
+                snapshot_version=1,
+                canonicalization_version=1,
+                stages=[
+                    RoadmapStageSnapshot(
+                        stage_id="persist-evidence",
+                        position=0,
+                        content_hash="b" * 64,
+                        content={
+                            "id": "persist-evidence",
+                            "title": "Persist evidence",
+                        },
+                    )
+                ],
+            ),
+            created_at=SAVED_AT,
+        )
+    )
+
+    record = _record()
+    evidence = record.evidence[0]
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_id=trusted.project_id,
+        roadmap_snapshot_id=(
+            trusted.roadmap_snapshot_id
+        ),
+        project_direction_id=(
+            trusted.project_direction_id
+        ),
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=_trusted_context(),
+    )
+
+    SQLiteRepositoryEvidenceStore(
+        database_path
+    ).save(
+        record.model_copy(
+            update={
+                "attributions": [attribution],
+            },
+            deep=True,
+        )
+    )
+
+    import sqlite3
+
+    connection = sqlite3.connect(
+        str(database_path)
+    )
+    connection.execute("PRAGMA foreign_keys = ON")
+
+    try:
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="FOREIGN KEY constraint failed",
+        ):
+            connection.execute(
+                """
+                DELETE FROM roadmap_registry
+                WHERE roadmap_snapshot_id = ?
+                """,
+                (trusted.roadmap_snapshot_id,),
+            )
+            connection.commit()
+
+        connection.rollback()
+
+        remaining = connection.execute(
+            """
+            SELECT COUNT(*)
+            FROM roadmap_registry
+            WHERE roadmap_snapshot_id = ?
+            """,
+            (trusted.roadmap_snapshot_id,),
+        ).fetchone()[0]
+
+        attribution_count = connection.execute(
+            """
+            SELECT COUNT(*)
+            FROM evidence_attributions
+            WHERE roadmap_snapshot_id = ?
+            """,
+            (trusted.roadmap_snapshot_id,),
+        ).fetchone()[0]
+    finally:
+        connection.close()
+
+    assert remaining == 1
+    assert attribution_count == 1
