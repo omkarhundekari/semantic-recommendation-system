@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 
 from feasibility_scorer import score_project_feasibility
@@ -39,6 +40,10 @@ from planning.roadmap_execution_enrichment import (
     enrich_roadmap_for_execution,
 )
 from planning.roadmap_registry import (
+    ProjectNotFoundError,
+    ProjectStatus,
+    ProjectStatusTransition,
+    ProjectStatusTransitionError,
     RoadmapRegistryError,
     RoadmapSnapshotRegistry,
     create_stored_roadmap_snapshot,
@@ -373,11 +378,19 @@ def get_execution_evidence_store(
 
 
 def get_roadmap_snapshot_registry(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
 ) -> Optional[RoadmapSnapshotRegistry]:
-    return (
-        get_execution_evidence_storage_runtime()
-        .roadmap_registry
-    )
+    if not isinstance(
+        runtime,
+        ExecutionEvidenceStorageRuntime,
+    ):
+        runtime = (
+            get_execution_evidence_storage_runtime()
+        )
+
+    return runtime.roadmap_registry
 
 
 def get_execution_evidence_coordinator(
@@ -400,6 +413,24 @@ def get_execution_evidence_attribution_service(
     return EvidenceAttributionService(
         store=get_execution_evidence_store(),
     )
+
+
+class ProjectStatusTransitionRequest(BaseModel):
+    status: ProjectStatus
+    reason: Optional[str] = Field(
+        default=None,
+        max_length=1000,
+    )
+
+
+class ProjectStatusTransitionResponse(BaseModel):
+    changed: bool
+    project_id: str
+    previous_status: ProjectStatus
+    current_status: ProjectStatus
+    transition: Optional[
+        ProjectStatusTransition
+    ] = None
 
 
 BROAD_PLANNING_DOMAINS = {
@@ -1049,6 +1080,122 @@ def list_execution_evidence_attributions(
         raise HTTPException(
             status_code=404,
             detail=str(error),
+        ) from error
+
+
+@app.post(
+    "/v1/projects/{project_id}/status",
+    response_model=ProjectStatusTransitionResponse,
+)
+def transition_project_status(
+    project_id: str,
+    request: ProjectStatusTransitionRequest,
+    roadmap_registry: Optional[
+        RoadmapSnapshotRegistry
+    ] = Depends(
+        get_roadmap_snapshot_registry
+    ),
+) -> ProjectStatusTransitionResponse:
+    if roadmap_registry is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted project lifecycle storage is "
+                "unavailable. Migrate execution evidence "
+                "storage to trusted SQLite first."
+            ),
+        )
+
+    try:
+        transition = (
+            roadmap_registry
+            .transition_project_status(
+                project_id,
+                new_status=request.status,
+                changed_at=datetime.now(
+                    timezone.utc
+                ),
+                reason=request.reason,
+            )
+        )
+    except ProjectNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        ) from error
+    except ProjectStatusTransitionError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except RoadmapRegistryError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted project lifecycle storage "
+                "could not complete the transition."
+            ),
+        ) from error
+
+    if transition is not None:
+        return ProjectStatusTransitionResponse(
+            changed=True,
+            project_id=transition.project_id,
+            previous_status=transition.previous_status,
+            current_status=transition.new_status,
+            transition=transition,
+        )
+
+    return ProjectStatusTransitionResponse(
+        changed=False,
+        project_id=project_id.strip(),
+        previous_status=request.status,
+        current_status=request.status,
+        transition=None,
+    )
+
+
+@app.get(
+    "/v1/projects/{project_id}/status-transitions",
+    response_model=List[ProjectStatusTransition],
+)
+def list_project_status_transition_history(
+    project_id: str,
+    roadmap_registry: Optional[
+        RoadmapSnapshotRegistry
+    ] = Depends(
+        get_roadmap_snapshot_registry
+    ),
+) -> List[ProjectStatusTransition]:
+    if roadmap_registry is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted project lifecycle storage is "
+                "unavailable. Migrate execution evidence "
+                "storage to trusted SQLite first."
+            ),
+        )
+
+    try:
+        return (
+            roadmap_registry
+            .list_project_status_transitions(
+                project_id
+            )
+        )
+    except ProjectNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        ) from error
+    except RoadmapRegistryError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted project lifecycle history "
+                "could not be loaded."
+            ),
         ) from error
 
 

@@ -295,3 +295,296 @@ def test_endpoint_reports_legacy_registry_unavailable(
         and direction["project_direction_id"] is None
         for direction in payload["directions"]
     )
+
+
+
+def _trusted_lifecycle_runtime(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-14T12:00:00+00:00",
+    )
+    service = TrustedSQLiteStorageService(
+        database_path
+    )
+
+    return ExecutionEvidenceStorageRuntime(
+        evidence_store=(
+            service.build_repository_evidence_store()
+        ),
+        trusted_sqlite_service=service,
+        roadmap_registry=(
+            service.build_roadmap_snapshot_registry()
+        ),
+        roadmap_registry_status="ready",
+        remediation=None,
+    )
+
+
+def _create_lifecycle_project(
+    runtime,
+):
+    from datetime import datetime, timezone
+
+    from planning.roadmap_registry import (
+        create_stored_roadmap_snapshot,
+    )
+    from planning.roadmap_snapshot import (
+        RoadmapSnapshot,
+        RoadmapStageSnapshot,
+    )
+
+    snapshot = RoadmapSnapshot(
+        roadmap_hash="a" * 64,
+        stages=[
+            RoadmapStageSnapshot(
+                stage_id="mvp",
+                position=0,
+                content_hash="b" * 64,
+                content={
+                    "id": "mvp",
+                    "title": "Build",
+                    "purpose": "Build the project.",
+                    "tasks": [
+                        "Implement the MVP."
+                    ],
+                },
+            )
+        ],
+    )
+
+    return runtime.roadmap_registry.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_lifecycle",
+            response_direction_id="direction-one",
+            title="Lifecycle project",
+            snapshot=snapshot,
+            created_at=datetime(
+                2026,
+                7,
+                14,
+                12,
+                0,
+                tzinfo=timezone.utc,
+            ),
+        )
+    )
+
+
+def test_project_status_endpoint_archives_project(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+    stored = _create_lifecycle_project(runtime)
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={
+                    "status": "archived",
+                    "reason": "Paused temporarily.",
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert payload["changed"] is True
+    assert payload["project_id"] == stored.project_id
+    assert payload["previous_status"] == "active"
+    assert payload["current_status"] == "archived"
+    assert payload["transition"]["reason"] == (
+        "Paused temporarily."
+    )
+
+
+def test_project_status_endpoint_is_idempotent(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+    stored = _create_lifecycle_project(runtime)
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            first = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={"status": "archived"},
+            )
+            second = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={"status": "archived"},
+            )
+            history = client.get(
+                f"/v1/projects/"
+                f"{stored.project_id}/"
+                "status-transitions"
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert second.json() == {
+        "changed": False,
+        "project_id": stored.project_id,
+        "previous_status": "archived",
+        "current_status": "archived",
+        "transition": None,
+    }
+    assert history.status_code == 200
+    assert len(history.json()) == 1
+
+
+def test_deleted_project_cannot_be_reactivated_via_api(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+    stored = _create_lifecycle_project(runtime)
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            deleted = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={"status": "deleted"},
+            )
+            restored = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={"status": "active"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert deleted.status_code == 200
+    assert restored.status_code == 409
+    assert "deleted -> active" in (
+        restored.json()["detail"]
+    )
+
+
+def test_project_status_endpoint_returns_404(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/v1/projects/proj_missing/status",
+                json={"status": "archived"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+
+
+def test_project_status_history_is_newest_first(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+    stored = _create_lifecycle_project(runtime)
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            archived = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={"status": "archived"},
+            )
+            active = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={"status": "active"},
+            )
+            response = client.get(
+                f"/v1/projects/"
+                f"{stored.project_id}/"
+                "status-transitions"
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert archived.status_code == 200
+    assert active.status_code == 200
+    assert response.status_code == 200
+
+    history = response.json()
+
+    assert len(history) == 2
+    assert history[0]["previous_status"] == (
+        "archived"
+    )
+    assert history[0]["new_status"] == "active"
+    assert history[1]["previous_status"] == "active"
+    assert history[1]["new_status"] == "archived"
+
+
+def test_project_lifecycle_api_requires_trusted_sqlite(
+    tmp_path: Path,
+):
+    runtime = ExecutionEvidenceStorageRuntime(
+        evidence_store=JsonRepositoryEvidenceStore(
+            tmp_path / "repositories.json"
+        ),
+        trusted_sqlite_service=None,
+        roadmap_registry=None,
+        roadmap_registry_status=(
+            "unavailable_legacy_store"
+        ),
+        remediation="Migrate the legacy store.",
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/v1/projects/proj_any/status",
+                json={"status": "archived"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 503
