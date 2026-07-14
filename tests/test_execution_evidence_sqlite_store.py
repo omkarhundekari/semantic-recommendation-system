@@ -11,6 +11,7 @@ from execution_evidence.models import (
     EvidenceAttribution,
     ExecutionEvidenceItem,
     RepositorySyncState,
+    RoadmapAttributionContext,
 )
 from execution_evidence.snapshot import (
     GitHubRepositorySyncSnapshot,
@@ -21,6 +22,14 @@ from execution_evidence.sqlite_schema import (
 from execution_evidence.sqlite_store import (
     SQLiteRepositoryEvidenceStore,
     SQLiteRepositoryEvidenceStoreError,
+)
+from planning.roadmap_registry import (
+    SQLiteRoadmapSnapshotRegistry,
+    StoredRoadmapSnapshot,
+)
+from planning.roadmap_snapshot import (
+    RoadmapSnapshot,
+    RoadmapStageSnapshot,
 )
 from execution_evidence.store import (
     RepositoryEvidenceRestoreError,
@@ -331,3 +340,138 @@ def test_sqlite_restore_rolls_back_mid_batch_failure(
         )
 
     assert store.list_repository_keys() == []
+
+
+def _trusted_context() -> RoadmapAttributionContext:
+    return RoadmapAttributionContext(
+        roadmap_hash="a" * 64,
+        roadmap_stage_hash="b" * 64,
+        roadmap_node_id="persist-evidence",
+        snapshot_version=1,
+        canonicalization_version=1,
+    )
+
+
+def _register_project_direction(
+    database_path: Path,
+    *,
+    project_direction_id: str,
+) -> None:
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    registry.create(
+        StoredRoadmapSnapshot(
+            project_direction_id=(
+                project_direction_id
+            ),
+            response_direction_id="direction-one",
+            title="Trusted direction",
+            snapshot=RoadmapSnapshot(
+                roadmap_hash="a" * 64,
+                snapshot_version=1,
+                canonicalization_version=1,
+                stages=[
+                    RoadmapStageSnapshot(
+                        stage_id="persist-evidence",
+                        position=0,
+                        content_hash="b" * 64,
+                        content={
+                            "id": "persist-evidence",
+                            "title": (
+                                "Persist execution evidence"
+                            ),
+                        },
+                    )
+                ],
+            ),
+            created_at=SAVED_AT,
+        )
+    )
+
+
+def test_sqlite_store_persists_project_scoped_attribution(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _register_project_direction(
+        database_path,
+        project_direction_id="project-one",
+    )
+
+    record = _record()
+    evidence = record.evidence[0]
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_direction_id="project-one",
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=_trusted_context(),
+    )
+
+    saved = SQLiteRepositoryEvidenceStore(
+        database_path
+    ).save(
+        record.model_copy(
+            update={
+                "attributions": [attribution],
+            },
+            deep=True,
+        )
+    )
+
+    loaded = SQLiteRepositoryEvidenceStore(
+        database_path
+    ).load(REFERENCE.repository_key)
+
+    assert loaded == saved
+    assert loaded is not None
+    assert (
+        loaded.attributions[0].attribution_id
+        == "attribution-one"
+    )
+    assert (
+        loaded.attributions[0]
+        .project_direction_id
+        == "project-one"
+    )
+
+
+def test_sqlite_store_rejects_unknown_project_direction(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    store = SQLiteRepositoryEvidenceStore(
+        database_path
+    )
+    record = _record()
+    evidence = record.evidence[0]
+
+    attribution = EvidenceAttribution(
+        attribution_id="attribution-one",
+        project_direction_id="missing-project",
+        evidence_key=evidence.evidence_key,
+        roadmap_node_id="persist-evidence",
+        source="manual",
+        confidence=1.0,
+        status="accepted",
+        decided_at=SAVED_AT,
+        roadmap_context=_trusted_context(),
+    )
+
+    with pytest.raises(
+        SQLiteRepositoryEvidenceStoreError,
+        match="unknown roadmap snapshot",
+    ):
+        store.save(
+            record.model_copy(
+                update={
+                    "attributions": [attribution],
+                },
+                deep=True,
+            )
+        )

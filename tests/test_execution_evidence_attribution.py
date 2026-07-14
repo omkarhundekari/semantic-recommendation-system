@@ -605,3 +605,82 @@ def test_contextual_attribution_is_not_silently_downgraded():
             roadmap_node_id="build-mvp",
             decided_at=LATER,
         )
+
+
+def test_project_scoped_attach_generates_stable_identity():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+    context = _roadmap_context()
+
+    first = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_direction_id="project-one",
+        roadmap_context=context,
+        decided_at=NOW,
+    )
+
+    second = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_direction_id="project-one",
+        roadmap_context=context.model_copy(
+            deep=True
+        ),
+        decided_at=LATER,
+    )
+
+    assert first.created is True
+    assert second.created is False
+    assert first.attribution.attribution_id is not None
+    assert (
+        second.attribution.attribution_id
+        == first.attribution.attribution_id
+    )
+    assert (
+        first.attribution.project_direction_id
+        == "project-one"
+    )
+
+
+def test_same_evidence_stage_can_be_scoped_to_two_projects():
+    store = InMemoryRepositoryEvidenceStore()
+    store.save(_record())
+    service = EvidenceAttributionService(
+        store=store
+    )
+
+    first = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_direction_id="project-one",
+        roadmap_context=_roadmap_context(),
+        decided_at=NOW,
+    )
+
+    second = service.attach(
+        repository_key=REPOSITORY_KEY,
+        evidence_key=_evidence().evidence_key,
+        roadmap_node_id="build-mvp",
+        project_direction_id="project-two",
+        roadmap_context=_roadmap_context(),
+        decided_at=LATER,
+    )
+
+    assert first.created is True
+    assert second.created is True
+    assert (
+        first.attribution.attribution_id
+        != second.attribution.attribution_id
+    )
+    assert len(
+        service.list_for_repository(
+            REPOSITORY_KEY
+        )
+    ) == 2

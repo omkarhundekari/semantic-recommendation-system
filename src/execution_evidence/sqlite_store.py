@@ -121,12 +121,13 @@ class SQLiteRepositoryEvidenceStore(
             ]
 
             attributions = [
-                EvidenceAttribution.model_validate_json(
-                    row["payload_json"]
-                )
+                self._attribution_from_row(row)
                 for row in connection.execute(
                     """
-                    SELECT payload_json
+                    SELECT
+                        attribution_id,
+                        project_direction_id,
+                        payload_json
                     FROM evidence_attributions
                     WHERE repository_id = ?
                     ORDER BY position
@@ -762,10 +763,48 @@ class SQLiteRepositoryEvidenceStore(
         for position, attribution in enumerate(
             attributions
         ):
+            roadmap_registry_id = None
+
+            if (
+                attribution.project_direction_id
+                is not None
+            ):
+                registry_row = connection.execute(
+                    """
+                    SELECT roadmap_registry_id
+                    FROM roadmap_registry
+                    WHERE
+                        workspace_id = ?
+                        AND project_direction_id = ?
+                    """,
+                    (
+                        self._workspace_id,
+                        attribution.project_direction_id,
+                    ),
+                ).fetchone()
+
+                if registry_row is None:
+                    raise (
+                        SQLiteRepositoryEvidenceStoreError(
+                            "Project-scoped attribution "
+                            "references an unknown roadmap "
+                            "snapshot."
+                        )
+                    )
+
+                roadmap_registry_id = int(
+                    registry_row[
+                        "roadmap_registry_id"
+                    ]
+                )
+
             connection.execute(
                 """
                 INSERT INTO evidence_attributions (
+                    attribution_id,
                     repository_id,
+                    roadmap_registry_id,
+                    project_direction_id,
                     evidence_key,
                     roadmap_node_id,
                     source,
@@ -777,11 +816,14 @@ class SQLiteRepositoryEvidenceStore(
                     position
                 )
                 VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
                 """,
                 (
+                    attribution.attribution_id,
                     repository_id,
+                    roadmap_registry_id,
+                    attribution.project_direction_id,
                     attribution.evidence_key,
                     attribution.roadmap_node_id,
                     attribution.source,
@@ -798,6 +840,37 @@ class SQLiteRepositoryEvidenceStore(
                     position,
                 ),
             )
+
+    @staticmethod
+    def _attribution_from_row(
+        row: sqlite3.Row,
+    ) -> EvidenceAttribution:
+        attribution = (
+            EvidenceAttribution.model_validate_json(
+                row["payload_json"]
+            )
+        )
+
+        relational_attribution_id = (
+            row["attribution_id"]
+        )
+        relational_project_direction_id = (
+            row["project_direction_id"]
+        )
+
+        if (
+            attribution.attribution_id
+            != relational_attribution_id
+            or attribution.project_direction_id
+            != relational_project_direction_id
+        ):
+            raise SQLiteRepositoryEvidenceStoreError(
+                "SQLite attribution identity columns "
+                "do not match payload identity."
+            )
+
+        return attribution
+
 
     @staticmethod
     def _rollback(

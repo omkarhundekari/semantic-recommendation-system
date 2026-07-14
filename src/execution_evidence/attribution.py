@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import List, Optional
+from uuid import uuid4
 
 from pydantic import BaseModel
 
@@ -52,6 +53,7 @@ class EvidenceAttributionService:
         roadmap_node_id: str,
         decided_at: datetime,
         rationale: str = "",
+        project_direction_id: Optional[str] = None,
         roadmap_context: Optional[
             RoadmapAttributionContext
         ] = None,
@@ -63,15 +65,16 @@ class EvidenceAttributionService:
             evidence_key=evidence_key,
         )
 
-        attribution = EvidenceAttribution(
-            evidence_key=evidence_key,
-            roadmap_node_id=roadmap_node_id,
-            source="manual",
-            confidence=1.0,
-            rationale=rationale,
-            status="accepted",
-            decided_at=decided_at,
-            roadmap_context=roadmap_context,
+        normalized_project_direction_id = (
+            project_direction_id.strip()
+            if project_direction_id
+            else None
+        )
+
+        attribution_identity = (
+            normalized_project_direction_id,
+            evidence_key,
+            roadmap_node_id,
         )
 
         existing = next(
@@ -79,8 +82,8 @@ class EvidenceAttributionService:
                 item
                 for item in record.attributions
                 if (
-                    item.attribution_key
-                    == attribution.attribution_key
+                    item.attribution_identity
+                    == attribution_identity
                 )
             ),
             None,
@@ -89,7 +92,7 @@ class EvidenceAttributionService:
         if existing is not None:
             if (
                 existing.roadmap_context
-                != attribution.roadmap_context
+                != roadmap_context
             ):
                 raise AttributionContextConflictError(
                     "Evidence attribution already exists "
@@ -101,6 +104,26 @@ class EvidenceAttributionService:
                 attribution=existing,
                 created=False,
             )
+
+        attribution = EvidenceAttribution(
+            attribution_id=(
+                str(uuid4())
+                if normalized_project_direction_id
+                is not None
+                else None
+            ),
+            project_direction_id=(
+                normalized_project_direction_id
+            ),
+            evidence_key=evidence_key,
+            roadmap_node_id=roadmap_node_id,
+            source="manual",
+            confidence=1.0,
+            rationale=rationale,
+            status="accepted",
+            decided_at=decided_at,
+            roadmap_context=roadmap_context,
+        )
 
         updated = StoredRepositoryEvidence.model_validate(
             {
