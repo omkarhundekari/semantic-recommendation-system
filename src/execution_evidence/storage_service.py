@@ -8,6 +8,9 @@ from execution_evidence.sqlite_store import (
     DEFAULT_WORKSPACE_ID,
     SQLiteRepositoryEvidenceStore,
 )
+from execution_evidence.sqlite_execution_event_store import (
+    SQLiteExecutionEventStore,
+)
 from execution_evidence.store import (
     RepositoryEvidenceStore,
 )
@@ -120,6 +123,15 @@ class TrustedSQLiteStorageService:
         self,
     ) -> SQLiteRoadmapSnapshotRegistry:
         return SQLiteRoadmapSnapshotRegistry(
+            self._path,
+            workspace_id=self._workspace_id,
+            initialize_schema=False,
+        )
+
+    def build_execution_event_store(
+        self,
+    ) -> SQLiteExecutionEventStore:
+        return SQLiteExecutionEventStore(
             self._path,
             workspace_id=self._workspace_id,
             initialize_schema=False,

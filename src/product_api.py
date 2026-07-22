@@ -4,7 +4,13 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import (
+    Depends,
+    FastAPI,
+    Header,
+    HTTPException,
+    Request,
+)
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -79,6 +85,26 @@ from execution_evidence.api_models import (
     EvidenceAttributionListQuery,
     RepositoryEvidenceSyncRequest,
 )
+from execution_evidence.execution_event import (
+    ExecutionEventAppendResult,
+)
+from execution_evidence.execution_event_store import (
+    ExecutionEventIdempotencyConflictError,
+    ExecutionEventProjectNotFoundError,
+    ExecutionEventStore,
+    ExecutionEventStoreError,
+)
+from execution_evidence.github_webhook_adapter import (
+    GitHubWebhookPayloadError,
+)
+from execution_evidence.github_webhook_ingestion import (
+    GitHubWebhookIngestionService,
+    GitHubWebhookMalformedJSONError,
+    GitHubWebhookPayloadShapeError,
+)
+from execution_evidence.github_webhook_signature import (
+    GitHubWebhookSignatureError,
+)
 from execution_evidence.coordinator import (
     StatefulGitHubSyncCoordinator,
     StatefulGitHubSyncResult,
@@ -144,6 +170,11 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+
+GITHUB_WEBHOOK_SECRET_ENV = (
+    "SOLVYN_GITHUB_WEBHOOK_SECRET"
 )
 
 
@@ -376,6 +407,49 @@ def get_execution_evidence_store(
     return (
         get_execution_evidence_storage_runtime()
         .evidence_store
+    )
+
+
+def get_execution_event_store(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> ExecutionEventStore:
+    if runtime.trusted_sqlite_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Durable execution event storage is "
+                "unavailable. Migrate execution evidence "
+                "storage to trusted SQLite."
+            ),
+        )
+
+    return (
+        runtime.trusted_sqlite_service
+        .build_execution_event_store()
+    )
+
+
+def get_github_webhook_ingestion_service(
+    event_store: ExecutionEventStore = Depends(
+        get_execution_event_store
+    ),
+) -> GitHubWebhookIngestionService:
+    secret = os.getenv(GITHUB_WEBHOOK_SECRET_ENV)
+
+    if secret is None or not secret.strip():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "GitHub webhook ingestion is not "
+                "configured."
+            ),
+        )
+
+    return GitHubWebhookIngestionService(
+        secret=secret.encode("utf-8"),
+        event_store=event_store,
     )
 
 
@@ -665,6 +739,76 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
         options.append("Help me choose")
 
     return options
+
+
+@app.post(
+    (
+        "/v1/projects/{project_id}/"
+        "execution-evidence/github/webhook"
+    ),
+    response_model=ExecutionEventAppendResult,
+)
+async def ingest_github_execution_evidence_webhook(
+    project_id: str,
+    request: Request,
+    github_event: str = Header(
+        ...,
+        alias="X-GitHub-Event",
+    ),
+    github_delivery: str = Header(
+        ...,
+        alias="X-GitHub-Delivery",
+    ),
+    github_signature: str = Header(
+        ...,
+        alias="X-Hub-Signature-256",
+    ),
+    service: GitHubWebhookIngestionService = Depends(
+        get_github_webhook_ingestion_service
+    ),
+) -> ExecutionEventAppendResult:
+    raw_body = await request.body()
+
+    try:
+        return service.ingest(
+            project_id=project_id,
+            event_name=github_event,
+            delivery_id=github_delivery,
+            signature_header=github_signature,
+            raw_body=raw_body,
+            recorded_at=datetime.now(timezone.utc),
+        )
+    except GitHubWebhookSignatureError as error:
+        raise HTTPException(
+            status_code=401,
+            detail=str(error),
+        ) from error
+    except (
+        GitHubWebhookMalformedJSONError,
+        GitHubWebhookPayloadShapeError,
+        GitHubWebhookPayloadError,
+    ) as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
+    except ExecutionEventProjectNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        ) from error
+    except (
+        ExecutionEventIdempotencyConflictError
+    ) as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except ExecutionEventStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error),
+        ) from error
 
 
 @app.get(
