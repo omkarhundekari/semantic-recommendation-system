@@ -10,6 +10,7 @@ from execution_evidence.execution_event import (
     create_execution_event_id,
 )
 from execution_evidence.execution_event_payload import (
+    GitHubPullRequestMergedPayload,
     GitHubRefUpdatedPayload,
 )
 
@@ -19,6 +20,136 @@ UTC = timezone.utc
 
 class GitHubWebhookPayloadError(ValueError):
     pass
+
+
+def adapt_github_pull_request_closed(
+    *,
+    project_id: str,
+    delivery_id: str,
+    recorded_at: datetime,
+    payload: Dict[str, Any],
+) -> ExecutionEvent:
+    project_id = _required_identity_text(
+        project_id,
+        "project_id",
+    )
+    delivery_id = _required_identity_text(
+        delivery_id,
+        "delivery_id",
+    )
+
+    action = _required_text(
+        payload,
+        "action",
+    )
+
+    if action != "closed":
+        raise GitHubWebhookPayloadError(
+            "GitHub pull request action must "
+            "be 'closed'."
+        )
+
+    pull_request = _required_mapping(
+        payload,
+        "pull_request",
+    )
+    repository = _required_mapping(
+        payload,
+        "repository",
+    )
+    sender = _required_mapping(
+        payload,
+        "sender",
+    )
+
+    merged = _required_boolean(
+        pull_request,
+        "merged",
+        context="GitHub pull request",
+    )
+
+    if not merged:
+        raise GitHubWebhookPayloadError(
+            "GitHub pull request must be merged."
+        )
+
+    repository_id = str(
+        _required_value(repository, "id")
+    )
+    sender_id = str(
+        _required_value(sender, "id")
+    )
+    pull_request_id = str(
+        _required_value(pull_request, "id")
+    )
+
+    pull_request_number = _required_positive_integer(
+        pull_request,
+        "number",
+        context="GitHub pull request",
+    )
+
+    merge_commit_sha = _required_text(
+        pull_request,
+        "merge_commit_sha",
+    )
+
+    base = _required_mapping(
+        pull_request,
+        "base",
+    )
+    head = _required_mapping(
+        pull_request,
+        "head",
+    )
+    base_ref = _required_text(
+        base,
+        "ref",
+    )
+    head_ref = _required_text(
+        head,
+        "ref",
+    )
+
+    try:
+        event_payload = GitHubPullRequestMergedPayload(
+            repository_id=repository_id,
+            pull_request_number=(
+                pull_request_number
+            ),
+            base_ref=base_ref,
+            head_ref=head_ref,
+            merge_commit_sha=merge_commit_sha,
+            sender_id=sender_id,
+        )
+    except ValidationError as error:
+        raise GitHubWebhookPayloadError(
+            "Invalid GitHub pull request payload."
+        ) from error
+
+    return ExecutionEvent(
+        execution_event_id=(
+            create_execution_event_id()
+        ),
+        project_id=project_id,
+        event_type=(
+            "github.pull_request.merged"
+        ),
+        occurred_at=recorded_at,
+        recorded_at=recorded_at,
+        actor_id=sender_id,
+        ingested_by_id="system_github",
+        source_provider="github",
+        source_account_id=sender_id,
+        external_resource_id=repository_id,
+        external_entity_type="pull_request",
+        external_entity_id=pull_request_id,
+        provider_idempotency_key=(
+            f"github:delivery:{delivery_id}"
+        ),
+        ingestion_method="webhook",
+        payload=event_payload,
+    )
 
 
 def adapt_github_push(
@@ -128,6 +259,50 @@ def adapt_github_push(
         ingestion_method="webhook",
         payload=event_payload,
     )
+
+
+def _required_boolean(
+    payload: Dict[str, Any],
+    field_name: str,
+    *,
+    context: str,
+) -> bool:
+    value = _required_value(
+        payload,
+        field_name,
+    )
+
+    if not isinstance(value, bool):
+        raise GitHubWebhookPayloadError(
+            f"{context} field '{field_name}' "
+            "must be a boolean."
+        )
+
+    return value
+
+
+def _required_positive_integer(
+    payload: Dict[str, Any],
+    field_name: str,
+    *,
+    context: str,
+) -> int:
+    value = _required_value(
+        payload,
+        field_name,
+    )
+
+    if (
+        not isinstance(value, int)
+        or isinstance(value, bool)
+        or value < 1
+    ):
+        raise GitHubWebhookPayloadError(
+            f"{context} field '{field_name}' "
+            "must be a positive integer."
+        )
+
+    return value
 
 
 def _optional_boolean(

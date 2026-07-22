@@ -3,10 +3,12 @@ from datetime import datetime, timezone
 import pytest
 
 from execution_evidence.execution_event_payload import (
+    GitHubPullRequestMergedPayload,
     GitHubRefUpdatedPayload,
 )
 from execution_evidence.github_webhook_adapter import (
     GitHubWebhookPayloadError,
+    adapt_github_pull_request_closed,
     adapt_github_push,
 )
 
@@ -282,4 +284,84 @@ def test_adapt_github_push_rejects_non_boolean_flags(
             ),
             recorded_at=RECORDED_AT,
             payload=payload,
+        )
+
+
+def test_adapt_github_pull_request_merged():
+    event = adapt_github_pull_request_closed(
+        project_id="proj_test",
+        delivery_id="delivery-pr",
+        recorded_at=RECORDED_AT,
+        payload={
+            "action": "closed",
+            "pull_request": {
+                "id": 12345,
+                "number": 27,
+                "merged": True,
+                "merge_commit_sha": "a" * 40,
+                "base": {
+                    "ref": "main",
+                },
+                "head": {
+                    "ref": "feature/evidence",
+                },
+            },
+            "repository": {
+                "id": 987,
+            },
+            "sender": {
+                "id": 456,
+            },
+        },
+    )
+
+    assert event.event_type == "github.pull_request.merged"
+
+    payload = event.payload
+
+    assert isinstance(
+        payload,
+        GitHubPullRequestMergedPayload,
+    )
+
+    assert payload.repository_id == "987"
+    assert payload.pull_request_number == 27
+    assert payload.base_ref == "main"
+    assert payload.head_ref == "feature/evidence"
+    assert payload.merge_commit_sha == "a" * 40
+    assert payload.sender_id == "456"
+
+    assert event.external_entity_id == "12345"
+
+
+def test_adapt_github_pull_request_closed_rejects_unmerged_pull_request():
+    with pytest.raises(
+        GitHubWebhookPayloadError,
+        match="must be merged",
+    ):
+        adapt_github_pull_request_closed(
+            project_id="proj_test",
+            delivery_id="delivery-pr-unmerged",
+            recorded_at=RECORDED_AT,
+            payload={
+                "action": "closed",
+                "pull_request": {
+                    "id": 12345,
+                    "number": 27,
+                    "merged": False,
+                    "merge_commit_sha": None,
+                    "base": {
+                        "ref": "main",
+                    },
+                    "head": {
+                        "ref": "feature/evidence",
+                    },
+                },
+                "repository": {
+                    "id": 987,
+                },
+                "sender": {
+                    "id": 456,
+                },
+            },
         )
