@@ -83,6 +83,9 @@ from execution_evidence.api_models import (
     EvidenceAttributionDetachRequest,
     EvidenceAttributionDetachResponse,
     EvidenceAttributionListQuery,
+    ExecutionEventLineageConflictResponse,
+    ExecutionEventLineageResponse,
+    ExecutionEventRecordResponse,
     RepositoryEvidenceSyncRequest,
 )
 from execution_evidence.execution_event import (
@@ -93,6 +96,13 @@ from execution_evidence.execution_event_store import (
     ExecutionEventProjectNotFoundError,
     ExecutionEventStore,
     ExecutionEventStoreError,
+)
+from execution_evidence.execution_event_projection import (
+    ExecutionEventProjectionError,
+)
+from execution_evidence.execution_event_projection_service import (
+    ExecutionEventProjectionService,
+    ExecutionEventProjectionUnsupportedStoreError,
 )
 from execution_evidence.github_webhook_adapter import (
     GitHubWebhookPayloadError,
@@ -431,6 +441,18 @@ def get_execution_event_store(
     )
 
 
+
+
+def get_execution_event_projection_service(
+    event_store: ExecutionEventStore = Depends(
+        get_execution_event_store
+    ),
+) -> ExecutionEventProjectionService:
+    return ExecutionEventProjectionService(
+        store=event_store
+    )
+
+
 def get_github_webhook_ingestion_service(
     event_store: ExecutionEventStore = Depends(
         get_execution_event_store
@@ -739,6 +761,109 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
         options.append("Help me choose")
 
     return options
+
+
+
+
+@app.get(
+    (
+        "/v1/projects/{project_id}/"
+        "execution-evidence/events/lineage"
+    ),
+    response_model=ExecutionEventLineageResponse,
+)
+def get_project_execution_event_lineage(
+    project_id: str,
+    limit: int = 1000,
+    service: ExecutionEventProjectionService = Depends(
+        get_execution_event_projection_service
+    ),
+) -> ExecutionEventLineageResponse:
+    if limit < 1 or limit > 1000:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Execution event projection limit "
+                "must be between 1 and 1000."
+            ),
+        )
+
+    try:
+        projection = service.project_lineage(
+            project_id,
+            limit=limit,
+        )
+    except (
+        ExecutionEventProjectionUnsupportedStoreError
+    ) as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error),
+        ) from error
+    except ExecutionEventStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Execution event lineage storage "
+                "is temporarily unavailable."
+            ),
+        ) from error
+    except ExecutionEventProjectionError as error:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Stored execution event lineage "
+                "failed integrity validation."
+            ),
+        ) from error
+    except ValueError as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
+
+    return ExecutionEventLineageResponse(
+        project_id=projection.project_id,
+        ordered_records=[
+            ExecutionEventRecordResponse(
+                store_sequence=(
+                    record.store_sequence
+                ),
+                event=record.event,
+            )
+            for record
+            in projection.ordered_records
+        ],
+        authoritative_event_ids=[
+            record.event.execution_event_id
+            for record
+            in projection.ordered_records
+            if (
+                record.event.execution_event_id
+                in projection.authoritative_event_ids
+            )
+        ],
+        terminal_event_ids=list(
+            projection.terminal_event_ids
+        ),
+        conflicts=[
+            ExecutionEventLineageConflictResponse(
+                predecessor_event_id=(
+                    conflict.predecessor_event_id
+                ),
+                successor_event_ids=list(
+                    conflict.successor_event_ids
+                ),
+                authoritative_successor_event_id=(
+                    conflict
+                    .authoritative_successor_event_id
+                ),
+            )
+            for conflict
+            in projection.conflicts
+        ],
+        has_conflicts=projection.has_conflicts,
+    )
 
 
 @app.post(

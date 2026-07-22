@@ -1,12 +1,16 @@
 from __future__ import annotations
 
-from typing import Annotated, Optional
+from typing import Annotated, List, Optional
 
 from pydantic import (
     BaseModel,
     Field,
     StringConstraints,
     model_validator,
+)
+
+from execution_evidence.execution_event import (
+    ExecutionEvent,
 )
 
 
@@ -107,3 +111,37 @@ class EvidenceAttributionListQuery(
 
 class EvidenceAttributionDetachResponse(BaseModel):
     removed: bool
+
+
+class ExecutionEventRecordResponse(BaseModel):
+    store_sequence: int = Field(ge=1)
+    event: ExecutionEvent
+
+
+class ExecutionEventLineageConflictResponse(
+    BaseModel
+):
+    predecessor_event_id: NonBlankIdentifier
+    successor_event_ids: List[
+        NonBlankIdentifier
+    ]
+    authoritative_successor_event_id: (
+        NonBlankIdentifier
+    )
+
+
+class ExecutionEventLineageResponse(BaseModel):
+    project_id: NonBlankIdentifier
+    ordered_records: List[
+        ExecutionEventRecordResponse
+    ]
+    authoritative_event_ids: List[
+        NonBlankIdentifier
+    ]
+    terminal_event_ids: List[
+        NonBlankIdentifier
+    ]
+    conflicts: List[
+        ExecutionEventLineageConflictResponse
+    ]
+    has_conflicts: bool
