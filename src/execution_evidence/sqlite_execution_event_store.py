@@ -14,6 +14,7 @@ from execution_evidence.execution_event_payload import (
     ExecutionEventPayload,
 )
 from execution_evidence.execution_event_store import (
+    StoredExecutionEvent,
     ExecutionEventIdempotencyConflictError,
     ExecutionEventProjectNotFoundError,
     ExecutionEventStore,
@@ -357,6 +358,59 @@ class SQLiteExecutionEventStore(
             raise ExecutionEventStoreError(
                 "Could not list project execution "
                 "events."
+            ) from error
+        finally:
+            connection.close()
+
+
+    def list_project_event_records(
+        self,
+        project_id: str,
+        *,
+        limit: int = 100,
+    ) -> List[StoredExecutionEvent]:
+        if limit < 1 or limit > 1000:
+            raise ValueError(
+                "Execution event list limit must be "
+                "between 1 and 1000."
+            )
+
+        connection = self._connect()
+
+        try:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM project_execution_events
+                WHERE
+                    workspace_id = ?
+                    AND project_id = ?
+                ORDER BY
+                    execution_event_row_id ASC
+                LIMIT ?
+                """,
+                (
+                    self._workspace_id,
+                    project_id,
+                    limit,
+                ),
+            ).fetchall()
+
+            return [
+                StoredExecutionEvent(
+                    store_sequence=int(
+                        row[
+                            "execution_event_row_id"
+                        ]
+                    ),
+                    event=self._event_from_row(row),
+                )
+                for row in rows
+            ]
+        except sqlite3.Error as error:
+            raise ExecutionEventStoreError(
+                "Could not list stored project "
+                "execution event records."
             ) from error
         finally:
             connection.close()
