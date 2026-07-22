@@ -487,3 +487,77 @@ def test_adapt_github_issue_closed_rejects_non_closed_action():
                 },
             },
         )
+
+
+def test_adapt_github_release_published():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_release_published,
+    )
+
+    event = adapt_github_release_published(
+        project_id="proj_test",
+        delivery_id="delivery-release",
+        recorded_at=RECORDED_AT,
+        payload={
+            "action": "published",
+            "release": {
+                "id": 777,
+                "tag_name": "v1.2.0",
+                "name": "Version 1.2.0",
+                "published_at": "2026-07-21T20:00:00Z",
+            },
+            "repository": {
+                "id": 987,
+            },
+            "sender": {
+                "id": 456,
+            },
+        },
+    )
+
+    assert event.event_type == "github.release.published"
+    assert event.external_entity_id == "777"
+
+    assert event.payload.repository_id == "987"
+    assert event.payload.tag_name == "v1.2.0"
+    assert event.payload.release_name == "Version 1.2.0"
+    assert event.payload.sender_id == "456"
+
+    assert event.occurred_at == datetime(
+        2026,
+        7,
+        21,
+        20,
+        0,
+        tzinfo=timezone.utc,
+    )
+
+    assert event.recorded_at == RECORDED_AT
+
+
+def test_adapt_github_release_rejects_non_published_action():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_release_published,
+    )
+
+    with pytest.raises(GitHubWebhookPayloadError):
+        adapt_github_release_published(
+            project_id="proj_test",
+            delivery_id="delivery-release",
+            recorded_at=RECORDED_AT,
+            payload={
+                "action": "edited",
+                "release": {
+                    "id": 777,
+                    "tag_name": "v1.2.0",
+                    "name": "Version 1.2.0",
+                    "published_at": "2026-07-21T20:00:00Z",
+                },
+                "repository": {
+                    "id": 987,
+                },
+                "sender": {
+                    "id": 456,
+                },
+            },
+        )
