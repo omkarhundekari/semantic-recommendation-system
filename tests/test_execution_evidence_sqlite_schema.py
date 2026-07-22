@@ -27,6 +27,7 @@ EXPECTED_TABLES = {
     "execution_evidence_import_receipts",
     "roadmap_registry",
     "projects",
+    "project_execution_events",
 }
 
 EXPECTED_INDEXES = {
@@ -46,6 +47,10 @@ EXPECTED_INDEXES = {
     "idx_projects_workspace_updated",
     "idx_roadmap_registry_public_snapshot",
     "idx_roadmap_registry_project_created",
+    "idx_project_execution_events_actor",
+    "idx_project_execution_events_timeline",
+    "idx_project_execution_events_client_replay",
+    "idx_project_execution_events_provider_replay",
 }
 
 
@@ -443,7 +448,11 @@ def test_version_nine_project_upgrades_with_zero_revision(
     monkeypatch.setattr(
         schema,
         "MIGRATIONS",
-        current_migrations[:-1],
+        tuple(
+            migration
+            for migration in current_migrations
+            if migration.version <= 9
+        ),
     )
 
     version = schema.initialize_execution_evidence_database(
@@ -529,7 +538,9 @@ def test_version_nine_project_upgrades_with_zero_revision(
     finally:
         connection.close()
 
-    assert upgraded_version == 10
+    assert upgraded_version == (
+        schema.CURRENT_SQLITE_SCHEMA_VERSION
+    )
     assert project is not None
     assert project["project_id"] == "proj_existing"
     assert project["title"] == "Existing project"

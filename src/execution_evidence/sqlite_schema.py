@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 10
+CURRENT_SQLITE_SCHEMA_VERSION = 11
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -1056,6 +1056,141 @@ WHERE
 """
 
 
+CREATE_PROJECT_EXECUTION_EVENTS_SQL = """
+CREATE TABLE project_execution_events (
+    execution_event_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    execution_event_id TEXT NOT NULL,
+    workspace_id TEXT NOT NULL,
+    project_row_id INTEGER NOT NULL,
+    project_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    occurred_at TEXT NOT NULL,
+    recorded_at TEXT NOT NULL,
+    actor_id TEXT,
+    ingested_by_id TEXT,
+    source_provider TEXT NOT NULL,
+    source_account_id TEXT,
+    external_resource_id TEXT,
+    external_entity_type TEXT,
+    external_entity_id TEXT,
+    provider_idempotency_key TEXT,
+    client_idempotency_key TEXT,
+    ingestion_method TEXT NOT NULL
+        CHECK (
+            ingestion_method IN (
+                'manual',
+                'api',
+                'webhook',
+                'import',
+                'system'
+            )
+        ),
+    source_payload_hash TEXT,
+    verified_at TEXT,
+    visibility TEXT NOT NULL DEFAULT 'private'
+        CHECK (
+            visibility IN (
+                'private',
+                'project',
+                'shareable',
+                'public'
+            )
+        ),
+    payload_json TEXT NOT NULL,
+    event_fingerprint TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (workspace_id)
+        REFERENCES workspaces(workspace_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (project_row_id)
+        REFERENCES projects(project_row_id)
+        ON DELETE RESTRICT,
+    UNIQUE (
+        workspace_id,
+        execution_event_id
+    ),
+    CHECK (
+        provider_idempotency_key IS NOT NULL
+        OR client_idempotency_key IS NOT NULL
+    )
+);
+
+CREATE UNIQUE INDEX
+    idx_project_execution_events_provider_replay
+ON project_execution_events(
+    workspace_id,
+    provider_idempotency_key
+)
+WHERE provider_idempotency_key IS NOT NULL;
+
+CREATE UNIQUE INDEX
+    idx_project_execution_events_client_replay
+ON project_execution_events(
+    workspace_id,
+    client_idempotency_key
+)
+WHERE client_idempotency_key IS NOT NULL;
+
+CREATE INDEX idx_project_execution_events_timeline
+ON project_execution_events(
+    workspace_id,
+    project_id,
+    occurred_at DESC,
+    recorded_at DESC,
+    execution_event_id DESC
+);
+
+CREATE INDEX idx_project_execution_events_actor
+ON project_execution_events(
+    workspace_id,
+    actor_id,
+    occurred_at DESC
+)
+WHERE actor_id IS NOT NULL;
+
+CREATE TRIGGER validate_project_execution_event_scope_insert
+BEFORE INSERT ON project_execution_events
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM projects AS project
+            WHERE
+                project.project_row_id =
+                    NEW.project_row_id
+                AND project.workspace_id =
+                    NEW.workspace_id
+                AND project.project_id =
+                    NEW.project_id
+        )
+        THEN RAISE(
+            ABORT,
+            'Execution event project scope is invalid'
+        )
+    END;
+END;
+
+CREATE TRIGGER prevent_project_execution_event_update
+BEFORE UPDATE ON project_execution_events
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Execution events are immutable'
+    );
+END;
+
+CREATE TRIGGER prevent_project_execution_event_delete
+BEFORE DELETE ON project_execution_events
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Execution events are immutable'
+    );
+END;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -1110,6 +1245,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=10,
         name="add_project_lifecycle_revision",
         sql=ADD_PROJECT_LIFECYCLE_REVISION_SQL,
+    ),
+    SQLiteMigration(
+        version=11,
+        name="create_project_execution_event_stream",
+        sql=CREATE_PROJECT_EXECUTION_EVENTS_SQL,
     ),
 )
 
