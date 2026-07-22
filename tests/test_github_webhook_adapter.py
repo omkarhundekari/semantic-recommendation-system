@@ -298,6 +298,7 @@ def test_adapt_github_pull_request_merged():
                 "id": 12345,
                 "number": 27,
                 "merged": True,
+                "merged_at": "2026-07-21T18:30:00Z",
                 "merge_commit_sha": "a" * 40,
                 "base": {
                     "ref": "main",
@@ -365,3 +366,53 @@ def test_adapt_github_pull_request_closed_rejects_unmerged_pull_request():
                 },
             },
         )
+
+
+def test_adapt_github_pull_request_uses_merged_at_as_occurred_at():
+    merged_at = datetime(
+        2026,
+        7,
+        21,
+        18,
+        30,
+        tzinfo=timezone.utc,
+    )
+    recorded_at = datetime(
+        2026,
+        7,
+        21,
+        18,
+        35,
+        tzinfo=timezone.utc,
+    )
+
+    event = adapt_github_pull_request_closed(
+        project_id="proj_test",
+        delivery_id="delivery-pr-time",
+        recorded_at=recorded_at,
+        payload={
+            "action": "closed",
+            "pull_request": {
+                "id": 12345,
+                "number": 27,
+                "merged": True,
+                "merged_at": "2026-07-21T18:30:00Z",
+                "merge_commit_sha": "a" * 40,
+                "base": {
+                    "ref": "main",
+                },
+                "head": {
+                    "ref": "feature/evidence",
+                },
+            },
+            "repository": {
+                "id": 987,
+            },
+            "sender": {
+                "id": 456,
+            },
+        },
+    )
+
+    assert event.occurred_at == merged_at
+    assert event.recorded_at == recorded_at

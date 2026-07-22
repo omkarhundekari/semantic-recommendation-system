@@ -93,6 +93,13 @@ def adapt_github_pull_request_closed(
         pull_request,
         "merge_commit_sha",
     )
+    occurred_at = _parse_github_datetime(
+        _required_text(
+            pull_request,
+            "merged_at",
+        ),
+        field_name="merged_at",
+    )
 
     base = _required_mapping(
         pull_request,
@@ -135,7 +142,7 @@ def adapt_github_pull_request_closed(
         event_type=(
             "github.pull_request.merged"
         ),
-        occurred_at=recorded_at,
+        occurred_at=occurred_at,
         recorded_at=recorded_at,
         actor_id=sender_id,
         ingested_by_id="system_github",
@@ -259,6 +266,37 @@ def adapt_github_push(
         ingestion_method="webhook",
         payload=event_payload,
     )
+
+
+def _parse_github_datetime(
+    value: str,
+    *,
+    field_name: str,
+) -> datetime:
+    normalized = value.strip()
+
+    if normalized.endswith("Z"):
+        normalized = (
+            normalized[:-1] + "+00:00"
+        )
+
+    try:
+        parsed = datetime.fromisoformat(
+            normalized
+        )
+    except ValueError as error:
+        raise GitHubWebhookPayloadError(
+            f"GitHub field '{field_name}' must "
+            "be a valid ISO-8601 datetime."
+        ) from error
+
+    if parsed.tzinfo is None:
+        raise GitHubWebhookPayloadError(
+            f"GitHub field '{field_name}' must "
+            "include a timezone."
+        )
+
+    return parsed
 
 
 def _required_boolean(
