@@ -18,6 +18,8 @@ from execution_evidence.execution_event_store import (
     ExecutionEventProjectNotFoundError,
     ExecutionEventStore,
     ExecutionEventStoreError,
+    ExecutionEventSupersessionScopeError,
+    ExecutionEventSupersessionTargetNotFoundError,
 )
 from execution_evidence.sqlite_schema import (
     connect_execution_evidence_database,
@@ -165,10 +167,19 @@ class SQLiteExecutionEventStore(
                     created=False,
                 )
 
+            self._validate_supersession_target(
+                connection,
+                event=event,
+                project_row_id=int(
+                    project["project_row_id"]
+                ),
+            )
+
             connection.execute(
                 """
                 INSERT INTO project_execution_events (
                     execution_event_id,
+                    supersedes_execution_event_id,
                     workspace_id,
                     project_row_id,
                     project_id,
@@ -194,11 +205,13 @@ class SQLiteExecutionEventStore(
                 )
                 VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?
                 )
                 """,
                 (
                     event.execution_event_id,
+                    event.supersedes_execution_event_id,
                     self._workspace_id,
                     int(project["project_row_id"]),
                     event.project_id,
@@ -255,6 +268,8 @@ class SQLiteExecutionEventStore(
         except (
             ExecutionEventProjectNotFoundError,
             ExecutionEventIdempotencyConflictError,
+            ExecutionEventSupersessionScopeError,
+            ExecutionEventSupersessionTargetNotFoundError,
             ExecutionEventStoreError,
         ):
             self._rollback(connection)
@@ -345,6 +360,55 @@ class SQLiteExecutionEventStore(
             ) from error
         finally:
             connection.close()
+
+    def _validate_supersession_target(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        event: ExecutionEvent,
+        project_row_id: int,
+    ) -> None:
+        target_id = (
+            event.supersedes_execution_event_id
+        )
+
+        if target_id is None:
+            return
+
+        target = connection.execute(
+            """
+            SELECT
+                project_row_id,
+                project_id
+            FROM project_execution_events
+            WHERE
+                workspace_id = ?
+                AND execution_event_id = ?
+            """,
+            (
+                self._workspace_id,
+                target_id,
+            ),
+        ).fetchone()
+
+        if target is None:
+            raise (
+                ExecutionEventSupersessionTargetNotFoundError(
+                    "Superseded execution event does "
+                    "not exist."
+                )
+            )
+
+        if (
+            int(target["project_row_id"])
+            != project_row_id
+            or str(target["project_id"])
+            != event.project_id
+        ):
+            raise ExecutionEventSupersessionScopeError(
+                "Superseded execution event belongs "
+                "to a different project."
+            )
 
     def _find_idempotent_event(
         self,
@@ -470,6 +534,9 @@ class SQLiteExecutionEventStore(
         return ExecutionEvent(
             execution_event_id=row[
                 "execution_event_id"
+            ],
+            supersedes_execution_event_id=row[
+                "supersedes_execution_event_id"
             ],
             project_id=row["project_id"],
             event_type=row["event_type"],

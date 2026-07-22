@@ -19,6 +19,8 @@ from execution_evidence.execution_event_payload import (
 from execution_evidence.execution_event_store import (
     ExecutionEventIdempotencyConflictError,
     ExecutionEventProjectNotFoundError,
+    ExecutionEventSupersessionScopeError,
+    ExecutionEventSupersessionTargetNotFoundError,
 )
 from execution_evidence.sqlite_execution_event_store import (
     SQLiteExecutionEventStore,
@@ -106,11 +108,17 @@ def _event(
     client_idempotency_key: Optional[
         str
     ] = None,
+    supersedes_execution_event_id: Optional[
+        str
+    ] = None,
     ingestion_method: str = "webhook",
     payload: Optional[object] = None,
 ) -> ExecutionEvent:
     return ExecutionEvent(
         execution_event_id=execution_event_id,
+        supersedes_execution_event_id=(
+            supersedes_execution_event_id
+        ),
         project_id=project_id,
         event_type=event_type,
         occurred_at=occurred_at
@@ -728,3 +736,233 @@ def test_typed_payload_survives_sqlite_round_trip(
     )
     assert loaded.payload.ref == "refs/heads/main"
     assert loaded.payload.after_sha == "b" * 40
+
+ORIGINAL_EVENT_ID = (
+    "evt_11111111-1111-4111-8111-111111111111"
+)
+FIRST_REPLACEMENT_EVENT_ID = (
+    "evt_22222222-2222-4222-8222-222222222222"
+)
+SECOND_REPLACEMENT_EVENT_ID = (
+    "evt_33333333-3333-4333-8333-333333333333"
+)
+MISSING_EVENT_ID = (
+    "evt_44444444-4444-4444-8444-444444444444"
+)
+
+
+def test_supersession_round_trips_through_sqlite(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+    original = _event(
+        execution_event_id=ORIGINAL_EVENT_ID,
+        provider_idempotency_key="original-event",
+    )
+    replacement = _event(
+        execution_event_id=(
+            FIRST_REPLACEMENT_EVENT_ID
+        ),
+        provider_idempotency_key="replacement-event",
+        supersedes_execution_event_id=(
+            ORIGINAL_EVENT_ID
+        ),
+    )
+
+    store.append(original)
+    result = store.append(replacement)
+    loaded = store.load(
+        FIRST_REPLACEMENT_EVENT_ID
+    )
+
+    assert result.created is True
+    assert (
+        result.event.supersedes_execution_event_id
+        == ORIGINAL_EVENT_ID
+    )
+    assert loaded == result.event
+
+
+def test_supersession_requires_existing_target(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    with pytest.raises(
+        ExecutionEventSupersessionTargetNotFoundError
+    ):
+        store.append(
+            _event(
+                execution_event_id=(
+                    FIRST_REPLACEMENT_EVENT_ID
+                ),
+                provider_idempotency_key=(
+                    "missing-target"
+                ),
+                supersedes_execution_event_id=(
+                    MISSING_EVENT_ID
+                ),
+            )
+        )
+
+
+def test_supersession_rejects_target_from_another_project(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(
+        database_path,
+        project_id="proj_original",
+    )
+    _insert_project(
+        database_path,
+        project_id="proj_replacement",
+    )
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+    store.append(
+        _event(
+            execution_event_id=ORIGINAL_EVENT_ID,
+            project_id="proj_original",
+            provider_idempotency_key="original-event",
+        )
+    )
+
+    with pytest.raises(
+        ExecutionEventSupersessionScopeError
+    ):
+        store.append(
+            _event(
+                execution_event_id=(
+                    FIRST_REPLACEMENT_EVENT_ID
+                ),
+                project_id="proj_replacement",
+                provider_idempotency_key=(
+                    "cross-project-replacement"
+                ),
+                supersedes_execution_event_id=(
+                    ORIGINAL_EVENT_ID
+                ),
+            )
+        )
+
+
+def test_cross_workspace_supersession_target_is_not_exposed(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(
+        database_path,
+        workspace_id="workspace-one",
+        project_id="proj_shared",
+    )
+    _insert_project(
+        database_path,
+        workspace_id="workspace-two",
+        project_id="proj_shared",
+    )
+
+    first_store = SQLiteExecutionEventStore(
+        database_path,
+        workspace_id="workspace-one",
+    )
+    second_store = SQLiteExecutionEventStore(
+        database_path,
+        workspace_id="workspace-two",
+    )
+
+    first_store.append(
+        _event(
+            execution_event_id=ORIGINAL_EVENT_ID,
+            project_id="proj_shared",
+            provider_idempotency_key="original-event",
+        )
+    )
+
+    with pytest.raises(
+        ExecutionEventSupersessionTargetNotFoundError
+    ):
+        second_store.append(
+            _event(
+                execution_event_id=(
+                    FIRST_REPLACEMENT_EVENT_ID
+                ),
+                project_id="proj_shared",
+                provider_idempotency_key=(
+                    "cross-workspace-replacement"
+                ),
+                supersedes_execution_event_id=(
+                    ORIGINAL_EVENT_ID
+                ),
+            )
+        )
+
+
+def test_multiple_events_can_supersede_same_target(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+    store.append(
+        _event(
+            execution_event_id=ORIGINAL_EVENT_ID,
+            provider_idempotency_key="original-event",
+        )
+    )
+
+    replacements = [
+        _event(
+            execution_event_id=(
+                FIRST_REPLACEMENT_EVENT_ID
+            ),
+            provider_idempotency_key=(
+                "first-replacement"
+            ),
+            supersedes_execution_event_id=(
+                ORIGINAL_EVENT_ID
+            ),
+        ),
+        _event(
+            execution_event_id=(
+                SECOND_REPLACEMENT_EVENT_ID
+            ),
+            provider_idempotency_key=(
+                "second-replacement"
+            ),
+            supersedes_execution_event_id=(
+                ORIGINAL_EVENT_ID
+            ),
+        ),
+    ]
+
+    results = [
+        store.append(event)
+        for event in replacements
+    ]
+
+    assert all(
+        result.created
+        for result in results
+    )
+    assert {
+        result.event.supersedes_execution_event_id
+        for result in results
+    } == {
+        ORIGINAL_EVENT_ID,
+    }

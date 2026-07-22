@@ -51,6 +51,7 @@ EXPECTED_INDEXES = {
     "idx_project_execution_events_timeline",
     "idx_project_execution_events_client_replay",
     "idx_project_execution_events_provider_replay",
+    "idx_project_execution_events_supersedes",
 }
 
 
@@ -2139,6 +2140,201 @@ def test_version_eight_rejects_durable_identity_collisions(
                 connection
             )
             == 7
+        )
+    finally:
+        connection.close()
+
+
+def test_execution_event_supersession_schema_is_present(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        columns = {
+            str(row["name"])
+            for row in connection.execute(
+                """
+                PRAGMA table_info(
+                    project_execution_events
+                )
+                """
+            )
+        }
+
+        assert (
+            "supersedes_execution_event_id"
+            in columns
+        )
+        assert (
+            "idx_project_execution_events_supersedes"
+            in _database_objects(
+                connection,
+                "index",
+            )
+        )
+    finally:
+        connection.close()
+
+
+def test_version_11_event_stream_upgrades_without_data_loss(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS[:11],
+        )
+        apply_execution_evidence_migrations(
+            connection
+        )
+
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                "local",
+                "2026-07-22T12:00:00+00:00",
+                "2026-07-22T12:00:00+00:00",
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO projects (
+                project_id,
+                workspace_id,
+                title,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "proj_test",
+                "local",
+                "Test project",
+                "active",
+                "2026-07-22T12:00:00+00:00",
+                "2026-07-22T12:00:00+00:00",
+            ),
+        )
+
+        project = connection.execute(
+            """
+            SELECT project_row_id
+            FROM projects
+            WHERE
+                workspace_id = 'local'
+                AND project_id = 'proj_test'
+            """
+        ).fetchone()
+
+        connection.execute(
+            """
+            INSERT INTO project_execution_events (
+                execution_event_id,
+                workspace_id,
+                project_row_id,
+                project_id,
+                event_type,
+                occurred_at,
+                recorded_at,
+                source_provider,
+                provider_idempotency_key,
+                ingestion_method,
+                visibility,
+                payload_json,
+                event_fingerprint,
+                created_at
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            (
+                "evt_existing",
+                "local",
+                int(project["project_row_id"]),
+                "proj_test",
+                "commit.created",
+                "2026-07-22T12:00:00+00:00",
+                "2026-07-22T12:01:00+00:00",
+                "github",
+                "existing-delivery",
+                "webhook",
+                "project",
+                "{}",
+                "existing-fingerprint",
+                "2026-07-22T12:01:00+00:00",
+            ),
+        )
+
+        assert (
+            get_execution_evidence_schema_version(
+                connection
+            )
+            == 11
+        )
+
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS,
+        )
+        apply_execution_evidence_migrations(
+            connection
+        )
+
+        stored = connection.execute(
+            """
+            SELECT
+                execution_event_id,
+                supersedes_execution_event_id
+            FROM project_execution_events
+            WHERE execution_event_id = ?
+            """,
+            ("evt_existing",),
+        ).fetchone()
+
+        assert (
+            get_execution_evidence_schema_version(
+                connection
+            )
+            == 12
+        )
+        assert stored is not None
+        assert (
+            stored["execution_event_id"]
+            == "evt_existing"
+        )
+        assert (
+            stored[
+                "supersedes_execution_event_id"
+            ]
+            is None
         )
     finally:
         connection.close()

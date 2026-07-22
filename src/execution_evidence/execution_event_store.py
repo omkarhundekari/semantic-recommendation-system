@@ -31,6 +31,18 @@ class ExecutionEventIdempotencyConflictError(
     pass
 
 
+class ExecutionEventSupersessionTargetNotFoundError(
+    ExecutionEventStoreError
+):
+    """The referenced event is unavailable in this workspace."""
+
+
+class ExecutionEventSupersessionScopeError(
+    ExecutionEventStoreError
+):
+    """The referenced event belongs to another project."""
+
+
 class ExecutionEventStore(ABC):
     @abstractmethod
     def append(
