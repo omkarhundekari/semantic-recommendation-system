@@ -10,6 +10,7 @@ from execution_evidence.execution_event import (
     create_execution_event_id,
 )
 from execution_evidence.execution_event_payload import (
+    GitHubIssueClosedPayload,
     GitHubPullRequestMergedPayload,
     GitHubRefUpdatedPayload,
 )
@@ -20,6 +21,106 @@ UTC = timezone.utc
 
 class GitHubWebhookPayloadError(ValueError):
     pass
+
+
+def adapt_github_issue_closed(
+    *,
+    project_id: str,
+    delivery_id: str,
+    recorded_at: datetime,
+    payload: Dict[str, Any],
+) -> ExecutionEvent:
+    project_id = _required_identity_text(
+        project_id,
+        "project_id",
+    )
+    delivery_id = _required_identity_text(
+        delivery_id,
+        "delivery_id",
+    )
+
+    action = _required_text(
+        payload,
+        "action",
+    )
+
+    if action != "closed":
+        raise GitHubWebhookPayloadError(
+            "GitHub issue action must be 'closed'."
+        )
+
+    issue = _required_mapping(
+        payload,
+        "issue",
+    )
+    repository = _required_mapping(
+        payload,
+        "repository",
+    )
+    sender = _required_mapping(
+        payload,
+        "sender",
+    )
+
+    repository_id = str(
+        _required_value(repository, "id")
+    )
+    sender_id = str(
+        _required_value(sender, "id")
+    )
+    issue_id = str(
+        _required_value(issue, "id")
+    )
+    issue_number = _required_positive_integer(
+        issue,
+        "number",
+        context="GitHub issue",
+    )
+    title = _required_text(
+        issue,
+        "title",
+    )
+    occurred_at = _parse_github_datetime(
+        _required_text(
+            issue,
+            "closed_at",
+        ),
+        field_name="closed_at",
+    )
+
+    try:
+        event_payload = GitHubIssueClosedPayload(
+            repository_id=repository_id,
+            issue_number=issue_number,
+            title=title,
+            sender_id=sender_id,
+        )
+    except ValidationError as error:
+        raise GitHubWebhookPayloadError(
+            "Invalid GitHub issue payload."
+        ) from error
+
+    return ExecutionEvent(
+        execution_event_id=(
+            create_execution_event_id()
+        ),
+        project_id=project_id,
+        event_type="github.issue.closed",
+        occurred_at=occurred_at,
+        recorded_at=recorded_at,
+        actor_id=sender_id,
+        ingested_by_id="system_github",
+        source_provider="github",
+        source_account_id=sender_id,
+        external_resource_id=repository_id,
+        external_entity_type="issue",
+        external_entity_id=issue_id,
+        provider_idempotency_key=(
+            f"github:delivery:{delivery_id}"
+        ),
+        ingestion_method="webhook",
+        payload=event_payload,
+    )
 
 
 def adapt_github_pull_request_closed(

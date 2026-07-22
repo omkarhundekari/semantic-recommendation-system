@@ -416,3 +416,74 @@ def test_adapt_github_pull_request_uses_merged_at_as_occurred_at():
 
     assert event.occurred_at == merged_at
     assert event.recorded_at == recorded_at
+
+
+def test_adapt_github_issue_closed():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_issue_closed,
+    )
+
+    event = adapt_github_issue_closed(
+        project_id="proj_test",
+        delivery_id="delivery-issue",
+        recorded_at=RECORDED_AT,
+        payload={
+            "action": "closed",
+            "issue": {
+                "id": 555,
+                "number": 42,
+                "title": "Finish execution evidence",
+                "closed_at": "2026-07-21T19:00:00Z",
+            },
+            "repository": {
+                "id": 987,
+            },
+            "sender": {
+                "id": 456,
+            },
+        },
+    )
+
+    assert event.event_type == "github.issue.closed"
+    assert event.external_entity_id == "555"
+    assert event.payload.repository_id == "987"
+    assert event.payload.issue_number == 42
+    assert event.payload.title == "Finish execution evidence"
+    assert event.payload.sender_id == "456"
+    assert event.occurred_at == datetime(
+        2026,
+        7,
+        21,
+        19,
+        0,
+        tzinfo=timezone.utc,
+    )
+    assert event.recorded_at == RECORDED_AT
+
+
+def test_adapt_github_issue_closed_rejects_non_closed_action():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_issue_closed,
+    )
+
+    with pytest.raises(GitHubWebhookPayloadError):
+        adapt_github_issue_closed(
+            project_id="proj_test",
+            delivery_id="delivery-issue",
+            recorded_at=RECORDED_AT,
+            payload={
+                "action": "edited",
+                "issue": {
+                    "id": 555,
+                    "number": 42,
+                    "title": "Finish execution evidence",
+                    "closed_at": "2026-07-21T19:00:00Z",
+                },
+                "repository": {
+                    "id": 987,
+                },
+                "sender": {
+                    "id": 456,
+                },
+            },
+        )

@@ -126,6 +126,15 @@ class GitHubRefUpdatedPayload(ExecutionEventPayload):
         return self
 
 
+class GitHubIssueClosedPayload(
+    ExecutionEventPayload
+):
+    repository_id: str = Field(min_length=1)
+    issue_number: int = Field(gt=0)
+    title: str = Field(min_length=1)
+    sender_id: str = Field(min_length=1)
+
+
 class GitHubPullRequestMergedPayload(
     ExecutionEventPayload
 ):
@@ -145,6 +154,7 @@ EXECUTION_EVENT_PAYLOAD_REGISTRY: Dict[
     "github.pull_request.merged": (
         GitHubPullRequestMergedPayload
     ),
+    "github.issue.closed": GitHubIssueClosedPayload,
 }
 
 
