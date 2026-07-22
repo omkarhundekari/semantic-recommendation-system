@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, Type
+from typing import Dict, Optional, Type
 
 from pydantic import (
     BaseModel,
@@ -126,6 +126,32 @@ class GitHubRefUpdatedPayload(ExecutionEventPayload):
         return self
 
 
+class GitHubDeploymentSucceededPayload(
+    ExecutionEventPayload
+):
+    repository_id: str = Field(min_length=1)
+    deployment_status_id: str = Field(min_length=1)
+    sha: str = Field(min_length=1)
+    ref: str = Field(min_length=1)
+    environment: str = Field(min_length=1)
+    environment_url: Optional[str] = None
+    sender_id: str = Field(min_length=1)
+
+    @field_validator("sha")
+    @classmethod
+    def validate_sha(
+        cls,
+        value: str,
+    ) -> str:
+        if not GITHUB_SHA_PATTERN.fullmatch(value):
+            raise ValueError(
+                "sha must be a 40-character hexadecimal "
+                "Git SHA."
+            )
+
+        return value.lower()
+
+
 class GitHubWorkflowRunCompletedPayload(
     ExecutionEventPayload
 ):
@@ -195,6 +221,9 @@ EXECUTION_EVENT_PAYLOAD_REGISTRY: Dict[
     ),
     "github.workflow_run.completed": (
         GitHubWorkflowRunCompletedPayload
+    ),
+    "github.deployment.succeeded": (
+        GitHubDeploymentSucceededPayload
     ),
 }
 

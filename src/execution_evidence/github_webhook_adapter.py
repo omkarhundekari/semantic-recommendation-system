@@ -15,6 +15,7 @@ from execution_evidence.execution_event_payload import (
     GitHubRefUpdatedPayload,
     GitHubReleasePublishedPayload,
     GitHubWorkflowRunCompletedPayload,
+    GitHubDeploymentSucceededPayload,
 )
 
 
@@ -23,6 +24,160 @@ UTC = timezone.utc
 
 class GitHubWebhookPayloadError(ValueError):
     pass
+
+
+def adapt_github_deployment_status_success(
+    *,
+    project_id: str,
+    delivery_id: str,
+    recorded_at: datetime,
+    payload: Dict[str, Any],
+) -> ExecutionEvent:
+    project_id = _required_identity_text(
+        project_id,
+        "project_id",
+    )
+    delivery_id = _required_identity_text(
+        delivery_id,
+        "delivery_id",
+    )
+
+    deployment_status = _required_mapping(
+        payload,
+        "deployment_status",
+    )
+    deployment = _required_mapping(
+        payload,
+        "deployment",
+    )
+    repository = _required_mapping(
+        payload,
+        "repository",
+    )
+    sender = _required_mapping(
+        payload,
+        "sender",
+    )
+
+    state = _required_text(
+        deployment_status,
+        "state",
+    )
+
+    if state != "success":
+        raise GitHubWebhookPayloadError(
+            "GitHub deployment status state must be "
+            "'success'."
+        )
+
+    repository_id = str(
+        _required_value(repository, "id")
+    )
+    sender_id = str(
+        _required_value(sender, "id")
+    )
+    deployment_id = str(
+        _required_value(deployment, "id")
+    )
+    deployment_status_id = str(
+        _required_value(deployment_status, "id")
+    )
+
+    sha = _required_text(
+        deployment,
+        "sha",
+    )
+    ref = _required_text(
+        deployment,
+        "ref",
+    )
+
+    deployment_environment = _required_text(
+        deployment,
+        "environment",
+    )
+    status_environment = _required_text(
+        deployment_status,
+        "environment",
+    )
+
+    if (
+        deployment_environment
+        != status_environment
+    ):
+        raise GitHubWebhookPayloadError(
+            "GitHub deployment and deployment status "
+            "environments must match."
+        )
+
+    environment_url_value = deployment_status.get(
+        "environment_url"
+    )
+    environment_url = None
+
+    if environment_url_value is not None:
+        if not isinstance(
+            environment_url_value,
+            str,
+        ) or not environment_url_value.strip():
+            raise GitHubWebhookPayloadError(
+                "GitHub deployment environment_url "
+                "must be a non-empty string when "
+                "provided."
+            )
+
+        environment_url = (
+            environment_url_value.strip()
+        )
+
+    occurred_at = _parse_github_datetime(
+        _required_text(
+            deployment_status,
+            "created_at",
+        ),
+        field_name="created_at",
+    )
+
+    try:
+        event_payload = (
+            GitHubDeploymentSucceededPayload(
+                repository_id=repository_id,
+                deployment_status_id=(
+                    deployment_status_id
+                ),
+                sha=sha,
+                ref=ref,
+                environment=deployment_environment,
+                environment_url=environment_url,
+                sender_id=sender_id,
+            )
+        )
+    except ValidationError as error:
+        raise GitHubWebhookPayloadError(
+            "Invalid GitHub deployment payload."
+        ) from error
+
+    return ExecutionEvent(
+        execution_event_id=(
+            create_execution_event_id()
+        ),
+        project_id=project_id,
+        event_type="github.deployment.succeeded",
+        occurred_at=occurred_at,
+        recorded_at=recorded_at,
+        actor_id=sender_id,
+        ingested_by_id="system_github",
+        source_provider="github",
+        source_account_id=sender_id,
+        external_resource_id=repository_id,
+        external_entity_type="deployment",
+        external_entity_id=deployment_id,
+        provider_idempotency_key=(
+            f"github:delivery:{delivery_id}"
+        ),
+        ingestion_method="webhook",
+        payload=event_payload,
+    )
 
 
 def adapt_github_workflow_run_completed(

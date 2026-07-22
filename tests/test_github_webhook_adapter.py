@@ -675,3 +675,127 @@ def test_adapt_github_workflow_run_requires_conclusion():
                 },
             },
         )
+
+
+def test_adapt_github_deployment_status_success():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_deployment_status_success,
+    )
+
+    event = adapt_github_deployment_status_success(
+        project_id="proj_test",
+        delivery_id="delivery-deployment",
+        recorded_at=RECORDED_AT,
+        payload={
+            "deployment_status": {
+                "id": 901,
+                "state": "success",
+                "environment": "production",
+                "environment_url": "https://example.com",
+                "created_at": "2026-07-22T18:30:00Z",
+            },
+            "deployment": {
+                "id": 900,
+                "sha": "b" * 40,
+                "ref": "main",
+                "environment": "production",
+            },
+            "repository": {
+                "id": 987,
+            },
+            "sender": {
+                "id": 456,
+            },
+        },
+    )
+
+    assert event.event_type == "github.deployment.succeeded"
+    assert event.external_entity_type == "deployment"
+    assert event.external_entity_id == "900"
+
+    assert event.payload.repository_id == "987"
+    assert event.payload.deployment_status_id == "901"
+    assert event.payload.sha == "b" * 40
+    assert event.payload.ref == "main"
+    assert event.payload.environment == "production"
+    assert (
+        event.payload.environment_url
+        == "https://example.com"
+    )
+    assert event.payload.sender_id == "456"
+
+    assert event.occurred_at == datetime(
+        2026,
+        7,
+        22,
+        18,
+        30,
+        tzinfo=timezone.utc,
+    )
+    assert event.recorded_at == RECORDED_AT
+
+
+def test_adapt_github_deployment_status_rejects_non_success_state():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_deployment_status_success,
+    )
+
+    with pytest.raises(GitHubWebhookPayloadError):
+        adapt_github_deployment_status_success(
+            project_id="proj_test",
+            delivery_id="delivery-deployment",
+            recorded_at=RECORDED_AT,
+            payload={
+                "deployment_status": {
+                    "id": 901,
+                    "state": "failure",
+                    "environment": "production",
+                    "created_at": "2026-07-22T18:30:00Z",
+                },
+                "deployment": {
+                    "id": 900,
+                    "sha": "b" * 40,
+                    "ref": "main",
+                    "environment": "production",
+                },
+                "repository": {
+                    "id": 987,
+                },
+                "sender": {
+                    "id": 456,
+                },
+            },
+        )
+
+
+def test_adapt_github_deployment_status_requires_matching_environment():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_deployment_status_success,
+    )
+
+    with pytest.raises(GitHubWebhookPayloadError):
+        adapt_github_deployment_status_success(
+            project_id="proj_test",
+            delivery_id="delivery-deployment",
+            recorded_at=RECORDED_AT,
+            payload={
+                "deployment_status": {
+                    "id": 901,
+                    "state": "success",
+                    "environment": "staging",
+                    "created_at": "2026-07-22T18:30:00Z",
+                },
+                "deployment": {
+                    "id": 900,
+                    "sha": "b" * 40,
+                    "ref": "main",
+                    "environment": "production",
+                },
+                "repository": {
+                    "id": 987,
+                },
+                "sender": {
+                    "id": 456,
+                },
+            },
+        )
