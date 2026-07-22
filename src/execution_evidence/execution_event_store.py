@@ -76,12 +76,13 @@ class ExecutionEventStore(ABC):
         raise NotImplementedError
 
 
-    @abstractmethod
     def list_project_event_records(
         self,
         project_id: str,
         *,
         limit: int = 100,
     ) -> List[StoredExecutionEvent]:
-        raise NotImplementedError
-
+        raise NotImplementedError(
+            "This execution event store does not "
+            "expose authoritative storage order."
+        )
