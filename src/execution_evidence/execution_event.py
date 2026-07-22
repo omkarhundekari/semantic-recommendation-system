@@ -168,15 +168,29 @@ class ExecutionEvent(BaseModel):
         return self
 
     def immutable_fingerprint(self) -> str:
-        payload = self.model_dump(
+        event_data = self.model_dump(
             mode="json",
             exclude={
                 "execution_event_id",
                 "recorded_at",
+                "payload",
             },
         )
+
+        if isinstance(
+            self.payload,
+            ExecutionEventPayload,
+        ):
+            event_data["payload"] = (
+                self.payload.model_dump(
+                    mode="json"
+                )
+            )
+        else:
+            event_data["payload"] = self.payload
+
         canonical = json.dumps(
-            payload,
+            event_data,
             sort_keys=True,
             separators=(",", ":"),
             ensure_ascii=False,
