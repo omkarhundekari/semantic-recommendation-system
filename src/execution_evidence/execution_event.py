@@ -4,7 +4,7 @@ import hashlib
 import json
 from datetime import datetime
 from typing import Any, Dict, Literal, Optional, Union
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from pydantic import (
     BaseModel,
@@ -44,6 +44,10 @@ class ExecutionEvent(BaseModel):
     )
 
     execution_event_id: str = Field(min_length=1)
+    supersedes_execution_event_id: Optional[str] = Field(
+        default=None,
+        min_length=1,
+    )
     project_id: str = Field(min_length=1)
     event_type: str = Field(min_length=1)
 
@@ -100,6 +104,45 @@ class ExecutionEvent(BaseModel):
     ] = Field(default_factory=dict)
 
     @field_validator(
+        "supersedes_execution_event_id",
+    )
+    @classmethod
+    def validate_superseded_event_id(
+        cls,
+        value: Optional[str],
+    ) -> Optional[str]:
+        if value is None:
+            return None
+
+        prefix = "evt_"
+        if not value.startswith(prefix):
+            raise ValueError(
+                "Superseded execution event IDs must "
+                "start with 'evt_'."
+            )
+
+        raw_uuid = value[len(prefix):]
+
+        try:
+            parsed_uuid = UUID(raw_uuid)
+        except ValueError as error:
+            raise ValueError(
+                "Superseded execution event IDs must "
+                "contain a valid UUID."
+            ) from error
+
+        if (
+            parsed_uuid.version != 4
+            or str(parsed_uuid) != raw_uuid
+        ):
+            raise ValueError(
+                "Superseded execution event IDs must "
+                "contain a canonical UUID4."
+            )
+
+        return value
+
+    @field_validator(
         "occurred_at",
         "recorded_at",
         "verified_at",
@@ -122,6 +165,20 @@ class ExecutionEvent(BaseModel):
             )
 
         return value
+
+    @model_validator(mode="after")
+    def reject_self_supersession(
+        self,
+    ) -> "ExecutionEvent":
+        if (
+            self.supersedes_execution_event_id
+            == self.execution_event_id
+        ):
+            raise ValueError(
+                "An execution event cannot supersede itself."
+            )
+
+        return self
 
     @model_validator(mode="after")
     def validate_idempotency(
