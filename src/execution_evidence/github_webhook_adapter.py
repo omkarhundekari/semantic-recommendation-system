@@ -937,3 +937,51 @@ def _parse_pushed_at(
             "GitHub repository pushed_at is "
             "outside the supported range."
         ) from error
+
+def adapt_github_webhook(
+    *,
+    project_id: str,
+    event_name: str,
+    delivery_id: str,
+    recorded_at: datetime,
+    payload: Dict[str, Any],
+) -> ExecutionEvent:
+    event_name = _required_identity_text(
+        event_name,
+        "event_name",
+    )
+
+    if (
+        event_name.lower() != event_name
+        or not event_name.replace("_", "").isalnum()
+    ):
+        raise GitHubWebhookPayloadError(
+            "GitHub event_name must use lowercase "
+            "letters, numbers, and underscores only."
+        )
+
+    adapters = {
+        "push": adapt_github_push,
+        "pull_request": adapt_github_pull_request_closed,
+        "issues": adapt_github_issue_closed,
+        "release": adapt_github_release_published,
+        "workflow_run": adapt_github_workflow_run_completed,
+        "deployment_status": (
+            adapt_github_deployment_status_success
+        ),
+    }
+
+    adapter = adapters.get(event_name)
+
+    if adapter is None:
+        raise GitHubWebhookPayloadError(
+            f"Unsupported GitHub webhook event: "
+            f"{event_name!r}."
+        )
+
+    return adapter(
+        project_id=project_id,
+        delivery_id=delivery_id,
+        recorded_at=recorded_at,
+        payload=payload,
+    )

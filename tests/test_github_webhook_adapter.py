@@ -799,3 +799,123 @@ def test_adapt_github_deployment_status_requires_matching_environment():
                 },
             },
         )
+
+
+def test_adapt_github_webhook_dispatches_supported_event():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_webhook,
+    )
+
+    event = adapt_github_webhook(
+        project_id="proj_test",
+        event_name="workflow_run",
+        delivery_id="delivery-dispatch",
+        recorded_at=RECORDED_AT,
+        payload={
+            "action": "completed",
+            "workflow_run": {
+                "id": 888,
+                "name": "CI",
+                "head_sha": "a" * 40,
+                "head_branch": "main",
+                "conclusion": "success",
+                "run_number": 52,
+                "updated_at": "2026-07-22T21:00:00Z",
+            },
+            "repository": {
+                "id": 987,
+            },
+            "sender": {
+                "id": 456,
+            },
+        },
+    )
+
+    assert event.event_type == "github.workflow_run.completed"
+    assert event.external_entity_type == "workflow_run"
+    assert event.external_entity_id == "888"
+    assert (
+        event.provider_idempotency_key
+        == "github:delivery:delivery-dispatch"
+    )
+
+
+def test_adapt_github_webhook_rejects_unsupported_event():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_webhook,
+    )
+
+    with pytest.raises(GitHubWebhookPayloadError):
+        adapt_github_webhook(
+            project_id="proj_test",
+            event_name="star",
+            delivery_id="delivery-unsupported",
+            recorded_at=RECORDED_AT,
+            payload={
+                "action": "created",
+                "repository": {
+                    "id": 987,
+                },
+                "sender": {
+                    "id": 456,
+                },
+            },
+        )
+
+
+def test_adapt_github_webhook_rejects_unsupported_action():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_webhook,
+    )
+
+    with pytest.raises(GitHubWebhookPayloadError):
+        adapt_github_webhook(
+            project_id="proj_test",
+            event_name="workflow_run",
+            delivery_id="delivery-action",
+            recorded_at=RECORDED_AT,
+            payload={
+                "action": "requested",
+                "workflow_run": {
+                    "id": 888,
+                    "name": "CI",
+                    "head_sha": "a" * 40,
+                    "head_branch": "main",
+                    "conclusion": None,
+                    "run_number": 52,
+                    "updated_at": "2026-07-22T21:00:00Z",
+                },
+                "repository": {
+                    "id": 987,
+                },
+                "sender": {
+                    "id": 456,
+                },
+            },
+        )
+
+
+@pytest.mark.parametrize(
+    "event_name",
+    [
+        "",
+        " ",
+        "Workflow_Run",
+        "workflow run",
+    ],
+)
+def test_adapt_github_webhook_rejects_invalid_event_name(
+    event_name,
+):
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_webhook,
+    )
+
+    with pytest.raises(GitHubWebhookPayloadError):
+        adapt_github_webhook(
+            project_id="proj_test",
+            event_name=event_name,
+            delivery_id="delivery-invalid-name",
+            recorded_at=RECORDED_AT,
+            payload={},
+        )
