@@ -126,6 +126,32 @@ class GitHubRefUpdatedPayload(ExecutionEventPayload):
         return self
 
 
+class GitHubWorkflowRunCompletedPayload(
+    ExecutionEventPayload
+):
+    repository_id: str = Field(min_length=1)
+    workflow_name: str = Field(min_length=1)
+    run_number: int = Field(gt=0)
+    head_sha: str = Field(min_length=1)
+    head_branch: str = Field(min_length=1)
+    conclusion: str = Field(min_length=1)
+    sender_id: str = Field(min_length=1)
+
+    @field_validator("head_sha")
+    @classmethod
+    def validate_head_sha(
+        cls,
+        value: str,
+    ) -> str:
+        if not GITHUB_SHA_PATTERN.fullmatch(value):
+            raise ValueError(
+                "head_sha must be a 40-character "
+                "hexadecimal Git SHA."
+            )
+
+        return value.lower()
+
+
 class GitHubReleasePublishedPayload(
     ExecutionEventPayload
 ):
@@ -166,6 +192,9 @@ EXECUTION_EVENT_PAYLOAD_REGISTRY: Dict[
     "github.issue.closed": GitHubIssueClosedPayload,
     "github.release.published": (
         GitHubReleasePublishedPayload
+    ),
+    "github.workflow_run.completed": (
+        GitHubWorkflowRunCompletedPayload
     ),
 }
 

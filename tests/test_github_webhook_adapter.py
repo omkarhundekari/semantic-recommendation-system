@@ -561,3 +561,117 @@ def test_adapt_github_release_rejects_non_published_action():
                 },
             },
         )
+
+
+def test_adapt_github_workflow_run_completed():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_workflow_run_completed,
+    )
+
+    event = adapt_github_workflow_run_completed(
+        project_id="proj_test",
+        delivery_id="delivery-workflow",
+        recorded_at=RECORDED_AT,
+        payload={
+            "action": "completed",
+            "workflow_run": {
+                "id": 888,
+                "name": "CI",
+                "head_sha": "a" * 40,
+                "head_branch": "main",
+                "conclusion": "success",
+                "run_number": 52,
+                "updated_at": "2026-07-21T21:00:00Z",
+            },
+            "repository": {
+                "id": 987,
+            },
+            "sender": {
+                "id": 456,
+            },
+        },
+    )
+
+    assert event.event_type == "github.workflow_run.completed"
+    assert event.external_entity_id == "888"
+    assert event.external_entity_type == "workflow_run"
+
+    assert event.payload.repository_id == "987"
+    assert event.payload.workflow_name == "CI"
+    assert event.payload.run_number == 52
+    assert event.payload.head_sha == "a" * 40
+    assert event.payload.head_branch == "main"
+    assert event.payload.conclusion == "success"
+    assert event.payload.sender_id == "456"
+
+    assert event.occurred_at == datetime(
+        2026,
+        7,
+        21,
+        21,
+        0,
+        tzinfo=timezone.utc,
+    )
+    assert event.recorded_at == RECORDED_AT
+
+
+def test_adapt_github_workflow_run_rejects_non_completed_action():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_workflow_run_completed,
+    )
+
+    with pytest.raises(GitHubWebhookPayloadError):
+        adapt_github_workflow_run_completed(
+            project_id="proj_test",
+            delivery_id="delivery-workflow",
+            recorded_at=RECORDED_AT,
+            payload={
+                "action": "requested",
+                "workflow_run": {
+                    "id": 888,
+                    "name": "CI",
+                    "head_sha": "a" * 40,
+                    "head_branch": "main",
+                    "conclusion": None,
+                    "run_number": 52,
+                    "updated_at": "2026-07-21T21:00:00Z",
+                },
+                "repository": {
+                    "id": 987,
+                },
+                "sender": {
+                    "id": 456,
+                },
+            },
+        )
+
+
+def test_adapt_github_workflow_run_requires_conclusion():
+    from execution_evidence.github_webhook_adapter import (
+        adapt_github_workflow_run_completed,
+    )
+
+    with pytest.raises(GitHubWebhookPayloadError):
+        adapt_github_workflow_run_completed(
+            project_id="proj_test",
+            delivery_id="delivery-workflow",
+            recorded_at=RECORDED_AT,
+            payload={
+                "action": "completed",
+                "workflow_run": {
+                    "id": 888,
+                    "name": "CI",
+                    "head_sha": "a" * 40,
+                    "head_branch": "main",
+                    "conclusion": None,
+                    "run_number": 52,
+                    "updated_at": "2026-07-21T21:00:00Z",
+                },
+                "repository": {
+                    "id": 987,
+                },
+                "sender": {
+                    "id": 456,
+                },
+            },
+        )

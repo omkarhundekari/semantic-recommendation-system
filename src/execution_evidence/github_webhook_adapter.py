@@ -14,6 +14,7 @@ from execution_evidence.execution_event_payload import (
     GitHubPullRequestMergedPayload,
     GitHubRefUpdatedPayload,
     GitHubReleasePublishedPayload,
+    GitHubWorkflowRunCompletedPayload,
 )
 
 
@@ -22,6 +23,126 @@ UTC = timezone.utc
 
 class GitHubWebhookPayloadError(ValueError):
     pass
+
+
+def adapt_github_workflow_run_completed(
+    *,
+    project_id: str,
+    delivery_id: str,
+    recorded_at: datetime,
+    payload: Dict[str, Any],
+) -> ExecutionEvent:
+    project_id = _required_identity_text(
+        project_id,
+        "project_id",
+    )
+    delivery_id = _required_identity_text(
+        delivery_id,
+        "delivery_id",
+    )
+
+    action = _required_text(
+        payload,
+        "action",
+    )
+
+    if action != "completed":
+        raise GitHubWebhookPayloadError(
+            "GitHub workflow run action must be "
+            "'completed'."
+        )
+
+    workflow_run = _required_mapping(
+        payload,
+        "workflow_run",
+    )
+    repository = _required_mapping(
+        payload,
+        "repository",
+    )
+    sender = _required_mapping(
+        payload,
+        "sender",
+    )
+
+    repository_id = str(
+        _required_value(repository, "id")
+    )
+    sender_id = str(
+        _required_value(sender, "id")
+    )
+    workflow_run_id = str(
+        _required_value(workflow_run, "id")
+    )
+    workflow_name = _required_text(
+        workflow_run,
+        "name",
+    )
+    run_number = _required_positive_integer(
+        workflow_run,
+        "run_number",
+        context="GitHub workflow run",
+    )
+    head_sha = _required_text(
+        workflow_run,
+        "head_sha",
+    )
+    head_branch = _required_text(
+        workflow_run,
+        "head_branch",
+    )
+    conclusion = _required_text(
+        workflow_run,
+        "conclusion",
+    )
+    occurred_at = _parse_github_datetime(
+        _required_text(
+            workflow_run,
+            "updated_at",
+        ),
+        field_name="updated_at",
+    )
+
+    try:
+        event_payload = (
+            GitHubWorkflowRunCompletedPayload(
+                repository_id=repository_id,
+                workflow_name=workflow_name,
+                run_number=run_number,
+                head_sha=head_sha,
+                head_branch=head_branch,
+                conclusion=conclusion,
+                sender_id=sender_id,
+            )
+        )
+    except ValidationError as error:
+        raise GitHubWebhookPayloadError(
+            "Invalid GitHub workflow run payload."
+        ) from error
+
+    return ExecutionEvent(
+        execution_event_id=(
+            create_execution_event_id()
+        ),
+        project_id=project_id,
+        event_type=(
+            "github.workflow_run.completed"
+        ),
+        occurred_at=occurred_at,
+        recorded_at=recorded_at,
+        actor_id=sender_id,
+        ingested_by_id="system_github",
+        source_provider="github",
+        source_account_id=sender_id,
+        external_resource_id=repository_id,
+        external_entity_type="workflow_run",
+        external_entity_id=workflow_run_id,
+        provider_idempotency_key=(
+            f"github:delivery:{delivery_id}"
+        ),
+        ingestion_method="webhook",
+        payload=event_payload,
+    )
 
 
 def adapt_github_release_published(
