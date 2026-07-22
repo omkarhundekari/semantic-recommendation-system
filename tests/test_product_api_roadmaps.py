@@ -393,6 +393,7 @@ def test_project_status_endpoint_archives_project(
                 json={
                     "status": "archived",
                     "reason": "Paused temporarily.",
+                    "expected_revision": 0,
                 },
             )
     finally:
@@ -427,12 +428,18 @@ def test_project_status_endpoint_is_idempotent(
             first = client.post(
                 f"/v1/projects/"
                 f"{stored.project_id}/status",
-                json={"status": "archived"},
+                json={
+                    "status": "archived",
+                    "expected_revision": 0,
+                },
             )
             second = client.post(
                 f"/v1/projects/"
                 f"{stored.project_id}/status",
-                json={"status": "archived"},
+                json={
+                    "status": "archived",
+                    "expected_revision": 1,
+                },
             )
             history = client.get(
                 f"/v1/projects/"
@@ -473,12 +480,18 @@ def test_deleted_project_cannot_be_reactivated_via_api(
             deleted = client.post(
                 f"/v1/projects/"
                 f"{stored.project_id}/status",
-                json={"status": "deleted"},
+                json={
+                    "status": "deleted",
+                    "expected_revision": 0,
+                },
             )
             restored = client.post(
                 f"/v1/projects/"
                 f"{stored.project_id}/status",
-                json={"status": "active"},
+                json={
+                    "status": "active",
+                    "expected_revision": 1,
+                },
             )
     finally:
         app.dependency_overrides.clear()
@@ -505,7 +518,10 @@ def test_project_status_endpoint_returns_404(
         with TestClient(app) as client:
             response = client.post(
                 "/v1/projects/proj_missing/status",
-                json={"status": "archived"},
+                json={
+                    "status": "archived",
+                    "expected_revision": 0,
+                },
             )
     finally:
         app.dependency_overrides.clear()
@@ -530,12 +546,18 @@ def test_project_status_history_is_newest_first(
             archived = client.post(
                 f"/v1/projects/"
                 f"{stored.project_id}/status",
-                json={"status": "archived"},
+                json={
+                    "status": "archived",
+                    "expected_revision": 0,
+                },
             )
             active = client.post(
                 f"/v1/projects/"
                 f"{stored.project_id}/status",
-                json={"status": "active"},
+                json={
+                    "status": "active",
+                    "expected_revision": 1,
+                },
             )
             response = client.get(
                 f"/v1/projects/"
@@ -583,12 +605,52 @@ def test_project_lifecycle_api_requires_trusted_sqlite(
         with TestClient(app) as client:
             response = client.post(
                 "/v1/projects/proj_any/status",
-                json={"status": "archived"},
+                json={
+                    "status": "archived",
+                    "expected_revision": 0,
+                },
             )
     finally:
         app.dependency_overrides.clear()
 
     assert response.status_code == 503
+
+
+def test_project_status_endpoint_requires_revision(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+    stored = _create_lifecycle_project(runtime)
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                f"/v1/projects/"
+                f"{stored.project_id}/status",
+                json={"status": "archived"},
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 422
+
+    loaded = runtime.roadmap_registry.load(
+        stored.project_direction_id
+    )
+
+    assert loaded is not None
+    assert loaded.project_status == "active"
+    assert loaded.project_revision == 0
+    assert runtime.roadmap_registry.list_project_status_transitions(
+        stored.project_id
+    ) == []
+
 
 def test_project_status_endpoint_rejects_stale_revision(
     tmp_path: Path,

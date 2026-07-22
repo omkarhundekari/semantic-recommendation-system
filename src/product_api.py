@@ -423,8 +423,7 @@ class ProjectStatusTransitionRequest(BaseModel):
         default=None,
         max_length=1000,
     )
-    expected_revision: Optional[int] = Field(
-        default=None,
+    expected_revision: int = Field(
         ge=0,
     )
 

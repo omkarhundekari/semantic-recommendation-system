@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import Barrier
 
 import pytest
 
@@ -1181,6 +1183,93 @@ def test_project_status_transition_rejects_stale_revision(
             stored.project_id
         )
     ) == 1
+
+
+def test_concurrent_project_status_transitions_allow_one_writer(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    creator = SQLiteRoadmapSnapshotRegistry(
+        database_path
+    )
+    stored = creator.create(
+        create_stored_roadmap_snapshot(
+            project_id="proj_concurrent_revision",
+            response_direction_id="direction-one",
+            title="Concurrent lifecycle project",
+            snapshot=_snapshot(),
+            created_at=CREATED_AT,
+        )
+    )
+    barrier = Barrier(2)
+
+    def transition(
+        new_status,
+    ):
+        registry = SQLiteRoadmapSnapshotRegistry(
+            database_path
+        )
+        barrier.wait()
+
+        try:
+            result = registry.transition_project_status(
+                stored.project_id,
+                new_status=new_status,
+                changed_at=CREATED_AT,
+                expected_revision=0,
+            )
+            return ("success", result)
+        except ProjectRevisionConflictError as error:
+            return ("conflict", str(error))
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(
+            executor.map(
+                transition,
+                ("archived", "deleted"),
+            )
+        )
+
+    successes = [
+        value
+        for outcome, value in results
+        if outcome == "success"
+    ]
+    conflicts = [
+        value
+        for outcome, value in results
+        if outcome == "conflict"
+    ]
+
+    assert len(successes) == 1
+    assert successes[0].revision == 1
+    assert len(conflicts) == 1
+    assert conflicts[0] == (
+        "Project revision conflict: "
+        "expected 0, found 1."
+    )
+
+    loaded = creator.load(
+        stored.project_direction_id
+    )
+
+    assert loaded is not None
+    assert loaded.project_status in {
+        "archived",
+        "deleted",
+    }
+    assert loaded.project_revision == 1
+
+    transitions = (
+        creator.list_project_status_transitions(
+            stored.project_id
+        )
+    )
+
+    assert len(transitions) == 1
+    assert transitions[0].new_status == (
+        loaded.project_status
+    )
 
 
 def test_project_status_transition_is_workspace_scoped(
