@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional, Union
 from uuid import uuid4
 
 from pydantic import (
@@ -12,6 +12,12 @@ from pydantic import (
     Field,
     field_validator,
     model_validator,
+)
+
+from execution_evidence.execution_event_payload import (
+    EXECUTION_EVENT_PAYLOAD_REGISTRY,
+    ExecutionEventPayload,
+    validate_execution_event_payload,
 )
 
 
@@ -88,9 +94,10 @@ class ExecutionEvent(BaseModel):
     verified_at: Optional[datetime] = None
 
     visibility: ExecutionEventVisibility = "private"
-    payload: Dict[str, Any] = Field(
-        default_factory=dict
-    )
+    payload: Union[
+        Dict[str, Any],
+        ExecutionEventPayload,
+    ] = Field(default_factory=dict)
 
     @field_validator(
         "occurred_at",
@@ -137,6 +144,26 @@ class ExecutionEvent(BaseModel):
                 "Webhook execution events require a "
                 "provider idempotency key."
             )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_payload_contract(
+        self,
+    ) -> "ExecutionEvent":
+        if (
+            self.event_type
+            not in EXECUTION_EVENT_PAYLOAD_REGISTRY
+        ):
+            return self
+
+        try:
+            validate_execution_event_payload(
+                event_type=self.event_type,
+                payload=self.payload,
+            )
+        except TypeError as error:
+            raise ValueError(str(error)) from error
 
         return self
 

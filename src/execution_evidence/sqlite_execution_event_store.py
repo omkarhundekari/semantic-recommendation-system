@@ -9,6 +9,10 @@ from execution_evidence.execution_event import (
     ExecutionEvent,
     ExecutionEventAppendResult,
 )
+from execution_evidence.execution_event_payload import (
+    EXECUTION_EVENT_PAYLOAD_REGISTRY,
+    ExecutionEventPayload,
+)
 from execution_evidence.execution_event_store import (
     ExecutionEventIdempotencyConflictError,
     ExecutionEventProjectNotFoundError,
@@ -22,6 +26,49 @@ from execution_evidence.sqlite_schema import (
 
 
 DEFAULT_WORKSPACE_ID = "local"
+
+
+
+def _serialize_execution_event_payload(
+    payload: object,
+) -> object:
+    if isinstance(
+        payload,
+        ExecutionEventPayload,
+    ):
+        return payload.model_dump(mode="json")
+
+    return payload
+
+
+def _deserialize_execution_event_payload(
+    *,
+    event_type: str,
+    payload_json: str,
+) -> object:
+    payload = json.loads(payload_json)
+    payload_type = (
+        EXECUTION_EVENT_PAYLOAD_REGISTRY.get(
+            event_type
+        )
+    )
+
+    if payload_type is None:
+        return payload
+
+    if not isinstance(payload, dict):
+        raise ExecutionEventStoreError(
+            "Stored typed execution event payload "
+            "must be a JSON object."
+        )
+
+    try:
+        return payload_type.model_validate(payload)
+    except Exception as error:
+        raise ExecutionEventStoreError(
+            "Stored execution event payload does not "
+            f"match event type '{event_type}'."
+        ) from error
 
 
 class SQLiteExecutionEventStore(
@@ -176,7 +223,9 @@ class SQLiteExecutionEventStore(
                     ),
                     event.visibility,
                     json.dumps(
-                        event.payload,
+                        _serialize_execution_event_payload(
+                            event.payload
+                        ),
                         sort_keys=True,
                         separators=(",", ":"),
                         ensure_ascii=False,
@@ -455,7 +504,10 @@ class SQLiteExecutionEventStore(
             ],
             verified_at=row["verified_at"],
             visibility=row["visibility"],
-            payload=json.loads(row["payload_json"]),
+            payload=_deserialize_execution_event_payload(
+                event_type=row["event_type"],
+                payload_json=row["payload_json"],
+            ),
         )
 
     def _connect(self) -> sqlite3.Connection:

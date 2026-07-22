@@ -13,6 +13,9 @@ from pydantic import ValidationError
 from execution_evidence.execution_event import (
     ExecutionEvent,
 )
+from execution_evidence.execution_event_payload import (
+    GitHubRefUpdatedPayload,
+)
 from execution_evidence.execution_event_store import (
     ExecutionEventIdempotencyConflictError,
     ExecutionEventProjectNotFoundError,
@@ -104,7 +107,7 @@ def _event(
         str
     ] = None,
     ingestion_method: str = "webhook",
-    payload: Optional[dict] = None,
+    payload: Optional[object] = None,
 ) -> ExecutionEvent:
     return ExecutionEvent(
         execution_event_id=execution_event_id,
@@ -675,3 +678,53 @@ def test_webhook_requires_provider_idempotency_key():
             provider_idempotency_key=None,
             client_idempotency_key="request-only",
         )
+
+
+
+def test_typed_payload_survives_sqlite_round_trip(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+    payload = GitHubRefUpdatedPayload(
+        repository_id="123",
+        ref="refs/heads/main",
+        before_sha="a" * 40,
+        after_sha="b" * 40,
+        created=False,
+        deleted=False,
+        forced=False,
+        included_commit_count=2,
+        sender_id="456",
+    )
+    event = _event(
+        execution_event_id="evt_github_ref",
+        event_type="github.ref.updated",
+        provider_idempotency_key=(
+            "github:delivery:ref-update-123"
+        ),
+        payload=payload,
+    )
+
+    result = store.append(event)
+    loaded = store.load(
+        event.execution_event_id
+    )
+
+    assert result.created is True
+    assert result.event == event
+    assert loaded == event
+    assert isinstance(
+        result.event.payload,
+        GitHubRefUpdatedPayload,
+    )
+    assert isinstance(
+        loaded.payload,
+        GitHubRefUpdatedPayload,
+    )
+    assert loaded.payload.ref == "refs/heads/main"
+    assert loaded.payload.after_sha == "b" * 40
