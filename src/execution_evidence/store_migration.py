@@ -639,7 +639,7 @@ def migration_receipt_v1_material(
     }
 
 
-def migration_receipt_v2_material(
+def migration_receipt_v2_intrinsic_material(
     *,
     receipt_kind: str,
     predecessor_receipt_id: Optional[str],
@@ -690,6 +690,69 @@ def migration_receipt_v2_material(
     }
 
 
+def migration_receipt_v2_material(
+    *,
+    receipt_kind: str,
+    predecessor_receipt_id: Optional[str],
+    predecessor_content_digest: Optional[str],
+    schema_version_from: Optional[int],
+    schema_version_to: int,
+    lineage_epoch: int,
+    source_type: str,
+    source_identifier: str,
+    source_root_hash: str,
+    canonicalization_version: int,
+    report_version: int,
+    repository_count: int,
+    evidence_count: int,
+    attribution_count: int,
+    deterministic_report_json: str,
+    created_at: str,
+) -> Dict[str, object]:
+    material = migration_receipt_v2_intrinsic_material(
+        receipt_kind=receipt_kind,
+        predecessor_receipt_id=(
+            predecessor_receipt_id
+        ),
+        schema_version_from=schema_version_from,
+        schema_version_to=schema_version_to,
+        lineage_epoch=lineage_epoch,
+        source_type=source_type,
+        source_identifier=source_identifier,
+        source_root_hash=source_root_hash,
+        canonicalization_version=(
+            canonicalization_version
+        ),
+        report_version=report_version,
+        repository_count=repository_count,
+        evidence_count=evidence_count,
+        attribution_count=attribution_count,
+        deterministic_report_json=(
+            deterministic_report_json
+        ),
+        created_at=created_at,
+    )
+
+    if receipt_kind == "root":
+        if predecessor_content_digest is not None:
+            raise RepositoryEvidenceMigrationError(
+                "Root receipts cannot bind predecessor "
+                "content."
+            )
+    else:
+        if predecessor_content_digest is None:
+            raise RepositoryEvidenceMigrationError(
+                "Non-root receipt version 2 material "
+                "requires a predecessor content digest."
+            )
+
+        material["predecessor_content_digest"] = (
+            predecessor_content_digest
+        )
+
+    return material
+
+
 def canonical_migration_receipt_material_json(
     material: Dict[str, object],
 ) -> str:
@@ -708,13 +771,117 @@ def canonical_migration_receipt_material_json(
     )
 
 
+def migration_receipt_intrinsic_material(
+    receipt: RepositoryEvidenceMigrationReceipt,
+) -> Dict[str, object]:
+    if (
+        receipt.receipt_version
+        == MIGRATION_RECEIPT_VERSION
+    ):
+        return migration_receipt_v1_material(
+            receipt_version=receipt.receipt_version,
+            source_type=receipt.source_type,
+            source_identifier=(
+                receipt.source_identifier
+            ),
+            source_root_hash=(
+                receipt.source_root_hash
+            ),
+            canonicalization_version=(
+                receipt.canonicalization_version
+            ),
+            report_version=receipt.report_version,
+            deterministic_report_json=(
+                receipt.deterministic_report_json
+            ),
+        )
+
+    if (
+        receipt.receipt_version
+        == MIGRATION_RECEIPT_V2_VERSION
+    ):
+        if (
+            receipt.receipt_kind is None
+            or receipt.schema_version_to is None
+            or receipt.lineage_epoch is None
+        ):
+            raise RepositoryEvidenceMigrationError(
+                "Receipt version 2 intrinsic material "
+                "is incomplete."
+            )
+
+        return migration_receipt_v2_intrinsic_material(
+            receipt_kind=receipt.receipt_kind,
+            predecessor_receipt_id=(
+                receipt.predecessor_receipt_id
+            ),
+            schema_version_from=(
+                receipt.schema_version_from
+            ),
+            schema_version_to=(
+                receipt.schema_version_to
+            ),
+            lineage_epoch=receipt.lineage_epoch,
+            source_type=receipt.source_type,
+            source_identifier=(
+                receipt.source_identifier
+            ),
+            source_root_hash=(
+                receipt.source_root_hash
+            ),
+            canonicalization_version=(
+                receipt.canonicalization_version
+            ),
+            report_version=receipt.report_version,
+            repository_count=(
+                receipt.repository_count
+            ),
+            evidence_count=receipt.evidence_count,
+            attribution_count=(
+                receipt.attribution_count
+            ),
+            deterministic_report_json=(
+                receipt.deterministic_report_json
+            ),
+            created_at=receipt.created_at,
+        )
+
+    raise RepositoryEvidenceMigrationError(
+        "Unsupported migration receipt version."
+    )
+
+
+def calculate_migration_receipt_content_digest(
+    receipt: RepositoryEvidenceMigrationReceipt,
+) -> str:
+    canonical_material = (
+        canonical_migration_receipt_material_json(
+            migration_receipt_intrinsic_material(
+                receipt
+            )
+        )
+    )
+
+    return hashlib.sha256(
+        canonical_material.encode("utf-8")
+    ).hexdigest()
+
+
 def calculate_migration_receipt_id(
     receipt: RepositoryEvidenceMigrationReceipt,
+    *,
+    predecessor_content_digest: Optional[str] = None,
 ) -> str:
     if (
         receipt.receipt_version
         == MIGRATION_RECEIPT_VERSION
     ):
+        if predecessor_content_digest is not None:
+            raise RepositoryEvidenceMigrationError(
+                "Receipt version 1 cannot bind "
+                "predecessor content."
+            )
+
         material = migration_receipt_v1_material(
             receipt_version=receipt.receipt_version,
             source_type=receipt.source_type,
@@ -750,6 +917,9 @@ def calculate_migration_receipt_id(
             receipt_kind=receipt.receipt_kind,
             predecessor_receipt_id=(
                 receipt.predecessor_receipt_id
+            ),
+            predecessor_content_digest=(
+                predecessor_content_digest
             ),
             schema_version_from=(
                 receipt.schema_version_from
@@ -865,6 +1035,9 @@ def build_migration_receipt_v2(
     created_at: str,
     receipt_kind: str,
     predecessor_receipt_id: Optional[str],
+    predecessor_receipt: Optional[
+        RepositoryEvidenceMigrationReceipt
+    ] = None,
     schema_version_from: Optional[int],
     schema_version_to: int,
     lineage_epoch: int,
@@ -883,15 +1056,19 @@ def build_migration_receipt_v2(
     if receipt_kind == "root":
         if (
             predecessor_receipt_id is not None
+            or predecessor_receipt is not None
             or schema_version_from is not None
         ):
             raise RepositoryEvidenceMigrationError(
                 "Root receipts cannot have a "
                 "predecessor schema transition."
             )
+
+        predecessor_content_digest = None
     else:
         if (
             predecessor_receipt_id is None
+            or predecessor_receipt is None
             or schema_version_from is None
             or schema_version_to
             <= schema_version_from
@@ -900,6 +1077,21 @@ def build_migration_receipt_v2(
                 "Non-root receipts require a forward "
                 "schema transition and predecessor."
             )
+
+        if (
+            predecessor_receipt.receipt_id
+            != predecessor_receipt_id
+        ):
+            raise RepositoryEvidenceMigrationError(
+                "Migration receipt predecessor does "
+                "not match predecessor_receipt_id."
+            )
+
+        predecessor_content_digest = (
+            calculate_migration_receipt_content_digest(
+                predecessor_receipt
+            )
+        )
 
     deterministic_report = (
         deterministic_migration_report_json(
@@ -911,6 +1103,9 @@ def build_migration_receipt_v2(
         receipt_kind=receipt_kind,
         predecessor_receipt_id=(
             predecessor_receipt_id
+        ),
+        predecessor_content_digest=(
+            predecessor_content_digest
         ),
         schema_version_from=schema_version_from,
         schema_version_to=schema_version_to,
