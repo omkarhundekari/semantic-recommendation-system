@@ -346,3 +346,29 @@ def test_unknown_receipt_version_fails_closed():
         == TrustedReceiptChainFailureCode
         .UNKNOWN_VERSION
     )
+
+def test_trusted_store_reexports_chain_api():
+    from execution_evidence import trusted_receipt_chain
+    from execution_evidence import trusted_store
+
+    assert (
+        trusted_store.TrustedReceiptChainFailureCode
+        is trusted_receipt_chain
+        .TrustedReceiptChainFailureCode
+    )
+    assert (
+        trusted_store.TrustedReceiptChainFailure
+        is trusted_receipt_chain
+        .TrustedReceiptChainFailure
+    )
+    assert (
+        trusted_store
+        .TrustedReceiptChainValidationResult
+        is trusted_receipt_chain
+        .TrustedReceiptChainValidationResult
+    )
+    assert (
+        trusted_store.validate_trusted_receipt_chain
+        is trusted_receipt_chain
+        .validate_trusted_receipt_chain
+    )
