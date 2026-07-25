@@ -55,3 +55,12 @@ data/execution_evidence/*.db
 data/execution_evidence/*.db-shm
 data/execution_evidence/*.db-wal
 data/execution_evidence/backups/
+
+# Local execution-evidence databases
+data/execution_evidence/*.db-*
+data/execution_evidence/*.db.*
+data/execution_evidence/*.sqlite
+data/execution_evidence/*.sqlite3
+data/execution_evidence/*.bak
+data/execution_evidence/*-wal
+data/execution_evidence/*-shm

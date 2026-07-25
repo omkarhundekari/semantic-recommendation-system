@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 13
+CURRENT_SQLITE_SCHEMA_VERSION = 14
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -1215,6 +1215,174 @@ ON project_execution_events(
 """
 
 
+ADD_TRUSTED_RECEIPT_LINEAGE_FOUNDATION_SQL = """
+ALTER TABLE execution_evidence_import_receipts
+ADD COLUMN receipt_version INTEGER NOT NULL DEFAULT 1
+    CHECK (receipt_version IN (1, 2));
+
+ALTER TABLE execution_evidence_import_receipts
+ADD COLUMN receipt_kind TEXT
+    CHECK (
+        receipt_kind IS NULL
+        OR receipt_kind IN (
+            'root',
+            'sqlite_upgrade',
+            'epoch_boundary'
+        )
+    );
+
+ALTER TABLE execution_evidence_import_receipts
+ADD COLUMN predecessor_receipt_id TEXT;
+
+ALTER TABLE execution_evidence_import_receipts
+ADD COLUMN schema_version_from INTEGER
+    CHECK (
+        schema_version_from IS NULL
+        OR schema_version_from >= 0
+    );
+
+ALTER TABLE execution_evidence_import_receipts
+ADD COLUMN schema_version_to INTEGER
+    CHECK (
+        schema_version_to IS NULL
+        OR schema_version_to >= 0
+    );
+
+ALTER TABLE execution_evidence_import_receipts
+ADD COLUMN lineage_epoch INTEGER
+    CHECK (
+        lineage_epoch IS NULL
+        OR lineage_epoch >= 0
+    );
+
+CREATE UNIQUE INDEX
+    idx_import_receipts_unique_successor
+ON execution_evidence_import_receipts(
+    predecessor_receipt_id
+)
+WHERE predecessor_receipt_id IS NOT NULL;
+
+CREATE UNIQUE INDEX
+    idx_import_receipts_unique_epoch_origin
+ON execution_evidence_import_receipts(
+    lineage_epoch
+)
+WHERE
+    receipt_version = 2
+    AND receipt_kind IN (
+        'root',
+        'epoch_boundary'
+    )
+    AND lineage_epoch IS NOT NULL;
+
+CREATE INDEX
+    idx_import_receipts_lineage_tip
+ON execution_evidence_import_receipts(
+    lineage_epoch,
+    schema_version_to,
+    receipt_id
+)
+WHERE receipt_version = 2;
+
+CREATE TRIGGER
+    trg_import_receipts_v2_structure_insert
+BEFORE INSERT ON execution_evidence_import_receipts
+WHEN
+    NEW.receipt_version = 2
+    AND (
+        NEW.receipt_kind IS NULL
+        OR NEW.schema_version_to IS NULL
+        OR NEW.lineage_epoch IS NULL
+        OR NEW.lineage_epoch < 1
+        OR (
+            NEW.receipt_kind = 'root'
+            AND (
+                NEW.predecessor_receipt_id IS NOT NULL
+                OR NEW.schema_version_from IS NOT NULL
+            )
+        )
+        OR (
+            NEW.receipt_kind IN (
+                'sqlite_upgrade',
+                'epoch_boundary'
+            )
+            AND (
+                NEW.predecessor_receipt_id IS NULL
+                OR NEW.schema_version_from IS NULL
+                OR NEW.schema_version_to
+                    <= NEW.schema_version_from
+            )
+        )
+    )
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Receipt version 2 lineage fields are invalid'
+    );
+END;
+
+CREATE TRIGGER
+    trg_import_receipts_v2_predecessor_insert
+BEFORE INSERT ON execution_evidence_import_receipts
+WHEN
+    NEW.receipt_version = 2
+    AND NEW.predecessor_receipt_id IS NOT NULL
+    AND NOT EXISTS (
+        SELECT 1
+        FROM execution_evidence_import_receipts
+        WHERE receipt_id =
+            NEW.predecessor_receipt_id
+    )
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Receipt predecessor does not exist'
+    );
+END;
+
+CREATE TRIGGER
+    trg_import_receipts_lineage_immutable
+BEFORE UPDATE
+ON execution_evidence_import_receipts
+WHEN
+    OLD.receipt_version = 2
+    OR NEW.receipt_version = 2
+    OR EXISTS (
+        SELECT 1
+        FROM execution_evidence_import_receipts
+        WHERE predecessor_receipt_id =
+            OLD.receipt_id
+    )
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Receipt lineage rows are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    trg_import_receipts_delete_protection
+BEFORE DELETE
+ON execution_evidence_import_receipts
+WHEN
+    OLD.receipt_version = 2
+    OR EXISTS (
+        SELECT 1
+        FROM execution_evidence_import_receipts
+        WHERE predecessor_receipt_id =
+            OLD.receipt_id
+    )
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Receipt lineage rows cannot be deleted'
+    );
+END;
+
+PRAGMA user_version = 14;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -1285,6 +1453,13 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         name="add_execution_event_lineage_order_index",
         sql=(
             ADD_EXECUTION_EVENT_LINEAGE_ORDER_INDEX_SQL
+        ),
+    ),
+    SQLiteMigration(
+        version=14,
+        name="add_trusted_receipt_lineage_foundation",
+        sql=(
+            ADD_TRUSTED_RECEIPT_LINEAGE_FOUNDATION_SQL
         ),
     ),
 )

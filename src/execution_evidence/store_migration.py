@@ -4,7 +4,7 @@ import hashlib
 import json
 import sqlite3
 from pathlib import Path
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -555,6 +555,16 @@ def _verify_stored_sequences(
 
 
 MIGRATION_RECEIPT_VERSION = 1
+MIGRATION_RECEIPT_V2_VERSION = 2
+MIGRATION_RECEIPT_V2_HASH_DOMAIN = (
+    "solvyn.trusted-receipt.v2"
+)
+
+MIGRATION_RECEIPT_KINDS = {
+    "root",
+    "sqlite_upgrade",
+    "epoch_boundary",
+}
 
 
 class RepositoryEvidenceMigrationReceipt(
@@ -574,6 +584,20 @@ class RepositoryEvidenceMigrationReceipt(
     attribution_count: int = Field(ge=0)
     deterministic_report_json: str
     created_at: str
+    receipt_kind: Optional[str] = None
+    predecessor_receipt_id: Optional[str] = None
+    schema_version_from: Optional[int] = Field(
+        default=None,
+        ge=0,
+    )
+    schema_version_to: Optional[int] = Field(
+        default=None,
+        ge=0,
+    )
+    lineage_epoch: Optional[int] = Field(
+        default=None,
+        ge=0,
+    )
 
 
 def deterministic_migration_report_json(
@@ -590,6 +614,189 @@ def deterministic_migration_report_json(
     )
 
 
+def migration_receipt_v1_material(
+    *,
+    receipt_version: int,
+    source_type: str,
+    source_identifier: str,
+    source_root_hash: str,
+    canonicalization_version: int,
+    report_version: int,
+    deterministic_report_json: str,
+) -> Dict[str, object]:
+    return {
+        "receipt_version": receipt_version,
+        "source_type": source_type,
+        "source_identifier": source_identifier,
+        "source_root_hash": source_root_hash,
+        "canonicalization_version": (
+            canonicalization_version
+        ),
+        "report_version": report_version,
+        "deterministic_report_json": (
+            deterministic_report_json
+        ),
+    }
+
+
+def migration_receipt_v2_material(
+    *,
+    receipt_kind: str,
+    predecessor_receipt_id: Optional[str],
+    schema_version_from: Optional[int],
+    schema_version_to: int,
+    lineage_epoch: int,
+    source_type: str,
+    source_identifier: str,
+    source_root_hash: str,
+    canonicalization_version: int,
+    report_version: int,
+    repository_count: int,
+    evidence_count: int,
+    attribution_count: int,
+    deterministic_report_json: str,
+    created_at: str,
+) -> Dict[str, object]:
+    return {
+        "hash_domain": (
+            MIGRATION_RECEIPT_V2_HASH_DOMAIN
+        ),
+        "receipt_version": (
+            MIGRATION_RECEIPT_V2_VERSION
+        ),
+        "receipt_kind": receipt_kind,
+        "predecessor_receipt_id": (
+            predecessor_receipt_id
+        ),
+        "schema_version_from": (
+            schema_version_from
+        ),
+        "schema_version_to": schema_version_to,
+        "lineage_epoch": lineage_epoch,
+        "source_type": source_type,
+        "source_identifier": source_identifier,
+        "source_root_hash": source_root_hash,
+        "canonicalization_version": (
+            canonicalization_version
+        ),
+        "report_version": report_version,
+        "repository_count": repository_count,
+        "evidence_count": evidence_count,
+        "attribution_count": attribution_count,
+        "deterministic_report_json": (
+            deterministic_report_json
+        ),
+        "created_at": created_at,
+    }
+
+
+def canonical_migration_receipt_material_json(
+    material: Dict[str, object],
+) -> str:
+    if "receipt_id" in material:
+        raise RepositoryEvidenceMigrationError(
+            "Migration receipt hash material must "
+            "not contain receipt_id."
+        )
+
+    return json.dumps(
+        material,
+        ensure_ascii=False,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def calculate_migration_receipt_id(
+    receipt: RepositoryEvidenceMigrationReceipt,
+) -> str:
+    if (
+        receipt.receipt_version
+        == MIGRATION_RECEIPT_VERSION
+    ):
+        material = migration_receipt_v1_material(
+            receipt_version=receipt.receipt_version,
+            source_type=receipt.source_type,
+            source_identifier=(
+                receipt.source_identifier
+            ),
+            source_root_hash=(
+                receipt.source_root_hash
+            ),
+            canonicalization_version=(
+                receipt.canonicalization_version
+            ),
+            report_version=receipt.report_version,
+            deterministic_report_json=(
+                receipt.deterministic_report_json
+            ),
+        )
+    elif (
+        receipt.receipt_version
+        == MIGRATION_RECEIPT_V2_VERSION
+    ):
+        if (
+            receipt.receipt_kind is None
+            or receipt.schema_version_to is None
+            or receipt.lineage_epoch is None
+        ):
+            raise RepositoryEvidenceMigrationError(
+                "Receipt version 2 lineage material "
+                "is incomplete."
+            )
+
+        material = migration_receipt_v2_material(
+            receipt_kind=receipt.receipt_kind,
+            predecessor_receipt_id=(
+                receipt.predecessor_receipt_id
+            ),
+            schema_version_from=(
+                receipt.schema_version_from
+            ),
+            schema_version_to=(
+                receipt.schema_version_to
+            ),
+            lineage_epoch=receipt.lineage_epoch,
+            source_type=receipt.source_type,
+            source_identifier=(
+                receipt.source_identifier
+            ),
+            source_root_hash=(
+                receipt.source_root_hash
+            ),
+            canonicalization_version=(
+                receipt.canonicalization_version
+            ),
+            report_version=receipt.report_version,
+            repository_count=(
+                receipt.repository_count
+            ),
+            evidence_count=receipt.evidence_count,
+            attribution_count=(
+                receipt.attribution_count
+            ),
+            deterministic_report_json=(
+                receipt.deterministic_report_json
+            ),
+            created_at=receipt.created_at,
+        )
+    else:
+        raise RepositoryEvidenceMigrationError(
+            "Unsupported migration receipt version."
+        )
+
+    canonical_material = (
+        canonical_migration_receipt_material_json(
+            material
+        )
+    )
+
+    return hashlib.sha256(
+        canonical_material.encode("utf-8")
+    ).hexdigest()
+
+
 def build_migration_receipt(
     *,
     report: RepositoryEvidenceMigrationReport,
@@ -602,32 +809,26 @@ def build_migration_receipt(
         )
     )
 
-    receipt_material = json.dumps(
-        {
-            "receipt_version": (
-                MIGRATION_RECEIPT_VERSION
-            ),
-            "source_type": report.source_type,
-            "source_identifier": (
-                source_identifier
-            ),
-            "source_root_hash": (
-                report.root_hash
-            ),
-            "canonicalization_version": (
-                report.canonicalization_version
-            ),
-            "report_version": (
-                report.report_version
-            ),
-            "deterministic_report_json": (
-                deterministic_report
-            ),
-        },
-        ensure_ascii=False,
-        allow_nan=False,
-        sort_keys=True,
-        separators=(",", ":"),
+    receipt_material = (
+        canonical_migration_receipt_material_json(
+            migration_receipt_v1_material(
+                receipt_version=(
+                    MIGRATION_RECEIPT_VERSION
+                ),
+                source_type=report.source_type,
+                source_identifier=source_identifier,
+                source_root_hash=report.root_hash,
+                canonicalization_version=(
+                    report.canonicalization_version
+                ),
+                report_version=(
+                    report.report_version
+                ),
+                deterministic_report_json=(
+                    deterministic_report
+                ),
+            )
+        )
     )
 
     receipt_id = hashlib.sha256(
@@ -654,6 +855,120 @@ def build_migration_receipt(
             deterministic_report
         ),
         created_at=created_at,
+    )
+
+
+def build_migration_receipt_v2(
+    *,
+    report: RepositoryEvidenceMigrationReport,
+    source_identifier: str,
+    created_at: str,
+    receipt_kind: str,
+    predecessor_receipt_id: Optional[str],
+    schema_version_from: Optional[int],
+    schema_version_to: int,
+    lineage_epoch: int,
+) -> RepositoryEvidenceMigrationReceipt:
+    if receipt_kind not in MIGRATION_RECEIPT_KINDS:
+        raise RepositoryEvidenceMigrationError(
+            "Unsupported migration receipt kind."
+        )
+
+    if lineage_epoch < 1:
+        raise RepositoryEvidenceMigrationError(
+            "Migration receipt lineage epoch must "
+            "be positive."
+        )
+
+    if receipt_kind == "root":
+        if (
+            predecessor_receipt_id is not None
+            or schema_version_from is not None
+        ):
+            raise RepositoryEvidenceMigrationError(
+                "Root receipts cannot have a "
+                "predecessor schema transition."
+            )
+    else:
+        if (
+            predecessor_receipt_id is None
+            or schema_version_from is None
+            or schema_version_to
+            <= schema_version_from
+        ):
+            raise RepositoryEvidenceMigrationError(
+                "Non-root receipts require a forward "
+                "schema transition and predecessor."
+            )
+
+    deterministic_report = (
+        deterministic_migration_report_json(
+            report
+        )
+    )
+
+    material = migration_receipt_v2_material(
+        receipt_kind=receipt_kind,
+        predecessor_receipt_id=(
+            predecessor_receipt_id
+        ),
+        schema_version_from=schema_version_from,
+        schema_version_to=schema_version_to,
+        lineage_epoch=lineage_epoch,
+        source_type=report.source_type,
+        source_identifier=source_identifier,
+        source_root_hash=report.root_hash,
+        canonicalization_version=(
+            report.canonicalization_version
+        ),
+        report_version=report.report_version,
+        repository_count=report.repository_count,
+        evidence_count=report.evidence_count,
+        attribution_count=(
+            report.attribution_count
+        ),
+        deterministic_report_json=(
+            deterministic_report
+        ),
+        created_at=created_at,
+    )
+
+    receipt_id = hashlib.sha256(
+        canonical_migration_receipt_material_json(
+            material
+        ).encode("utf-8")
+    ).hexdigest()
+
+    return RepositoryEvidenceMigrationReceipt(
+        receipt_version=(
+            MIGRATION_RECEIPT_V2_VERSION
+        ),
+        receipt_id=receipt_id,
+        source_type=report.source_type,
+        source_identifier=source_identifier,
+        source_root_hash=report.root_hash,
+        canonicalization_version=(
+            report.canonicalization_version
+        ),
+        report_version=report.report_version,
+        repository_count=(
+            report.repository_count
+        ),
+        evidence_count=report.evidence_count,
+        attribution_count=(
+            report.attribution_count
+        ),
+        deterministic_report_json=(
+            deterministic_report
+        ),
+        created_at=created_at,
+        receipt_kind=receipt_kind,
+        predecessor_receipt_id=(
+            predecessor_receipt_id
+        ),
+        schema_version_from=schema_version_from,
+        schema_version_to=schema_version_to,
+        lineage_epoch=lineage_epoch,
     )
 
 
@@ -685,9 +1000,18 @@ def persist_migration_receipt(
                 evidence_count,
                 attribution_count,
                 deterministic_report_json,
-                created_at
+                created_at,
+                receipt_version,
+                receipt_kind,
+                predecessor_receipt_id,
+                schema_version_from,
+                schema_version_to,
+                lineage_epoch
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?
+            )
             """,
             (
                 receipt.receipt_id,
@@ -701,6 +1025,12 @@ def persist_migration_receipt(
                 receipt.attribution_count,
                 receipt.deterministic_report_json,
                 receipt.created_at,
+                receipt.receipt_version,
+                receipt.receipt_kind,
+                receipt.predecessor_receipt_id,
+                receipt.schema_version_from,
+                receipt.schema_version_to,
+                receipt.lineage_epoch,
             ),
         )
         connection.execute("COMMIT")
@@ -745,7 +1075,13 @@ def verify_migration_receipt(
                 evidence_count,
                 attribution_count,
                 deterministic_report_json,
-                created_at
+                created_at,
+                receipt_version,
+                receipt_kind,
+                predecessor_receipt_id,
+                schema_version_from,
+                schema_version_to,
+                lineage_epoch
             FROM execution_evidence_import_receipts
             WHERE receipt_id = ?
             """,

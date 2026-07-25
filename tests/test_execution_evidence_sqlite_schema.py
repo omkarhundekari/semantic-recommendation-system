@@ -2341,7 +2341,7 @@ def test_version_11_event_stream_upgrades_without_data_loss(
         connection.close()
 
 
-def test_version_12_event_stream_upgrades_to_lineage_index(
+def test_version_12_event_stream_upgrades_to_current_schema(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -2477,7 +2477,7 @@ def test_version_12_event_stream_upgrades_to_lineage_index(
             get_execution_evidence_schema_version(
                 connection
             )
-            == 13
+            == CURRENT_SQLITE_SCHEMA_VERSION
         )
         assert (
             "idx_project_execution_events_lineage_order"
@@ -2488,5 +2488,551 @@ def test_version_12_event_stream_upgrades_to_lineage_index(
             stored["execution_event_id"]
             == "evt_existing_v12"
         )
+    finally:
+        connection.close()
+
+
+def _insert_test_receipt(
+    connection,
+    *,
+    receipt_id: str,
+    receipt_version: int = 1,
+    receipt_kind=None,
+    predecessor_receipt_id=None,
+    schema_version_from=None,
+    schema_version_to=None,
+    lineage_epoch=None,
+):
+    connection.execute(
+        """
+        INSERT INTO execution_evidence_import_receipts (
+            receipt_id,
+            source_type,
+            source_identifier,
+            source_root_hash,
+            canonicalization_version,
+            report_version,
+            repository_count,
+            evidence_count,
+            attribution_count,
+            deterministic_report_json,
+            created_at,
+            receipt_version,
+            receipt_kind,
+            predecessor_receipt_id,
+            schema_version_from,
+            schema_version_to,
+            lineage_epoch
+        )
+        VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?
+        )
+        """,
+        (
+            receipt_id,
+            "fresh_init",
+            f"test:{receipt_id}",
+            "0" * 64,
+            1,
+            1,
+            0,
+            0,
+            0,
+            "{}",
+            "2026-07-25T12:00:00+00:00",
+            receipt_version,
+            receipt_kind,
+            predecessor_receipt_id,
+            schema_version_from,
+            schema_version_to,
+            lineage_epoch,
+        ),
+    )
+
+
+def test_version_13_upgrades_to_receipt_lineage_foundation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS[:13],
+        )
+        apply_execution_evidence_migrations(
+            connection
+        )
+
+        connection.execute(
+            """
+            INSERT INTO execution_evidence_import_receipts (
+                receipt_id,
+                source_type,
+                source_identifier,
+                source_root_hash,
+                canonicalization_version,
+                report_version,
+                repository_count,
+                evidence_count,
+                attribution_count,
+                deterministic_report_json,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "legacy_receipt",
+                "fresh_init",
+                "solvyn:fresh-init",
+                "0" * 64,
+                1,
+                1,
+                0,
+                0,
+                0,
+                "{}",
+                "2026-07-25T12:00:00+00:00",
+            ),
+        )
+
+        assert (
+            get_execution_evidence_schema_version(
+                connection
+            )
+            == 13
+        )
+        assert int(
+            connection.execute(
+                "PRAGMA user_version"
+            ).fetchone()[0]
+        ) == 0
+
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS,
+        )
+        apply_execution_evidence_migrations(
+            connection
+        )
+
+        columns = {
+            str(row["name"])
+            for row in connection.execute(
+                """
+                PRAGMA table_info(
+                    execution_evidence_import_receipts
+                )
+                """
+            )
+        }
+
+        stored = connection.execute(
+            """
+            SELECT
+                receipt_version,
+                receipt_kind,
+                predecessor_receipt_id,
+                schema_version_from,
+                schema_version_to,
+                lineage_epoch
+            FROM execution_evidence_import_receipts
+            WHERE receipt_id = ?
+            """,
+            ("legacy_receipt",),
+        ).fetchone()
+
+        assert (
+            get_execution_evidence_schema_version(
+                connection
+            )
+            == 14
+        )
+        assert int(
+            connection.execute(
+                "PRAGMA user_version"
+            ).fetchone()[0]
+        ) == 14
+
+        assert {
+            "receipt_version",
+            "receipt_kind",
+            "predecessor_receipt_id",
+            "schema_version_from",
+            "schema_version_to",
+            "lineage_epoch",
+        }.issubset(columns)
+
+        assert stored is not None
+        assert stored["receipt_version"] == 1
+        assert stored["receipt_kind"] is None
+        assert (
+            stored["predecessor_receipt_id"]
+            is None
+        )
+        assert stored["schema_version_from"] is None
+        assert stored["schema_version_to"] is None
+        assert stored["lineage_epoch"] is None
+    finally:
+        connection.close()
+
+
+def test_receipt_lineage_requires_complete_v2_structure(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="lineage fields are invalid",
+        ):
+            _insert_test_receipt(
+                connection,
+                receipt_id="incomplete_v2",
+                receipt_version=2,
+            )
+    finally:
+        connection.close()
+
+
+def test_receipt_lineage_requires_existing_predecessor(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="predecessor does not exist",
+        ):
+            _insert_test_receipt(
+                connection,
+                receipt_id="orphan_upgrade",
+                receipt_version=2,
+                receipt_kind="sqlite_upgrade",
+                predecessor_receipt_id="missing",
+                schema_version_from=13,
+                schema_version_to=14,
+                lineage_epoch=1,
+            )
+    finally:
+        connection.close()
+
+
+def test_receipt_lineage_rejects_forked_successors(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        _insert_test_receipt(
+            connection,
+            receipt_id="legacy_root",
+        )
+        _insert_test_receipt(
+            connection,
+            receipt_id="first_successor",
+            receipt_version=2,
+            receipt_kind="epoch_boundary",
+            predecessor_receipt_id="legacy_root",
+            schema_version_from=13,
+            schema_version_to=14,
+            lineage_epoch=1,
+        )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+        ):
+            _insert_test_receipt(
+                connection,
+                receipt_id="forked_successor",
+                receipt_version=2,
+                receipt_kind="epoch_boundary",
+                predecessor_receipt_id="legacy_root",
+                schema_version_from=13,
+                schema_version_to=14,
+                lineage_epoch=1,
+            )
+    finally:
+        connection.close()
+
+
+def test_receipt_lineage_rejects_multiple_epoch_roots(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        _insert_test_receipt(
+            connection,
+            receipt_id="epoch_root_one",
+            receipt_version=2,
+            receipt_kind="root",
+            schema_version_to=14,
+            lineage_epoch=1,
+        )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+        ):
+            _insert_test_receipt(
+                connection,
+                receipt_id="epoch_root_two",
+                receipt_version=2,
+                receipt_kind="root",
+                schema_version_to=14,
+                lineage_epoch=1,
+            )
+    finally:
+        connection.close()
+
+
+def test_receipt_v2_lineage_fields_are_immutable(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        _insert_test_receipt(
+            connection,
+            receipt_id="immutable_root",
+            receipt_version=2,
+            receipt_kind="root",
+            schema_version_to=14,
+            lineage_epoch=1,
+        )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="lineage rows are immutable",
+        ):
+            connection.execute(
+                """
+                UPDATE execution_evidence_import_receipts
+                SET schema_version_to = 15
+                WHERE receipt_id = ?
+                """,
+                ("immutable_root",),
+            )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="lineage rows are immutable",
+        ):
+            connection.execute(
+                """
+                UPDATE execution_evidence_import_receipts
+                SET source_root_hash = ?
+                WHERE receipt_id = ?
+                """,
+                (
+                    "f" * 64,
+                    "immutable_root",
+                ),
+            )
+    finally:
+        connection.close()
+
+
+def test_receipt_v2_rows_cannot_be_deleted(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        _insert_test_receipt(
+            connection,
+            receipt_id="protected_v2_root",
+            receipt_version=2,
+            receipt_kind="root",
+            schema_version_to=14,
+            lineage_epoch=1,
+        )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="cannot be deleted",
+        ):
+            connection.execute(
+                """
+                DELETE FROM execution_evidence_import_receipts
+                WHERE receipt_id = ?
+                """,
+                ("protected_v2_root",),
+            )
+    finally:
+        connection.close()
+
+
+def test_referenced_legacy_predecessor_cannot_be_deleted(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        _insert_test_receipt(
+            connection,
+            receipt_id="legacy_epoch_predecessor",
+        )
+        _insert_test_receipt(
+            connection,
+            receipt_id="epoch_boundary",
+            receipt_version=2,
+            receipt_kind="epoch_boundary",
+            predecessor_receipt_id=(
+                "legacy_epoch_predecessor"
+            ),
+            schema_version_from=13,
+            schema_version_to=14,
+            lineage_epoch=1,
+        )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="lineage rows are immutable",
+        ):
+            connection.execute(
+                """
+                UPDATE execution_evidence_import_receipts
+                SET source_root_hash = ?
+                WHERE receipt_id = ?
+                """,
+                (
+                    "f" * 64,
+                    "legacy_epoch_predecessor",
+                ),
+            )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="cannot be deleted",
+        ):
+            connection.execute(
+                """
+                DELETE FROM execution_evidence_import_receipts
+                WHERE receipt_id = ?
+                """,
+                ("legacy_epoch_predecessor",),
+            )
+    finally:
+        connection.close()
+
+
+def test_receipt_lineage_rejects_competing_epoch_origins(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        _insert_test_receipt(
+            connection,
+            receipt_id="legacy_origin_predecessor",
+        )
+        _insert_test_receipt(
+            connection,
+            receipt_id="epoch_one_boundary",
+            receipt_version=2,
+            receipt_kind="epoch_boundary",
+            predecessor_receipt_id=(
+                "legacy_origin_predecessor"
+            ),
+            schema_version_from=13,
+            schema_version_to=14,
+            lineage_epoch=1,
+        )
+
+        with pytest.raises(
+            sqlite3.IntegrityError,
+        ):
+            _insert_test_receipt(
+                connection,
+                receipt_id="competing_epoch_root",
+                receipt_version=2,
+                receipt_kind="root",
+                schema_version_to=14,
+                lineage_epoch=1,
+            )
+    finally:
+        connection.close()
+
+
+def test_receipt_lineage_rejects_zero_epoch(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        with pytest.raises(
+            sqlite3.IntegrityError,
+            match="lineage fields are invalid",
+        ):
+            _insert_test_receipt(
+                connection,
+                receipt_id="zero_epoch_root",
+                receipt_version=2,
+                receipt_kind="root",
+                schema_version_to=14,
+                lineage_epoch=0,
+            )
     finally:
         connection.close()

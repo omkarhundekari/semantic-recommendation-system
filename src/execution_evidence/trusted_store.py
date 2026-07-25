@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import sqlite3
 import time
@@ -17,12 +16,15 @@ from execution_evidence.sqlite_schema import (
 from execution_evidence.store_migration import (
     CANONICAL_AGGREGATE_VERSION,
     MIGRATION_RECEIPT_VERSION,
+    MIGRATION_RECEIPT_V2_VERSION,
+    MIGRATION_RECEIPT_KINDS,
     RepositoryEvidenceMigrationError,
     RepositoryEvidenceMigrationLock,
     RepositoryEvidenceMigrationReceipt,
     RepositoryEvidenceMigrationReport,
     build_migration_receipt,
     build_repository_evidence_root_hash,
+    calculate_migration_receipt_id,
     load_repository_evidence_snapshot,
     persist_migration_receipt,
     verify_migration_receipt,
@@ -468,7 +470,13 @@ def load_valid_trusted_receipt(
                 evidence_count,
                 attribution_count,
                 deterministic_report_json,
-                created_at
+                created_at,
+                receipt_version,
+                receipt_kind,
+                predecessor_receipt_id,
+                schema_version_from,
+                schema_version_to,
+                lineage_epoch
             FROM execution_evidence_import_receipts
             ORDER BY created_at DESC, receipt_id
             """
@@ -499,11 +507,54 @@ def load_valid_trusted_receipt(
 def validate_trusted_store_receipt(
     receipt: RepositoryEvidenceMigrationReceipt,
 ) -> bool:
+    if receipt.receipt_version not in {
+        MIGRATION_RECEIPT_VERSION,
+        MIGRATION_RECEIPT_V2_VERSION,
+    }:
+        return False
+
     if (
         receipt.receipt_version
-        != MIGRATION_RECEIPT_VERSION
+        == MIGRATION_RECEIPT_VERSION
     ):
-        return False
+        if any(
+            value is not None
+            for value in (
+                receipt.receipt_kind,
+                receipt.predecessor_receipt_id,
+                receipt.schema_version_from,
+                receipt.schema_version_to,
+                receipt.lineage_epoch,
+            )
+        ):
+            return False
+    else:
+        if (
+            receipt.receipt_kind
+            not in MIGRATION_RECEIPT_KINDS
+            or receipt.schema_version_to is None
+            or receipt.lineage_epoch is None
+            or receipt.lineage_epoch < 1
+        ):
+            return False
+
+        if receipt.receipt_kind == "root":
+            if (
+                receipt.predecessor_receipt_id
+                is not None
+                or receipt.schema_version_from
+                is not None
+            ):
+                return False
+        elif (
+            receipt.predecessor_receipt_id
+            is None
+            or receipt.schema_version_from
+            is None
+            or receipt.schema_version_to
+            <= receipt.schema_version_from
+        ):
+            return False
 
     if (
         receipt.source_type
@@ -607,54 +658,19 @@ def validate_trusted_store_receipt(
         ):
             return False
 
-    expected_receipt_id = (
-        _calculate_receipt_id(
-            receipt
+    try:
+        expected_receipt_id = (
+            calculate_migration_receipt_id(
+                receipt
+            )
         )
-    )
+    except RepositoryEvidenceMigrationError:
+        return False
 
     return (
         expected_receipt_id
         == receipt.receipt_id
     )
-
-
-def _calculate_receipt_id(
-    receipt: RepositoryEvidenceMigrationReceipt,
-) -> str:
-    receipt_material = json.dumps(
-        {
-            "receipt_version": (
-                receipt.receipt_version
-            ),
-            "source_type": (
-                receipt.source_type
-            ),
-            "source_identifier": (
-                receipt.source_identifier
-            ),
-            "source_root_hash": (
-                receipt.source_root_hash
-            ),
-            "canonicalization_version": (
-                receipt.canonicalization_version
-            ),
-            "report_version": (
-                receipt.report_version
-            ),
-            "deterministic_report_json": (
-                receipt.deterministic_report_json
-            ),
-        },
-        ensure_ascii=False,
-        allow_nan=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    )
-
-    return hashlib.sha256(
-        receipt_material.encode("utf-8")
-    ).hexdigest()
 
 
 def _wait_for_concurrent_initialization(
