@@ -14,6 +14,8 @@ from execution_evidence.execution_event_projection_service import (
     ExecutionEventProjectionUnsupportedStoreError,
 )
 from execution_evidence.execution_event_store import (
+    ExecutionEventProjectHistoryTooLargeError,
+    ExecutionEventProjectNotFoundError,
     StoredExecutionEvent,
 )
 from product_api import (
@@ -48,9 +50,7 @@ def _record(
     return StoredExecutionEvent(
         store_sequence=sequence,
         event=ExecutionEvent(
-            execution_event_id=(
-                _event_id(number)
-            ),
+            execution_event_id=_event_id(number),
             supersedes_execution_event_id=(
                 _event_id(supersedes)
                 if supersedes is not None
@@ -65,46 +65,31 @@ def _record(
                 f"client-{number}"
             ),
             ingestion_method="system",
-            payload={
-                "number": number,
-            },
+            payload={"number": number},
         ),
     )
 
 
 class RecordingProjectionService:
-    def __init__(
-        self,
-        projection,
-    ) -> None:
+    def __init__(self, projection) -> None:
         self.projection = projection
         self.calls = []
 
     def project_lineage(
         self,
         project_id: str,
-        *,
-        limit: int | None = None,
     ):
-        self.calls.append(
-            {
-                "project_id": project_id,
-                "limit": limit,
-            }
-        )
-
+        self.calls.append(project_id)
         return self.projection
 
 
 class FailingProjectionService:
-    def __init__(self, error: Exception):
+    def __init__(self, error: Exception) -> None:
         self.error = error
 
     def project_lineage(
         self,
         project_id: str,
-        *,
-        limit: int | None = None,
     ):
         raise self.error
 
@@ -113,27 +98,26 @@ def _client_for(service):
     app.dependency_overrides[
         get_execution_event_projection_service
     ] = lambda: service
-
     return TestClient(app)
 
 
-def _clear_overrides():
+def _clear_overrides() -> None:
     app.dependency_overrides.clear()
 
 
-def test_lineage_endpoint_returns_ordered_projection():
+def test_lineage_endpoint_returns_complete_projection():
     original = _record(
         1,
-        sequence=1,
+        sequence=4,
     )
     first_correction = _record(
         2,
-        sequence=2,
+        sequence=9,
         supersedes=1,
     )
     authoritative_correction = _record(
         3,
-        sequence=3,
+        sequence=14,
         supersedes=1,
     )
 
@@ -158,10 +142,7 @@ def test_lineage_endpoint_returns_ordered_projection():
                     "/v1/projects/project-test/"
                     "execution-evidence/events/"
                     "lineage"
-                ),
-                params={
-                    "limit": 50,
-                },
+                )
             )
     finally:
         _clear_overrides()
@@ -169,85 +150,30 @@ def test_lineage_endpoint_returns_ordered_projection():
     assert response.status_code == 200
     body = response.json()
 
-    assert service.calls == [
-        {
-            "project_id": "project-test",
-            "limit": 50,
-        }
-    ]
-
+    assert service.calls == ["project-test"]
     assert body["project_id"] == "project-test"
+    assert (
+        body["projection_through_sequence"]
+        == 14
+    )
     assert [
         record["store_sequence"]
         for record in body["ordered_records"]
-    ] == [1, 2, 3]
+    ] == [4, 9, 14]
 
     assert body["authoritative_event_ids"] == [
         original.event.execution_event_id,
         authoritative_correction
         .event.execution_event_id,
     ]
-
     assert body["terminal_event_ids"] == [
         authoritative_correction
         .event.execution_event_id,
     ]
-
     assert body["has_conflicts"] is True
-    assert body["conflicts"] == [
-        {
-            "predecessor_event_id": (
-                original.event.execution_event_id
-            ),
-            "successor_event_ids": [
-                first_correction
-                .event.execution_event_id,
-                authoritative_correction
-                .event.execution_event_id,
-            ],
-            (
-                "authoritative_successor_event_id"
-            ): (
-                authoritative_correction
-                .event.execution_event_id
-            ),
-        }
-    ]
 
 
-def test_lineage_endpoint_uses_default_limit():
-    projection = (
-        build_execution_event_lineage_projection(
-            "project-test",
-            [],
-        )
-    )
-    service = RecordingProjectionService(
-        projection
-    )
-
-    try:
-        with _client_for(service) as client:
-            response = client.get(
-                (
-                    "/v1/projects/project-test/"
-                    "execution-evidence/events/"
-                    "lineage"
-                )
-            )
-    finally:
-        _clear_overrides()
-
-    assert response.status_code == 200
-    assert service.calls == [
-        {
-            "project_id": "project-test",
-            "limit": 1000,
-        }
-    ]
-
-
-def test_lineage_endpoint_rejects_invalid_limit():
+def test_lineage_endpoint_rejects_limit():
     projection = (
         build_execution_event_lineage_projection(
             "project-test",
@@ -266,20 +192,16 @@ def test_lineage_endpoint_rejects_invalid_limit():
                     "execution-evidence/events/"
                     "lineage"
                 ),
-                params={
-                    "limit": 1001,
-                },
+                params={"limit": 50},
             )
     finally:
         _clear_overrides()
 
     assert response.status_code == 422
-    assert (
-        response.json()["detail"]
-        == (
-            "Execution event projection limit "
-            "must be between 1 and 1000."
-        )
+    assert response.json()["detail"] == (
+        "Execution event lineage is a complete "
+        "project projection and cannot be "
+        "limited or paginated."
     )
     assert service.calls == []
 
@@ -288,8 +210,8 @@ def test_lineage_endpoint_returns_503_for_unsupported_store():
     service = FailingProjectionService(
         ExecutionEventProjectionUnsupportedStoreError(
             "The configured execution event store "
-            "does not expose authoritative "
-            "storage order."
+            "does not expose complete authoritative "
+            "project snapshots."
         )
     )
 
@@ -307,6 +229,96 @@ def test_lineage_endpoint_returns_503_for_unsupported_store():
 
     assert response.status_code == 503
     assert (
-        "authoritative storage order"
+        "complete authoritative project snapshots"
         in response.json()["detail"]
     )
+
+
+def test_lineage_endpoint_returns_404_for_missing_project():
+    service = FailingProjectionService(
+        ExecutionEventProjectNotFoundError(
+            "Execution event project does not exist."
+        )
+    )
+
+    try:
+        with _client_for(service) as client:
+            response = client.get(
+                (
+                    "/v1/projects/project-missing/"
+                    "execution-evidence/events/"
+                    "lineage"
+                )
+            )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == (
+        "Execution event project does not exist."
+    )
+
+
+def test_lineage_endpoint_returns_413_for_history_ceiling():
+    service = FailingProjectionService(
+        ExecutionEventProjectHistoryTooLargeError(
+            "Execution event project history "
+            "exceeds the synchronous lineage "
+            "projection limit."
+        )
+    )
+
+    try:
+        with _client_for(service) as client:
+            response = client.get(
+                (
+                    "/v1/projects/project-test/"
+                    "execution-evidence/events/"
+                    "lineage"
+                )
+            )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 413
+    assert response.json()["detail"] == (
+        "Execution event project history "
+        "exceeds the synchronous lineage "
+        "projection limit."
+    )
+
+
+def test_lineage_endpoint_rejects_cursor_pagination():
+    projection = (
+        build_execution_event_lineage_projection(
+            "project-test",
+            [],
+        )
+    )
+    service = RecordingProjectionService(
+        projection
+    )
+
+    try:
+        with _client_for(service) as client:
+            response = client.get(
+                (
+                    "/v1/projects/project-test/"
+                    "execution-evidence/events/"
+                    "lineage"
+                ),
+                params={
+                    "cursor": "opaque-cursor",
+                    "offset": 10,
+                },
+            )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == (
+        "Execution event lineage is a complete "
+        "project projection and cannot be "
+        "limited or paginated."
+    )
+    assert service.calls == []

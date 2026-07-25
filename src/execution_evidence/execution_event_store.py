@@ -2,13 +2,21 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from execution_evidence.execution_event import (
     ExecutionEvent,
     ExecutionEventAppendResult,
 )
 
+if TYPE_CHECKING:
+    from execution_evidence.execution_event_record_snapshot import (
+        ProjectExecutionEventRecordSnapshot,
+    )
+
+
+
+MAX_SYNCHRONOUS_LINEAGE_EVENTS = 100_000
 
 
 @dataclass(frozen=True)
@@ -22,6 +30,12 @@ class ExecutionEventStoreError(RuntimeError):
 
 
 class ExecutionEventProjectNotFoundError(
+    ExecutionEventStoreError
+):
+    pass
+
+
+class ExecutionEventProjectHistoryTooLargeError(
     ExecutionEventStoreError
 ):
     pass
@@ -85,4 +99,15 @@ class ExecutionEventStore(ABC):
         raise NotImplementedError(
             "This execution event store does not "
             "expose authoritative storage order."
+        )
+
+
+    def load_project_event_record_snapshot(
+        self,
+        project_id: str,
+    ) -> "ProjectExecutionEventRecordSnapshot":
+        raise NotImplementedError(
+            "This execution event store does not "
+            "expose complete authoritative project "
+            "snapshots."
         )

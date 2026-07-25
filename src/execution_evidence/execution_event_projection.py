@@ -69,6 +69,7 @@ class ExecutionEventLineageConflict:
 @dataclass(frozen=True)
 class ExecutionEventLineageProjection:
     project_id: str
+    projection_through_sequence: int
     ordered_records: Tuple[
         StoredExecutionEvent,
         ...,
@@ -150,6 +151,7 @@ def build_execution_event_lineage_projection(
     if not ordered_records:
         return ExecutionEventLineageProjection(
             project_id=project_id,
+            projection_through_sequence=0,
             ordered_records=(),
             authoritative_event_ids=frozenset(),
             terminal_event_ids=(),
@@ -309,6 +311,10 @@ def build_execution_event_lineage_projection(
 
     return ExecutionEventLineageProjection(
         project_id=project_id,
+        projection_through_sequence=max(
+            record.store_sequence
+            for record in ordered_records
+        ),
         ordered_records=ordered_records,
         authoritative_event_ids=frozenset(
             authoritative_event_ids

@@ -13,9 +13,14 @@ from execution_evidence.execution_event_payload import (
     EXECUTION_EVENT_PAYLOAD_REGISTRY,
     ExecutionEventPayload,
 )
+from execution_evidence.execution_event_record_snapshot import (
+    ProjectExecutionEventRecordSnapshot,
+)
 from execution_evidence.execution_event_store import (
+    MAX_SYNCHRONOUS_LINEAGE_EVENTS,
     StoredExecutionEvent,
     ExecutionEventIdempotencyConflictError,
+    ExecutionEventProjectHistoryTooLargeError,
     ExecutionEventProjectNotFoundError,
     ExecutionEventStore,
     ExecutionEventStoreError,
@@ -29,6 +34,41 @@ from execution_evidence.sqlite_schema import (
 
 
 DEFAULT_WORKSPACE_ID = "local"
+
+
+PROJECT_EVENT_SNAPSHOT_METADATA_SQL = """
+SELECT
+    project.project_row_id,
+    COUNT(event.execution_event_row_id)
+        AS snapshot_event_count,
+    COALESCE(
+        MAX(event.execution_event_row_id),
+        0
+    ) AS snapshot_head_sequence
+FROM projects AS project
+LEFT JOIN project_execution_events AS event
+    ON
+        event.workspace_id =
+            project.workspace_id
+        AND event.project_row_id =
+            project.project_row_id
+WHERE
+    project.workspace_id = ?
+    AND project.project_id = ?
+GROUP BY
+    project.project_row_id
+"""
+
+PROJECT_EVENT_SNAPSHOT_RECORDS_SQL = """
+SELECT *
+FROM project_execution_events
+WHERE
+    workspace_id = ?
+    AND project_row_id = ?
+ORDER BY
+    execution_event_row_id ASC
+LIMIT ?
+"""
 
 
 
@@ -414,6 +454,117 @@ class SQLiteExecutionEventStore(
             ) from error
         finally:
             connection.close()
+
+
+    def load_project_event_record_snapshot(
+        self,
+        project_id: str,
+    ) -> ProjectExecutionEventRecordSnapshot:
+        if not project_id:
+            raise ValueError(
+                "Execution event snapshot project ID "
+                "must not be empty."
+            )
+
+        connection = self._connect()
+
+        try:
+            # _connect() returns a fresh connection with no
+            # existing transaction, preserving one read snapshot.
+            connection.execute("BEGIN")
+
+            try:
+                metadata = connection.execute(
+                    PROJECT_EVENT_SNAPSHOT_METADATA_SQL,
+                    (
+                        self._workspace_id,
+                        project_id,
+                    ),
+                ).fetchone()
+
+                if metadata is None:
+                    raise (
+                        ExecutionEventProjectNotFoundError(
+                            "Execution event project does "
+                            "not exist."
+                        )
+                    )
+
+                project_row_id = int(
+                    metadata["project_row_id"]
+                )
+                event_count = int(
+                    metadata["snapshot_event_count"]
+                )
+                watermark = int(
+                    metadata["snapshot_head_sequence"]
+                )
+
+                if (
+                    event_count
+                    > MAX_SYNCHRONOUS_LINEAGE_EVENTS
+                ):
+                    raise (
+                        ExecutionEventProjectHistoryTooLargeError(
+                            "Execution event project history "
+                            "exceeds the synchronous lineage "
+                            "projection limit."
+                        )
+                    )
+
+                rows = connection.execute(
+                    PROJECT_EVENT_SNAPSHOT_RECORDS_SQL,
+                    (
+                        self._workspace_id,
+                        project_row_id,
+                        (
+                            MAX_SYNCHRONOUS_LINEAGE_EVENTS
+                            + 1
+                        ),
+                    ),
+                ).fetchall()
+            finally:
+                if connection.in_transaction:
+                    connection.rollback()
+
+            records = tuple(
+                StoredExecutionEvent(
+                    store_sequence=int(
+                        row[
+                            "execution_event_row_id"
+                        ]
+                    ),
+                    event=self._event_from_row(row),
+                )
+                for row in rows
+            )
+
+            if len(records) != event_count:
+                raise ExecutionEventStoreError(
+                    "Execution event snapshot row count "
+                    "does not match authoritative project "
+                    "metadata."
+                )
+
+            return ProjectExecutionEventRecordSnapshot(
+                project_id=project_id,
+                records=records,
+                project_watermark_sequence=watermark,
+            )
+        except (
+            ExecutionEventProjectHistoryTooLargeError,
+            ExecutionEventProjectNotFoundError,
+            ExecutionEventStoreError,
+        ):
+            raise
+        except sqlite3.Error as error:
+            raise ExecutionEventStoreError(
+                "Could not load the complete project "
+                "execution event snapshot."
+            ) from error
+        finally:
+            connection.close()
+
 
     def _validate_supersession_target(
         self,

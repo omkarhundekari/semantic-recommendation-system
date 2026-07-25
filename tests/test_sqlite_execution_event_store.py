@@ -8,6 +8,12 @@ from threading import Barrier
 from typing import Optional
 
 import pytest
+
+import execution_evidence.sqlite_execution_event_store as sqlite_execution_event_store_module
+from execution_evidence.sqlite_execution_event_store import (
+    PROJECT_EVENT_SNAPSHOT_METADATA_SQL,
+    PROJECT_EVENT_SNAPSHOT_RECORDS_SQL,
+)
 from pydantic import ValidationError
 
 from execution_evidence.execution_event import (
@@ -18,6 +24,7 @@ from execution_evidence.execution_event_payload import (
 )
 from execution_evidence.execution_event_store import (
     ExecutionEventIdempotencyConflictError,
+    ExecutionEventProjectHistoryTooLargeError,
     ExecutionEventProjectNotFoundError,
     ExecutionEventSupersessionScopeError,
     ExecutionEventSupersessionTargetNotFoundError,
@@ -966,3 +973,573 @@ def test_multiple_events_can_supersede_same_target(
     } == {
         ORIGINAL_EVENT_ID,
     }
+
+
+def test_snapshot_distinguishes_existing_empty_project(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(
+        database_path,
+        project_id="proj_empty",
+    )
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    snapshot = (
+        store.load_project_event_record_snapshot(
+            "proj_empty"
+        )
+    )
+
+    assert snapshot.project_id == "proj_empty"
+    assert snapshot.records == ()
+    assert snapshot.project_watermark_sequence == 0
+
+
+def test_snapshot_rejects_missing_project(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_execution_evidence_database(
+        database_path
+    )
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    with pytest.raises(
+        ExecutionEventProjectNotFoundError,
+        match="does not exist",
+    ):
+        store.load_project_event_record_snapshot(
+            "proj_missing"
+        )
+
+
+def test_snapshot_preserves_workspace_isolation(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+
+    _insert_project(
+        database_path,
+        workspace_id="workspace-one",
+        project_id="proj_private",
+    )
+
+    other_workspace_store = (
+        SQLiteExecutionEventStore(
+            database_path,
+            workspace_id="workspace-two",
+        )
+    )
+
+    with pytest.raises(
+        ExecutionEventProjectNotFoundError,
+        match="does not exist",
+    ):
+        (
+            other_workspace_store
+            .load_project_event_record_snapshot(
+                "proj_private"
+            )
+        )
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        "archived",
+        "deleted",
+    ],
+)
+def test_snapshot_reads_inactive_empty_projects(
+    tmp_path: Path,
+    status: str,
+):
+    database_path = tmp_path / f"{status}.db"
+
+    _insert_project(
+        database_path,
+        project_id=f"proj_{status}",
+        status=status,
+    )
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    snapshot = (
+        store.load_project_event_record_snapshot(
+            f"proj_{status}"
+        )
+    )
+
+    assert snapshot.project_id == f"proj_{status}"
+    assert snapshot.records == ()
+    assert snapshot.project_watermark_sequence == 0
+
+
+def test_snapshot_fails_closed_above_synchronous_ceiling(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    for number in range(1, 4):
+        store.append(
+            _event(
+                execution_event_id=f"evt_{number}",
+                provider_idempotency_key=(
+                    f"provider-key-{number}"
+                ),
+                payload={"number": number},
+            )
+        )
+
+    monkeypatch.setattr(
+        sqlite_execution_event_store_module,
+        "MAX_SYNCHRONOUS_LINEAGE_EVENTS",
+        2,
+    )
+
+    with pytest.raises(
+        ExecutionEventProjectHistoryTooLargeError,
+        match="exceeds the synchronous lineage",
+    ):
+        store.load_project_event_record_snapshot(
+            "proj_test"
+        )
+
+
+def test_snapshot_returns_complete_ordered_project_history(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    expected_event_ids = []
+
+    for number in range(1, 6):
+        execution_event_id = f"evt_snapshot_{number}"
+        expected_event_ids.append(
+            execution_event_id
+        )
+
+        store.append(
+            _event(
+                execution_event_id=(
+                    execution_event_id
+                ),
+                provider_idempotency_key=(
+                    "snapshot-success-"
+                    f"{number}"
+                ),
+                payload={
+                    "number": number,
+                },
+            )
+        )
+
+    snapshot = (
+        store.load_project_event_record_snapshot(
+            "proj_test"
+        )
+    )
+
+    sequences = [
+        record.store_sequence
+        for record in snapshot.records
+    ]
+    event_ids = [
+        record.event.execution_event_id
+        for record in snapshot.records
+    ]
+
+    assert event_ids == expected_event_ids
+    assert sequences == sorted(sequences)
+    assert len(sequences) == 5
+    assert snapshot.project_watermark_sequence == (
+        sequences[-1]
+    )
+
+
+def test_snapshot_accepts_history_at_exact_ceiling(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    for number in range(1, 4):
+        store.append(
+            _event(
+                execution_event_id=(
+                    f"evt_exact_ceiling_{number}"
+                ),
+                provider_idempotency_key=(
+                    "exact-ceiling-"
+                    f"{number}"
+                ),
+                payload={
+                    "number": number,
+                },
+            )
+        )
+
+    monkeypatch.setattr(
+        sqlite_execution_event_store_module,
+        "MAX_SYNCHRONOUS_LINEAGE_EVENTS",
+        3,
+    )
+
+    snapshot = (
+        store.load_project_event_record_snapshot(
+            "proj_test"
+        )
+    )
+
+    assert len(snapshot.records) == 3
+    assert snapshot.project_watermark_sequence == (
+        snapshot.records[-1].store_sequence
+    )
+
+
+def test_snapshot_join_isolates_same_project_id_across_workspaces(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+
+    _insert_project(
+        database_path,
+        workspace_id="workspace-one",
+        project_id="proj_shared",
+    )
+    _insert_project(
+        database_path,
+        workspace_id="workspace-two",
+        project_id="proj_shared",
+    )
+
+    first_store = SQLiteExecutionEventStore(
+        database_path,
+        workspace_id="workspace-one",
+    )
+    second_store = SQLiteExecutionEventStore(
+        database_path,
+        workspace_id="workspace-two",
+    )
+
+    first_store.append(
+        _event(
+            execution_event_id="evt_workspace_one",
+            project_id="proj_shared",
+            provider_idempotency_key=(
+                "workspace-one-snapshot"
+            ),
+            payload={
+                "workspace": "one",
+            },
+        )
+    )
+    second_store.append(
+        _event(
+            execution_event_id="evt_workspace_two",
+            project_id="proj_shared",
+            provider_idempotency_key=(
+                "workspace-two-snapshot"
+            ),
+            payload={
+                "workspace": "two",
+            },
+        )
+    )
+
+    first_snapshot = (
+        first_store
+        .load_project_event_record_snapshot(
+            "proj_shared"
+        )
+    )
+    second_snapshot = (
+        second_store
+        .load_project_event_record_snapshot(
+            "proj_shared"
+        )
+    )
+
+    assert [
+        record.event.execution_event_id
+        for record in first_snapshot.records
+    ] == [
+        "evt_workspace_one",
+    ]
+
+    assert [
+        record.event.execution_event_id
+        for record in second_snapshot.records
+    ] == [
+        "evt_workspace_two",
+    ]
+
+
+def test_snapshot_reads_archived_project_with_history(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+
+    _insert_project(
+        database_path,
+        project_id="proj_archived_history",
+        status="active",
+    )
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    store.append(
+        _event(
+            execution_event_id=(
+                "evt_archived_history"
+            ),
+            project_id="proj_archived_history",
+            provider_idempotency_key=(
+                "archived-history-event"
+            ),
+        )
+    )
+
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        connection.execute(
+            """
+            UPDATE projects
+            SET status = 'archived'
+            WHERE workspace_id = ?
+              AND project_id = ?
+            """,
+            (
+                "local",
+                "proj_archived_history",
+            ),
+        )
+    finally:
+        connection.close()
+
+    snapshot = (
+        store.load_project_event_record_snapshot(
+            "proj_archived_history"
+        )
+    )
+
+    assert [
+        record.event.execution_event_id
+        for record in snapshot.records
+    ] == [
+        "evt_archived_history",
+    ]
+
+
+def test_snapshot_query_uses_lineage_order_index_without_temp_sort(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    for number in range(1, 301):
+        store.append(
+            _event(
+                execution_event_id=(
+                    f"evt_plan_{number}"
+                ),
+                provider_idempotency_key=(
+                    f"github:plan:{number}"
+                ),
+            )
+        )
+
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        connection.execute("ANALYZE")
+        project_row = connection.execute(
+            """
+            SELECT project_row_id
+            FROM projects
+            WHERE
+                workspace_id = ?
+                AND project_id = ?
+            """,
+            (
+                "local",
+                "proj_test",
+            ),
+        ).fetchone()
+
+        assert project_row is not None
+
+        plan_rows = connection.execute(
+            "EXPLAIN QUERY PLAN "
+            + PROJECT_EVENT_SNAPSHOT_RECORDS_SQL,
+            (
+                "local",
+                int(project_row["project_row_id"]),
+                100_001,
+            ),
+        ).fetchall()
+    finally:
+        connection.close()
+
+    details = [
+        str(row["detail"])
+        for row in plan_rows
+    ]
+
+    assert any(
+        "idx_project_execution_events_lineage_order"
+        in detail
+        for detail in details
+    )
+    assert not any(
+        "USE TEMP B-TREE FOR ORDER BY"
+        in detail
+        for detail in details
+    )
+
+
+def test_snapshot_metadata_query_uses_lineage_index_without_temp_grouping(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    for number in range(1, 301):
+        store.append(
+            _event(
+                execution_event_id=(
+                    f"evt_metadata_plan_{number}"
+                ),
+                provider_idempotency_key=(
+                    f"github:metadata-plan:{number}"
+                ),
+            )
+        )
+
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        connection.execute("ANALYZE")
+        plan_rows = connection.execute(
+            "EXPLAIN QUERY PLAN "
+            + PROJECT_EVENT_SNAPSHOT_METADATA_SQL,
+            (
+                "local",
+                "proj_test",
+            ),
+        ).fetchall()
+    finally:
+        connection.close()
+
+    details = [
+        str(row["detail"])
+        for row in plan_rows
+    ]
+
+    assert any(
+        "idx_project_execution_events_lineage_order"
+        in detail
+        for detail in details
+    )
+    assert not any(
+        "USE TEMP B-TREE FOR GROUP BY"
+        in detail
+        for detail in details
+    )
+
+
+def test_oversized_snapshot_rejects_before_event_deserialization(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    _insert_project(database_path)
+
+    store = SQLiteExecutionEventStore(
+        database_path
+    )
+
+    for number in range(1, 4):
+        store.append(
+            _event(
+                execution_event_id=(
+                    f"evt_ceiling_{number}"
+                ),
+                provider_idempotency_key=(
+                    f"github:ceiling:{number}"
+                ),
+            )
+        )
+
+    monkeypatch.setattr(
+        sqlite_execution_event_store_module,
+        "MAX_SYNCHRONOUS_LINEAGE_EVENTS",
+        2,
+    )
+
+    def fail_if_deserialized(_row):
+        raise AssertionError(
+            "Oversized history must be rejected "
+            "before event deserialization."
+        )
+
+    monkeypatch.setattr(
+        store,
+        "_event_from_row",
+        fail_if_deserialized,
+    )
+
+    with pytest.raises(
+        ExecutionEventProjectHistoryTooLargeError
+    ):
+        store.load_project_event_record_snapshot(
+            "proj_test"
+        )

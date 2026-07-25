@@ -52,6 +52,7 @@ EXPECTED_INDEXES = {
     "idx_project_execution_events_client_replay",
     "idx_project_execution_events_provider_replay",
     "idx_project_execution_events_supersedes",
+    "idx_project_execution_events_lineage_order",
 }
 
 
@@ -2323,7 +2324,7 @@ def test_version_11_event_stream_upgrades_without_data_loss(
             get_execution_evidence_schema_version(
                 connection
             )
-            == 12
+            == CURRENT_SQLITE_SCHEMA_VERSION
         )
         assert stored is not None
         assert (
@@ -2335,6 +2336,157 @@ def test_version_11_event_stream_upgrades_without_data_loss(
                 "supersedes_execution_event_id"
             ]
             is None
+        )
+    finally:
+        connection.close()
+
+
+def test_version_12_event_stream_upgrades_to_lineage_index(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    database_path = tmp_path / "solvyn.db"
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS[:12],
+        )
+        apply_execution_evidence_migrations(
+            connection
+        )
+
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                "local",
+                "2026-07-23T12:00:00Z",
+                "2026-07-23T12:00:00Z",
+            ),
+        )
+
+        project_cursor = connection.execute(
+            """
+            INSERT INTO projects (
+                project_id,
+                workspace_id,
+                title,
+                status,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "proj_existing_v12",
+                "local",
+                "Existing version 12 project",
+                "active",
+                "2026-07-23T12:00:00Z",
+                "2026-07-23T12:00:00Z",
+            ),
+        )
+
+        project_row_id = int(
+            project_cursor.lastrowid
+        )
+
+        connection.execute(
+            """
+            INSERT INTO project_execution_events (
+                execution_event_id,
+                workspace_id,
+                project_row_id,
+                project_id,
+                event_type,
+                occurred_at,
+                recorded_at,
+                source_provider,
+                provider_idempotency_key,
+                ingestion_method,
+                visibility,
+                payload_json,
+                event_fingerprint,
+                created_at,
+                supersedes_execution_event_id
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            (
+                "evt_existing_v12",
+                "local",
+                project_row_id,
+                "proj_existing_v12",
+                "commit.created",
+                "2026-07-23T12:00:00+00:00",
+                "2026-07-23T12:01:00+00:00",
+                "github",
+                "existing-v12-delivery",
+                "webhook",
+                "project",
+                "{}",
+                "existing-v12-fingerprint",
+                "2026-07-23T12:01:00+00:00",
+                None,
+            ),
+        )
+
+        assert (
+            get_execution_evidence_schema_version(
+                connection
+            )
+            == 12
+        )
+
+        monkeypatch.setattr(
+            "execution_evidence.sqlite_schema.MIGRATIONS",
+            MIGRATIONS,
+        )
+        apply_execution_evidence_migrations(
+            connection
+        )
+
+        indexes = _database_objects(
+            connection,
+            "index",
+        )
+        stored = connection.execute(
+            """
+            SELECT execution_event_id
+            FROM project_execution_events
+            WHERE execution_event_id = ?
+            """,
+            ("evt_existing_v12",),
+        ).fetchone()
+
+        assert (
+            get_execution_evidence_schema_version(
+                connection
+            )
+            == 13
+        )
+        assert (
+            "idx_project_execution_events_lineage_order"
+            in indexes
+        )
+        assert stored is not None
+        assert (
+            stored["execution_event_id"]
+            == "evt_existing_v12"
         )
     finally:
         connection.close()

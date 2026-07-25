@@ -9,8 +9,12 @@ from execution_evidence.execution_event import (
     ExecutionEvent,
 )
 from execution_evidence.execution_event_projection_service import (
+    ExecutionEventProjectionIncompleteSnapshotError,
     ExecutionEventProjectionService,
     ExecutionEventProjectionUnsupportedStoreError,
+)
+from execution_evidence.execution_event_record_snapshot import (
+    ProjectExecutionEventRecordSnapshot,
 )
 from execution_evidence.execution_event_store import (
     ExecutionEventAppendResult,
@@ -54,27 +58,21 @@ def _event(
         occurred_at=BASE_TIME,
         recorded_at=BASE_TIME,
         source_provider="test",
-        client_idempotency_key=(
-            f"client-{number}"
-        ),
+        client_idempotency_key=f"client-{number}",
         ingestion_method="system",
-        payload={
-            "number": number,
-        },
+        payload={"number": number},
     )
 
 
-class RecordingProjectionStore(
+class SnapshotProjectionStore(
     ExecutionEventStore
 ):
     def __init__(
         self,
-        records: List[
-            StoredExecutionEvent
-        ],
+        snapshot: ProjectExecutionEventRecordSnapshot,
     ) -> None:
-        self.records = records
-        self.calls = []
+        self.snapshot = snapshot
+        self.calls: List[str] = []
 
     def append(
         self,
@@ -96,20 +94,12 @@ class RecordingProjectionStore(
     ) -> List[ExecutionEvent]:
         raise NotImplementedError
 
-    def list_project_event_records(
+    def load_project_event_record_snapshot(
         self,
         project_id: str,
-        *,
-        limit: int = 100,
-    ) -> List[StoredExecutionEvent]:
-        self.calls.append(
-            {
-                "project_id": project_id,
-                "limit": limit,
-            }
-        )
-
-        return list(self.records)
+    ) -> ProjectExecutionEventRecordSnapshot:
+        self.calls.append(project_id)
+        return self.snapshot
 
 
 class UnsupportedProjectionStore(
@@ -136,24 +126,40 @@ class UnsupportedProjectionStore(
         return []
 
 
-def test_service_loads_records_and_builds_projection():
+def _snapshot(
+    records: List[StoredExecutionEvent],
+    *,
+    project_id: str = "project-test",
+) -> ProjectExecutionEventRecordSnapshot:
+    return ProjectExecutionEventRecordSnapshot(
+        project_id=project_id,
+        records=tuple(records),
+        project_watermark_sequence=(
+            max(
+                record.store_sequence
+                for record in records
+            )
+            if records
+            else 0
+        ),
+    )
+
+
+def test_service_loads_complete_snapshot_and_projects():
     first = StoredExecutionEvent(
-        store_sequence=1,
+        store_sequence=4,
         event=_event(1),
     )
     second = StoredExecutionEvent(
-        store_sequence=2,
+        store_sequence=9,
         event=_event(
             2,
             supersedes=1,
         ),
     )
 
-    store = RecordingProjectionStore(
-        [
-            second,
-            first,
-        ]
+    store = SnapshotProjectionStore(
+        _snapshot([first, second])
     )
     service = ExecutionEventProjectionService(
         store=store
@@ -163,119 +169,80 @@ def test_service_loads_records_and_builds_projection():
         "project-test"
     )
 
-    assert store.calls == [
-        {
-            "project_id": "project-test",
-            "limit": 1000,
-        }
-    ]
-
+    assert store.calls == ["project-test"]
+    assert (
+        projection.projection_through_sequence
+        == 9
+    )
     assert [
         record.store_sequence
-        for record
-        in projection.ordered_records
-    ] == [1, 2]
-
+        for record in projection.ordered_records
+    ] == [4, 9]
     assert projection.terminal_event_ids == (
         second.event.execution_event_id,
     )
 
 
-def test_service_forwards_explicit_limit():
-    store = RecordingProjectionStore([])
-    service = ExecutionEventProjectionService(
-        store=store
-    )
-
-    service.project_lineage(
-        "project-test",
-        limit=25,
-    )
-
-    assert store.calls == [
-        {
-            "project_id": "project-test",
-            "limit": 25,
-        }
+def test_service_projects_more_than_legacy_limit():
+    records = [
+        StoredExecutionEvent(
+            store_sequence=number,
+            event=_event(number),
+        )
+        for number in range(1, 1002)
     ]
 
-
-def test_service_uses_configured_default_limit():
-    store = RecordingProjectionStore([])
     service = ExecutionEventProjectionService(
-        store=store,
-        default_limit=500,
+        store=SnapshotProjectionStore(
+            _snapshot(records)
+        )
     )
 
-    service.project_lineage(
+    projection = service.project_lineage(
         "project-test"
     )
 
-    assert store.calls == [
-        {
-            "project_id": "project-test",
-            "limit": 500,
-        }
-    ]
+    assert len(projection.ordered_records) == 1001
+    assert (
+        projection.projection_through_sequence
+        == 1001
+    )
 
 
-def test_service_translates_unsupported_store_error():
+def test_service_rejects_snapshot_for_other_project():
+    service = ExecutionEventProjectionService(
+        store=SnapshotProjectionStore(
+            _snapshot(
+                [],
+                project_id="project-other",
+            )
+        )
+    )
+
+    with pytest.raises(
+        ExecutionEventProjectionIncompleteSnapshotError,
+        match="different project",
+    ):
+        service.project_lineage("project-test")
+
+
+def test_service_rejects_unsupported_store():
     service = ExecutionEventProjectionService(
         store=UnsupportedProjectionStore()
     )
 
     with pytest.raises(
         ExecutionEventProjectionUnsupportedStoreError,
-        match="authoritative storage order",
+        match="complete authoritative project snapshots",
     ):
-        service.project_lineage(
-            "project-test"
-        )
-
-
-@pytest.mark.parametrize(
-    "default_limit",
-    [0, -1, 1001],
-)
-def test_service_rejects_invalid_default_limit(
-    default_limit: int,
-):
-    with pytest.raises(
-        ValueError,
-        match="between 1 and 1000",
-    ):
-        ExecutionEventProjectionService(
-            store=RecordingProjectionStore(
-                []
-            ),
-            default_limit=default_limit,
-        )
-
-
-@pytest.mark.parametrize(
-    "limit",
-    [0, -1, 1001],
-)
-def test_service_rejects_invalid_request_limit(
-    limit: int,
-):
-    service = ExecutionEventProjectionService(
-        store=RecordingProjectionStore([])
-    )
-
-    with pytest.raises(
-        ValueError,
-        match="between 1 and 1000",
-    ):
-        service.project_lineage(
-            "project-test",
-            limit=limit,
-        )
+        service.project_lineage("project-test")
 
 
 def test_service_rejects_empty_project_id():
     service = ExecutionEventProjectionService(
-        store=RecordingProjectionStore([])
+        store=SnapshotProjectionStore(
+            _snapshot([])
+        )
     )
 
     with pytest.raises(
@@ -285,30 +252,96 @@ def test_service_rejects_empty_project_id():
         service.project_lineage("")
 
 
-def test_service_preserves_projection_errors():
-    wrong_project_record = (
+def test_service_uses_event_after_legacy_limit_to_resolve_lineage():
+    records = [
         StoredExecutionEvent(
-            store_sequence=1,
-            event=_event(
-                1,
-                project_id="project-other",
-            ),
+            store_sequence=number,
+            event=_event(number),
         )
+        for number in range(1, 1001)
+    ]
+
+    successor = StoredExecutionEvent(
+        store_sequence=1001,
+        event=_event(
+            1001,
+            supersedes=1,
+        ),
     )
 
     service = ExecutionEventProjectionService(
-        store=RecordingProjectionStore(
-            [wrong_project_record]
+        store=SnapshotProjectionStore(
+            _snapshot(
+                records + [successor]
+            )
         )
     )
 
+    projection = service.project_lineage(
+        "project-test"
+    )
+
+    original_event_id = _event_id(1)
+    successor_event_id = _event_id(1001)
+
+    assert len(projection.ordered_records) == 1001
+    assert (
+        projection.projection_through_sequence
+        == 1001
+    )
+    assert (
+        original_event_id
+        not in projection.terminal_event_ids
+    )
+    assert (
+        successor_event_id
+        in projection.terminal_event_ids
+    )
+    assert (
+        successor_event_id
+        in projection.authoritative_event_ids
+    )
+
+
+def test_snapshot_model_rejects_out_of_order_records():
+    first = StoredExecutionEvent(
+        store_sequence=4,
+        event=_event(1),
+    )
+    second = StoredExecutionEvent(
+        store_sequence=9,
+        event=_event(2),
+    )
+
     with pytest.raises(
-        Exception,
-        match=(
-            "does not belong to the "
-            "projected project"
-        ),
+        ValueError,
+        match="ascending storage sequence",
     ):
-        service.project_lineage(
-            "project-test"
+        ProjectExecutionEventRecordSnapshot(
+            project_id="project-test",
+            records=(second, first),
+            project_watermark_sequence=9,
         )
+
+
+def test_service_rejects_snapshot_below_authoritative_watermark():
+    record = StoredExecutionEvent(
+        store_sequence=4,
+        event=_event(1),
+    )
+
+    snapshot = ProjectExecutionEventRecordSnapshot(
+        project_id="project-test",
+        records=(record,),
+        project_watermark_sequence=9,
+    )
+
+    service = ExecutionEventProjectionService(
+        store=SnapshotProjectionStore(snapshot)
+    )
+
+    with pytest.raises(
+        ExecutionEventProjectionIncompleteSnapshotError,
+        match="authoritative project watermark",
+    ):
+        service.project_lineage("project-test")

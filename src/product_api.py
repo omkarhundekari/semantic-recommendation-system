@@ -93,6 +93,7 @@ from execution_evidence.execution_event import (
 )
 from execution_evidence.execution_event_store import (
     ExecutionEventIdempotencyConflictError,
+    ExecutionEventProjectHistoryTooLargeError,
     ExecutionEventProjectNotFoundError,
     ExecutionEventStore,
     ExecutionEventStoreError,
@@ -774,30 +775,40 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
 )
 def get_project_execution_event_lineage(
     project_id: str,
-    limit: int = 1000,
+    request: Request,
     service: ExecutionEventProjectionService = Depends(
         get_execution_event_projection_service
     ),
 ) -> ExecutionEventLineageResponse:
-    if limit < 1 or limit > 1000:
+    if request.query_params:
         raise HTTPException(
             status_code=422,
             detail=(
-                "Execution event projection limit "
-                "must be between 1 and 1000."
+                "Execution event lineage is a complete "
+                "project projection and cannot be "
+                "limited or paginated."
             ),
         )
 
     try:
         projection = service.project_lineage(
-            project_id,
-            limit=limit,
+            project_id
         )
     except (
         ExecutionEventProjectionUnsupportedStoreError
     ) as error:
         raise HTTPException(
             status_code=503,
+            detail=str(error),
+        ) from error
+    except ExecutionEventProjectHistoryTooLargeError as error:
+        raise HTTPException(
+            status_code=413,
+            detail=str(error),
+        ) from error
+    except ExecutionEventProjectNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
             detail=str(error),
         ) from error
     except ExecutionEventStoreError as error:
@@ -824,11 +835,12 @@ def get_project_execution_event_lineage(
 
     return ExecutionEventLineageResponse(
         project_id=projection.project_id,
+        projection_through_sequence=(
+            projection.projection_through_sequence
+        ),
         ordered_records=[
             ExecutionEventRecordResponse(
-                store_sequence=(
-                    record.store_sequence
-                ),
+                store_sequence=record.store_sequence,
                 event=record.event,
             )
             for record

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 12
+CURRENT_SQLITE_SCHEMA_VERSION = 13
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -1204,6 +1204,17 @@ WHERE supersedes_execution_event_id IS NOT NULL;
 """
 
 
+ADD_EXECUTION_EVENT_LINEAGE_ORDER_INDEX_SQL = """
+CREATE INDEX
+    idx_project_execution_events_lineage_order
+ON project_execution_events(
+    workspace_id,
+    project_row_id,
+    execution_event_row_id
+);
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -1268,6 +1279,13 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=12,
         name="add_execution_event_supersession",
         sql=ADD_EXECUTION_EVENT_SUPERSESSION_SQL,
+    ),
+    SQLiteMigration(
+        version=13,
+        name="add_execution_event_lineage_order_index",
+        sql=(
+            ADD_EXECUTION_EVENT_LINEAGE_ORDER_INDEX_SQL
+        ),
     ),
 )
 

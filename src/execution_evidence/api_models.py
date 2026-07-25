@@ -132,6 +132,7 @@ class ExecutionEventLineageConflictResponse(
 
 class ExecutionEventLineageResponse(BaseModel):
     project_id: NonBlankIdentifier
+    projection_through_sequence: int = Field(ge=0)
     ordered_records: List[
         ExecutionEventRecordResponse
     ]
