@@ -4,7 +4,11 @@ import sqlite3
 from pathlib import Path
 from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationError,
+)
 
 from execution_evidence.json_store import (
     JsonRepositoryEvidenceStore,
@@ -16,9 +20,13 @@ from execution_evidence.sqlite_schema import (
 from execution_evidence.sqlite_store import (
     SQLiteRepositoryEvidenceStore,
 )
-from execution_evidence.trusted_store import (
-    TrustedStoreInitializationError,
-    load_valid_trusted_receipt,
+from execution_evidence.store_migration import (
+    MIGRATION_RECEIPT_VERSION,
+    RepositoryEvidenceMigrationReceipt,
+)
+from execution_evidence.trusted_receipt_chain import (
+    TrustedReceiptChainFailureCode,
+    validate_trusted_receipt_chain,
 )
 
 
@@ -27,6 +35,7 @@ StorageReadinessStatus = Literal[
     "degraded",
     "misconfigured",
 ]
+
 
 
 class ExecutionEvidenceStorageReadiness(
@@ -40,6 +49,11 @@ class ExecutionEvidenceStorageReadiness(
     migration_receipt_count: Optional[int] = None
     integrity_check: Optional[str] = None
     foreign_key_violation_count: Optional[int] = None
+    trusted_receipt_chain_valid: Optional[bool] = None
+    trusted_receipt_chain_failure_code: Optional[str] = None
+    trusted_receipt_chain_tip: Optional[str] = None
+    trusted_receipt_chain_length: Optional[int] = None
+    trusted_receipt_lineage_epoch: Optional[int] = None
     checks: Dict[str, bool] = Field(
         default_factory=dict
     )
@@ -49,7 +63,6 @@ class ExecutionEvidenceStorageReadiness(
     errors: List[str] = Field(
         default_factory=list
     )
-
 
 def assess_execution_evidence_storage_readiness(
     store,
@@ -146,6 +159,7 @@ def assess_sqlite_database_readiness(
             isolation_level=None,
         )
         connection.row_factory = sqlite3.Row
+        connection.execute("BEGIN")
 
         schema_row = connection.execute(
             """
@@ -158,6 +172,15 @@ def assess_sqlite_database_readiness(
         schema_version = (
             int(schema_row["version"])
             if schema_row is not None
+            else 0
+        )
+
+        user_version_row = connection.execute(
+            "PRAGMA user_version"
+        ).fetchone()
+        user_version = (
+            int(user_version_row[0])
+            if user_version_row is not None
             else 0
         )
 
@@ -181,17 +204,31 @@ def assess_sqlite_database_readiness(
             foreign_key_violations
         )
 
-        receipt_row = connection.execute(
+        receipt_rows = connection.execute(
             """
-            SELECT COUNT(*) AS count
+            SELECT
+                receipt_id,
+                source_type,
+                source_identifier,
+                source_root_hash,
+                canonicalization_version,
+                report_version,
+                repository_count,
+                evidence_count,
+                attribution_count,
+                deterministic_report_json,
+                created_at,
+                receipt_version,
+                receipt_kind,
+                predecessor_receipt_id,
+                schema_version_from,
+                schema_version_to,
+                lineage_epoch
             FROM execution_evidence_import_receipts
+            ORDER BY created_at, receipt_id
             """
-        ).fetchone()
-        receipt_count = (
-            int(receipt_row["count"])
-            if receipt_row is not None
-            else 0
-        )
+        ).fetchall()
+        receipt_count = len(receipt_rows)
     except sqlite3.Error:
         return ExecutionEvidenceStorageReadiness(
             status="misconfigured",
@@ -216,6 +253,8 @@ def assess_sqlite_database_readiness(
     schema_current = (
         schema_version
         == CURRENT_SQLITE_SCHEMA_VERSION
+        and user_version
+        == CURRENT_SQLITE_SCHEMA_VERSION
     )
     integrity_valid = (
         integrity_messages == ["ok"]
@@ -223,29 +262,111 @@ def assess_sqlite_database_readiness(
     foreign_keys_valid = (
         foreign_key_violation_count == 0
     )
-    trusted_receipt = None
-    trusted_receipt_validation_failed = False
+    receipt_present = receipt_count > 0
+
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    chain_valid: Optional[bool] = None
+    chain_failure_code: Optional[str] = None
+    chain_tip: Optional[str] = None
+    chain_length: Optional[int] = None
+    lineage_epoch: Optional[int] = None
+    receipt_compatible = False
+
+    parsed_receipts = []
+    parse_failure = False
 
     if (
         schema_current
         and integrity_valid
         and foreign_keys_valid
     ):
-        try:
-            trusted_receipt = (
-                load_valid_trusted_receipt(
-                    path
+        for row in receipt_rows:
+            try:
+                parsed_receipts.append(
+                    RepositoryEvidenceMigrationReceipt(
+                        **dict(row)
+                    )
+                )
+            except (
+                ValidationError,
+                TypeError,
+                ValueError,
+            ):
+                parse_failure = True
+                chain_valid = False
+                chain_failure_code = (
+                    "receipt_parse_failure"
+                )
+                chain_tip = (
+                    str(row["receipt_id"])
+                    if row["receipt_id"] is not None
+                    else None
+                )
+                chain_length = len(
+                    parsed_receipts
+                )
+                break
+
+        if not parse_failure:
+            chain_result = (
+                validate_trusted_receipt_chain(
+                    parsed_receipts,
+                    user_version=user_version,
                 )
             )
-        except TrustedStoreInitializationError:
-            trusted_receipt_validation_failed = True
+            chain_valid = chain_result.valid
+            chain_tip = (
+                chain_result.authoritative_tip
+            )
+            chain_length = (
+                chain_result.chain_length
+            )
+            lineage_epoch = (
+                chain_result.lineage_epoch
+            )
 
-    trusted_receipt_present = (
-        trusted_receipt is not None
-    )
+            if chain_result.failure is not None:
+                chain_failure_code = (
+                    chain_result.failure.code.value
+                )
 
-    errors: List[str] = []
-    warnings: List[str] = []
+            if chain_result.valid:
+                receipt_compatible = True
+            elif (
+                chain_result.failure is not None
+                and chain_result.failure.code
+                == TrustedReceiptChainFailureCode
+                .CHAIN_NOT_ESTABLISHED
+                and chain_result.chain_length == 1
+                and chain_result.authoritative_tip
+                is not None
+            ):
+                authoritative_receipt = next(
+                    (
+                        receipt
+                        for receipt in parsed_receipts
+                        if receipt.receipt_id
+                        == chain_result.authoritative_tip
+                    ),
+                    None,
+                )
+
+                if (
+                    authoritative_receipt
+                    is not None
+                    and authoritative_receipt
+                    .receipt_version
+                    == MIGRATION_RECEIPT_VERSION
+                ):
+                    receipt_compatible = True
+                    warnings.append(
+                        "SQLite trusted-store receipt "
+                        "is valid legacy version 1, but "
+                        "version 2 receipt lineage is "
+                        "not established."
+                    )
 
     if not schema_current:
         errors.append(
@@ -263,25 +384,49 @@ def assess_sqlite_database_readiness(
             "SQLite foreign-key validation failed."
         )
 
-    if trusted_receipt_validation_failed:
-        errors.append(
-            "SQLite trusted-store receipts could "
-            "not be validated."
-        )
-    elif not trusted_receipt_present:
-        errors.append(
-            "SQLite database has no valid trusted-store "
-            "initialization or migration receipt."
-        )
+    if (
+        schema_current
+        and integrity_valid
+        and foreign_keys_valid
+    ):
+        if parse_failure:
+            errors.append(
+                "SQLite trusted-store receipt data "
+                "could not be parsed."
+            )
+        elif not receipt_present:
+            errors.append(
+                "SQLite database has no trusted-store "
+                "initialization or migration receipt."
+            )
+        elif not receipt_compatible:
+            errors.append(
+                "SQLite trusted-store receipt chain "
+                "could not be validated."
+            )
 
     if errors:
         status: StorageReadinessStatus = (
             "misconfigured"
         )
-    elif warnings:
+    elif chain_valid is True:
+        status = "ready"
+    elif receipt_compatible:
         status = "degraded"
     else:
-        status = "ready"
+        status = "misconfigured"
+
+    if status == "ready" and chain_valid is not True:
+        raise AssertionError(
+            "Ready SQLite storage requires a valid "
+            "trusted receipt chain."
+        )
+
+    if chain_valid is True and status != "ready":
+        raise AssertionError(
+            "A valid trusted receipt chain must produce "
+            "ready SQLite storage."
+        )
 
     return ExecutionEvidenceStorageReadiness(
         status=status,
@@ -296,6 +441,17 @@ def assess_sqlite_database_readiness(
         foreign_key_violation_count=(
             foreign_key_violation_count
         ),
+        trusted_receipt_chain_valid=chain_valid,
+        trusted_receipt_chain_failure_code=(
+            chain_failure_code
+        ),
+        trusted_receipt_chain_tip=chain_tip,
+        trusted_receipt_chain_length=(
+            chain_length
+        ),
+        trusted_receipt_lineage_epoch=(
+            lineage_epoch
+        ),
         checks={
             "database_exists": True,
             "database_readable": True,
@@ -305,10 +461,16 @@ def assess_sqlite_database_readiness(
                 foreign_keys_valid
             ),
             "migration_receipt_present": (
-                trusted_receipt_present
+                receipt_present
             ),
             "trusted_receipt_present": (
-                trusted_receipt_present
+                receipt_present
+            ),
+            "trusted_receipt_chain_valid": (
+                chain_valid is True
+            ),
+            "trusted_receipt_compatible": (
+                receipt_compatible
             ),
         },
         warnings=warnings,

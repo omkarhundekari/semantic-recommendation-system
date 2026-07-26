@@ -22,7 +22,7 @@ from planning.roadmap_registry import (
 CREATED_AT = "2026-07-13T12:00:00+00:00"
 
 
-def test_service_requires_ready_trusted_database(
+def test_service_accepts_compatible_legacy_database(
     tmp_path: Path,
 ):
     database_path = tmp_path / "solvyn.db"
@@ -38,7 +38,22 @@ def test_service_requires_ready_trusted_database(
 
     assert service.path == database_path
     assert service.workspace_id == "local"
-    assert service.readiness.status == "ready"
+    assert service.readiness.status == "degraded"
+    assert (
+        service.readiness.checks[
+            "trusted_receipt_compatible"
+        ]
+        is True
+    )
+    assert (
+        service.readiness.trusted_receipt_chain_valid
+        is False
+    )
+    assert (
+        service.readiness
+        .trusted_receipt_chain_failure_code
+        == "chain_not_established"
+    )
 
 
 def test_service_rejects_missing_database(

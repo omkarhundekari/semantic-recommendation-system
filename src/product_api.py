@@ -354,12 +354,27 @@ def build_execution_evidence_storage_runtime(
         resolved_path
     )
 
-    if readiness.status != "ready":
+    trusted_storage_usable = (
+        readiness.status == "ready"
+        or (
+            readiness.status == "degraded"
+            and readiness.checks.get(
+                "trusted_receipt_compatible",
+                False,
+            )
+        )
+    )
+
+    if not trusted_storage_usable:
         details = "; ".join(readiness.errors)
         raise ValueError(
             "SQLite execution evidence storage "
-            "failed readiness validation: "
-            f"{details}"
+            "failed readiness validation"
+            + (
+                f": {details}"
+                if details
+                else "."
+            )
         )
 
     try:
