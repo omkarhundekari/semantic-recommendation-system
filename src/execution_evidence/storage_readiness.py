@@ -126,129 +126,16 @@ def _assess_json_store(
     )
 
 
-def assess_sqlite_database_readiness(
-    database_path: Path | str,
+def _build_sqlite_readiness(
+    *,
+    schema_version: int,
+    user_version: int,
+    integrity_messages: List[str],
+    integrity_check: str,
+    foreign_key_violation_count: int,
+    receipt_rows,
 ) -> ExecutionEvidenceStorageReadiness:
-    path = Path(database_path)
-
-    if not path.is_file():
-        return ExecutionEvidenceStorageReadiness(
-            status="misconfigured",
-            backend="sqlite",
-            writable_store_initialized=False,
-            expected_schema_version=(
-                CURRENT_SQLITE_SCHEMA_VERSION
-            ),
-            checks={
-                "database_exists": False,
-            },
-            errors=[
-                "SQLite execution evidence database "
-                "does not exist."
-            ],
-        )
-
-    connection = None
-
-    try:
-        uri = path.resolve().as_uri() + "?mode=ro"
-        connection = sqlite3.connect(
-            uri,
-            uri=True,
-            timeout=5.0,
-            isolation_level=None,
-        )
-        connection.row_factory = sqlite3.Row
-        connection.execute("BEGIN")
-
-        schema_row = connection.execute(
-            """
-            SELECT COALESCE(MAX(version), 0)
-                AS version
-            FROM execution_evidence_schema_migrations
-            """
-        ).fetchone()
-
-        schema_version = (
-            int(schema_row["version"])
-            if schema_row is not None
-            else 0
-        )
-
-        user_version_row = connection.execute(
-            "PRAGMA user_version"
-        ).fetchone()
-        user_version = (
-            int(user_version_row[0])
-            if user_version_row is not None
-            else 0
-        )
-
-        integrity_rows = connection.execute(
-            "PRAGMA integrity_check"
-        ).fetchall()
-        integrity_messages = [
-            str(row[0])
-            for row in integrity_rows
-        ]
-        integrity_check = ",".join(
-            integrity_messages
-        )
-
-        foreign_key_violations = (
-            connection.execute(
-                "PRAGMA foreign_key_check"
-            ).fetchall()
-        )
-        foreign_key_violation_count = len(
-            foreign_key_violations
-        )
-
-        receipt_rows = connection.execute(
-            """
-            SELECT
-                receipt_id,
-                source_type,
-                source_identifier,
-                source_root_hash,
-                canonicalization_version,
-                report_version,
-                repository_count,
-                evidence_count,
-                attribution_count,
-                deterministic_report_json,
-                created_at,
-                receipt_version,
-                receipt_kind,
-                predecessor_receipt_id,
-                schema_version_from,
-                schema_version_to,
-                lineage_epoch
-            FROM execution_evidence_import_receipts
-            ORDER BY created_at, receipt_id
-            """
-        ).fetchall()
-        receipt_count = len(receipt_rows)
-    except sqlite3.Error:
-        return ExecutionEvidenceStorageReadiness(
-            status="misconfigured",
-            backend="sqlite",
-            writable_store_initialized=True,
-            expected_schema_version=(
-                CURRENT_SQLITE_SCHEMA_VERSION
-            ),
-            checks={
-                "database_exists": True,
-                "database_readable": False,
-            },
-            errors=[
-                "SQLite execution evidence database "
-                "could not be read or validated."
-            ],
-        )
-    finally:
-        if connection is not None:
-            connection.close()
+    receipt_count = len(receipt_rows)
 
     schema_current = (
         schema_version
@@ -476,3 +363,163 @@ def assess_sqlite_database_readiness(
         warnings=warnings,
         errors=errors,
     )
+
+
+def assess_sqlite_connection_readiness(
+    connection: sqlite3.Connection,
+) -> ExecutionEvidenceStorageReadiness:
+    """Assess SQLite readiness inside a caller-owned transaction."""
+    if not connection.in_transaction:
+        raise ValueError(
+            "SQLite readiness assessment requires "
+            "an active caller-owned transaction."
+        )
+
+    original_row_factory = connection.row_factory
+
+    try:
+        connection.row_factory = sqlite3.Row
+
+        schema_row = connection.execute(
+            """
+            SELECT COALESCE(MAX(version), 0)
+                AS version
+            FROM execution_evidence_schema_migrations
+            """
+        ).fetchone()
+
+        schema_version = (
+            int(schema_row["version"])
+            if schema_row is not None
+            else 0
+        )
+
+        user_version_row = connection.execute(
+            "PRAGMA user_version"
+        ).fetchone()
+        user_version = (
+            int(user_version_row[0])
+            if user_version_row is not None
+            else 0
+        )
+
+        integrity_rows = connection.execute(
+            "PRAGMA integrity_check"
+        ).fetchall()
+        integrity_messages = [
+            str(row[0])
+            for row in integrity_rows
+        ]
+        integrity_check = ",".join(
+            integrity_messages
+        )
+
+        foreign_key_violations = (
+            connection.execute(
+                "PRAGMA foreign_key_check"
+            ).fetchall()
+        )
+        foreign_key_violation_count = len(
+            foreign_key_violations
+        )
+
+        receipt_rows = connection.execute(
+            """
+            SELECT
+                receipt_id,
+                source_type,
+                source_identifier,
+                source_root_hash,
+                canonicalization_version,
+                report_version,
+                repository_count,
+                evidence_count,
+                attribution_count,
+                deterministic_report_json,
+                created_at,
+                receipt_version,
+                receipt_kind,
+                predecessor_receipt_id,
+                schema_version_from,
+                schema_version_to,
+                lineage_epoch
+            FROM execution_evidence_import_receipts
+            ORDER BY created_at, receipt_id
+            """
+        ).fetchall()
+
+        return _build_sqlite_readiness(
+            schema_version=schema_version,
+            user_version=user_version,
+            integrity_messages=integrity_messages,
+            integrity_check=integrity_check,
+            foreign_key_violation_count=(
+                foreign_key_violation_count
+            ),
+            receipt_rows=receipt_rows,
+        )
+    finally:
+        connection.row_factory = original_row_factory
+
+
+def assess_sqlite_database_readiness(
+    database_path: Path | str,
+) -> ExecutionEvidenceStorageReadiness:
+    path = Path(database_path)
+
+    if not path.is_file():
+        return ExecutionEvidenceStorageReadiness(
+            status="misconfigured",
+            backend="sqlite",
+            writable_store_initialized=False,
+            expected_schema_version=(
+                CURRENT_SQLITE_SCHEMA_VERSION
+            ),
+            checks={
+                "database_exists": False,
+            },
+            errors=[
+                "SQLite execution evidence database "
+                "does not exist."
+            ],
+        )
+
+    connection = None
+
+    try:
+        uri = path.resolve().as_uri() + "?mode=ro"
+        connection = sqlite3.connect(
+            uri,
+            uri=True,
+            timeout=5.0,
+            isolation_level=None,
+        )
+        connection.execute("BEGIN")
+
+        return assess_sqlite_connection_readiness(
+            connection
+        )
+    except sqlite3.Error:
+        return ExecutionEvidenceStorageReadiness(
+            status="misconfigured",
+            backend="sqlite",
+            writable_store_initialized=True,
+            expected_schema_version=(
+                CURRENT_SQLITE_SCHEMA_VERSION
+            ),
+            checks={
+                "database_exists": True,
+                "database_readable": False,
+            },
+            errors=[
+                "SQLite execution evidence database "
+                "could not be read or validated."
+            ],
+        )
+    finally:
+        if connection is not None:
+            try:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+            finally:
+                connection.close()
