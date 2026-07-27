@@ -270,7 +270,7 @@ def test_assessment_identity_is_deterministic():
     assert first.assessment_id == second.assessment_id
 
 
-def test_changed_data_version_changes_assessment_identity():
+def test_changed_data_version_preserves_assessment_identity():
     root = _v2_root()
     readiness = _readiness(
         status="ready",
@@ -289,6 +289,71 @@ def test_changed_data_version_changes_assessment_identity():
         [root],
         user_version=14,
         data_version=13,
+        readiness=readiness,
+    )
+
+    assert (
+        first.store_state_fingerprint
+        == second.store_state_fingerprint
+    )
+    assert first.assessment_id == second.assessment_id
+    assert first.assessed_data_version == 12
+    assert second.assessed_data_version == 13
+
+
+def test_changed_user_version_changes_assessment_identity():
+    root = _v2_root()
+    readiness = _readiness(
+        status="ready",
+        chain_valid=True,
+        chain_tip=root.receipt_id,
+        chain_length=1,
+    )
+
+    first = assess_trusted_store_recovery(
+        [root],
+        user_version=14,
+        data_version=12,
+        readiness=readiness,
+    )
+    second = assess_trusted_store_recovery(
+        [root],
+        user_version=15,
+        data_version=12,
+        readiness=readiness,
+    )
+
+    assert (
+        first.store_state_fingerprint
+        != second.store_state_fingerprint
+    )
+    assert first.assessment_id != second.assessment_id
+
+
+def test_changed_receipt_changes_assessment_identity():
+    root = _v2_root()
+    changed = root.model_copy(
+        update={
+            "source_root_hash": "0" * 64,
+        }
+    )
+    readiness = _readiness(
+        status="ready",
+        chain_valid=True,
+        chain_tip=root.receipt_id,
+        chain_length=1,
+    )
+
+    first = assess_trusted_store_recovery(
+        [root],
+        user_version=14,
+        data_version=12,
+        readiness=readiness,
+    )
+    second = assess_trusted_store_recovery(
+        [changed],
+        user_version=14,
+        data_version=12,
         readiness=readiness,
     )
 
