@@ -427,3 +427,77 @@ def test_upgrade_restores_backup_after_failure(
         connection.close()
 
     assert version == CURRENT_SQLITE_SCHEMA_VERSION
+
+
+def test_load_trusted_receipts_from_connection_requires_transaction(
+    tmp_path: Path,
+):
+    from execution_evidence.sqlite_schema import (
+        connect_execution_evidence_database,
+    )
+    from execution_evidence.trusted_store import (
+        load_trusted_receipts_from_connection,
+    )
+
+    database_path = tmp_path / "solvyn.db"
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-13T12:00:00+00:00",
+    )
+
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        with pytest.raises(
+            ValueError,
+            match="active caller-owned transaction",
+        ):
+            load_trusted_receipts_from_connection(
+                connection
+            )
+    finally:
+        connection.close()
+
+
+def test_load_trusted_receipts_from_connection_preserves_transaction(
+    tmp_path: Path,
+):
+    from execution_evidence.sqlite_schema import (
+        connect_execution_evidence_database,
+    )
+    from execution_evidence.trusted_store import (
+        load_trusted_receipts_from_connection,
+    )
+
+    database_path = tmp_path / "solvyn.db"
+    expected = initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-13T12:00:00+00:00",
+    )
+
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        original_row_factory = connection.row_factory
+        connection.execute("BEGIN")
+
+        receipts = (
+            load_trusted_receipts_from_connection(
+                connection
+            )
+        )
+
+        assert receipts == (expected,)
+        assert connection.in_transaction is True
+        assert (
+            connection.row_factory
+            is original_row_factory
+        )
+    finally:
+        if connection.in_transaction:
+            connection.rollback()
+        connection.close()

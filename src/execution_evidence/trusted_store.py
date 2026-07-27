@@ -13,6 +13,10 @@ from execution_evidence.sqlite_schema import (
     get_execution_evidence_schema_version,
     initialize_execution_evidence_database,
 )
+from execution_evidence.sqlite_trusted_receipts import (
+    TRUSTED_RECEIPT_NEWEST_FIRST_SQL,
+    load_trusted_receipt_rows_from_connection,
+)
 from execution_evidence.store_migration import (
     CANONICAL_AGGREGATE_VERSION,
     MIGRATION_RECEIPT_VERSION,
@@ -25,6 +29,7 @@ from execution_evidence.store_migration import (
     build_migration_receipt,
     build_repository_evidence_root_hash,
     calculate_migration_receipt_id,
+    deserialize_repository_evidence_migration_receipt,
     load_repository_evidence_snapshot,
     persist_migration_receipt,
     verify_migration_receipt,
@@ -440,6 +445,38 @@ def upgrade_trusted_sqlite_store(
         ) from error
 
 
+def load_trusted_receipts_from_connection(
+    connection: sqlite3.Connection,
+) -> tuple[
+    RepositoryEvidenceMigrationReceipt,
+    ...,
+]:
+    """Load all trusted receipts from one caller-owned snapshot."""
+    if not connection.in_transaction:
+        raise ValueError(
+            "Trusted receipts require an active "
+            "caller-owned transaction."
+        )
+
+    try:
+        rows = load_trusted_receipt_rows_from_connection(
+            connection,
+            order="newest_first",
+        )
+    except sqlite3.Error as error:
+        raise TrustedStoreInitializationError(
+            "Could not inspect trusted-store "
+            "receipts."
+        ) from error
+
+    return tuple(
+        deserialize_repository_evidence_migration_receipt(
+            row
+        )
+        for row in rows
+    )
+
+
 def load_valid_trusted_receipt(
     database_path: Path | str,
 ) -> Optional[
@@ -458,28 +495,7 @@ def load_valid_trusted_receipt(
 
     try:
         rows = connection.execute(
-            """
-            SELECT
-                receipt_id,
-                source_type,
-                source_identifier,
-                source_root_hash,
-                canonicalization_version,
-                report_version,
-                repository_count,
-                evidence_count,
-                attribution_count,
-                deterministic_report_json,
-                created_at,
-                receipt_version,
-                receipt_kind,
-                predecessor_receipt_id,
-                schema_version_from,
-                schema_version_to,
-                lineage_epoch
-            FROM execution_evidence_import_receipts
-            ORDER BY created_at DESC, receipt_id
-            """
+            TRUSTED_RECEIPT_NEWEST_FIRST_SQL
         ).fetchall()
     except sqlite3.Error as error:
         raise TrustedStoreInitializationError(
@@ -491,8 +507,8 @@ def load_valid_trusted_receipt(
 
     for row in rows:
         receipt = (
-            RepositoryEvidenceMigrationReceipt(
-                **dict(row)
+            deserialize_repository_evidence_migration_receipt(
+                row
             )
         )
 

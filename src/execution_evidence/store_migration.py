@@ -600,6 +600,15 @@ class RepositoryEvidenceMigrationReceipt(
     )
 
 
+def deserialize_repository_evidence_migration_receipt(
+    row,
+) -> RepositoryEvidenceMigrationReceipt:
+    """Deserialize one persisted migration receipt row."""
+    return RepositoryEvidenceMigrationReceipt(
+        **dict(row)
+    )
+
+
 def deterministic_migration_report_json(
     report: RepositoryEvidenceMigrationReport,
 ) -> str:

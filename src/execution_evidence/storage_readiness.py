@@ -7,7 +7,6 @@ from typing import Dict, List, Literal, Optional
 from pydantic import (
     BaseModel,
     Field,
-    ValidationError,
 )
 
 from execution_evidence.json_store import (
@@ -17,12 +16,15 @@ from execution_evidence.json_store import (
 from execution_evidence.sqlite_schema import (
     CURRENT_SQLITE_SCHEMA_VERSION,
 )
+from execution_evidence.sqlite_trusted_store_snapshot import (
+    SQLiteTrustedStoreRawSnapshot,
+    capture_sqlite_trusted_store_snapshot,
+)
 from execution_evidence.sqlite_store import (
     SQLiteRepositoryEvidenceStore,
 )
 from execution_evidence.store_migration import (
     MIGRATION_RECEIPT_VERSION,
-    RepositoryEvidenceMigrationReceipt,
 )
 from execution_evidence.trusted_receipt_chain import (
     TrustedReceiptChainFailureCode,
@@ -126,30 +128,49 @@ def _assess_json_store(
     )
 
 
-def _build_sqlite_readiness(
-    *,
-    schema_version: int,
-    user_version: int,
-    integrity_messages: List[str],
-    integrity_check: str,
-    foreign_key_violation_count: int,
-    receipt_rows,
+def derive_sqlite_storage_readiness(
+    snapshot: SQLiteTrustedStoreRawSnapshot,
 ) -> ExecutionEvidenceStorageReadiness:
-    receipt_count = len(receipt_rows)
+    """Derive readiness from an immutable SQLite snapshot."""
+    schema_version = snapshot.schema_migration_version
+    user_version = snapshot.user_version
+    receipt_count = snapshot.receipt_row_count
+
+    if schema_version is None:
+        schema_version_value = 0
+    else:
+        schema_version_value = schema_version
+
+    if user_version is None:
+        user_version_value = 0
+    else:
+        user_version_value = user_version
 
     schema_current = (
-        schema_version
+        snapshot.schema_migration_version_read_error
+        is None
+        and snapshot.user_version_read_error is None
+        and schema_version
         == CURRENT_SQLITE_SCHEMA_VERSION
         and user_version
         == CURRENT_SQLITE_SCHEMA_VERSION
     )
+
     integrity_valid = (
-        integrity_messages == ["ok"]
+        snapshot.integrity_read_error is None
+        and list(snapshot.integrity_messages)
+        == ["ok"]
     )
+
     foreign_keys_valid = (
-        foreign_key_violation_count == 0
+        snapshot.foreign_key_read_error is None
+        and len(snapshot.foreign_key_violations) == 0
     )
-    receipt_present = receipt_count > 0
+
+    receipt_present = (
+        receipt_count is not None
+        and receipt_count > 0
+    )
 
     errors: List[str] = []
     warnings: List[str] = []
@@ -161,46 +182,35 @@ def _build_sqlite_readiness(
     lineage_epoch: Optional[int] = None
     receipt_compatible = False
 
-    parsed_receipts = []
-    parse_failure = False
+    parse_failure = bool(
+        snapshot.unparseable_receipt_rows
+    )
 
     if (
         schema_current
         and integrity_valid
         and foreign_keys_valid
     ):
-        for row in receipt_rows:
-            try:
-                parsed_receipts.append(
-                    RepositoryEvidenceMigrationReceipt(
-                        **dict(row)
-                    )
-                )
-            except (
-                ValidationError,
-                TypeError,
-                ValueError,
-            ):
-                parse_failure = True
-                chain_valid = False
-                chain_failure_code = (
-                    "receipt_parse_failure"
-                )
-                chain_tip = (
-                    str(row["receipt_id"])
-                    if row["receipt_id"] is not None
-                    else None
-                )
-                chain_length = len(
-                    parsed_receipts
-                )
-                break
-
-        if not parse_failure:
+        if parse_failure:
+            first_malformed = min(
+                snapshot.unparseable_receipt_rows,
+                key=lambda item: (
+                    item.snapshot_row_index
+                ),
+            )
+            chain_valid = False
+            chain_failure_code = (
+                "receipt_parse_failure"
+            )
+            chain_tip = first_malformed.receipt_id
+            chain_length = (
+                first_malformed.snapshot_row_index
+            )
+        else:
             chain_result = (
                 validate_trusted_receipt_chain(
-                    parsed_receipts,
-                    user_version=user_version,
+                    snapshot.receipts,
+                    user_version=user_version_value,
                 )
             )
             chain_valid = chain_result.valid
@@ -233,7 +243,7 @@ def _build_sqlite_readiness(
                 authoritative_receipt = next(
                     (
                         receipt
-                        for receipt in parsed_receipts
+                        for receipt in snapshot.receipts
                         if receipt.receipt_id
                         == chain_result.authoritative_tip
                     ),
@@ -241,8 +251,7 @@ def _build_sqlite_readiness(
                 )
 
                 if (
-                    authoritative_receipt
-                    is not None
+                    authoritative_receipt is not None
                     and authoritative_receipt
                     .receipt_version
                     == MIGRATION_RECEIPT_VERSION
@@ -324,9 +333,11 @@ def _build_sqlite_readiness(
             CURRENT_SQLITE_SCHEMA_VERSION
         ),
         migration_receipt_count=receipt_count,
-        integrity_check=integrity_check,
-        foreign_key_violation_count=(
-            foreign_key_violation_count
+        integrity_check=",".join(
+            snapshot.integrity_messages
+        ),
+        foreign_key_violation_count=len(
+            snapshot.foreign_key_violations
         ),
         trusted_receipt_chain_valid=chain_valid,
         trusted_receipt_chain_failure_code=(
@@ -365,6 +376,44 @@ def _build_sqlite_readiness(
     )
 
 
+def _raise_for_legacy_snapshot_read_failure(
+    snapshot: SQLiteTrustedStoreRawSnapshot,
+) -> None:
+    missing_tables = [
+        item.table_name
+        for item in snapshot.required_tables
+        if not item.present
+    ]
+
+    if missing_tables:
+        raise sqlite3.OperationalError(
+            "Missing required trusted-store tables: "
+            + ", ".join(missing_tables)
+        )
+
+    read_errors = (
+        snapshot.schema_migration_version_read_error,
+        snapshot.user_version_read_error,
+        snapshot.integrity_read_error,
+        snapshot.foreign_key_read_error,
+        snapshot.receipts_read_error,
+    )
+
+    first_error = next(
+        (
+            error
+            for error in read_errors
+            if error is not None
+        ),
+        None,
+    )
+
+    if first_error is not None:
+        raise sqlite3.DatabaseError(
+            first_error.message
+        )
+
+
 def assess_sqlite_connection_readiness(
     connection: sqlite3.Connection,
 ) -> ExecutionEvidenceStorageReadiness:
@@ -375,92 +424,20 @@ def assess_sqlite_connection_readiness(
             "an active caller-owned transaction."
         )
 
-    original_row_factory = connection.row_factory
+    snapshot = capture_sqlite_trusted_store_snapshot(
+        connection
+    )
 
-    try:
-        connection.row_factory = sqlite3.Row
+    # Preserve the established connection-level contract
+    # during the pure derivation extraction. Structural and
+    # SQLite read failures remain caller-visible exceptions.
+    _raise_for_legacy_snapshot_read_failure(
+        snapshot
+    )
 
-        schema_row = connection.execute(
-            """
-            SELECT COALESCE(MAX(version), 0)
-                AS version
-            FROM execution_evidence_schema_migrations
-            """
-        ).fetchone()
-
-        schema_version = (
-            int(schema_row["version"])
-            if schema_row is not None
-            else 0
-        )
-
-        user_version_row = connection.execute(
-            "PRAGMA user_version"
-        ).fetchone()
-        user_version = (
-            int(user_version_row[0])
-            if user_version_row is not None
-            else 0
-        )
-
-        integrity_rows = connection.execute(
-            "PRAGMA integrity_check"
-        ).fetchall()
-        integrity_messages = [
-            str(row[0])
-            for row in integrity_rows
-        ]
-        integrity_check = ",".join(
-            integrity_messages
-        )
-
-        foreign_key_violations = (
-            connection.execute(
-                "PRAGMA foreign_key_check"
-            ).fetchall()
-        )
-        foreign_key_violation_count = len(
-            foreign_key_violations
-        )
-
-        receipt_rows = connection.execute(
-            """
-            SELECT
-                receipt_id,
-                source_type,
-                source_identifier,
-                source_root_hash,
-                canonicalization_version,
-                report_version,
-                repository_count,
-                evidence_count,
-                attribution_count,
-                deterministic_report_json,
-                created_at,
-                receipt_version,
-                receipt_kind,
-                predecessor_receipt_id,
-                schema_version_from,
-                schema_version_to,
-                lineage_epoch
-            FROM execution_evidence_import_receipts
-            ORDER BY created_at, receipt_id
-            """
-        ).fetchall()
-
-        return _build_sqlite_readiness(
-            schema_version=schema_version,
-            user_version=user_version,
-            integrity_messages=integrity_messages,
-            integrity_check=integrity_check,
-            foreign_key_violation_count=(
-                foreign_key_violation_count
-            ),
-            receipt_rows=receipt_rows,
-        )
-    finally:
-        connection.row_factory = original_row_factory
-
+    return derive_sqlite_storage_readiness(
+        snapshot
+    )
 
 def assess_sqlite_database_readiness(
     database_path: Path | str,
