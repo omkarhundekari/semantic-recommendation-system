@@ -9,6 +9,7 @@ from execution_evidence.sqlite_store import (
 )
 from execution_evidence.storage_readiness import (
     assess_execution_evidence_storage_readiness,
+    assess_sqlite_connection_readiness,
     assess_sqlite_database_readiness,
 )
 from execution_evidence.sqlite_schema import (
@@ -419,3 +420,107 @@ def test_broken_v2_chain_cannot_fall_back_to_valid_legacy(
         readiness.trusted_receipt_chain_failure_code
         != "chain_not_established"
     )
+
+
+def test_connection_readiness_requires_active_transaction(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-13T12:00:00+00:00",
+    )
+
+    connection = sqlite3.connect(
+        str(database_path),
+        isolation_level=None,
+    )
+
+    try:
+        try:
+            assess_sqlite_connection_readiness(
+                connection
+            )
+        except ValueError as error:
+            assert "active caller-owned transaction" in str(
+                error
+            )
+        else:
+            raise AssertionError(
+                "Readiness assessment accepted an "
+                "autocommit connection."
+            )
+    finally:
+        connection.close()
+
+
+def test_connection_readiness_preserves_caller_ownership(
+    tmp_path: Path,
+):
+    database_path = tmp_path / "solvyn.db"
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-13T12:00:00+00:00",
+    )
+
+    connection = sqlite3.connect(
+        str(database_path),
+        isolation_level=None,
+    )
+    original_row_factory = lambda cursor, row: row
+    connection.row_factory = original_row_factory
+
+    try:
+        connection.execute("BEGIN")
+
+        readiness = assess_sqlite_connection_readiness(
+            connection
+        )
+
+        assert readiness.backend == "sqlite"
+        assert connection.in_transaction is True
+        assert (
+            connection.row_factory
+            is original_row_factory
+        )
+        assert connection.execute(
+            "SELECT 1"
+        ).fetchone()[0] == 1
+    finally:
+        if connection.in_transaction:
+            connection.execute("ROLLBACK")
+        connection.close()
+
+
+def test_connection_readiness_propagates_sqlite_errors():
+    connection = sqlite3.connect(
+        ":memory:",
+        isolation_level=None,
+    )
+    original_row_factory = lambda cursor, row: row
+    connection.row_factory = original_row_factory
+
+    try:
+        connection.execute("BEGIN")
+
+        try:
+            assess_sqlite_connection_readiness(
+                connection
+            )
+        except sqlite3.Error:
+            pass
+        else:
+            raise AssertionError(
+                "Missing trusted-store tables must "
+                "raise a SQLite read error."
+            )
+
+        assert connection.in_transaction is True
+        assert (
+            connection.row_factory
+            is original_row_factory
+        )
+    finally:
+        if connection.in_transaction:
+            connection.execute("ROLLBACK")
+        connection.close()

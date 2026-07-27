@@ -54,6 +54,10 @@ class TrustedStoreRecoveryAssessment(BaseModel):
     descendant_count_after_break: int = Field(ge=0)
 
     store_state_fingerprint: str
+
+    # Diagnostic only. SQLite PRAGMA data_version is
+    # connection-local and must never be used for
+    # identity, equality, or cross-process staleness.
     assessed_data_version: int = Field(ge=0)
     assessed_user_version: int = Field(ge=0)
     evidence_fingerprint_available: bool = False
@@ -80,7 +84,6 @@ def build_trusted_store_state_fingerprint(
     ],
     *,
     user_version: int,
-    data_version: int,
     readiness: ExecutionEvidenceStorageReadiness,
 ) -> str:
     ordered_receipts = sorted(
@@ -97,7 +100,6 @@ def build_trusted_store_state_fingerprint(
     payload = {
         "receipts": ordered_receipts,
         "user_version": user_version,
-        "data_version": data_version,
         "readiness": {
             "status": readiness.status,
             "backend": readiness.backend,
@@ -107,9 +109,6 @@ def build_trusted_store_state_fingerprint(
             ),
             "migration_receipt_count": (
                 readiness.migration_receipt_count
-            ),
-            "integrity_check": (
-                readiness.integrity_check
             ),
             "foreign_key_violation_count": (
                 readiness.foreign_key_violation_count
@@ -198,7 +197,6 @@ def assess_trusted_store_recovery(
         build_trusted_store_state_fingerprint(
             receipts,
             user_version=user_version,
-            data_version=data_version,
             readiness=readiness,
         )
     )
