@@ -280,12 +280,16 @@ def test_receipt_parse_failure_is_misconfigured(
 
     assert readiness.status == "misconfigured"
     assert (
+        readiness.storage_failure_code
+        == "receipt_parse_failure"
+    )
+    assert (
         readiness.trusted_receipt_chain_valid
-        is False
+        is None
     )
     assert (
         readiness.trusted_receipt_chain_failure_code
-        == "receipt_parse_failure"
+        is None
     )
     assert readiness.errors
 
@@ -524,3 +528,154 @@ def test_connection_readiness_propagates_sqlite_errors():
         if connection.in_transaction:
             connection.execute("ROLLBACK")
         connection.close()
+
+
+# storage_readiness_model_contract_hardening
+
+
+def _contract_readiness(**updates):
+    from execution_evidence.storage_readiness import (
+        ExecutionEvidenceStorageReadiness,
+    )
+
+    values = {
+        "status": "misconfigured",
+        "backend": "sqlite",
+        "writable_store_initialized": True,
+        "storage_failure_code": (
+            "trusted_receipts_missing"
+        ),
+        "trusted_receipt_chain_valid": None,
+        "trusted_receipt_chain_failure_code": None,
+        "checks": {
+            "required_tables_present": True,
+            "schema_current": True,
+            "integrity_valid": True,
+            "foreign_keys_valid": True,
+            "trusted_receipt_present": False,
+            "trusted_receipt_compatible": False,
+        },
+    }
+    values.update(updates)
+
+    return ExecutionEvidenceStorageReadiness(
+        **values
+    )
+
+
+def test_model_rejects_missing_primary_misconfiguration_code():
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(
+        ValidationError,
+        match="authoritative storage failure code",
+    ):
+        _contract_readiness(
+            storage_failure_code=None,
+        )
+
+
+def test_model_rejects_primary_code_on_degraded_state():
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(
+        ValidationError,
+        match="must not carry a storage failure code",
+    ):
+        _contract_readiness(
+            status="degraded",
+        )
+
+
+def test_model_rejects_chain_detail_before_validation():
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(
+        ValidationError,
+        match="requires executed chain validation",
+    ):
+        _contract_readiness(
+            storage_failure_code=(
+                "trusted_receipt_chain_invalid"
+            ),
+            trusted_receipt_chain_failure_code=(
+                "unknown_version"
+            ),
+            checks={
+                "required_tables_present": True,
+                "schema_current": True,
+                "integrity_valid": True,
+                "foreign_keys_valid": True,
+                "trusted_receipt_present": True,
+                "trusted_receipt_compatible": False,
+            },
+        )
+
+
+def test_model_rejects_failed_chain_without_detail_code():
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(
+        ValidationError,
+        match="requires a specific chain failure code",
+    ):
+        _contract_readiness(
+            storage_failure_code=(
+                "trusted_receipt_chain_invalid"
+            ),
+            trusted_receipt_chain_valid=False,
+            checks={
+                "required_tables_present": True,
+                "schema_current": True,
+                "integrity_valid": True,
+                "foreign_keys_valid": True,
+                "trusted_receipt_present": True,
+                "trusted_receipt_compatible": False,
+            },
+        )
+
+
+def test_model_accepts_degraded_executed_legacy_chain():
+    readiness = _contract_readiness(
+        status="degraded",
+        storage_failure_code=None,
+        trusted_receipt_chain_valid=False,
+        trusted_receipt_chain_failure_code=(
+            "chain_not_established"
+        ),
+        checks={
+            "required_tables_present": True,
+            "schema_current": True,
+            "integrity_valid": True,
+            "foreign_keys_valid": True,
+            "trusted_receipt_present": True,
+            "trusted_receipt_compatible": True,
+        },
+    )
+
+    assert readiness.status == "degraded"
+    assert readiness.storage_failure_code is None
+
+
+def test_model_rejects_check_primary_code_conflict():
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(
+        ValidationError,
+        match="Missing required trusted-store tables",
+    ):
+        _contract_readiness(
+            checks={
+                "required_tables_present": False,
+                "schema_current": False,
+                "integrity_valid": False,
+                "foreign_keys_valid": False,
+                "trusted_receipt_present": False,
+                "trusted_receipt_compatible": False,
+            },
+        )

@@ -73,6 +73,7 @@ def test_healthy_v2_readiness_full_contract(
         "status": "ready",
         "backend": "sqlite",
         "writable_store_initialized": True,
+        "storage_failure_code": None,
         "schema_version": (
             CURRENT_SQLITE_SCHEMA_VERSION
         ),
@@ -122,6 +123,7 @@ def test_compatible_legacy_readiness_full_contract(
         "status": "degraded",
         "backend": "sqlite",
         "writable_store_initialized": True,
+        "storage_failure_code": None,
         "schema_version": (
             CURRENT_SQLITE_SCHEMA_VERSION
         ),
@@ -174,6 +176,9 @@ def test_missing_receipt_readiness_full_contract(
         "status": "misconfigured",
         "backend": "sqlite",
         "writable_store_initialized": True,
+        "storage_failure_code": (
+            "trusted_receipts_missing"
+        ),
         "schema_version": (
             CURRENT_SQLITE_SCHEMA_VERSION
         ),
@@ -241,6 +246,9 @@ def test_malformed_receipt_readiness_full_contract(
         "status": "misconfigured",
         "backend": "sqlite",
         "writable_store_initialized": True,
+        "storage_failure_code": (
+            "receipt_parse_failure"
+        ),
         "schema_version": (
             CURRENT_SQLITE_SCHEMA_VERSION
         ),
@@ -250,14 +258,10 @@ def test_malformed_receipt_readiness_full_contract(
         "migration_receipt_count": 1,
         "integrity_check": "ok",
         "foreign_key_violation_count": 0,
-        "trusted_receipt_chain_valid": False,
-        "trusted_receipt_chain_failure_code": (
-            "receipt_parse_failure"
-        ),
-        "trusted_receipt_chain_tip": (
-            receipt.receipt_id
-        ),
-        "trusted_receipt_chain_length": 0,
+        "trusted_receipt_chain_valid": None,
+        "trusted_receipt_chain_failure_code": None,
+        "trusted_receipt_chain_tip": None,
+        "trusted_receipt_chain_length": None,
         "trusted_receipt_lineage_epoch": None,
         "checks": {
             "database_exists": True,

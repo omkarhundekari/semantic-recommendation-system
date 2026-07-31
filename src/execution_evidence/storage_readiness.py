@@ -1,3 +1,10 @@
+"""Execution-evidence storage readiness diagnosis.
+
+Readiness derivation produces the authoritative structured storage
+diagnosis. Downstream consumers must not reconstruct failure
+precedence from checks, warnings, or presentation-oriented errors.
+"""
+
 from __future__ import annotations
 
 import sqlite3
@@ -7,6 +14,7 @@ from typing import Dict, List, Literal, Optional
 from pydantic import (
     BaseModel,
     Field,
+    model_validator,
 )
 
 from execution_evidence.json_store import (
@@ -39,6 +47,21 @@ StorageReadinessStatus = Literal[
 ]
 
 
+StorageFailureCode = Literal[
+    "unsupported_store_type",
+    "json_store_unreadable",
+    "sqlite_database_missing",
+    "sqlite_database_unreadable",
+    "trusted_store_tables_missing",
+    "schema_version_mismatch",
+    "integrity_validation_failed",
+    "foreign_key_validation_failed",
+    "receipts_unreadable",
+    "receipt_parse_failure",
+    "trusted_receipts_missing",
+    "trusted_receipt_chain_invalid",
+]
+
 
 class ExecutionEvidenceStorageReadiness(
     BaseModel
@@ -46,6 +69,12 @@ class ExecutionEvidenceStorageReadiness(
     status: StorageReadinessStatus
     backend: Literal["json", "sqlite"]
     writable_store_initialized: bool
+    # Unknown values are rejected at this model boundary.
+    # Recovery retains an unknown-code branch as defense
+    # in depth for a future persisted or versioned boundary.
+    storage_failure_code: Optional[
+        StorageFailureCode
+    ] = None
     schema_version: Optional[int] = None
     expected_schema_version: Optional[int] = None
     migration_receipt_count: Optional[int] = None
@@ -65,6 +94,171 @@ class ExecutionEvidenceStorageReadiness(
     errors: List[str] = Field(
         default_factory=list
     )
+
+    @model_validator(mode="after")
+    def validate_readiness_contract(
+        self,
+    ) -> "ExecutionEvidenceStorageReadiness":
+        if (
+            self.status in {"ready", "degraded"}
+            and self.storage_failure_code is not None
+        ):
+            raise ValueError(
+                "Ready or degraded storage must not "
+                "carry a storage failure code."
+            )
+
+        if (
+            self.status == "misconfigured"
+            and self.storage_failure_code is None
+        ):
+            raise ValueError(
+                "Misconfigured storage requires an "
+                "authoritative storage failure code."
+            )
+
+        chain_executed = (
+            self.trusted_receipt_chain_valid
+            is not None
+        )
+        chain_failure_present = (
+            self.trusted_receipt_chain_failure_code
+            is not None
+        )
+
+        if chain_failure_present and not chain_executed:
+            raise ValueError(
+                "A trusted receipt chain failure code "
+                "requires executed chain validation."
+            )
+
+        if (
+            self.trusted_receipt_chain_valid is True
+            and chain_failure_present
+        ):
+            raise ValueError(
+                "A valid trusted receipt chain must not "
+                "carry a chain failure code."
+            )
+
+        if (
+            self.trusted_receipt_chain_valid is False
+            and not chain_failure_present
+        ):
+            raise ValueError(
+                "Failed trusted receipt chain validation "
+                "requires a specific chain failure code."
+            )
+
+        if (
+            self.status == "ready"
+            and self.backend == "sqlite"
+            and self.trusted_receipt_chain_valid
+            is not True
+        ):
+            raise ValueError(
+                "Ready SQLite storage requires a valid "
+                "trusted receipt chain."
+            )
+
+        checks = self.checks
+        failure_code = self.storage_failure_code
+
+        direct_check_contracts = {
+            "trusted_store_tables_missing": (
+                "required_tables_present",
+                False,
+            ),
+            "schema_version_mismatch": (
+                "schema_current",
+                False,
+            ),
+            "integrity_validation_failed": (
+                "integrity_valid",
+                False,
+            ),
+            "foreign_key_validation_failed": (
+                "foreign_keys_valid",
+                False,
+            ),
+            "trusted_receipts_missing": (
+                "trusted_receipt_present",
+                False,
+            ),
+            "trusted_receipt_chain_invalid": (
+                "trusted_receipt_compatible",
+                False,
+            ),
+        }
+
+        expected_check = direct_check_contracts.get(
+            failure_code
+        )
+
+        if expected_check is not None:
+            check_name, expected_value = expected_check
+
+            if (
+                check_name in checks
+                and checks[check_name]
+                is not expected_value
+            ):
+                raise ValueError(
+                    f"{failure_code} conflicts with "
+                    f"checks[{check_name!r}]."
+                )
+
+        if (
+            checks.get("required_tables_present")
+            is False
+            and failure_code
+            != "trusted_store_tables_missing"
+        ):
+            raise ValueError(
+                "Missing required trusted-store tables "
+                "must be the primary storage diagnosis."
+            )
+
+        if (
+            checks.get("required_tables_present")
+            is True
+            and checks.get("schema_current") is False
+            and failure_code != "schema_version_mismatch"
+        ):
+            raise ValueError(
+                "Schema mismatch must be the primary "
+                "diagnosis after table validation."
+            )
+
+        if (
+            checks.get("required_tables_present")
+            is True
+            and checks.get("schema_current") is True
+            and checks.get("integrity_valid") is False
+            and failure_code
+            != "integrity_validation_failed"
+        ):
+            raise ValueError(
+                "Integrity failure must be the primary "
+                "diagnosis after structural validation."
+            )
+
+        if (
+            checks.get("required_tables_present")
+            is True
+            and checks.get("schema_current") is True
+            and checks.get("integrity_valid") is True
+            and checks.get("foreign_keys_valid") is False
+            and failure_code
+            != "foreign_key_validation_failed"
+        ):
+            raise ValueError(
+                "Foreign-key failure must be the primary "
+                "diagnosis after integrity validation."
+            )
+
+        return self
+
 
 def assess_execution_evidence_storage_readiness(
     store,
@@ -87,6 +281,7 @@ def assess_execution_evidence_storage_readiness(
         status="misconfigured",
         backend="json",
         writable_store_initialized=False,
+        storage_failure_code="unsupported_store_type",
         checks={
             "supported_store_type": False,
         },
@@ -108,6 +303,7 @@ def _assess_json_store(
             status="misconfigured",
             backend="json",
             writable_store_initialized=exists,
+            storage_failure_code="json_store_unreadable",
             checks={
                 "store_readable": False,
             },
@@ -135,6 +331,12 @@ def derive_sqlite_storage_readiness(
     schema_version = snapshot.schema_migration_version
     user_version = snapshot.user_version
     receipt_count = snapshot.receipt_row_count
+    missing_tables = tuple(
+        item.table_name
+        for item in snapshot.required_tables
+        if not item.present
+    )
+    required_tables_present = not missing_tables
 
     if schema_version is None:
         schema_version_value = 0
@@ -174,6 +376,9 @@ def derive_sqlite_storage_readiness(
 
     errors: List[str] = []
     warnings: List[str] = []
+    storage_failure_code: Optional[
+        StorageFailureCode
+    ] = None
 
     chain_valid: Optional[bool] = None
     chain_failure_code: Optional[str] = None
@@ -187,25 +392,21 @@ def derive_sqlite_storage_readiness(
     )
 
     if (
-        schema_current
+        required_tables_present
+        and schema_current
         and integrity_valid
         and foreign_keys_valid
+        and snapshot.receipts_read_error is None
     ):
         if parse_failure:
-            first_malformed = min(
-                snapshot.unparseable_receipt_rows,
-                key=lambda item: (
-                    item.snapshot_row_index
-                ),
-            )
-            chain_valid = False
-            chain_failure_code = (
-                "receipt_parse_failure"
-            )
-            chain_tip = first_malformed.receipt_id
-            chain_length = (
-                first_malformed.snapshot_row_index
-            )
+            # Parsing failed before trusted receipt-chain
+            # validation could execute. The primary storage
+            # diagnosis owns this failure; chain detail must
+            # remain absent.
+            chain_valid = None
+            chain_failure_code = None
+            chain_tip = None
+            chain_length = None
         else:
             chain_result = (
                 validate_trusted_receipt_chain(
@@ -264,6 +465,14 @@ def derive_sqlite_storage_readiness(
                         "not established."
                     )
 
+    if not required_tables_present:
+        errors.append(
+            "SQLite database is missing required "
+            "trusted-store tables: "
+            + ", ".join(missing_tables)
+            + "."
+        )
+
     if not schema_current:
         errors.append(
             "SQLite execution evidence schema "
@@ -281,11 +490,17 @@ def derive_sqlite_storage_readiness(
         )
 
     if (
-        schema_current
+        required_tables_present
+        and schema_current
         and integrity_valid
         and foreign_keys_valid
     ):
-        if parse_failure:
+        if snapshot.receipts_read_error is not None:
+            errors.append(
+                "SQLite trusted-store receipt data "
+                "could not be read."
+            )
+        elif parse_failure:
             errors.append(
                 "SQLite trusted-store receipt data "
                 "could not be parsed."
@@ -301,6 +516,37 @@ def derive_sqlite_storage_readiness(
                 "could not be validated."
             )
 
+    # This ordering is policy. Enum declaration order must never
+    # determine which diagnosis wins when failures compound.
+    if not required_tables_present:
+        storage_failure_code = (
+            "trusted_store_tables_missing"
+        )
+    elif not schema_current:
+        storage_failure_code = (
+            "schema_version_mismatch"
+        )
+    elif not integrity_valid:
+        storage_failure_code = (
+            "integrity_validation_failed"
+        )
+    elif not foreign_keys_valid:
+        storage_failure_code = (
+            "foreign_key_validation_failed"
+        )
+    elif snapshot.receipts_read_error is not None:
+        storage_failure_code = "receipts_unreadable"
+    elif parse_failure:
+        storage_failure_code = "receipt_parse_failure"
+    elif not receipt_present:
+        storage_failure_code = (
+            "trusted_receipts_missing"
+        )
+    elif not receipt_compatible:
+        storage_failure_code = (
+            "trusted_receipt_chain_invalid"
+        )
+
     if errors:
         status: StorageReadinessStatus = (
             "misconfigured"
@@ -312,22 +558,11 @@ def derive_sqlite_storage_readiness(
     else:
         status = "misconfigured"
 
-    if status == "ready" and chain_valid is not True:
-        raise AssertionError(
-            "Ready SQLite storage requires a valid "
-            "trusted receipt chain."
-        )
-
-    if chain_valid is True and status != "ready":
-        raise AssertionError(
-            "A valid trusted receipt chain must produce "
-            "ready SQLite storage."
-        )
-
     return ExecutionEvidenceStorageReadiness(
         status=status,
         backend="sqlite",
         writable_store_initialized=True,
+        storage_failure_code=storage_failure_code,
         schema_version=schema_version,
         expected_schema_version=(
             CURRENT_SQLITE_SCHEMA_VERSION
@@ -449,6 +684,7 @@ def assess_sqlite_database_readiness(
             status="misconfigured",
             backend="sqlite",
             writable_store_initialized=False,
+            storage_failure_code="sqlite_database_missing",
             expected_schema_version=(
                 CURRENT_SQLITE_SCHEMA_VERSION
             ),
@@ -481,6 +717,7 @@ def assess_sqlite_database_readiness(
             status="misconfigured",
             backend="sqlite",
             writable_store_initialized=True,
+            storage_failure_code="sqlite_database_unreadable",
             expected_schema_version=(
                 CURRENT_SQLITE_SCHEMA_VERSION
             ),

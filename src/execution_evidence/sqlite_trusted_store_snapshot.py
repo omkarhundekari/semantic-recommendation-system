@@ -144,6 +144,110 @@ class SQLiteTrustedStoreRawSnapshot(BaseModel):
 
     @model_validator(mode="after")
     def _validate_snapshot(self):
+        table_presence = {
+            item.table_name: item.present
+            for item in self.required_tables
+        }
+
+        if len(table_presence) != len(
+            self.required_tables
+        ):
+            raise ValueError(
+                "Required table observations must be "
+                "unique."
+            )
+
+        expected_tables = set(
+            TRUSTED_STORE_REQUIRED_TABLES
+        )
+        if set(table_presence) != expected_tables:
+            raise ValueError(
+                "Required table observations must be "
+                "complete."
+            )
+
+        schema_table_present = table_presence[
+            "execution_evidence_schema_migrations"
+        ]
+        receipts_table_present = table_presence[
+            "execution_evidence_import_receipts"
+        ]
+
+        if not schema_table_present:
+            if (
+                self.schema_migration_version
+                is not None
+                or self
+                .schema_migration_version_read_error
+                is not None
+            ):
+                raise ValueError(
+                    "A missing schema-migration table "
+                    "cannot expose schema facts."
+                )
+        elif (
+            self.schema_migration_version is None
+        ) == (
+            self.schema_migration_version_read_error
+            is None
+        ):
+            raise ValueError(
+                "Schema migration version must expose "
+                "exactly one of value or read error."
+            )
+
+        for field_name, value, read_error in (
+            (
+                "user version",
+                self.user_version,
+                self.user_version_read_error,
+            ),
+            (
+                "data version",
+                self.data_version,
+                self.data_version_read_error,
+            ),
+        ):
+            if (value is None) == (
+                read_error is None
+            ):
+                raise ValueError(
+                    f"{field_name.capitalize()} must "
+                    "expose exactly one of value or "
+                    "read error."
+                )
+
+        if (
+            self.integrity_read_error is not None
+            and self.integrity_messages
+        ):
+            raise ValueError(
+                "Unreadable integrity state cannot "
+                "expose integrity messages."
+            )
+
+        if (
+            self.foreign_key_read_error is not None
+            and self.foreign_key_violations
+        ):
+            raise ValueError(
+                "Unreadable foreign-key state cannot "
+                "expose violations."
+            )
+
+        if not receipts_table_present:
+            if (
+                self.receipt_row_count is not None
+                or self.receipts
+                or self.unparseable_receipt_rows
+                or self.receipts_read_error is not None
+            ):
+                raise ValueError(
+                    "A missing receipt table cannot "
+                    "expose receipt facts."
+                )
+            return self
+
         if self.receipts_read_error is not None:
             if self.receipt_row_count is not None:
                 raise ValueError(
@@ -165,16 +269,37 @@ class SQLiteTrustedStoreRawSnapshot(BaseModel):
 
             return self
 
-        if self.receipt_row_count is not None:
-            observed = (
-                len(self.receipts)
-                + len(self.unparseable_receipt_rows)
+        if self.receipt_row_count is None:
+            raise ValueError(
+                "A readable receipt table must expose "
+                "a completed receipt count."
             )
 
-            if observed != self.receipt_row_count:
-                raise ValueError(
-                    "Receipt accounting mismatch."
-                )
+        observed = (
+            len(self.receipts)
+            + len(self.unparseable_receipt_rows)
+        )
+
+        if observed != self.receipt_row_count:
+            raise ValueError(
+                "Receipt accounting mismatch."
+            )
+
+        indexes = [
+            item.snapshot_row_index
+            for item in self.unparseable_receipt_rows
+        ]
+        if indexes != sorted(indexes):
+            raise ValueError(
+                "Malformed receipt observations must "
+                "follow snapshot enumeration order."
+            )
+
+        if len(indexes) != len(set(indexes)):
+            raise ValueError(
+                "Malformed receipt snapshot indexes "
+                "must be unique."
+            )
 
         return self
 

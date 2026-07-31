@@ -7,12 +7,14 @@ from typing import (
     Literal,
     Optional,
     Sequence,
+    get_args,
 )
 
 from pydantic import BaseModel, Field
 
 from execution_evidence.storage_readiness import (
     ExecutionEvidenceStorageReadiness,
+    StorageFailureCode,
 )
 from execution_evidence.store_migration import (
     MIGRATION_RECEIPT_VERSION,
@@ -35,6 +37,34 @@ TrustedStoreRecoveryAction = Literal[
     "manual_investigation",
     "restore_from_backup",
 ]
+
+
+_STORAGE_FAILURE_DATA_LOSS_POSSIBLE = {
+    "unsupported_store_type": False,
+    "json_store_unreadable": True,
+    "sqlite_database_missing": True,
+    "sqlite_database_unreadable": True,
+    "trusted_store_tables_missing": True,
+    "schema_version_mismatch": False,
+    "integrity_validation_failed": True,
+    "foreign_key_validation_failed": True,
+    "receipts_unreadable": True,
+    "receipt_parse_failure": True,
+    "trusted_receipts_missing": False,
+    "trusted_receipt_chain_invalid": True,
+}
+
+
+def _storage_failure_data_loss_possible(
+    failure_code: str | None,
+) -> bool:
+    if failure_code is None:
+        return True
+
+    return _STORAGE_FAILURE_DATA_LOSS_POSSIBLE.get(
+        failure_code,
+        True,
+    )
 
 
 class TrustedStoreRecoveryAssessment(BaseModel):
@@ -103,6 +133,9 @@ def build_trusted_store_state_fingerprint(
         "readiness": {
             "status": readiness.status,
             "backend": readiness.backend,
+            "storage_failure_code": (
+                readiness.storage_failure_code
+            ),
             "schema_version": readiness.schema_version,
             "expected_schema_version": (
                 readiness.expected_schema_version
@@ -216,18 +249,92 @@ def assess_trusted_store_recovery(
         "mutation_allowed": False,
     }
 
-    integrity_valid = readiness.checks.get(
-        "integrity_valid",
-        False,
+    storage_failure_code = (
+        readiness.storage_failure_code
     )
-    foreign_keys_valid = readiness.checks.get(
-        "foreign_keys_valid",
-        False,
+    known_storage_failure_codes = frozenset(
+        get_args(StorageFailureCode)
     )
+
+    if (
+        storage_failure_code is not None
+        and storage_failure_code
+        not in known_storage_failure_codes
+    ):
+        return TrustedStoreRecoveryAssessment(
+            **common,
+            status="manual_intervention_required",
+            proposed_action="manual_investigation",
+            failure_code="unknown_storage_failure_code",
+            authoritative_tip=None,
+            validated_receipt_count=0,
+            descendant_count_after_break=0,
+            data_loss_possible=(
+                _storage_failure_data_loss_possible(
+                    storage_failure_code
+                )
+            ),
+            explanation=(
+                "Storage readiness contains an unknown "
+                "structured failure code. Recovery is "
+                "failing closed because no policy is "
+                "authorized for this diagnosis."
+            ),
+            blockers=[
+                "The readiness producer and recovery "
+                "consumer may be version-skewed.",
+                "No receipt mutation or inferred recovery "
+                "policy is permitted for an unknown "
+                "storage diagnosis.",
+            ],
+        )
+
+    pre_lineage_failure_codes = {
+        "unsupported_store_type",
+        "json_store_unreadable",
+        "sqlite_database_missing",
+        "sqlite_database_unreadable",
+        "trusted_store_tables_missing",
+        "schema_version_mismatch",
+        "receipts_unreadable",
+        "receipt_parse_failure",
+    }
+
+    if storage_failure_code in pre_lineage_failure_codes:
+        return TrustedStoreRecoveryAssessment(
+            **common,
+            status="manual_intervention_required",
+            proposed_action="manual_investigation",
+            failure_code=storage_failure_code,
+            authoritative_tip=None,
+            validated_receipt_count=0,
+            descendant_count_after_break=0,
+            data_loss_possible=(
+                _storage_failure_data_loss_possible(
+                    storage_failure_code
+                )
+            ),
+            explanation=(
+                "Storage readiness reported a "
+                "pre-lineage failure. Receipt-chain "
+                "reasoning was skipped because derivation "
+                "did not establish a trustworthy input."
+            ),
+            blockers=[
+                "The storage condition must be "
+                "investigated without mutating trusted "
+                "history.",
+                "Recovery must not reconstruct readiness "
+                "precedence from diagnostic checks.",
+            ],
+        )
 
     # Do not reason about receipt history when the
     # underlying SQLite state is not structurally sound.
-    if not integrity_valid:
+    if (
+        storage_failure_code
+        == "integrity_validation_failed"
+    ):
         return TrustedStoreRecoveryAssessment(
             **common,
             status="manual_intervention_required",
@@ -251,7 +358,10 @@ def assess_trusted_store_recovery(
             ],
         )
 
-    if not foreign_keys_valid:
+    if (
+        storage_failure_code
+        == "foreign_key_validation_failed"
+    ):
         return TrustedStoreRecoveryAssessment(
             **common,
             status="manual_intervention_required",
@@ -277,16 +387,15 @@ def assess_trusted_store_recovery(
             ],
         )
 
-    if not receipts:
+    if (
+        storage_failure_code
+        == "trusted_receipts_missing"
+    ):
         return TrustedStoreRecoveryAssessment(
             **common,
             status="manual_intervention_required",
             proposed_action="manual_investigation",
-            failure_code=(
-                readiness
-                .trusted_receipt_chain_failure_code
-                or "receipt_set_empty"
-            ),
+            failure_code="trusted_receipts_missing",
             authoritative_tip=None,
             validated_receipt_count=0,
             descendant_count_after_break=0,
@@ -301,6 +410,57 @@ def assess_trusted_store_recovery(
                 "database cannot be established.",
                 "Trust bootstrap requires a separate "
                 "authorized workflow.",
+            ],
+        )
+
+    if (
+        readiness.status == "misconfigured"
+        and storage_failure_code is None
+    ):
+        return TrustedStoreRecoveryAssessment(
+            **common,
+            status="manual_intervention_required",
+            proposed_action="manual_investigation",
+            failure_code="readiness_diagnosis_missing",
+            authoritative_tip=None,
+            validated_receipt_count=0,
+            descendant_count_after_break=0,
+            data_loss_possible=False,
+            explanation=(
+                "The readiness snapshot is marked "
+                "misconfigured but does not contain its "
+                "required structured storage diagnosis."
+            ),
+            blockers=[
+                "Readiness must be derived again from a "
+                "complete immutable storage snapshot.",
+                "Recovery policy must not infer missing "
+                "diagnosis from readiness checks.",
+            ],
+        )
+
+    if (
+        storage_failure_code
+        == "trusted_receipt_chain_invalid"
+        and not receipts
+    ):
+        return TrustedStoreRecoveryAssessment(
+            **common,
+            status="manual_intervention_required",
+            proposed_action="manual_investigation",
+            failure_code="readiness_state_mismatch",
+            authoritative_tip=None,
+            validated_receipt_count=0,
+            descendant_count_after_break=0,
+            data_loss_possible=False,
+            explanation=(
+                "Readiness reports an invalid receipt "
+                "chain, but no receipt rows were supplied "
+                "to recovery."
+            ),
+            blockers=[
+                "Readiness and receipts must be captured "
+                "from the same read transaction.",
             ],
         )
 

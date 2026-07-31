@@ -11,6 +11,9 @@ from execution_evidence.sqlite_schema import (
 )
 from execution_evidence.sqlite_trusted_store_snapshot import (
     SQLITE_TRUSTED_STORE_SNAPSHOT_FORMAT_VERSION,
+    SQLiteForeignKeyViolation,
+    SQLiteSnapshotReadError,
+    SQLiteTrustedStoreRawSnapshot,
     capture_sqlite_trusted_store_snapshot,
 )
 from execution_evidence.trusted_store import (
@@ -459,3 +462,180 @@ def test_snapshot_rejects_partial_receipt_state():
                 message="boom",
             ),
         )
+
+
+def _valid_manual_snapshot_payload():
+    from execution_evidence.sqlite_schema import (
+        CURRENT_SQLITE_SCHEMA_VERSION,
+    )
+    from execution_evidence.sqlite_trusted_store_snapshot import (
+        SQLiteTablePresence,
+    )
+
+    return {
+        "required_tables": (
+            SQLiteTablePresence(
+                table_name=(
+                    "execution_evidence_"
+                    "schema_migrations"
+                ),
+                present=True,
+            ),
+            SQLiteTablePresence(
+                table_name=(
+                    "execution_evidence_"
+                    "import_receipts"
+                ),
+                present=True,
+            ),
+        ),
+        "schema_migration_version": (
+            CURRENT_SQLITE_SCHEMA_VERSION
+        ),
+        "schema_migration_version_read_error": None,
+        "user_version": CURRENT_SQLITE_SCHEMA_VERSION,
+        "user_version_read_error": None,
+        "data_version": 1,
+        "data_version_read_error": None,
+        "integrity_messages": ("ok",),
+        "integrity_read_error": None,
+        "foreign_key_violations": (),
+        "foreign_key_read_error": None,
+        "receipt_row_count": 0,
+        "receipts": (),
+        "unparseable_receipt_rows": (),
+        "receipts_read_error": None,
+    }
+
+
+@pytest.mark.parametrize(
+    "updates",
+    (
+        {
+            "user_version": None,
+            "user_version_read_error": None,
+        },
+        {
+            "data_version": 1,
+            "data_version_read_error": (
+                SQLiteSnapshotReadError(
+                    operation="read_data_version",
+                    error_type="DatabaseError",
+                    message="boom",
+                )
+            ),
+        },
+        {
+            "integrity_messages": ("ok",),
+            "integrity_read_error": (
+                SQLiteSnapshotReadError(
+                    operation="run_integrity_check",
+                    error_type="DatabaseError",
+                    message="boom",
+                )
+            ),
+        },
+        {
+            "foreign_key_violations": (
+                SQLiteForeignKeyViolation(
+                    table="child",
+                    rowid=1,
+                    parent="parent",
+                    foreign_key_index=0,
+                ),
+            ),
+            "foreign_key_read_error": (
+                SQLiteSnapshotReadError(
+                    operation="run_foreign_key_check",
+                    error_type="DatabaseError",
+                    message="boom",
+                )
+            ),
+        },
+    ),
+)
+def test_snapshot_rejects_conflicting_value_error_state(
+    updates,
+):
+    payload = _valid_manual_snapshot_payload()
+    payload.update(updates)
+
+    with pytest.raises(ValueError):
+        SQLiteTrustedStoreRawSnapshot(**payload)
+
+
+def test_snapshot_rejects_receipt_facts_when_table_missing():
+    from execution_evidence.sqlite_trusted_store_snapshot import (
+        SQLiteTablePresence,
+    )
+
+    payload = _valid_manual_snapshot_payload()
+    payload["required_tables"] = (
+        payload["required_tables"][0],
+        SQLiteTablePresence(
+            table_name=(
+                "execution_evidence_import_receipts"
+            ),
+            present=False,
+        ),
+    )
+    payload["receipt_row_count"] = 0
+
+    with pytest.raises(ValueError):
+        SQLiteTrustedStoreRawSnapshot(**payload)
+
+
+def test_snapshot_accepts_absent_receipt_table_without_facts():
+    from execution_evidence.sqlite_trusted_store_snapshot import (
+        SQLiteTablePresence,
+    )
+
+    payload = _valid_manual_snapshot_payload()
+    payload["required_tables"] = (
+        payload["required_tables"][0],
+        SQLiteTablePresence(
+            table_name=(
+                "execution_evidence_import_receipts"
+            ),
+            present=False,
+        ),
+    )
+    payload["receipt_row_count"] = None
+
+    snapshot = SQLiteTrustedStoreRawSnapshot(
+        **payload
+    )
+
+    assert snapshot.receipt_row_count is None
+    assert snapshot.receipts == ()
+    assert snapshot.receipts_read_error is None
+
+
+def test_snapshot_rejects_out_of_order_malformed_rows():
+    from execution_evidence.sqlite_trusted_store_snapshot import (
+        SQLiteUnparseableTrustedReceiptRow,
+    )
+
+    payload = _valid_manual_snapshot_payload()
+    payload.update(
+        {
+            "receipt_row_count": 2,
+            "unparseable_receipt_rows": (
+                SQLiteUnparseableTrustedReceiptRow(
+                    receipt_rowid=20,
+                    snapshot_row_index=1,
+                    receipt_id="later",
+                    error_type="ValidationError",
+                ),
+                SQLiteUnparseableTrustedReceiptRow(
+                    receipt_rowid=10,
+                    snapshot_row_index=0,
+                    receipt_id="earlier",
+                    error_type="ValidationError",
+                ),
+            ),
+        }
+    )
+
+    with pytest.raises(ValueError):
+        SQLiteTrustedStoreRawSnapshot(**payload)

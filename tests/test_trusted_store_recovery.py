@@ -22,15 +22,17 @@ CREATED_AT = "2026-07-25T12:00:00+00:00"
 def _readiness(
     *,
     status="misconfigured",
+    storage_failure_code=None,
     integrity_valid=True,
     foreign_keys_valid=True,
-    chain_valid=False,
+    chain_valid=None,
     failure_code=None,
     chain_tip=None,
     chain_length=None,
     compatible=False,
 ):
     return ExecutionEvidenceStorageReadiness(
+        storage_failure_code=storage_failure_code,
         status=status,
         backend="sqlite",
         writable_store_initialized=True,
@@ -54,6 +56,7 @@ def _readiness(
         checks={
             "database_exists": True,
             "database_readable": True,
+            "required_tables_present": True,
             "schema_current": True,
             "integrity_valid": integrity_valid,
             "foreign_keys_valid": (
@@ -115,6 +118,7 @@ def test_valid_legacy_store_is_healthy_not_recoverable():
         created_at=CREATED_AT
     )
     readiness = _readiness(
+        chain_valid=False,
         status="degraded",
         failure_code=(
             TrustedReceiptChainFailureCode
@@ -147,6 +151,10 @@ def test_broken_history_requires_manual_investigation():
         }
     )
     readiness = _readiness(
+        chain_valid=False,
+        storage_failure_code=(
+            "trusted_receipt_chain_invalid"
+        ),
         failure_code=(
             TrustedReceiptChainFailureCode
             .UNKNOWN_VERSION.value
@@ -180,6 +188,9 @@ def test_integrity_failure_short_circuits_chain_reasoning(
 ):
     root = _v2_root()
     readiness = _readiness(
+        storage_failure_code=(
+            "integrity_validation_failed"
+        ),
         integrity_valid=False,
     )
 
@@ -215,6 +226,10 @@ def test_integrity_failure_short_circuits_chain_reasoning(
 
 def test_empty_receipt_set_never_mints_trust():
     readiness = _readiness(
+        chain_valid=False,
+        storage_failure_code=(
+            "trusted_receipt_chain_invalid"
+        ),
         failure_code="chain_not_established",
     )
     readiness.migration_receipt_count = 0
@@ -367,6 +382,10 @@ def test_changed_receipt_changes_assessment_identity():
 def test_tip_schema_desync_never_proposes_metadata_repair():
     root = _v2_root()
     readiness = _readiness(
+        chain_valid=False,
+        storage_failure_code=(
+            "trusted_receipt_chain_invalid"
+        ),
         failure_code=(
             TrustedReceiptChainFailureCode
             .TIP_SCHEMA_DESYNC.value
@@ -440,6 +459,7 @@ def test_tampered_legacy_receipt_cannot_be_marked_healthy():
         }
     )
     readiness = _readiness(
+        chain_valid=False,
         status="degraded",
         failure_code=(
             TrustedReceiptChainFailureCode
@@ -493,4 +513,249 @@ def test_valid_chain_with_stale_readiness_requires_investigation():
         assessment.failure_code
         == "readiness_state_mismatch"
     )
+    assert assessment.mutation_allowed is False
+
+
+# trusted_store_recovery_fail_closed_hardening
+
+
+def test_unknown_storage_failure_code_is_rejected_at_model_boundary():
+    import pytest
+    from pydantic import ValidationError
+
+    payload = _readiness(
+        status="ready",
+        chain_valid=True,
+        chain_tip="receipt_tip",
+        chain_length=1,
+    ).model_dump(mode="python")
+
+    payload.update(
+        {
+            "status": "misconfigured",
+            "storage_failure_code": (
+                "future_unrecognized_failure"
+            ),
+            "trusted_receipt_chain_valid": None,
+            "trusted_receipt_chain_failure_code": None,
+            "trusted_receipt_chain_tip": None,
+            "trusted_receipt_chain_length": None,
+        }
+    )
+
+    with pytest.raises(ValidationError):
+        ExecutionEvidenceStorageReadiness.model_validate(
+            payload
+        )
+
+
+def test_unknown_storage_failure_code_defense_in_depth():
+    root = _v2_root()
+    readiness = _readiness(
+        status="ready",
+        chain_valid=True,
+        chain_tip=root.receipt_id,
+        chain_length=1,
+    )
+
+    # model_copy deliberately bypasses validation so this
+    # test can exercise the future boundary defense branch.
+    readiness = readiness.model_copy(
+        update={
+            "status": "misconfigured",
+            "storage_failure_code": (
+                "future_unrecognized_failure"
+            ),
+            "trusted_receipt_chain_valid": None,
+            "trusted_receipt_chain_failure_code": None,
+            "trusted_receipt_chain_tip": None,
+            "trusted_receipt_chain_length": None,
+        }
+    )
+
+    assessment = assess_trusted_store_recovery(
+        [root],
+        user_version=14,
+        data_version=18,
+        readiness=readiness,
+    )
+
+    assert (
+        assessment.status
+        == "manual_intervention_required"
+    )
+    assert (
+        assessment.proposed_action
+        == "manual_investigation"
+    )
+    assert (
+        assessment.failure_code
+        == "unknown_storage_failure_code"
+    )
+    assert assessment.mutation_allowed is False
+    assert assessment.data_loss_possible is True
+
+
+def test_unknown_storage_code_changes_recovery_identity():
+    root = _v2_root()
+    readiness = _readiness(
+        status="ready",
+        chain_valid=True,
+        chain_tip=root.receipt_id,
+        chain_length=1,
+    )
+
+    first = readiness.model_copy(
+        update={
+            "status": "misconfigured",
+            "storage_failure_code": "future_code_one",
+            "trusted_receipt_chain_valid": None,
+            "trusted_receipt_chain_failure_code": None,
+        }
+    )
+    second = first.model_copy(
+        update={
+            "storage_failure_code": "future_code_two",
+        }
+    )
+
+    first_assessment = assess_trusted_store_recovery(
+        [root],
+        user_version=14,
+        data_version=19,
+        readiness=first,
+    )
+    second_assessment = assess_trusted_store_recovery(
+        [root],
+        user_version=14,
+        data_version=19,
+        readiness=second,
+    )
+
+    assert (
+        first_assessment.store_state_fingerprint
+        != second_assessment.store_state_fingerprint
+    )
+    assert (
+        first_assessment.assessment_id
+        != second_assessment.assessment_id
+    )
+
+
+# trusted_store_data_loss_policy
+
+
+def test_pre_lineage_data_loss_policy_is_explicit():
+    expected = {
+        "unsupported_store_type": False,
+        "json_store_unreadable": True,
+        "sqlite_database_missing": True,
+        "sqlite_database_unreadable": True,
+        "trusted_store_tables_missing": True,
+        "schema_version_mismatch": False,
+        "receipts_unreadable": True,
+        "receipt_parse_failure": True,
+    }
+
+    for failure_code, data_loss_possible in (
+        expected.items()
+    ):
+        readiness = ExecutionEvidenceStorageReadiness(
+            status="misconfigured",
+            backend=(
+                "json"
+                if failure_code
+                in {
+                    "unsupported_store_type",
+                    "json_store_unreadable",
+                }
+                else "sqlite"
+            ),
+            writable_store_initialized=True,
+            storage_failure_code=failure_code,
+            trusted_receipt_chain_valid=None,
+            trusted_receipt_chain_failure_code=None,
+            checks={},
+        )
+
+        assessment = assess_trusted_store_recovery(
+            [],
+            user_version=14,
+            data_version=20,
+            readiness=readiness,
+        )
+
+        assert (
+            assessment.failure_code
+            == failure_code
+        )
+        assert (
+            assessment.data_loss_possible
+            is data_loss_possible
+        )
+        assert assessment.mutation_allowed is False
+
+
+def test_missing_trusted_store_tables_reports_possible_data_loss():
+    readiness = ExecutionEvidenceStorageReadiness(
+        status="misconfigured",
+        backend="sqlite",
+        writable_store_initialized=True,
+        storage_failure_code=(
+            "trusted_store_tables_missing"
+        ),
+        trusted_receipt_chain_valid=None,
+        trusted_receipt_chain_failure_code=None,
+        checks={
+            "required_tables_present": False,
+        },
+    )
+
+    assessment = assess_trusted_store_recovery(
+        [],
+        user_version=14,
+        data_version=21,
+        readiness=readiness,
+    )
+
+    assert (
+        assessment.failure_code
+        == "trusted_store_tables_missing"
+    )
+    assert assessment.data_loss_possible is True
+    assert assessment.mutation_allowed is False
+
+
+def test_unknown_storage_failure_defaults_to_possible_data_loss():
+    root = _v2_root()
+    readiness = _readiness(
+        status="ready",
+        chain_valid=True,
+        chain_tip=root.receipt_id,
+        chain_length=1,
+    ).model_copy(
+        update={
+            "status": "misconfigured",
+            "storage_failure_code": (
+                "future_unknown_failure"
+            ),
+            "trusted_receipt_chain_valid": None,
+            "trusted_receipt_chain_failure_code": None,
+            "trusted_receipt_chain_tip": None,
+            "trusted_receipt_chain_length": None,
+        }
+    )
+
+    assessment = assess_trusted_store_recovery(
+        [root],
+        user_version=14,
+        data_version=22,
+        readiness=readiness,
+    )
+
+    assert (
+        assessment.failure_code
+        == "unknown_storage_failure_code"
+    )
+    assert assessment.data_loss_possible is True
     assert assessment.mutation_allowed is False
