@@ -64,3 +64,8 @@ data/execution_evidence/*.sqlite3
 data/execution_evidence/*.bak
 data/execution_evidence/*-wal
 data/execution_evidence/*-shm
+
+# Local patch backups and review artifacts
+.patch_backups/
+.review_artifacts/
+.solvyn_*.txt
