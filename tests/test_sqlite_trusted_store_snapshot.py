@@ -299,6 +299,12 @@ def test_snapshot_records_receipt_read_failure(
     tmp_path: Path,
     monkeypatch,
 ):
+    sqlite_corrupt_code = getattr(
+        sqlite3,
+        "SQLITE_CORRUPT",
+        11,
+    )
+
     database_path = tmp_path / "solvyn.db"
     initialize_fresh_trusted_store(
         database_path,
@@ -310,7 +316,7 @@ def test_snapshot_records_receipt_read_failure(
             "simulated receipt read failure"
         )
         error.sqlite_errorcode = (
-            sqlite3.SQLITE_CORRUPT
+            sqlite_corrupt_code
         )
         error.sqlite_errorname = (
             "SQLITE_CORRUPT"
@@ -351,7 +357,7 @@ def test_snapshot_records_receipt_read_failure(
         )
         assert error.error_type == "DatabaseError"
         assert error.sqlite_errorcode == (
-            sqlite3.SQLITE_CORRUPT
+            sqlite_corrupt_code
         )
         assert error.sqlite_errorname == (
             "SQLITE_CORRUPT"
