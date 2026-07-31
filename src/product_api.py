@@ -795,13 +795,56 @@ def get_project_execution_event_lineage(
         get_execution_event_projection_service
     ),
 ) -> ExecutionEventLineageResponse:
-    if request.query_params:
+    pagination_parameters = (
+        "limit",
+        "cursor",
+        "offset",
+        "page",
+        "page_size",
+        "per_page",
+        "before",
+        "after",
+    )
+    unsupported_sequence_parameters = (
+        "from_sequence",
+        "through_sequence",
+    )
+
+    pagination_parameter = next(
+        (
+            parameter
+            for parameter in pagination_parameters
+            if parameter in request.query_params
+        ),
+        None,
+    )
+    if pagination_parameter is not None:
         raise HTTPException(
             status_code=422,
             detail=(
                 "Execution event lineage is a complete "
-                "project projection and cannot be "
-                "limited or paginated."
+                "project projection and does not support "
+                "pagination parameter "
+                f"'{pagination_parameter}'."
+            ),
+        )
+
+    sequence_parameter = next(
+        (
+            parameter
+            for parameter
+            in unsupported_sequence_parameters
+            if parameter in request.query_params
+        ),
+        None,
+    )
+    if sequence_parameter is not None:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Execution event lineage sequence "
+                f"parameter '{sequence_parameter}' is "
+                "not yet supported."
             ),
         )
 

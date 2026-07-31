@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import pytest
+
 from fastapi.testclient import TestClient
 
 from execution_evidence.execution_event import (
@@ -173,7 +175,22 @@ def test_lineage_endpoint_returns_complete_projection():
     assert body["has_conflicts"] is True
 
 
-def test_lineage_endpoint_rejects_limit():
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        "limit",
+        "cursor",
+        "offset",
+        "page",
+        "page_size",
+        "per_page",
+        "before",
+        "after",
+    ],
+)
+def test_lineage_endpoint_rejects_each_pagination_parameter(
+    parameter: str,
+):
     projection = (
         build_execution_event_lineage_projection(
             "project-test",
@@ -192,7 +209,7 @@ def test_lineage_endpoint_rejects_limit():
                     "execution-evidence/events/"
                     "lineage"
                 ),
-                params={"limit": 50},
+                params={parameter: "50"},
             )
     finally:
         _clear_overrides()
@@ -200,10 +217,53 @@ def test_lineage_endpoint_rejects_limit():
     assert response.status_code == 422
     assert response.json()["detail"] == (
         "Execution event lineage is a complete "
-        "project projection and cannot be "
-        "limited or paginated."
+        "project projection and does not support "
+        f"pagination parameter '{parameter}'."
     )
     assert service.calls == []
+
+
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        "from_sequence",
+        "through_sequence",
+    ],
+)
+def test_lineage_endpoint_rejects_each_unsupported_sequence_bound(
+    parameter: str,
+):
+    projection = (
+        build_execution_event_lineage_projection(
+            "project-test",
+            [],
+        )
+    )
+    service = RecordingProjectionService(
+        projection
+    )
+
+    try:
+        with _client_for(service) as client:
+            response = client.get(
+                (
+                    "/v1/projects/project-test/"
+                    "execution-evidence/events/"
+                    "lineage"
+                ),
+                params={parameter: "10"},
+            )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == (
+        "Execution event lineage sequence "
+        f"parameter '{parameter}' is not yet "
+        "supported."
+    )
+    assert service.calls == []
+
 
 
 def test_lineage_endpoint_returns_503_for_unsupported_store():
@@ -288,7 +348,11 @@ def test_lineage_endpoint_returns_413_for_history_ceiling():
     )
 
 
-def test_lineage_endpoint_rejects_cursor_pagination():
+
+
+
+
+def test_lineage_endpoint_allows_unrelated_query_parameters():
     projection = (
         build_execution_event_lineage_projection(
             "project-test",
@@ -308,17 +372,18 @@ def test_lineage_endpoint_rejects_cursor_pagination():
                     "lineage"
                 ),
                 params={
-                    "cursor": "opaque-cursor",
-                    "offset": 10,
+                    "trace_id": "trace-test",
+                    "cache_bust": "1",
                 },
             )
     finally:
         _clear_overrides()
 
-    assert response.status_code == 422
-    assert response.json()["detail"] == (
-        "Execution event lineage is a complete "
-        "project projection and cannot be "
-        "limited or paginated."
+    assert response.status_code == 200
+    assert response.json()["project_id"] == (
+        "project-test"
     )
-    assert service.calls == []
+    assert response.json()[
+        "projection_through_sequence"
+    ] == 0
+    assert service.calls == ["project-test"]
