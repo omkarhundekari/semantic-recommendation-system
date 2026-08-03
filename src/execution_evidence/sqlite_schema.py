@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 16
+CURRENT_SQLITE_SCHEMA_VERSION = 17
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -1813,6 +1813,267 @@ PRAGMA user_version = 16;
 """
 
 
+CREATE_PRINCIPAL_IDENTITY_FOUNDATION_SQL = """
+CREATE TABLE identity_providers (
+    identity_provider_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    identity_provider_id TEXT NOT NULL UNIQUE,
+    provider_kind TEXT NOT NULL
+        CHECK (
+            provider_kind IN (
+                'google',
+                'github',
+                'microsoft',
+                'oidc',
+                'saml'
+            )
+        ),
+    issuer TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (
+            status IN (
+                'active',
+                'disabled'
+            )
+        ),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE (
+        identity_provider_id,
+        issuer
+    )
+);
+
+CREATE TABLE principal_identity_links (
+    identity_link_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    link_id TEXT NOT NULL UNIQUE,
+    identity_provider_id TEXT NOT NULL,
+    issuer TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    principal_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (
+            status IN (
+                'active',
+                'ended'
+            )
+        ),
+    linked_at TEXT NOT NULL,
+    ended_at TEXT,
+    end_reason TEXT,
+    ended_by_principal_id TEXT,
+    severed_at TEXT,
+    severed_reason TEXT,
+    severed_by_principal_id TEXT,
+    FOREIGN KEY (
+        identity_provider_id,
+        issuer
+    )
+        REFERENCES identity_providers(
+            identity_provider_id,
+            issuer
+        )
+        ON DELETE RESTRICT,
+    FOREIGN KEY (principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (ended_by_principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (severed_by_principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT,
+    CHECK (
+        (
+            status = 'active'
+            AND ended_at IS NULL
+            AND end_reason IS NULL
+            AND ended_by_principal_id IS NULL
+            AND severed_at IS NULL
+            AND severed_reason IS NULL
+            AND severed_by_principal_id IS NULL
+        )
+        OR
+        (
+            status = 'ended'
+            AND ended_at IS NOT NULL
+            AND end_reason IS NOT NULL
+        )
+    ),
+    CHECK (
+        severed_at IS NULL
+        OR (
+            status = 'ended'
+            AND severed_reason IS NOT NULL
+        )
+    ),
+    CHECK (
+        severed_at IS NOT NULL
+        OR (
+            severed_reason IS NULL
+            AND severed_by_principal_id IS NULL
+        )
+    )
+);
+
+CREATE UNIQUE INDEX
+    idx_principal_identity_links_active
+ON principal_identity_links(
+    issuer,
+    subject
+)
+WHERE status = 'active';
+
+CREATE INDEX
+    idx_principal_identity_links_identity_history
+ON principal_identity_links(
+    issuer,
+    subject
+);
+
+CREATE INDEX
+    idx_principal_identity_links_principal_status
+ON principal_identity_links(
+    principal_id,
+    status
+);
+
+CREATE TRIGGER
+    prevent_identity_provider_identity_update
+BEFORE UPDATE OF
+    identity_provider_id,
+    issuer
+ON identity_providers
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Identity provider identity is immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_identity_provider_delete
+BEFORE DELETE
+ON identity_providers
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Identity providers cannot be deleted'
+    );
+END;
+
+CREATE TRIGGER
+    enforce_principal_identity_lifetime_ownership
+BEFORE INSERT
+ON principal_identity_links
+WHEN EXISTS (
+    SELECT 1
+    FROM principal_identity_links
+    WHERE
+        issuer = NEW.issuer
+        AND subject = NEW.subject
+        AND principal_id != NEW.principal_id
+        AND severed_at IS NULL
+)
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'External identity is historically owned by another principal'
+    );
+END;
+
+CREATE TRIGGER
+    require_principal_identity_link_genesis
+BEFORE INSERT
+ON principal_identity_links
+WHEN
+    NEW.status != 'active'
+    OR NEW.ended_at IS NOT NULL
+    OR NEW.end_reason IS NOT NULL
+    OR NEW.ended_by_principal_id IS NOT NULL
+    OR NEW.severed_at IS NOT NULL
+    OR NEW.severed_reason IS NOT NULL
+    OR NEW.severed_by_principal_id IS NOT NULL
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Principal identity links must begin active'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_principal_identity_fields_update
+BEFORE UPDATE OF
+    link_id,
+    identity_provider_id,
+    issuer,
+    subject,
+    principal_id,
+    linked_at
+ON principal_identity_links
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Principal identity fields are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    enforce_principal_identity_link_lifecycle
+BEFORE UPDATE OF
+    status,
+    ended_at,
+    end_reason,
+    ended_by_principal_id,
+    severed_at,
+    severed_reason,
+    severed_by_principal_id
+ON principal_identity_links
+WHEN
+    OLD.status = 'active'
+    AND (
+        NEW.status != 'ended'
+        OR NEW.ended_at IS NULL
+        OR NEW.end_reason IS NULL
+        OR NEW.severed_at IS NOT NULL
+        OR NEW.severed_reason IS NOT NULL
+        OR NEW.severed_by_principal_id IS NOT NULL
+    )
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Principal identity links may only end'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_ended_principal_identity_link_update
+BEFORE UPDATE
+ON principal_identity_links
+WHEN OLD.status = 'ended'
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Ended principal identity links are terminal'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_principal_identity_link_delete
+BEFORE DELETE
+ON principal_identity_links
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Principal identity links cannot be deleted'
+    );
+END;
+
+PRAGMA user_version = 17;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -1902,6 +2163,13 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         name="create_workspace_membership_foundation",
         sql=(
             CREATE_WORKSPACE_MEMBERSHIP_FOUNDATION_SQL
+        ),
+    ),
+    SQLiteMigration(
+        version=17,
+        name="create_principal_identity_foundation",
+        sql=(
+            CREATE_PRINCIPAL_IDENTITY_FOUNDATION_SQL
         ),
     ),
 )

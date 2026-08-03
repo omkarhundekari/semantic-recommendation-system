@@ -151,10 +151,11 @@ def _transition_membership(
 
 
 def test_membership_foundation_is_schema_version_16():
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 16
-    assert MIGRATIONS[-1].version == 16
+    migration = MIGRATIONS[15]
+
+    assert migration.version == 16
     assert (
-        MIGRATIONS[-1].name
+        migration.name
         == "create_workspace_membership_foundation"
     )
 
@@ -206,7 +207,7 @@ def test_fresh_schema_contains_membership_foundation(
     finally:
         connection.close()
 
-    assert version == 16
+    assert version == CURRENT_SQLITE_SCHEMA_VERSION
     assert {
         "workspace_memberships",
         "workspace_membership_status_transitions",
@@ -220,7 +221,7 @@ def test_fresh_schema_contains_membership_foundation(
         "idx_workspace_membership_transitions_history"
         in indexes
     )
-    assert user_version == 16
+    assert user_version == CURRENT_SQLITE_SCHEMA_VERSION
 
 
 def test_membership_requires_existing_workspace_and_principal(
@@ -736,7 +737,7 @@ def test_version_15_upgrades_to_membership_foundation(
         monkeypatch.setattr(
             schema,
             "MIGRATIONS",
-            MIGRATIONS,
+            MIGRATIONS[:16],
         )
         apply_execution_evidence_migrations(
             connection
