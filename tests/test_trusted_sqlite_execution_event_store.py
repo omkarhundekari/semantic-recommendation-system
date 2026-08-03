@@ -34,3 +34,34 @@ def test_trusted_storage_service_builds_execution_event_store(
     )
     assert store._path == database_path
     assert store._workspace_id == "workspace_test"
+
+
+def test_trusted_storage_service_builds_workspace_bound_execution_event_store(
+    tmp_path,
+):
+    from execution_evidence.storage_service import (
+        TrustedSQLiteStorageService,
+    )
+    from execution_evidence.trusted_store import (
+        initialize_fresh_trusted_store,
+    )
+
+    database_path = tmp_path / "solvyn.db"
+
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-07-22T12:00:00+00:00",
+    )
+
+    service = TrustedSQLiteStorageService(
+        database_path
+    )
+
+    store = (
+        service
+        .build_execution_event_store_for_workspace(
+            "workspace-b"
+        )
+    )
+
+    assert store.workspace_id == "workspace-b"

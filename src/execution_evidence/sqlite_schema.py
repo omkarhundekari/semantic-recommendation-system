@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 18
+CURRENT_SQLITE_SCHEMA_VERSION = 19
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -2074,6 +2074,240 @@ PRAGMA user_version = 17;
 """
 
 
+CREATE_GITHUB_SOURCE_BINDING_FOUNDATION_SQL = """
+CREATE TABLE github_source_bindings (
+    github_source_binding_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    github_source_binding_id TEXT NOT NULL UNIQUE,
+    repository_id TEXT NOT NULL,
+    workspace_id TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    installation_id TEXT,
+    created_at TEXT NOT NULL,
+    retired_at TEXT,
+    retired_reason TEXT,
+    FOREIGN KEY (workspace_id)
+        REFERENCES workspaces(workspace_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (
+        workspace_id,
+        project_id
+    )
+        REFERENCES projects(
+            workspace_id,
+            project_id
+        )
+        ON DELETE RESTRICT,
+    CHECK (
+        (
+            retired_at IS NULL
+            AND retired_reason IS NULL
+        )
+        OR
+        (
+            retired_at IS NOT NULL
+            AND retired_reason IS NOT NULL
+        )
+    )
+);
+
+CREATE UNIQUE INDEX
+    idx_github_source_bindings_current_repository
+ON github_source_bindings(
+    repository_id
+)
+WHERE retired_at IS NULL;
+
+CREATE TABLE github_webhook_credentials (
+    github_webhook_credential_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    github_webhook_credential_id TEXT
+        NOT NULL UNIQUE,
+    webhook_endpoint_id TEXT
+        NOT NULL UNIQUE,
+    installation_id TEXT,
+    secret_ref TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    retired_at TEXT,
+    retired_reason TEXT,
+    CHECK (
+        length(secret_ref) > 0
+    ),
+    CHECK (
+        (
+            retired_at IS NULL
+            AND retired_reason IS NULL
+        )
+        OR
+        (
+            retired_at IS NOT NULL
+            AND retired_reason IS NOT NULL
+        )
+    )
+);
+
+/*
+ * secret_ref is deliberately opaque to this schema.
+ * It must not encode assumptions about environment
+ * variables, Vault, KMS, encrypted rows, or any other
+ * future secret-storage implementation.
+ */
+
+CREATE TABLE github_webhook_credential_authorities (
+    github_webhook_credential_authority_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    github_webhook_credential_authority_id TEXT
+        NOT NULL UNIQUE,
+    github_webhook_credential_id TEXT NOT NULL,
+    repository_id TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    retired_at TEXT,
+    retired_reason TEXT,
+    FOREIGN KEY (github_webhook_credential_id)
+        REFERENCES github_webhook_credentials(
+            github_webhook_credential_id
+        )
+        ON DELETE RESTRICT,
+    CHECK (
+        (
+            retired_at IS NULL
+            AND retired_reason IS NULL
+        )
+        OR
+        (
+            retired_at IS NOT NULL
+            AND retired_reason IS NOT NULL
+        )
+    )
+);
+
+CREATE UNIQUE INDEX
+    idx_github_webhook_authorities_current_pair
+ON github_webhook_credential_authorities(
+    github_webhook_credential_id,
+    repository_id
+)
+WHERE retired_at IS NULL;
+
+CREATE TRIGGER
+    require_github_source_binding_genesis
+BEFORE INSERT
+ON github_source_bindings
+WHEN
+    NEW.retired_at IS NOT NULL
+    OR NEW.retired_reason IS NOT NULL
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'GitHub source bindings must begin current'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_github_source_binding_update
+BEFORE UPDATE
+ON github_source_bindings
+BEGIN
+    /*
+     * Retirement is reserved but unreachable in v19.
+     * A future privileged retirement operation must
+     * preserve repository/workspace/project identity
+     * and permit only the first lifecycle transition.
+     */
+    SELECT RAISE(
+        ABORT,
+        'GitHub source bindings are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_github_source_binding_delete
+BEFORE DELETE
+ON github_source_bindings
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'GitHub source bindings cannot be deleted'
+    );
+END;
+
+CREATE TRIGGER
+    require_github_webhook_credential_genesis
+BEFORE INSERT
+ON github_webhook_credentials
+WHEN
+    NEW.retired_at IS NOT NULL
+    OR NEW.retired_reason IS NOT NULL
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'GitHub webhook credentials must begin current'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_github_webhook_credential_update
+BEFORE UPDATE
+ON github_webhook_credentials
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'GitHub webhook credentials are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_github_webhook_credential_delete
+BEFORE DELETE
+ON github_webhook_credentials
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'GitHub webhook credentials cannot be deleted'
+    );
+END;
+
+CREATE TRIGGER
+    require_github_webhook_authority_genesis
+BEFORE INSERT
+ON github_webhook_credential_authorities
+WHEN
+    NEW.retired_at IS NOT NULL
+    OR NEW.retired_reason IS NOT NULL
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'GitHub webhook credential authorities must begin current'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_github_webhook_authority_update
+BEFORE UPDATE
+ON github_webhook_credential_authorities
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'GitHub webhook credential authorities are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_github_webhook_authority_delete
+BEFORE DELETE
+ON github_webhook_credential_authorities
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'GitHub webhook credential authorities cannot be deleted'
+    );
+END;
+
+PRAGMA user_version = 19;
+"""
+
+
+
 CREATE_EXECUTION_ACTOR_IDENTITY_NAMESPACE_SQL = """
 CREATE TABLE execution_actor_identity_namespaces (
     execution_actor_namespace_row_id INTEGER
@@ -2262,6 +2496,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         sql=(
             CREATE_EXECUTION_ACTOR_IDENTITY_NAMESPACE_SQL
         ),
+    ),
+    SQLiteMigration(
+        version=19,
+        name="create_github_source_binding_foundation",
+        sql=CREATE_GITHUB_SOURCE_BINDING_FOUNDATION_SQL,
     ),
 )
 

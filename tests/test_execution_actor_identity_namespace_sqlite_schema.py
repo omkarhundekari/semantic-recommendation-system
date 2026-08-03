@@ -89,10 +89,10 @@ def _insert_namespace(
 
 
 def test_namespace_foundation_is_schema_version_18():
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 18
-    assert MIGRATIONS[-1].version == 18
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 19
+    assert MIGRATIONS[17].version == 18
     assert (
-        MIGRATIONS[-1].name
+        MIGRATIONS[17].name
         == "create_execution_actor_identity_namespace"
     )
 
@@ -143,7 +143,7 @@ def test_fresh_schema_contains_namespace_foundation(
     finally:
         connection.close()
 
-    assert version == 18
+    assert version == 19
     assert table is not None
     assert (
         "prevent_execution_actor_namespace_update"
@@ -153,7 +153,7 @@ def test_fresh_schema_contains_namespace_foundation(
         "prevent_execution_actor_namespace_delete"
         in triggers
     )
-    assert user_version == 18
+    assert user_version == 19
 
 
 def test_version_17_upgrades_to_namespace_foundation(
@@ -187,7 +187,7 @@ def test_version_17_upgrades_to_namespace_foundation(
         monkeypatch.setattr(
             schema,
             "MIGRATIONS",
-            MIGRATIONS,
+            MIGRATIONS[:18],
         )
 
         apply_execution_evidence_migrations(

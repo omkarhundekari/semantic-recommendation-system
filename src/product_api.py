@@ -108,10 +108,20 @@ from execution_evidence.execution_event_projection_service import (
 from execution_evidence.github_webhook_adapter import (
     GitHubWebhookPayloadError,
 )
+from execution_evidence.github_source_routing_service import (
+    GitHubSourceRoutingService,
+)
+from execution_evidence.sqlite_github_source_binding_store import (
+    SQLiteGitHubSourceBindingStore,
+)
 from execution_evidence.github_webhook_ingestion import (
     GitHubWebhookIngestionService,
     GitHubWebhookMalformedJSONError,
     GitHubWebhookPayloadShapeError,
+    GitHubWebhookProjectBindingMismatchError,
+    GitHubWebhookRepositoryIdentityError,
+    GitHubWebhookRoutingNotFoundError,
+    GitHubWebhookRoutingStoreError,
 )
 from execution_evidence.github_webhook_signature import (
     GitHubWebhookSignatureError,
@@ -470,10 +480,20 @@ def get_execution_event_projection_service(
 
 
 def get_github_webhook_ingestion_service(
-    event_store: ExecutionEventStore = Depends(
-        get_execution_event_store
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
     ),
 ) -> GitHubWebhookIngestionService:
+    if runtime.trusted_sqlite_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Durable execution event storage is "
+                "unavailable. Migrate execution evidence "
+                "storage to trusted SQLite."
+            ),
+        )
+
     secret = os.getenv(GITHUB_WEBHOOK_SECRET_ENV)
 
     if secret is None or not secret.strip():
@@ -485,9 +505,21 @@ def get_github_webhook_ingestion_service(
             ),
         )
 
+    trusted_service = runtime.trusted_sqlite_service
+
+    routing_service = GitHubSourceRoutingService(
+        binding_store=SQLiteGitHubSourceBindingStore(
+            trusted_service.path
+        )
+    )
+
     return GitHubWebhookIngestionService(
         secret=secret.encode("utf-8"),
-        event_store=event_store,
+        routing_service=routing_service,
+        event_store_factory=(
+            trusted_service
+            .build_execution_event_store_for_workspace
+        ),
     )
 
 
@@ -982,9 +1014,27 @@ async def ingest_github_execution_evidence_webhook(
         GitHubWebhookMalformedJSONError,
         GitHubWebhookPayloadShapeError,
         GitHubWebhookPayloadError,
+        GitHubWebhookRepositoryIdentityError,
     ) as error:
         raise HTTPException(
             status_code=422,
+            detail=str(error),
+        ) from error
+    except GitHubWebhookRoutingNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        ) from error
+    except (
+        GitHubWebhookProjectBindingMismatchError
+    ) as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except GitHubWebhookRoutingStoreError as error:
+        raise HTTPException(
+            status_code=503,
             detail=str(error),
         ) from error
     except ExecutionEventProjectNotFoundError as error:

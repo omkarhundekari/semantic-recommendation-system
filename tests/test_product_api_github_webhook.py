@@ -19,6 +19,10 @@ from execution_evidence.github_webhook_adapter import (
 from execution_evidence.github_webhook_ingestion import (
     GitHubWebhookMalformedJSONError,
     GitHubWebhookPayloadShapeError,
+    GitHubWebhookProjectBindingMismatchError,
+    GitHubWebhookRepositoryIdentityError,
+    GitHubWebhookRoutingNotFoundError,
+    GitHubWebhookRoutingStoreError,
 )
 from execution_evidence.github_webhook_signature import (
     GitHubWebhookSignatureError,
@@ -229,6 +233,30 @@ def test_webhook_endpoint_returns_authoritative_replay(
                 "Unsupported GitHub webhook event."
             ),
             422,
+        ),
+        (
+            GitHubWebhookRepositoryIdentityError(
+                "Repository identity is invalid."
+            ),
+            422,
+        ),
+        (
+            GitHubWebhookRoutingNotFoundError(
+                "Repository is not bound."
+            ),
+            404,
+        ),
+        (
+            GitHubWebhookProjectBindingMismatchError(
+                "Project assertion conflicts."
+            ),
+            409,
+        ),
+        (
+            GitHubWebhookRoutingStoreError(
+                "Trusted routing is unavailable."
+            ),
+            503,
         ),
         (
             ExecutionEventProjectNotFoundError(

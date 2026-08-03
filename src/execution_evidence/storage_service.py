@@ -142,8 +142,34 @@ class TrustedSQLiteStorageService:
     def build_execution_event_store(
         self,
     ) -> SQLiteExecutionEventStore:
+        return self.build_execution_event_store_for_workspace(
+            self._workspace_id
+        )
+
+    def build_execution_event_store_for_workspace(
+        self,
+        workspace_id: str,
+    ) -> SQLiteExecutionEventStore:
+        if not isinstance(workspace_id, str):
+            raise ValueError(
+                "Execution event store workspace ID "
+                "must be text."
+            )
+
+        if not workspace_id:
+            raise ValueError(
+                "Execution event store workspace ID "
+                "must be non-empty."
+            )
+
+        if workspace_id != workspace_id.strip():
+            raise ValueError(
+                "Execution event store workspace ID "
+                "must not contain surrounding whitespace."
+            )
+
         return SQLiteExecutionEventStore(
             self._path,
-            workspace_id=self._workspace_id,
+            workspace_id=workspace_id,
             initialize_schema=False,
         )
