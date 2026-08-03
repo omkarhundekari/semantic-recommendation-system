@@ -16,10 +16,11 @@ from execution_evidence.sqlite_schema import (
 
 
 def test_principal_foundation_is_schema_version_15():
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 15
-    assert MIGRATIONS[-1].version == 15
+    principal_migration = MIGRATIONS[14]
+
+    assert principal_migration.version == 15
     assert (
-        MIGRATIONS[-1].name
+        principal_migration.name
         == "create_principal_foundation"
     )
 
@@ -71,7 +72,7 @@ def test_fresh_schema_contains_principal_foundation(
     finally:
         connection.close()
 
-    assert version == 15
+    assert version == CURRENT_SQLITE_SCHEMA_VERSION
     assert {
         "principal_kinds",
         "principals",
@@ -83,7 +84,7 @@ def test_fresh_schema_contains_principal_foundation(
         "system",
         "agent",
     }
-    assert user_version == 15
+    assert user_version == CURRENT_SQLITE_SCHEMA_VERSION
 
 
 def test_version_14_upgrades_to_principal_foundation(
@@ -122,7 +123,7 @@ def test_version_14_upgrades_to_principal_foundation(
         monkeypatch.setattr(
             schema,
             "MIGRATIONS",
-            MIGRATIONS,
+            MIGRATIONS[:15],
         )
         apply_execution_evidence_migrations(
             connection
@@ -237,7 +238,7 @@ def test_version_14_data_survives_principal_migration(
         monkeypatch.setattr(
             schema,
             "MIGRATIONS",
-            MIGRATIONS,
+            MIGRATIONS[:15],
         )
         apply_execution_evidence_migrations(
             connection
@@ -313,7 +314,7 @@ def test_principal_migration_replay_is_idempotent(
     finally:
         connection.close()
 
-    assert first == 15
-    assert second == 15
+    assert first == CURRENT_SQLITE_SCHEMA_VERSION
+    assert second == CURRENT_SQLITE_SCHEMA_VERSION
     assert v15_count == 1
     assert principal_count == 0

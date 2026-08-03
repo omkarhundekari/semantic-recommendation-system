@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 15
+CURRENT_SQLITE_SCHEMA_VERSION = 16
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -1421,6 +1421,398 @@ PRAGMA user_version = 15;
 """
 
 
+CREATE_WORKSPACE_MEMBERSHIP_FOUNDATION_SQL = """
+CREATE TABLE workspace_memberships (
+    membership_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    membership_id TEXT NOT NULL UNIQUE,
+    workspace_id TEXT NOT NULL,
+    principal_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (
+            status IN (
+                'active',
+                'suspended',
+                'removed'
+            )
+        ),
+    revision INTEGER NOT NULL DEFAULT 0
+        CHECK (revision >= 0),
+    created_by_principal_id TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    status_changed_at TEXT NOT NULL,
+    FOREIGN KEY (workspace_id)
+        REFERENCES workspaces(workspace_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (created_by_principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT
+);
+
+CREATE UNIQUE INDEX
+    idx_workspace_memberships_current
+ON workspace_memberships(
+    workspace_id,
+    principal_id
+)
+WHERE status != 'removed';
+
+CREATE INDEX
+    idx_workspace_memberships_principal
+ON workspace_memberships(
+    principal_id,
+    workspace_id,
+    status
+);
+
+CREATE TABLE workspace_membership_status_transitions (
+    transition_id TEXT PRIMARY KEY,
+    membership_row_id INTEGER NOT NULL,
+    membership_id TEXT NOT NULL,
+    workspace_id TEXT NOT NULL,
+    principal_id TEXT NOT NULL,
+    previous_status TEXT
+        CHECK (
+            previous_status IS NULL
+            OR previous_status IN (
+                'active',
+                'suspended',
+                'removed'
+            )
+        ),
+    new_status TEXT NOT NULL
+        CHECK (
+            new_status IN (
+                'active',
+                'suspended',
+                'removed'
+            )
+        ),
+    previous_revision INTEGER
+        CHECK (
+            previous_revision IS NULL
+            OR previous_revision >= 0
+        ),
+    resulting_revision INTEGER NOT NULL
+        CHECK (resulting_revision >= 0),
+    changed_at TEXT NOT NULL,
+    reason TEXT,
+    FOREIGN KEY (membership_row_id)
+        REFERENCES workspace_memberships(
+            membership_row_id
+        )
+        ON DELETE RESTRICT,
+    FOREIGN KEY (workspace_id)
+        REFERENCES workspaces(workspace_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT,
+    UNIQUE (
+        membership_row_id,
+        resulting_revision
+    ),
+    CHECK (
+        (
+            previous_status IS NULL
+            AND previous_revision IS NULL
+            AND new_status = 'active'
+            AND resulting_revision = 0
+        )
+        OR
+        (
+            previous_status IS NOT NULL
+            AND previous_revision IS NOT NULL
+            AND previous_status <> new_status
+            AND resulting_revision =
+                previous_revision + 1
+        )
+    )
+);
+
+CREATE INDEX
+    idx_workspace_membership_transitions_history
+ON workspace_membership_status_transitions(
+    membership_row_id,
+    resulting_revision ASC
+);
+
+CREATE TRIGGER
+    validate_workspace_membership_initial_state
+BEFORE INSERT
+ON workspace_memberships
+BEGIN
+    SELECT CASE
+        WHEN
+            NEW.status <> 'active'
+            OR NEW.revision <> 0
+            OR NEW.updated_at <> NEW.created_at
+            OR NEW.status_changed_at <> NEW.created_at
+        THEN RAISE(
+            ABORT,
+            'Workspace memberships must begin active at revision zero'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    create_workspace_membership_genesis_transition
+AFTER INSERT
+ON workspace_memberships
+BEGIN
+    INSERT INTO workspace_membership_status_transitions (
+        transition_id,
+        membership_row_id,
+        membership_id,
+        workspace_id,
+        principal_id,
+        previous_status,
+        new_status,
+        previous_revision,
+        resulting_revision,
+        changed_at,
+        reason
+    )
+    VALUES (
+        'wmt_genesis_' || NEW.membership_id,
+        NEW.membership_row_id,
+        NEW.membership_id,
+        NEW.workspace_id,
+        NEW.principal_id,
+        NULL,
+        'active',
+        NULL,
+        0,
+        NEW.created_at,
+        NULL
+    );
+END;
+
+CREATE TRIGGER
+    validate_workspace_membership_transition_insert
+BEFORE INSERT
+ON workspace_membership_status_transitions
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM workspace_memberships AS membership
+            WHERE
+                membership.membership_row_id =
+                    NEW.membership_row_id
+                AND membership.membership_id =
+                    NEW.membership_id
+                AND membership.workspace_id =
+                    NEW.workspace_id
+                AND membership.principal_id =
+                    NEW.principal_id
+        )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership transition scope is invalid'
+        )
+    END;
+
+    SELECT CASE
+        WHEN
+            NEW.previous_status IS NULL
+            AND NOT EXISTS (
+                SELECT 1
+                FROM workspace_memberships AS membership
+                WHERE
+                    membership.membership_row_id =
+                        NEW.membership_row_id
+                    AND membership.status = 'active'
+                    AND membership.revision = 0
+                    AND NEW.new_status = 'active'
+                    AND NEW.previous_revision IS NULL
+                    AND NEW.resulting_revision = 0
+                    AND NEW.changed_at =
+                        membership.created_at
+            )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership genesis transition is invalid'
+        )
+    END;
+
+    SELECT CASE
+        WHEN
+            NEW.previous_status IS NOT NULL
+            AND NOT EXISTS (
+                SELECT 1
+                FROM workspace_memberships AS membership
+                WHERE
+                    membership.membership_row_id =
+                        NEW.membership_row_id
+                    AND membership.status =
+                        NEW.previous_status
+                    AND membership.revision =
+                        NEW.previous_revision
+            )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership transition does not match current state'
+        )
+    END;
+
+    SELECT CASE
+        WHEN
+            NEW.previous_status IS NOT NULL
+            AND NOT (
+                (
+                    NEW.previous_status = 'active'
+                    AND NEW.new_status IN (
+                        'suspended',
+                        'removed'
+                    )
+                )
+                OR
+                (
+                    NEW.previous_status = 'suspended'
+                    AND NEW.new_status IN (
+                        'active',
+                        'removed'
+                    )
+                )
+            )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership status transition is invalid'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    apply_workspace_membership_transition
+AFTER INSERT
+ON workspace_membership_status_transitions
+WHEN NEW.previous_status IS NOT NULL
+BEGIN
+    UPDATE workspace_memberships
+    SET
+        status = NEW.new_status,
+        revision = NEW.resulting_revision,
+        updated_at = NEW.changed_at,
+        status_changed_at = NEW.changed_at
+    WHERE membership_row_id = NEW.membership_row_id;
+END;
+
+CREATE TRIGGER
+    validate_workspace_membership_state_update
+BEFORE UPDATE OF
+    status,
+    revision,
+    updated_at,
+    status_changed_at
+ON workspace_memberships
+WHEN
+    OLD.status <> NEW.status
+    OR OLD.revision <> NEW.revision
+    OR OLD.updated_at <> NEW.updated_at
+    OR OLD.status_changed_at <> NEW.status_changed_at
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM workspace_membership_status_transitions
+                AS transition
+            WHERE
+                transition.membership_row_id =
+                    OLD.membership_row_id
+                AND transition.previous_status =
+                    OLD.status
+                AND transition.new_status =
+                    NEW.status
+                AND transition.previous_revision =
+                    OLD.revision
+                AND transition.resulting_revision =
+                    NEW.revision
+                AND transition.changed_at =
+                    NEW.status_changed_at
+                AND transition.changed_at =
+                    NEW.updated_at
+        )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership state changes require an authoritative transition'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    prevent_workspace_membership_identity_update
+BEFORE UPDATE OF
+    membership_id,
+    workspace_id,
+    principal_id,
+    created_by_principal_id,
+    created_at
+ON workspace_memberships
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Workspace membership identity fields are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_removed_workspace_membership_reactivation
+BEFORE UPDATE OF
+    status,
+    revision,
+    updated_at,
+    status_changed_at
+ON workspace_memberships
+WHEN OLD.status = 'removed'
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Removed workspace memberships are terminal'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_workspace_membership_delete
+BEFORE DELETE
+ON workspace_memberships
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Workspace memberships cannot be deleted'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_workspace_membership_transition_update
+BEFORE UPDATE
+ON workspace_membership_status_transitions
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Workspace membership transitions are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_workspace_membership_transition_delete
+BEFORE DELETE
+ON workspace_membership_status_transitions
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Workspace membership transitions cannot be deleted'
+    );
+END;
+
+PRAGMA user_version = 16;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -1504,6 +1896,13 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=15,
         name="create_principal_foundation",
         sql=CREATE_PRINCIPAL_FOUNDATION_SQL,
+    ),
+    SQLiteMigration(
+        version=16,
+        name="create_workspace_membership_foundation",
+        sql=(
+            CREATE_WORKSPACE_MEMBERSHIP_FOUNDATION_SQL
+        ),
     ),
 )
 
