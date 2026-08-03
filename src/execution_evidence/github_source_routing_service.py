@@ -8,6 +8,9 @@ from execution_evidence.github_source_binding_store import (
 from execution_evidence.github_source_routing import (
     GitHubSourceRoute,
 )
+from execution_evidence.github_webhook_authenticated_source import (
+    GitHubWebhookAuthenticatedSource,
+)
 
 
 class GitHubSourceRoutingError(RuntimeError):
@@ -33,6 +36,21 @@ class GitHubSourceRoutingService:
         binding_store: GitHubSourceBindingStore,
     ) -> None:
         self._binding_store = binding_store
+
+    def resolve_authenticated_source(
+        self,
+        source: GitHubWebhookAuthenticatedSource,
+    ) -> GitHubSourceRoute:
+        if not isinstance(
+            source,
+            GitHubWebhookAuthenticatedSource,
+        ):
+            raise TypeError(
+                "GitHub source routing requires an "
+                "authenticated webhook source."
+            )
+
+        return self.resolve(source.repository_id)
 
     def resolve(
         self,

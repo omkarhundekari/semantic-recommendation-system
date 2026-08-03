@@ -114,17 +114,32 @@ from execution_evidence.github_source_routing_service import (
 from execution_evidence.sqlite_github_source_binding_store import (
     SQLiteGitHubSourceBindingStore,
 )
+from execution_evidence.github_webhook_authentication_service import (
+    GitHubWebhookAuthenticationService,
+    GitHubWebhookAuthenticationStoreError,
+    GitHubWebhookCredentialAuthorityNotFoundError,
+    GitHubWebhookEndpointNotFoundError,
+    GitHubWebhookRepositoryIdentityError,
+    GitHubWebhookSecretResolutionError,
+)
 from execution_evidence.github_webhook_ingestion import (
     GitHubWebhookIngestionService,
     GitHubWebhookMalformedJSONError,
     GitHubWebhookPayloadShapeError,
-    GitHubWebhookProjectBindingMismatchError,
-    GitHubWebhookRepositoryIdentityError,
     GitHubWebhookRoutingNotFoundError,
     GitHubWebhookRoutingStoreError,
 )
 from execution_evidence.github_webhook_signature import (
     GitHubWebhookSignatureError,
+)
+from execution_evidence.sqlite_github_webhook_credential_store import (
+    SQLiteGitHubWebhookCredentialStore,
+)
+from execution_evidence.sqlite_github_webhook_credential_authority_store import (
+    SQLiteGitHubWebhookCredentialAuthorityStore,
+)
+from execution_evidence.environment_github_webhook_secret_resolver import (
+    EnvironmentGitHubWebhookSecretResolver,
 )
 from execution_evidence.coordinator import (
     StatefulGitHubSyncCoordinator,
@@ -194,9 +209,7 @@ app.add_middleware(
 )
 
 
-GITHUB_WEBHOOK_SECRET_ENV = (
-    "SOLVYN_GITHUB_WEBHOOK_SECRET"
-)
+MAX_GITHUB_WEBHOOK_BODY_BYTES = 25 * 1024 * 1024
 
 
 EXECUTION_EVIDENCE_STORE_BACKEND_ENV = (
@@ -479,6 +492,40 @@ def get_execution_event_projection_service(
     )
 
 
+def get_github_webhook_authentication_service(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> GitHubWebhookAuthenticationService:
+    if runtime.trusted_sqlite_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Durable execution event storage is "
+                "unavailable. Migrate execution evidence "
+                "storage to trusted SQLite."
+            ),
+        )
+
+    trusted_service = runtime.trusted_sqlite_service
+
+    return GitHubWebhookAuthenticationService(
+        credential_store=(
+            SQLiteGitHubWebhookCredentialStore(
+                trusted_service.path
+            )
+        ),
+        authority_store=(
+            SQLiteGitHubWebhookCredentialAuthorityStore(
+                trusted_service.path
+            )
+        ),
+        secret_resolver=(
+            EnvironmentGitHubWebhookSecretResolver()
+        ),
+    )
+
+
 def get_github_webhook_ingestion_service(
     runtime: ExecutionEvidenceStorageRuntime = Depends(
         get_execution_evidence_storage_runtime
@@ -494,17 +541,6 @@ def get_github_webhook_ingestion_service(
             ),
         )
 
-    secret = os.getenv(GITHUB_WEBHOOK_SECRET_ENV)
-
-    if secret is None or not secret.strip():
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "GitHub webhook ingestion is not "
-                "configured."
-            ),
-        )
-
     trusted_service = runtime.trusted_sqlite_service
 
     routing_service = GitHubSourceRoutingService(
@@ -514,7 +550,6 @@ def get_github_webhook_ingestion_service(
     )
 
     return GitHubWebhookIngestionService(
-        secret=secret.encode("utf-8"),
         routing_service=routing_service,
         event_store_factory=(
             trusted_service
@@ -968,15 +1003,66 @@ def get_project_execution_event_lineage(
     )
 
 
+async def _read_bounded_github_webhook_body(
+    request: Request,
+) -> bytes:
+    content_length = request.headers.get(
+        "content-length"
+    )
+
+    if content_length is not None:
+        try:
+            declared_length = int(content_length)
+        except ValueError as error:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid Content-Length.",
+            ) from error
+
+        if declared_length < 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid Content-Length.",
+            )
+
+        if (
+            declared_length
+            > MAX_GITHUB_WEBHOOK_BODY_BYTES
+        ):
+            raise HTTPException(
+                status_code=413,
+                detail=(
+                    "GitHub webhook payload exceeds "
+                    "the maximum allowed size."
+                ),
+            )
+
+    body = bytearray()
+
+    async for chunk in request.stream():
+        if (
+            len(body) + len(chunk)
+            > MAX_GITHUB_WEBHOOK_BODY_BYTES
+        ):
+            raise HTTPException(
+                status_code=413,
+                detail=(
+                    "GitHub webhook payload exceeds "
+                    "the maximum allowed size."
+                ),
+            )
+
+        body.extend(chunk)
+
+    return bytes(body)
+
+
 @app.post(
-    (
-        "/v1/projects/{project_id}/"
-        "execution-evidence/github/webhook"
-    ),
+    "/v1/integrations/github/webhook/{webhook_endpoint_id}",
     response_model=ExecutionEventAppendResult,
 )
 async def ingest_github_execution_evidence_webhook(
-    project_id: str,
+    webhook_endpoint_id: str,
     request: Request,
     github_event: str = Header(
         ...,
@@ -990,58 +1076,64 @@ async def ingest_github_execution_evidence_webhook(
         ...,
         alias="X-Hub-Signature-256",
     ),
-    service: GitHubWebhookIngestionService = Depends(
+    authentication_service: (
+        GitHubWebhookAuthenticationService
+    ) = Depends(
+        get_github_webhook_authentication_service
+    ),
+    ingestion_service: GitHubWebhookIngestionService = Depends(
         get_github_webhook_ingestion_service
     ),
 ) -> ExecutionEventAppendResult:
-    raw_body = await request.body()
+    raw_body = await _read_bounded_github_webhook_body(
+        request
+    )
 
     try:
-        return service.ingest(
-            project_id=project_id,
+        authenticated_source = (
+            authentication_service.authenticate(
+                webhook_endpoint_id=webhook_endpoint_id,
+                signature_header=github_signature,
+                raw_body=raw_body,
+            )
+        )
+
+        return ingestion_service.ingest_authenticated(
+            authenticated_source=authenticated_source,
             event_name=github_event,
             delivery_id=github_delivery,
-            signature_header=github_signature,
             raw_body=raw_body,
             recorded_at=datetime.now(timezone.utc),
         )
+
+    except (
+        GitHubWebhookEndpointNotFoundError,
+        GitHubWebhookCredentialAuthorityNotFoundError,
+        GitHubWebhookRoutingNotFoundError,
+        ExecutionEventProjectNotFoundError,
+    ) as error:
+        raise HTTPException(
+            status_code=404,
+            detail="GitHub webhook source was not found.",
+        ) from error
+
     except GitHubWebhookSignatureError as error:
         raise HTTPException(
             status_code=401,
             detail=str(error),
         ) from error
+
     except (
+        GitHubWebhookRepositoryIdentityError,
         GitHubWebhookMalformedJSONError,
         GitHubWebhookPayloadShapeError,
         GitHubWebhookPayloadError,
-        GitHubWebhookRepositoryIdentityError,
     ) as error:
         raise HTTPException(
             status_code=422,
             detail=str(error),
         ) from error
-    except GitHubWebhookRoutingNotFoundError as error:
-        raise HTTPException(
-            status_code=404,
-            detail=str(error),
-        ) from error
-    except (
-        GitHubWebhookProjectBindingMismatchError
-    ) as error:
-        raise HTTPException(
-            status_code=409,
-            detail=str(error),
-        ) from error
-    except GitHubWebhookRoutingStoreError as error:
-        raise HTTPException(
-            status_code=503,
-            detail=str(error),
-        ) from error
-    except ExecutionEventProjectNotFoundError as error:
-        raise HTTPException(
-            status_code=404,
-            detail=str(error),
-        ) from error
+
     except (
         ExecutionEventIdempotencyConflictError
     ) as error:
@@ -1049,7 +1141,13 @@ async def ingest_github_execution_evidence_webhook(
             status_code=409,
             detail=str(error),
         ) from error
-    except ExecutionEventStoreError as error:
+
+    except (
+        GitHubWebhookAuthenticationStoreError,
+        GitHubWebhookSecretResolutionError,
+        GitHubWebhookRoutingStoreError,
+        ExecutionEventStoreError,
+    ) as error:
         raise HTTPException(
             status_code=503,
             detail=str(error),

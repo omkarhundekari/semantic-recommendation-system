@@ -194,3 +194,52 @@ def test_invalid_repository_identity_is_rejected(
 
     with pytest.raises(ValueError):
         service.resolve(repository_id)
+
+
+def test_resolve_authenticated_source_routes_authenticated_repository():
+    from execution_evidence.github_webhook_authenticated_source import (
+        GitHubWebhookAuthenticatedSource,
+    )
+
+    binding = _binding()
+    store = _BindingStore(binding)
+    service = GitHubSourceRoutingService(
+        binding_store=store
+    )
+
+    source = GitHubWebhookAuthenticatedSource(
+        github_webhook_credential_id=(
+            "gwc_123e4567-e89b-42d3-a456-426614174000"
+        ),
+        github_webhook_credential_authority_id=(
+            "gwa_123e4567-e89b-42d3-a456-426614174001"
+        ),
+        webhook_endpoint_id=(
+            "gwe_123e4567-e89b-42d3-a456-426614174002"
+        ),
+        repository_id=binding.repository_id,
+    )
+
+    route = service.resolve_authenticated_source(
+        source
+    )
+
+    assert route.repository_id == source.repository_id
+    assert route.workspace_id == binding.workspace_id
+    assert route.project_id == binding.project_id
+
+
+def test_resolve_authenticated_source_rejects_loose_repository_identity():
+    service = GitHubSourceRoutingService(
+        binding_store=_BindingStore(
+            _binding()
+        )
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="authenticated webhook source",
+    ):
+        service.resolve_authenticated_source(
+            "123"
+        )

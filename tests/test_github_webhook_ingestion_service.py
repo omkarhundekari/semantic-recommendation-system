@@ -23,10 +23,11 @@ from execution_evidence.github_webhook_ingestion import (
     GitHubWebhookIngestionService,
     GitHubWebhookMalformedJSONError,
     GitHubWebhookPayloadShapeError,
-    GitHubWebhookProjectBindingMismatchError,
-    GitHubWebhookRepositoryIdentityError,
     GitHubWebhookRoutingNotFoundError,
     GitHubWebhookRoutingStoreError,
+)
+from execution_evidence.github_webhook_authenticated_source import (
+    GitHubWebhookAuthenticatedSource,
 )
 from execution_evidence.github_source_routing import (
     GitHubSourceRoute,
@@ -34,9 +35,6 @@ from execution_evidence.github_source_routing import (
 from execution_evidence.github_source_routing_service import (
     GitHubSourceRoutingNotFoundError,
     GitHubSourceRoutingStoreError,
-)
-from execution_evidence.github_webhook_signature import (
-    GitHubWebhookSignatureError,
 )
 
 
@@ -119,11 +117,21 @@ class RecordingRoutingService:
         self.error = error
         self.repository_ids = []
 
-    def resolve(
+    def resolve_authenticated_source(
         self,
-        repository_id: str,
+        source: GitHubWebhookAuthenticatedSource,
     ) -> GitHubSourceRoute:
-        self.repository_ids.append(repository_id)
+        if not isinstance(
+            source,
+            GitHubWebhookAuthenticatedSource,
+        ):
+            raise TypeError(
+                "Authenticated webhook source required."
+            )
+
+        self.repository_ids.append(
+            source.repository_id
+        )
 
         if self.error is not None:
             raise self.error
@@ -176,7 +184,6 @@ def _service(
     )
 
     service = GitHubWebhookIngestionService(
-        secret=SECRET,
         routing_service=routing,
         event_store_factory=factory,
     )
@@ -186,6 +193,24 @@ def _service(
         resolved_store,
         routing,
         factory,
+    )
+
+
+def _authenticated_source(
+    *,
+    repository_id: str = "123",
+) -> GitHubWebhookAuthenticatedSource:
+    return GitHubWebhookAuthenticatedSource(
+        github_webhook_credential_id=(
+            "gwc_123e4567-e89b-42d3-a456-426614174000"
+        ),
+        github_webhook_credential_authority_id=(
+            "gwa_123e4567-e89b-42d3-a456-426614174001"
+        ),
+        webhook_endpoint_id=(
+            "gwe_123e4567-e89b-42d3-a456-426614174002"
+        ),
+        repository_id=repository_id,
     )
 
 
@@ -245,11 +270,10 @@ def test_ingest_verifies_adapts_and_appends_event():
     )
     raw_body = _raw_body(_push_payload())
 
-    result = service.ingest(
-        project_id="proj_test",
+    result = service.ingest_authenticated(
+        authenticated_source=_authenticated_source(),
         event_name="push",
         delivery_id="delivery-123",
-        signature_header=_signature(raw_body),
         raw_body=raw_body,
         recorded_at=RECORDED_AT,
     )
@@ -264,30 +288,6 @@ def test_ingest_verifies_adapts_and_appends_event():
     assert store.appended_events == [result.event]
 
 
-def test_ingest_rejects_invalid_signature_before_append():
-    store = RecordingExecutionEventStore()
-    service, store, routing, factory = _service(
-        store=store
-    )
-    raw_body = _raw_body(_push_payload())
-
-    with pytest.raises(
-        GitHubWebhookSignatureError
-    ):
-        service.ingest(
-            project_id="proj_test",
-            event_name="push",
-            delivery_id="delivery-123",
-            signature_header=(
-                "sha256=" + "0" * 64
-            ),
-            raw_body=raw_body,
-            recorded_at=RECORDED_AT,
-        )
-
-    assert routing.repository_ids == []
-    assert factory.workspace_ids == []
-    assert store.appended_events == []
 
 
 def test_ingest_rejects_malformed_json():
@@ -300,11 +300,10 @@ def test_ingest_rejects_malformed_json():
     with pytest.raises(
         GitHubWebhookMalformedJSONError
     ):
-        service.ingest(
-            project_id="proj_test",
+        service.ingest_authenticated(
+            authenticated_source=_authenticated_source(),
             event_name="push",
             delivery_id="delivery-123",
-            signature_header=_signature(raw_body),
             raw_body=raw_body,
             recorded_at=RECORDED_AT,
         )
@@ -336,11 +335,10 @@ def test_ingest_requires_json_object_payload(
     with pytest.raises(
         GitHubWebhookPayloadShapeError
     ):
-        service.ingest(
-            project_id="proj_test",
+        service.ingest_authenticated(
+            authenticated_source=_authenticated_source(),
             event_name="push",
             delivery_id="delivery-123",
-            signature_header=_signature(raw_body),
             raw_body=raw_body,
             recorded_at=RECORDED_AT,
         )
@@ -359,11 +357,10 @@ def test_ingest_propagates_unsupported_event_error():
         GitHubWebhookPayloadError,
         match="Unsupported GitHub webhook event",
     ):
-        service.ingest(
-            project_id="proj_test",
+        service.ingest_authenticated(
+            authenticated_source=_authenticated_source(),
             event_name="repository",
             delivery_id="delivery-123",
-            signature_header=_signature(raw_body),
             raw_body=raw_body,
             recorded_at=RECORDED_AT,
         )
@@ -383,11 +380,10 @@ def test_ingest_returns_authoritative_replay_result():
     )
     raw_body = _raw_body(_push_payload())
 
-    first_result = first_service.ingest(
-        project_id="proj_test",
+    first_result = first_service.ingest_authenticated(
+        authenticated_source=_authenticated_source(),
         event_name="push",
         delivery_id="delivery-123",
-        signature_header=_signature(raw_body),
         raw_body=raw_body,
         recorded_at=RECORDED_AT,
     )
@@ -408,11 +404,10 @@ def test_ingest_returns_authoritative_replay_result():
         store=replay_store
     )
 
-    result = replay_service.ingest(
-        project_id="proj_test",
+    result = replay_service.ingest_authenticated(
+        authenticated_source=_authenticated_source(),
         event_name="push",
         delivery_id="delivery-123",
-        signature_header=_signature(raw_body),
         raw_body=raw_body,
         recorded_at=RECORDED_AT,
     )
@@ -438,40 +433,25 @@ def test_ingest_propagates_idempotency_conflict():
     with pytest.raises(
         ExecutionEventIdempotencyConflictError
     ):
-        service.ingest(
-            project_id="proj_test",
+        service.ingest_authenticated(
+            authenticated_source=_authenticated_source(),
             event_name="push",
             delivery_id="delivery-123",
-            signature_header=_signature(raw_body),
             raw_body=raw_body,
             recorded_at=RECORDED_AT,
         )
 
 
-def test_service_rejects_empty_secret():
-    store = RecordingExecutionEventStore()
-
-    with pytest.raises(
-        GitHubWebhookIngestionError
-    ):
-        GitHubWebhookIngestionService(
-            secret=b"",
-            routing_service=RecordingRoutingService(),
-            event_store_factory=RecordingStoreFactory(
-                store
-            ),
-        )
 
 
 def test_ingest_routes_by_trusted_repository_binding():
     service, store, routing, factory = _service()
     raw_body = _raw_body(_push_payload())
 
-    result = service.ingest(
-        project_id="proj_test",
+    result = service.ingest_authenticated(
+        authenticated_source=_authenticated_source(),
         event_name="push",
         delivery_id="delivery-routing",
-        signature_header=_signature(raw_body),
         raw_body=raw_body,
         recorded_at=RECORDED_AT,
     )
@@ -486,35 +466,6 @@ def test_ingest_routes_by_trusted_repository_binding():
     )
 
 
-def test_ingest_rejects_url_project_mismatch_before_append():
-    route = GitHubSourceRoute(
-        github_source_binding_id=(
-            "gsb_123e4567-e89b-42d3-a456-426614174000"
-        ),
-        repository_id="123",
-        workspace_id="workspace-b",
-        project_id="proj_bound",
-    )
-    service, store, routing, factory = _service(
-        route=route
-    )
-    raw_body = _raw_body(_push_payload())
-
-    with pytest.raises(
-        GitHubWebhookProjectBindingMismatchError
-    ):
-        service.ingest(
-            project_id="proj_url",
-            event_name="push",
-            delivery_id="delivery-mismatch",
-            signature_header=_signature(raw_body),
-            raw_body=raw_body,
-            recorded_at=RECORDED_AT,
-        )
-
-    assert routing.repository_ids == ["123"]
-    assert factory.workspace_ids == []
-    assert store.appended_events == []
 
 
 def test_ingest_unbound_repository_fails_closed():
@@ -528,11 +479,10 @@ def test_ingest_unbound_repository_fails_closed():
     with pytest.raises(
         GitHubWebhookRoutingNotFoundError
     ):
-        service.ingest(
-            project_id="proj_test",
+        service.ingest_authenticated(
+            authenticated_source=_authenticated_source(),
             event_name="push",
             delivery_id="delivery-unbound",
-            signature_header=_signature(raw_body),
             raw_body=raw_body,
             recorded_at=RECORDED_AT,
         )
@@ -552,11 +502,10 @@ def test_ingest_routing_store_failure_propagates():
     with pytest.raises(
         GitHubWebhookRoutingStoreError
     ):
-        service.ingest(
-            project_id="proj_test",
+        service.ingest_authenticated(
+            authenticated_source=_authenticated_source(),
             event_name="push",
             delivery_id="delivery-routing-error",
-            signature_header=_signature(raw_body),
             raw_body=raw_body,
             recorded_at=RECORDED_AT,
         )
@@ -576,11 +525,10 @@ def test_ingest_store_factory_failure_is_not_unresolved():
     with pytest.raises(
         GitHubWebhookRoutingStoreError
     ):
-        service.ingest(
-            project_id="proj_test",
+        service.ingest_authenticated(
+            authenticated_source=_authenticated_source(),
             event_name="push",
             delivery_id="delivery-store-error",
-            signature_header=_signature(raw_body),
             raw_body=raw_body,
             recorded_at=RECORDED_AT,
         )
@@ -601,11 +549,10 @@ def test_ingest_store_factory_programming_error_propagates():
         TypeError,
         match="factory wiring bug",
     ):
-        service.ingest(
-            project_id="proj_test",
+        service.ingest_authenticated(
+            authenticated_source=_authenticated_source(),
             event_name="push",
             delivery_id="delivery-factory-bug",
-            signature_header=_signature(raw_body),
             raw_body=raw_body,
             recorded_at=RECORDED_AT,
         )
@@ -615,33 +562,18 @@ def test_ingest_store_factory_programming_error_propagates():
     assert store.appended_events == []
 
 
-@pytest.mark.parametrize(
-    "repository_id",
-    [
-        None,
-        "",
-        "123",
-        True,
-        0,
-        -1,
-    ],
-)
-def test_ingest_requires_positive_integer_repository_identity(
-    repository_id,
-):
+def test_ingest_authenticated_rejects_loose_source_identity():
     service, store, routing, factory = _service()
-    payload = _push_payload()
-    payload["repository"]["id"] = repository_id
-    raw_body = _raw_body(payload)
+    raw_body = _raw_body(_push_payload())
 
     with pytest.raises(
-        GitHubWebhookRepositoryIdentityError
+        TypeError,
+        match="authenticated source",
     ):
-        service.ingest(
-            project_id="proj_test",
+        service.ingest_authenticated(
+            authenticated_source="123",
             event_name="push",
-            delivery_id="delivery-bad-repository",
-            signature_header=_signature(raw_body),
+            delivery_id="delivery-loose-source",
             raw_body=raw_body,
             recorded_at=RECORDED_AT,
         )
