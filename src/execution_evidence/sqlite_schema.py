@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 14
+CURRENT_SQLITE_SCHEMA_VERSION = 15
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -1383,6 +1383,44 @@ PRAGMA user_version = 14;
 """
 
 
+CREATE_PRINCIPAL_FOUNDATION_SQL = """
+CREATE TABLE principal_kinds (
+    principal_kind TEXT PRIMARY KEY
+);
+
+INSERT INTO principal_kinds (
+    principal_kind
+)
+VALUES
+    ('human'),
+    ('service'),
+    ('system'),
+    ('agent');
+
+CREATE TABLE principals (
+    principal_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    principal_id TEXT NOT NULL UNIQUE,
+    principal_kind TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (
+            status IN (
+                'active',
+                'suspended',
+                'deactivated'
+            )
+        ),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (principal_kind)
+        REFERENCES principal_kinds(principal_kind)
+        ON DELETE RESTRICT
+);
+
+PRAGMA user_version = 15;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -1461,6 +1499,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         sql=(
             ADD_TRUSTED_RECEIPT_LINEAGE_FOUNDATION_SQL
         ),
+    ),
+    SQLiteMigration(
+        version=15,
+        name="create_principal_foundation",
+        sql=CREATE_PRINCIPAL_FOUNDATION_SQL,
     ),
 )
 

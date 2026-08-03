@@ -2651,13 +2651,13 @@ def test_version_13_upgrades_to_receipt_lineage_foundation(
             get_execution_evidence_schema_version(
                 connection
             )
-            == 14
+            == CURRENT_SQLITE_SCHEMA_VERSION
         )
         assert int(
             connection.execute(
                 "PRAGMA user_version"
             ).fetchone()[0]
-        ) == 14
+        ) == CURRENT_SQLITE_SCHEMA_VERSION
 
         assert {
             "receipt_version",
