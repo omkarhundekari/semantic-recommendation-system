@@ -133,10 +133,10 @@ def _end_link(
 
 
 def test_principal_identity_foundation_is_schema_version_17():
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 17
-    assert MIGRATIONS[-1].version == 17
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 18
+    assert MIGRATIONS[16].version == 17
     assert (
-        MIGRATIONS[-1].name
+        MIGRATIONS[16].name
         == "create_principal_identity_foundation"
     )
 
@@ -185,7 +185,7 @@ def test_fresh_schema_contains_identity_foundation(
     finally:
         connection.close()
 
-    assert version == 17
+    assert version == 18
     assert {
         "identity_providers",
         "principal_identity_links",
@@ -197,7 +197,7 @@ def test_fresh_schema_contains_identity_foundation(
         "idx_principal_identity_links_principal_status",
     }.issubset(indexes)
 
-    assert user_version == 17
+    assert user_version == 18
 
 
 def test_version_16_upgrades_to_identity_foundation(
@@ -229,7 +229,7 @@ def test_version_16_upgrades_to_identity_foundation(
         monkeypatch.setattr(
             schema,
             "MIGRATIONS",
-            MIGRATIONS,
+            MIGRATIONS[:17],
         )
         apply_execution_evidence_migrations(
             connection

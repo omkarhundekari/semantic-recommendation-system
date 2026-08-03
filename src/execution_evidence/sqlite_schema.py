@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 17
+CURRENT_SQLITE_SCHEMA_VERSION = 18
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -2074,6 +2074,88 @@ PRAGMA user_version = 17;
 """
 
 
+CREATE_EXECUTION_ACTOR_IDENTITY_NAMESPACE_SQL = """
+CREATE TABLE execution_actor_identity_namespaces (
+    execution_actor_namespace_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    execution_actor_namespace_id TEXT NOT NULL UNIQUE,
+    source_provider TEXT NOT NULL UNIQUE,
+    identity_provider_id TEXT NOT NULL,
+    issuer TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    retired_at TEXT,
+    retired_reason TEXT,
+    FOREIGN KEY (
+        identity_provider_id,
+        issuer
+    )
+        REFERENCES identity_providers(
+            identity_provider_id,
+            issuer
+        )
+        ON DELETE RESTRICT,
+    CHECK (
+        (
+            retired_at IS NULL
+            AND retired_reason IS NULL
+        )
+        OR
+        (
+            retired_at IS NOT NULL
+            AND retired_reason IS NOT NULL
+        )
+    )
+);
+
+CREATE TRIGGER
+    require_execution_actor_namespace_genesis
+BEFORE INSERT
+ON execution_actor_identity_namespaces
+WHEN
+    NEW.retired_at IS NOT NULL
+    OR NEW.retired_reason IS NOT NULL
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Execution actor identity namespaces must begin current'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_execution_actor_namespace_update
+BEFORE UPDATE
+ON execution_actor_identity_namespaces
+BEGIN
+    /*
+     * Retirement is deliberately unreachable in v18.
+     *
+     * A future privileged retirement operation must only
+     * permit the first NULL -> non-NULL retirement edge.
+     * It must continue blocking changes to namespace ID,
+     * source provider, provider ID, issuer, created_at,
+     * un-retirement, and re-retirement.
+     */
+    SELECT RAISE(
+        ABORT,
+        'Execution actor identity namespaces are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_execution_actor_namespace_delete
+BEFORE DELETE
+ON execution_actor_identity_namespaces
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Execution actor identity namespaces cannot be deleted'
+    );
+END;
+
+PRAGMA user_version = 18;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -2170,6 +2252,15 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         name="create_principal_identity_foundation",
         sql=(
             CREATE_PRINCIPAL_IDENTITY_FOUNDATION_SQL
+        ),
+    ),
+    SQLiteMigration(
+        version=18,
+        name=(
+            "create_execution_actor_identity_namespace"
+        ),
+        sql=(
+            CREATE_EXECUTION_ACTOR_IDENTITY_NAMESPACE_SQL
         ),
     ),
 )
