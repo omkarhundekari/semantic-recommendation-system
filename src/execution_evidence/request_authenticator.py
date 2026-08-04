@@ -17,6 +17,9 @@ from execution_evidence.request_principal_resolver import (
 )
 
 
+MAX_AUTHORIZATION_BEARER_TOKEN_BYTES = 8 * 1024
+
+
 class RequestAuthenticationError(RuntimeError):
     pass
 
@@ -117,4 +120,14 @@ class RequestAuthenticator:
                 "Bearer authentication is required."
             )
 
-        return parts[1]
+        token = parts[1]
+
+        if (
+            len(token.encode("utf-8"))
+            > MAX_AUTHORIZATION_BEARER_TOKEN_BYTES
+        ):
+            raise RequestAuthenticationRequiredError(
+                "Bearer authentication is required."
+            )
+
+        return token

@@ -10,6 +10,7 @@ from execution_evidence.oidc_token_verifier import (
     OIDCTokenVerifierUnavailableError,
 )
 from execution_evidence.request_authenticator import (
+    MAX_AUTHORIZATION_BEARER_TOKEN_BYTES,
     RequestAuthenticationFailedError,
     RequestAuthenticationRequiredError,
     RequestAuthenticationUnavailableError,
@@ -222,3 +223,39 @@ def test_identity_store_outage_is_not_auth_failure():
         ).authenticate(
             f"Bearer {TOKEN}"
         )
+
+def test_bearer_token_accepts_exact_size_limit():
+    token = "a" * MAX_AUTHORIZATION_BEARER_TOKEN_BYTES
+    verifier = Verifier()
+
+    RequestAuthenticator(
+        token_verifier=verifier,
+        principal_resolver=Resolver(),
+    ).authenticate(
+        f"Bearer {token}"
+    )
+
+    assert verifier.tokens == [token]
+
+
+def test_bearer_token_rejects_over_size_limit():
+    token = (
+        "a"
+        * (MAX_AUTHORIZATION_BEARER_TOKEN_BYTES + 1)
+    )
+    verifier = Verifier()
+    resolver = Resolver()
+
+    with pytest.raises(
+        RequestAuthenticationRequiredError,
+        match="Bearer authentication is required",
+    ):
+        RequestAuthenticator(
+            token_verifier=verifier,
+            principal_resolver=resolver,
+        ).authenticate(
+            f"Bearer {token}"
+        )
+
+    assert verifier.tokens == []
+    assert resolver.identities == []
