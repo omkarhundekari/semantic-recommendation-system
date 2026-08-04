@@ -56,6 +56,9 @@ def test_authenticated_principal_rejects_noncanonical_identity(
 
 def test_verified_oidc_identity_preserves_exact_values():
     identity = VerifiedOIDCIdentity(
+        identity_provider_id=(
+            "idp_123e4567-e89b-42d3-a456-426614174000"
+        ),
         issuer="https://issuer.example/path",
         subject="CaseSensitiveSubject",
     )
@@ -70,6 +73,14 @@ def test_verified_oidc_identity_preserves_exact_values():
 @pytest.mark.parametrize(
     ("field", "value"),
     [
+        (
+            "identity_provider_id",
+            " idp_123e4567-e89b-42d3-a456-426614174000 ",
+        ),
+        (
+            "identity_provider_id",
+            "provider_123e4567-e89b-42d3-a456-426614174000",
+        ),
         ("issuer", " https://issuer.example "),
         ("subject", " subject "),
         ("issuer", ""),
@@ -81,6 +92,9 @@ def test_verified_oidc_identity_rejects_noncanonical_values(
     value,
 ):
     values = {
+        "identity_provider_id": (
+            "idp_123e4567-e89b-42d3-a456-426614174000"
+        ),
         "issuer": "https://issuer.example",
         "subject": "subject",
     }

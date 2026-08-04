@@ -31,6 +31,7 @@ TOKEN = "signed-token"
 
 def _identity():
     return VerifiedOIDCIdentity(
+        identity_provider_id="idp_123e4567-e89b-42d3-a456-426614174000",
         issuer=ISSUER,
         subject=SUBJECT,
     )

@@ -21,8 +21,31 @@ class VerifiedOIDCIdentity(BaseModel):
         extra="forbid",
     )
 
+    identity_provider_id: str = Field(
+        min_length=1
+    )
     issuer: str = Field(min_length=1)
     subject: str = Field(min_length=1)
+
+    @field_validator("identity_provider_id")
+    @classmethod
+    def validate_identity_provider_id(
+        cls,
+        value: str,
+    ) -> str:
+        if value != value.strip():
+            raise ValueError(
+                "Verified OIDC identity provider ID "
+                "must not contain surrounding whitespace."
+            )
+
+        if not value.startswith("idp_"):
+            raise ValueError(
+                "Verified OIDC identity provider ID "
+                "must start with 'idp_'."
+            )
+
+        return value
 
     @field_validator(
         "issuer",

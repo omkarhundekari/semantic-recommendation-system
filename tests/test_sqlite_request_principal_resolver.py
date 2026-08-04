@@ -145,13 +145,49 @@ def _insert_identity_graph(
 
 def _identity(
     *,
+    identity_provider_id=PROVIDER_ID,
     issuer=ISSUER,
     subject=SUBJECT,
 ):
     return VerifiedOIDCIdentity(
+        identity_provider_id=identity_provider_id,
         issuer=issuer,
         subject=subject,
     )
+
+
+def test_verified_identity_is_bound_to_exact_provider(
+    database_path: Path,
+):
+    _insert_identity_graph(database_path)
+
+    resolver = SQLiteRequestPrincipalResolver(
+        database_path
+    )
+
+    expected = _identity()
+
+    resolved = resolver.resolve(expected)
+
+    assert resolved.identity_provider_id == PROVIDER_ID
+    assert (
+        resolved.identity_provider_id
+        == expected.identity_provider_id
+    )
+
+    forged_provider_identity = _identity(
+        identity_provider_id=(
+            "idp_223e4567-e89b-42d3-a456-426614174000"
+        )
+    )
+
+    with pytest.raises(
+        RequestPrincipalNotFoundError,
+        match="does not exist or is not active",
+    ):
+        resolver.resolve(
+            forged_provider_identity
+        )
 
 
 def test_resolves_enabled_provider_active_link_and_principal(

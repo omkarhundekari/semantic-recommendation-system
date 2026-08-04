@@ -75,13 +75,15 @@ class SQLiteRequestPrincipalResolver(
                             principal.principal_id =
                                 link.principal_id
                     WHERE
-                        provider.issuer = ?
+                        provider.identity_provider_id = ?
+                        AND provider.issuer = ?
                         AND provider.status = 'active'
                         AND link.subject = ?
                         AND link.status = 'active'
                         AND principal.status = 'active'
                     """,
                     (
+                        identity.identity_provider_id,
                         identity.issuer,
                         identity.subject,
                     ),
