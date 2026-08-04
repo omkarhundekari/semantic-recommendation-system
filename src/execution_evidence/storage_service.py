@@ -11,6 +11,9 @@ from execution_evidence.sqlite_store import (
 from execution_evidence.sqlite_execution_event_store import (
     SQLiteExecutionEventStore,
 )
+from execution_evidence.authorized_project_context import (
+    AuthorizedProjectContext,
+)
 from execution_evidence.store import (
     RepositoryEvidenceStore,
 )
@@ -146,10 +149,41 @@ class TrustedSQLiteStorageService:
             self._workspace_id
         )
 
+    def build_execution_event_store_for_authorized_project(
+        self,
+        context: AuthorizedProjectContext,
+    ) -> SQLiteExecutionEventStore:
+        """Build a user-request store from proven tenancy scope.
+
+        User-facing request paths must use this factory
+        after project authorization rather than supplying
+        a loose workspace identifier.
+        """
+        if not isinstance(
+            context,
+            AuthorizedProjectContext,
+        ):
+            raise TypeError(
+                "Authorized project execution-event "
+                "storage requires an authorized project "
+                "context."
+            )
+
+        return self.build_execution_event_store_for_workspace(
+            context.workspace_id
+        )
+
     def build_execution_event_store_for_workspace(
         self,
         workspace_id: str,
     ) -> SQLiteExecutionEventStore:
+        """Build a store for previously authenticated scope.
+
+        This lower-level factory remains available for
+        trusted non-user flows such as authenticated
+        source routing. User request routes must prefer
+        build_execution_event_store_for_authorized_project.
+        """
         if not isinstance(workspace_id, str):
             raise ValueError(
                 "Execution event store workspace ID "

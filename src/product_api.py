@@ -186,6 +186,26 @@ from execution_evidence.trusted_store import (
     TrustedStoreInitializationError,
     initialize_fresh_trusted_store,
 )
+from execution_evidence.authenticated_request_principal import (
+    AuthenticatedRequestPrincipal,
+)
+from execution_evidence.authorized_project_context import (
+    AuthorizedProjectContext,
+)
+from execution_evidence.request_authenticator import (
+    RequestAuthenticationFailedError,
+    RequestAuthenticationRequiredError,
+    RequestAuthenticationUnavailableError,
+    RequestAuthenticator,
+)
+from execution_evidence.project_access_service import (
+    ProjectAccessNotFoundError,
+    ProjectAccessService,
+    ProjectAccessStoreError,
+)
+from execution_evidence.sqlite_project_access_service import (
+    SQLiteProjectAccessService,
+)
 
 
 app = FastAPI(
@@ -487,6 +507,146 @@ def get_execution_event_projection_service(
         get_execution_event_store
     ),
 ) -> ExecutionEventProjectionService:
+    return ExecutionEventProjectionService(
+        store=event_store
+    )
+
+
+def get_request_authenticator(
+) -> RequestAuthenticator:
+    """Return the configured interactive request authenticator.
+
+    Production OIDC runtime configuration is wired in the
+    next authentication-runtime slice. Tests may override
+    this dependency directly.
+    """
+    raise HTTPException(
+        status_code=503,
+        detail=(
+            "Request authentication runtime is "
+            "temporarily unavailable."
+        ),
+    )
+
+
+def get_authenticated_request_principal(
+    authorization: Optional[str] = Header(
+        default=None,
+        alias="Authorization",
+    ),
+    authenticator: RequestAuthenticator = Depends(
+        get_request_authenticator
+    ),
+) -> AuthenticatedRequestPrincipal:
+    try:
+        return authenticator.authenticate(
+            authorization
+        )
+    except RequestAuthenticationRequiredError as error:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication is required.",
+            headers={
+                "WWW-Authenticate": "Bearer",
+            },
+        ) from error
+    except RequestAuthenticationFailedError as error:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+            headers={
+                "WWW-Authenticate": "Bearer",
+            },
+        ) from error
+    except RequestAuthenticationUnavailableError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Request authentication is temporarily "
+                "unavailable."
+            ),
+        ) from error
+
+
+def get_project_access_service(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> ProjectAccessService:
+    if runtime.trusted_sqlite_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Project authorization storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return SQLiteProjectAccessService(
+        runtime.trusted_sqlite_service.path
+    )
+
+
+def get_authorized_project_context(
+    workspace_id: str,
+    project_id: str,
+    principal: AuthenticatedRequestPrincipal = Depends(
+        get_authenticated_request_principal
+    ),
+    access_service: ProjectAccessService = Depends(
+        get_project_access_service
+    ),
+) -> AuthorizedProjectContext:
+    try:
+        return access_service.authorize(
+            principal=principal,
+            workspace_id=workspace_id,
+            project_id=project_id,
+        )
+    except ProjectAccessNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail="Project does not exist.",
+        ) from error
+    except ProjectAccessStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Project authorization storage is "
+                "temporarily unavailable."
+            ),
+        ) from error
+    except (TypeError, ValueError) as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
+
+
+def get_authorized_execution_event_projection_service(
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
+    ),
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> ExecutionEventProjectionService:
+    if runtime.trusted_sqlite_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Durable execution event storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    event_store = (
+        runtime.trusted_sqlite_service
+        .build_execution_event_store_for_authorized_project(
+            context
+        )
+    )
+
     return ExecutionEventProjectionService(
         store=event_store
     )
@@ -850,16 +1010,21 @@ def build_inference_options(candidate_families: List[Dict]) -> List[str]:
 
 @app.get(
     (
-        "/v1/projects/{project_id}/"
+        "/v1/workspaces/{workspace_id}/"
+        "projects/{project_id}/"
         "execution-evidence/events/lineage"
     ),
     response_model=ExecutionEventLineageResponse,
 )
 def get_project_execution_event_lineage(
+    workspace_id: str,
     project_id: str,
     request: Request,
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
+    ),
     service: ExecutionEventProjectionService = Depends(
-        get_execution_event_projection_service
+        get_authorized_execution_event_projection_service
     ),
 ) -> ExecutionEventLineageResponse:
     pagination_parameters = (
@@ -917,7 +1082,7 @@ def get_project_execution_event_lineage(
 
     try:
         projection = service.project_lineage(
-            project_id
+            context.project_id
         )
     except (
         ExecutionEventProjectionUnsupportedStoreError
