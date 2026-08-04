@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from uuid import UUID
+
+from execution_evidence.workspace_membership import (
+    WorkspaceMembershipRole,
+)
 
 from pydantic import (
     BaseModel,
@@ -26,6 +32,9 @@ class AuthorizedProjectContext(BaseModel):
 
     principal_id: str = Field(min_length=1)
     membership_id: str = Field(min_length=1)
+    membership_role: Optional[
+        WorkspaceMembershipRole
+    ] = None
     workspace_id: str = Field(min_length=1)
     project_id: str = Field(min_length=1)
 

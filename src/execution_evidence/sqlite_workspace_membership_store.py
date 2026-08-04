@@ -74,6 +74,12 @@ class SQLiteWorkspaceMembershipStore(
                 "active."
             )
 
+        if membership.role is not None:
+            raise WorkspaceMembershipTransitionError(
+                "New workspace memberships must begin "
+                "without an assigned role."
+            )
+
         if membership.revision != 0:
             raise WorkspaceMembershipTransitionError(
                 "New workspace memberships must begin "
@@ -184,19 +190,21 @@ class SQLiteWorkspaceMembershipStore(
                     workspace_id,
                     principal_id,
                     status,
+                    role,
                     revision,
                     created_by_principal_id,
                     created_at,
                     updated_at,
                     status_changed_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     membership.membership_id,
                     membership.workspace_id,
                     membership.principal_id,
                     membership.status,
+                    membership.role,
                     membership.revision,
                     membership.created_by_principal_id,
                     membership.created_at.isoformat(),
@@ -306,6 +314,7 @@ class SQLiteWorkspaceMembershipStore(
                     workspace_id,
                     principal_id,
                     status,
+                    role,
                     revision,
                     created_by_principal_id,
                     created_at,
@@ -409,6 +418,7 @@ class SQLiteWorkspaceMembershipStore(
                     workspace_id,
                     principal_id,
                     status,
+                    role,
                     revision,
                     created_by_principal_id,
                     created_at,
@@ -700,6 +710,7 @@ class SQLiteWorkspaceMembershipStore(
                 workspace_id,
                 principal_id,
                 status,
+                role,
                 revision,
                 created_by_principal_id,
                 created_at,
@@ -732,6 +743,7 @@ class SQLiteWorkspaceMembershipStore(
             workspace_id=row["workspace_id"],
             principal_id=row["principal_id"],
             status=row["status"],
+            role=row["role"],
             revision=int(row["revision"]),
             created_by_principal_id=row[
                 "created_by_principal_id"

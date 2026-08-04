@@ -28,6 +28,7 @@ EXPECTED_TABLES = {
     "roadmap_registry",
     "projects",
     "project_execution_events",
+    "workspace_membership_role_transitions",
 }
 
 EXPECTED_INDEXES = {
@@ -53,6 +54,7 @@ EXPECTED_INDEXES = {
     "idx_project_execution_events_provider_replay",
     "idx_project_execution_events_supersedes",
     "idx_project_execution_events_lineage_order",
+    "idx_workspace_membership_role_history",
 }
 
 

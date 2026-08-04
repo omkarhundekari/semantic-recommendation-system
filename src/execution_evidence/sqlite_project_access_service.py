@@ -69,6 +69,7 @@ class SQLiteProjectAccessService(
                 SELECT
                     principal.principal_id,
                     membership.membership_id,
+                    membership.role,
                     membership.workspace_id,
                     project.project_id
                 FROM principals AS principal
@@ -103,6 +104,7 @@ class SQLiteProjectAccessService(
             return AuthorizedProjectContext(
                 principal_id=row["principal_id"],
                 membership_id=row["membership_id"],
+                membership_role=row["role"],
                 workspace_id=row["workspace_id"],
                 project_id=row["project_id"],
             )

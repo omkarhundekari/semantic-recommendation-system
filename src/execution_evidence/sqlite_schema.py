@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 19
+CURRENT_SQLITE_SCHEMA_VERSION = 20
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -1813,6 +1813,323 @@ PRAGMA user_version = 16;
 """
 
 
+ADD_WORKSPACE_MEMBERSHIP_ROLE_FOUNDATION_SQL = """
+ALTER TABLE workspace_memberships
+ADD COLUMN role TEXT
+    CHECK (
+        role IS NULL
+        OR role IN (
+            'owner',
+            'admin',
+            'member',
+            'viewer'
+        )
+    );
+
+CREATE TABLE workspace_membership_role_transitions (
+    role_transition_id TEXT PRIMARY KEY,
+    membership_row_id INTEGER NOT NULL,
+    membership_id TEXT NOT NULL,
+    workspace_id TEXT NOT NULL,
+    principal_id TEXT NOT NULL,
+    previous_role TEXT
+        CHECK (
+            previous_role IS NULL
+            OR previous_role IN (
+                'owner',
+                'admin',
+                'member',
+                'viewer'
+            )
+        ),
+    new_role TEXT NOT NULL
+        CHECK (
+            new_role IN (
+                'owner',
+                'admin',
+                'member',
+                'viewer'
+            )
+        ),
+    previous_revision INTEGER NOT NULL
+        CHECK (previous_revision >= 0),
+    resulting_revision INTEGER NOT NULL
+        CHECK (resulting_revision >= 1),
+    changed_at TEXT NOT NULL,
+    changed_by_principal_id TEXT,
+    reason TEXT,
+    FOREIGN KEY (membership_row_id)
+        REFERENCES workspace_memberships(
+            membership_row_id
+        )
+        ON DELETE RESTRICT,
+    FOREIGN KEY (workspace_id)
+        REFERENCES workspaces(workspace_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (changed_by_principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT,
+    UNIQUE (
+        membership_row_id,
+        resulting_revision
+    ),
+    CHECK (
+        previous_role IS NOT new_role
+        AND resulting_revision =
+            previous_revision + 1
+    )
+);
+
+CREATE INDEX
+    idx_workspace_membership_role_history
+ON workspace_membership_role_transitions(
+    membership_row_id,
+    resulting_revision ASC
+);
+
+CREATE TRIGGER
+    validate_workspace_membership_role_transition_insert
+BEFORE INSERT
+ON workspace_membership_role_transitions
+BEGIN
+    SELECT CASE
+        WHEN NOT EXISTS (
+            SELECT 1
+            FROM workspace_memberships AS membership
+            WHERE
+                membership.membership_row_id =
+                    NEW.membership_row_id
+                AND membership.membership_id =
+                    NEW.membership_id
+                AND membership.workspace_id =
+                    NEW.workspace_id
+                AND membership.principal_id =
+                    NEW.principal_id
+                AND membership.role IS NEW.previous_role
+                AND membership.revision =
+                    NEW.previous_revision
+        )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership role transition does not match current state'
+        )
+    END;
+
+    SELECT CASE
+        WHEN EXISTS (
+            SELECT 1
+            FROM workspace_membership_status_transitions
+                AS status_transition
+            WHERE
+                status_transition.membership_row_id =
+                    NEW.membership_row_id
+                AND status_transition.resulting_revision =
+                    NEW.resulting_revision
+        )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership revision is already consumed by a status transition'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    prevent_status_transition_role_revision_collision
+BEFORE INSERT
+ON workspace_membership_status_transitions
+BEGIN
+    SELECT CASE
+        WHEN EXISTS (
+            SELECT 1
+            FROM workspace_membership_role_transitions
+                AS role_transition
+            WHERE
+                role_transition.membership_row_id =
+                    NEW.membership_row_id
+                AND role_transition.resulting_revision =
+                    NEW.resulting_revision
+        )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership revision is already consumed by a role transition'
+        )
+    END;
+END;
+
+DROP TRIGGER
+    validate_workspace_membership_initial_state;
+
+CREATE TRIGGER
+    validate_workspace_membership_initial_state
+BEFORE INSERT
+ON workspace_memberships
+BEGIN
+    SELECT CASE
+        WHEN
+            NEW.status <> 'active'
+            OR NEW.role IS NOT NULL
+            OR NEW.revision <> 0
+            OR NEW.updated_at <> NEW.created_at
+            OR NEW.status_changed_at <> NEW.created_at
+        THEN RAISE(
+            ABORT,
+            'Workspace memberships must begin active, unassigned, and at revision zero'
+        )
+    END;
+END;
+
+DROP TRIGGER
+    validate_workspace_membership_state_update;
+
+CREATE TRIGGER
+    validate_workspace_membership_state_update
+BEFORE UPDATE OF
+    status,
+    role,
+    revision,
+    updated_at,
+    status_changed_at
+ON workspace_memberships
+WHEN
+    OLD.status IS NOT NEW.status
+    OR OLD.role IS NOT NEW.role
+    OR OLD.revision <> NEW.revision
+    OR OLD.updated_at <> NEW.updated_at
+    OR OLD.status_changed_at <> NEW.status_changed_at
+BEGIN
+    SELECT CASE
+        WHEN OLD.status = 'removed'
+        THEN RAISE(
+            ABORT,
+            'Removed workspace memberships are terminal'
+        )
+    END;
+
+    SELECT CASE
+        WHEN
+            OLD.status IS NOT NEW.status
+            AND OLD.role IS NOT NEW.role
+        THEN RAISE(
+            ABORT,
+            'Workspace membership status and role cannot change in one mutation'
+        )
+    END;
+
+    SELECT CASE
+        WHEN
+            OLD.status IS NEW.status
+            AND OLD.role IS NEW.role
+        THEN RAISE(
+            ABORT,
+            'Workspace membership revision changes require a status or role transition'
+        )
+    END;
+
+    SELECT CASE
+        WHEN
+            OLD.status IS NOT NEW.status
+            AND NOT EXISTS (
+                SELECT 1
+                FROM workspace_membership_status_transitions
+                    AS transition
+                WHERE
+                    transition.membership_row_id =
+                        OLD.membership_row_id
+                    AND transition.previous_status =
+                        OLD.status
+                    AND transition.new_status =
+                        NEW.status
+                    AND transition.previous_revision =
+                        OLD.revision
+                    AND transition.resulting_revision =
+                        NEW.revision
+                    AND transition.changed_at =
+                        NEW.status_changed_at
+                    AND transition.changed_at =
+                        NEW.updated_at
+                    AND OLD.role IS NEW.role
+            )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership status changes require an authoritative transition'
+        )
+    END;
+
+    SELECT CASE
+        WHEN
+            OLD.role IS NOT NEW.role
+            AND NOT EXISTS (
+                SELECT 1
+                FROM workspace_membership_role_transitions
+                    AS transition
+                WHERE
+                    transition.membership_row_id =
+                        OLD.membership_row_id
+                    AND transition.previous_role
+                        IS OLD.role
+                    AND transition.new_role
+                        IS NEW.role
+                    AND transition.previous_revision =
+                        OLD.revision
+                    AND transition.resulting_revision =
+                        NEW.revision
+                    AND transition.changed_at =
+                        NEW.updated_at
+                    AND OLD.status IS NEW.status
+                    AND OLD.status_changed_at =
+                        NEW.status_changed_at
+            )
+        THEN RAISE(
+            ABORT,
+            'Workspace membership role changes require an authoritative transition'
+        )
+    END;
+END;
+
+CREATE TRIGGER
+    apply_workspace_membership_role_transition
+AFTER INSERT
+ON workspace_membership_role_transitions
+BEGIN
+    UPDATE workspace_memberships
+    SET
+        role = NEW.new_role,
+        revision = NEW.resulting_revision,
+        updated_at = NEW.changed_at
+    WHERE
+        membership_row_id =
+            NEW.membership_row_id;
+END;
+
+CREATE TRIGGER
+    prevent_workspace_membership_role_transition_update
+BEFORE UPDATE
+ON workspace_membership_role_transitions
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Workspace membership role transitions are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_workspace_membership_role_transition_delete
+BEFORE DELETE
+ON workspace_membership_role_transitions
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Workspace membership role transitions cannot be deleted'
+    );
+END;
+
+PRAGMA user_version = 20;
+"""
+
+
 CREATE_PRINCIPAL_IDENTITY_FOUNDATION_SQL = """
 CREATE TABLE identity_providers (
     identity_provider_row_id INTEGER
@@ -2501,6 +2818,15 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=19,
         name="create_github_source_binding_foundation",
         sql=CREATE_GITHUB_SOURCE_BINDING_FOUNDATION_SQL,
+    ),
+    SQLiteMigration(
+        version=20,
+        name=(
+            "add_workspace_membership_role_foundation"
+        ),
+        sql=(
+            ADD_WORKSPACE_MEMBERSHIP_ROLE_FOUNDATION_SQL
+        ),
     ),
 )
 

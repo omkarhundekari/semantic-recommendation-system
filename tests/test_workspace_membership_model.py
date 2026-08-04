@@ -7,8 +7,10 @@ from pydantic import ValidationError
 
 from execution_evidence.workspace_membership import (
     WorkspaceMembership,
+    WorkspaceMembershipRoleTransition,
     WorkspaceMembershipTransition,
     create_workspace_membership_id,
+    create_workspace_membership_role_transition_id,
     create_workspace_membership_transition_id,
 )
 
@@ -63,6 +65,187 @@ def test_transition_id_is_random_uuid4():
     assert first != second
     assert first.startswith("wmt_")
     assert second.startswith("wmt_")
+
+
+def test_role_transition_id_is_random_uuid4():
+    first = (
+        create_workspace_membership_role_transition_id()
+    )
+    second = (
+        create_workspace_membership_role_transition_id()
+    )
+
+    assert first != second
+    assert first.startswith("wmr_")
+    assert second.startswith("wmr_")
+
+
+def test_membership_role_is_unassigned_by_default():
+    membership = _membership()
+
+    assert membership.role is None
+
+
+def test_role_transition_rejects_noncanonical_id():
+    with pytest.raises(
+        ValidationError,
+        match="canonical UUID4",
+    ):
+        WorkspaceMembershipRoleTransition(
+            transition_id=(
+                "wmr_00000000-0000-1000-"
+                "8000-000000000001"
+            ),
+            membership_id=(
+                create_workspace_membership_id()
+            ),
+            workspace_id="workspace-test",
+            principal_id="prn_test",
+            previous_role=None,
+            new_role="owner",
+            previous_revision=0,
+            resulting_revision=1,
+            changed_at=NOW,
+        )
+
+
+def test_role_transition_assigns_first_role_after_genesis():
+    transition = WorkspaceMembershipRoleTransition(
+        transition_id=(
+            create_workspace_membership_role_transition_id()
+        ),
+        membership_id=(
+            create_workspace_membership_id()
+        ),
+        workspace_id="workspace-test",
+        principal_id="prn_test",
+        previous_role=None,
+        new_role="owner",
+        previous_revision=0,
+        resulting_revision=1,
+        changed_at=NOW,
+        changed_by_principal_id=None,
+    )
+
+    assert transition.previous_role is None
+    assert transition.new_role == "owner"
+    assert transition.previous_revision == 0
+    assert transition.resulting_revision == 1
+    assert transition.changed_by_principal_id is None
+
+
+def test_role_transition_requires_concrete_new_role():
+    with pytest.raises(ValidationError):
+        WorkspaceMembershipRoleTransition(
+            transition_id=(
+                create_workspace_membership_role_transition_id()
+            ),
+            membership_id=(
+                create_workspace_membership_id()
+            ),
+            workspace_id="workspace-test",
+            principal_id="prn_test",
+            previous_role=None,
+            new_role=None,
+            previous_revision=0,
+            resulting_revision=1,
+            changed_at=NOW,
+        )
+
+
+def test_role_transition_rejects_self_transition():
+    with pytest.raises(
+        ValidationError,
+        match="self-transitions",
+    ):
+        WorkspaceMembershipRoleTransition(
+            transition_id=(
+                create_workspace_membership_role_transition_id()
+            ),
+            membership_id=(
+                create_workspace_membership_id()
+            ),
+            workspace_id="workspace-test",
+            principal_id="prn_test",
+            previous_role="member",
+            new_role="member",
+            previous_revision=2,
+            resulting_revision=3,
+            changed_at=NOW,
+        )
+
+
+def test_role_transition_rejects_revision_jump():
+    with pytest.raises(
+        ValidationError,
+        match="advance exactly once",
+    ):
+        WorkspaceMembershipRoleTransition(
+            transition_id=(
+                create_workspace_membership_role_transition_id()
+            ),
+            membership_id=(
+                create_workspace_membership_id()
+            ),
+            workspace_id="workspace-test",
+            principal_id="prn_test",
+            previous_role=None,
+            new_role="owner",
+            previous_revision=0,
+            resulting_revision=2,
+            changed_at=NOW,
+        )
+
+
+def test_role_transition_requires_timezone_aware_time():
+    naive = datetime(
+        2026,
+        8,
+        2,
+        12,
+        0,
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="timezone-aware",
+    ):
+        WorkspaceMembershipRoleTransition(
+            transition_id=(
+                create_workspace_membership_role_transition_id()
+            ),
+            membership_id=(
+                create_workspace_membership_id()
+            ),
+            workspace_id="workspace-test",
+            principal_id="prn_test",
+            previous_role=None,
+            new_role="owner",
+            previous_revision=0,
+            resulting_revision=1,
+            changed_at=naive,
+        )
+
+
+def test_role_transition_reason_is_normalized():
+    transition = WorkspaceMembershipRoleTransition(
+        transition_id=(
+            create_workspace_membership_role_transition_id()
+        ),
+        membership_id=(
+            create_workspace_membership_id()
+        ),
+        workspace_id="workspace-test",
+        principal_id="prn_test",
+        previous_role=None,
+        new_role="owner",
+        previous_revision=0,
+        resulting_revision=1,
+        changed_at=NOW,
+        reason="  trusted bootstrap  ",
+    )
+
+    assert transition.reason == "trusted bootstrap"
 
 
 def test_membership_rejects_noncanonical_id():

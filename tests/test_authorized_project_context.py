@@ -51,3 +51,25 @@ def test_authorized_project_context_rejects_invalid_scope(
 ):
     with pytest.raises(ValidationError):
         _context(**{field: value})
+
+
+
+def test_authorized_project_context_defaults_to_unassigned_role():
+    context = _context()
+
+    assert context.membership_role is None
+
+
+def test_authorized_project_context_preserves_membership_role():
+    context = _context(
+        membership_role="owner"
+    )
+
+    assert context.membership_role == "owner"
+
+
+def test_authorized_project_context_rejects_unknown_role():
+    with pytest.raises(ValidationError):
+        _context(
+            membership_role="superuser"
+        )

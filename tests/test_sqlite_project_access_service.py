@@ -246,6 +246,7 @@ def test_authorizes_active_workspace_membership(
 
     assert context.principal_id == PRINCIPAL_ID
     assert context.membership_id == MEMBERSHIP_ONE
+    assert context.membership_role is None
     assert context.workspace_id == WORKSPACE_ONE
     assert context.project_id == PROJECT_ID
 
