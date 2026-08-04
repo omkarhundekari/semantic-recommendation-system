@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from datetime import datetime, timezone
+import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -206,6 +207,16 @@ from execution_evidence.project_access_service import (
 from execution_evidence.sqlite_project_access_service import (
     SQLiteProjectAccessService,
 )
+from execution_evidence.authentication_runtime import (
+    AuthenticationRuntime,
+    build_authentication_runtime,
+)
+from execution_evidence.environment_oidc_provider_config_source import (
+    EnvironmentOIDCProviderConfigSource,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI(
@@ -466,6 +477,15 @@ _execution_evidence_storage_runtime = (
 )
 
 
+_authentication_runtime = build_authentication_runtime(
+    config_source=EnvironmentOIDCProviderConfigSource(),
+    trusted_sqlite_service=(
+        _execution_evidence_storage_runtime
+        .trusted_sqlite_service
+    ),
+)
+
+
 def get_execution_evidence_storage_runtime(
 ) -> ExecutionEvidenceStorageRuntime:
     return _execution_evidence_storage_runtime
@@ -512,21 +532,55 @@ def get_execution_event_projection_service(
     )
 
 
-def get_request_authenticator(
-) -> RequestAuthenticator:
-    """Return the configured interactive request authenticator.
+def get_authentication_runtime(
+) -> AuthenticationRuntime:
+    return _authentication_runtime
 
-    Production OIDC runtime configuration is wired in the
-    next authentication-runtime slice. Tests may override
-    this dependency directly.
-    """
-    raise HTTPException(
-        status_code=503,
-        detail=(
-            "Request authentication runtime is "
-            "temporarily unavailable."
-        ),
-    )
+
+def get_request_authenticator(
+    runtime: AuthenticationRuntime = Depends(
+        get_authentication_runtime
+    ),
+) -> RequestAuthenticator:
+    if not runtime.ready:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Request authentication runtime is "
+                "temporarily unavailable."
+            ),
+        )
+
+    authenticator = runtime.authenticator
+
+    if authenticator is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Request authentication runtime is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return authenticator
+
+
+@app.get(
+    "/v1/authentication/readiness"
+)
+def get_authentication_readiness(
+    runtime: AuthenticationRuntime = Depends(
+        get_authentication_runtime
+    ),
+):
+    # This endpoint is intentionally public so operators
+    # can distinguish authentication-runtime health even
+    # when interactive authentication itself is unavailable.
+    # Internal provider IDs and diagnostic details remain
+    # available through runtime logging, not this response.
+    return {
+        "status": runtime.status,
+    }
 
 
 def get_authenticated_request_principal(
