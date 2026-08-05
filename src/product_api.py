@@ -47,6 +47,7 @@ from planning.roadmap_execution_enrichment import (
     enrich_roadmap_for_execution,
 )
 from planning.roadmap_registry import (
+    SQLiteRoadmapSnapshotRegistry,
     ProjectNotFoundError,
     ProjectRevisionConflictError,
     ProjectStatus,
@@ -772,11 +773,66 @@ def get_github_webhook_ingestion_service(
     )
 
 
+def get_authorized_roadmap_registry(
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
+    ),
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLiteRoadmapSnapshotRegistry:
+    """Bind lifecycle storage to the authorized workspace."""
+
+    if not isinstance(
+        context,
+        AuthorizedProjectContext,
+    ):
+        raise TypeError(
+            "Authorized project context is required."
+        )
+
+    if not isinstance(
+        runtime,
+        ExecutionEvidenceStorageRuntime,
+    ):
+        raise TypeError(
+            "Execution evidence storage runtime is required."
+        )
+
+    base_registry = runtime.roadmap_registry
+
+    if not isinstance(
+        base_registry,
+        SQLiteRoadmapSnapshotRegistry,
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted project lifecycle storage is "
+                "unavailable. Migrate execution evidence "
+                "storage to trusted SQLite first."
+            ),
+        )
+
+    return SQLiteRoadmapSnapshotRegistry(
+        base_registry.path,
+        workspace_id=context.workspace_id,
+        initialize_schema=False,
+    )
+
+
 def get_roadmap_snapshot_registry(
     runtime: ExecutionEvidenceStorageRuntime = Depends(
         get_execution_evidence_storage_runtime
     ),
 ) -> Optional[RoadmapSnapshotRegistry]:
+    """Return the runtime's workspace-defaulted roadmap registry.
+
+    This dependency is not authorization-context-bound and must
+    not be used by routes that already hold an
+    AuthorizedProjectContext. Such routes must construct their
+    registry from the authorized workspace instead.
+    """
     if not isinstance(
         runtime,
         ExecutionEvidenceStorageRuntime,
@@ -1785,33 +1841,25 @@ def list_execution_evidence_attributions(
 
 
 @app.post(
-    "/v1/projects/{project_id}/status",
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/status",
     response_model=ProjectStatusMutationResult,
 )
 def transition_project_status(
+    workspace_id: str,
     project_id: str,
     request: ProjectStatusTransitionRequest,
-    roadmap_registry: Optional[
-        RoadmapSnapshotRegistry
-    ] = Depends(
-        get_roadmap_snapshot_registry
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
+    ),
+    roadmap_registry: SQLiteRoadmapSnapshotRegistry = Depends(
+        get_authorized_roadmap_registry
     ),
 ) -> ProjectStatusMutationResult:
-    if roadmap_registry is None:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Trusted project lifecycle storage is "
-                "unavailable. Migrate execution evidence "
-                "storage to trusted SQLite first."
-            ),
-        )
-
     try:
         return (
             roadmap_registry
             .transition_project_status(
-                project_id,
+                context.project_id,
                 new_status=request.status,
                 changed_at=datetime.now(
                     timezone.utc
@@ -1846,32 +1894,24 @@ def transition_project_status(
 
 
 @app.get(
-    "/v1/projects/{project_id}/status-transitions",
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/status-transitions",
     response_model=List[ProjectStatusTransition],
 )
 def list_project_status_transition_history(
+    workspace_id: str,
     project_id: str,
-    roadmap_registry: Optional[
-        RoadmapSnapshotRegistry
-    ] = Depends(
-        get_roadmap_snapshot_registry
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
+    ),
+    roadmap_registry: SQLiteRoadmapSnapshotRegistry = Depends(
+        get_authorized_roadmap_registry
     ),
 ) -> List[ProjectStatusTransition]:
-    if roadmap_registry is None:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Trusted project lifecycle storage is "
-                "unavailable. Migrate execution evidence "
-                "storage to trusted SQLite first."
-            ),
-        )
-
     try:
         return (
             roadmap_registry
             .list_project_status_transitions(
-                project_id
+                context.project_id
             )
         )
     except ProjectNotFoundError as error:

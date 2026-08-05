@@ -216,8 +216,7 @@ class SQLiteRoadmapSnapshotRegistry(
             initialize_execution_evidence_database(
                 self._path
             )
-
-        self._ensure_workspace()
+            self._ensure_workspace()
 
     @property
     def path(self) -> Path:
