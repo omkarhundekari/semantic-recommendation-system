@@ -103,6 +103,7 @@ class WorkspaceMembershipStore(ABC):
         changed_at: datetime,
         expected_revision: int,
         reason: Optional[str] = None,
+        changed_by_principal_id: Optional[str] = None,
     ) -> WorkspaceMembershipMutationResult:
         raise NotImplementedError
 

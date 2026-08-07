@@ -226,7 +226,7 @@ def _assign_role(
     )
 
 
-def test_role_foundation_is_schema_version_20(
+def test_current_schema_includes_role_foundation(
     tmp_path: Path,
 ):
     path = tmp_path / "solvyn.db"
@@ -237,8 +237,8 @@ def test_role_foundation_is_schema_version_20(
         )
     )
 
-    assert version == 20
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 20
+    assert version == 21
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 21
 
 
 def test_fresh_schema_contains_role_foundation(
@@ -384,14 +384,14 @@ def test_version_19_membership_upgrades_unassigned(
             get_execution_evidence_schema_version(
                 connection
             )
-            == 20
+            == 21
         )
 
         assert int(
             connection.execute(
                 "PRAGMA user_version"
             ).fetchone()[0]
-        ) == 20
+        ) == 21
     finally:
         connection.close()
 

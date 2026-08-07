@@ -328,6 +328,10 @@ class WorkspaceMembershipTransition(BaseModel):
     resulting_revision: int = Field(ge=0)
 
     changed_at: datetime
+    changed_by_principal_id: Optional[str] = Field(
+        default=None,
+        min_length=1,
+    )
     reason: Optional[str] = None
 
     @field_validator(
@@ -384,6 +388,26 @@ class WorkspaceMembershipTransition(BaseModel):
                 "Workspace membership transition "
                 "identity values must not contain "
                 "surrounding whitespace."
+            )
+
+        return value
+
+    @field_validator(
+        "changed_by_principal_id",
+    )
+    @classmethod
+    def validate_changed_by_principal_id(
+        cls,
+        value: Optional[str],
+    ) -> Optional[str]:
+        if value is None:
+            return None
+
+        if value != value.strip():
+            raise ValueError(
+                "Workspace membership transition "
+                "actor must not contain surrounding "
+                "whitespace."
             )
 
         return value

@@ -373,6 +373,7 @@ class SQLiteWorkspaceMembershipStore(
         changed_at,
         expected_revision: int,
         reason: Optional[str] = None,
+        changed_by_principal_id: Optional[str] = None,
     ) -> WorkspaceMembershipMutationResult:
         self._validate_identifier(
             membership_id,
@@ -400,6 +401,22 @@ class SQLiteWorkspaceMembershipStore(
             and reason.strip()
             else None
         )
+
+        if changed_by_principal_id is not None:
+            if not changed_by_principal_id:
+                raise ValueError(
+                    "Membership transition actor must "
+                    "be non-empty."
+                )
+
+            if (
+                changed_by_principal_id
+                != changed_by_principal_id.strip()
+            ):
+                raise ValueError(
+                    "Membership transition actor must "
+                    "not contain surrounding whitespace."
+                )
 
         connection = (
             connect_execution_evidence_database(
@@ -506,6 +523,9 @@ class SQLiteWorkspaceMembershipStore(
                 previous_revision=current_revision,
                 resulting_revision=next_revision,
                 changed_at=changed_at,
+                changed_by_principal_id=(
+                    changed_by_principal_id
+                ),
                 reason=normalized_reason,
             )
 
@@ -523,9 +543,12 @@ class SQLiteWorkspaceMembershipStore(
                         previous_revision,
                         resulting_revision,
                         changed_at,
+                        changed_by_principal_id,
                         reason
                     )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
                 """,
                 (
                     transition.transition_id,
@@ -540,6 +563,7 @@ class SQLiteWorkspaceMembershipStore(
                     transition.previous_revision,
                     transition.resulting_revision,
                     transition.changed_at.isoformat(),
+                    transition.changed_by_principal_id,
                     transition.reason,
                 ),
             )
@@ -638,6 +662,7 @@ class SQLiteWorkspaceMembershipStore(
                     previous_revision,
                     resulting_revision,
                     changed_at,
+                    changed_by_principal_id,
                     reason
                 FROM workspace_membership_status_transitions
                 WHERE membership_row_id = ?
@@ -682,6 +707,9 @@ class SQLiteWorkspaceMembershipStore(
                     ),
                     changed_at=row[
                         "changed_at"
+                    ],
+                    changed_by_principal_id=row[
+                        "changed_by_principal_id"
                     ],
                     reason=row["reason"],
                 )

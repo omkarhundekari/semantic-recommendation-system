@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 20
+CURRENT_SQLITE_SCHEMA_VERSION = 21
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -2130,6 +2130,16 @@ PRAGMA user_version = 20;
 """
 
 
+ADD_WORKSPACE_MEMBERSHIP_STATUS_ACTOR_SQL = """
+ALTER TABLE workspace_membership_status_transitions
+ADD COLUMN changed_by_principal_id TEXT
+    REFERENCES principals(principal_id)
+    ON DELETE RESTRICT;
+
+PRAGMA user_version = 21;
+"""
+
+
 CREATE_PRINCIPAL_IDENTITY_FOUNDATION_SQL = """
 CREATE TABLE identity_providers (
     identity_provider_row_id INTEGER
@@ -2826,6 +2836,15 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         ),
         sql=(
             ADD_WORKSPACE_MEMBERSHIP_ROLE_FOUNDATION_SQL
+        ),
+    ),
+    SQLiteMigration(
+        version=21,
+        name=(
+            "add_workspace_membership_status_actor"
+        ),
+        sql=(
+            ADD_WORKSPACE_MEMBERSHIP_STATUS_ACTOR_SQL
         ),
     ),
 )
