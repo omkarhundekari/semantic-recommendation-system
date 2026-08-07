@@ -12,7 +12,9 @@ from fastapi import (
     HTTPException,
     Request,
 )
+from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
+from pydantic import ConfigDict, ValidationError, field_validator, model_validator
 from fastapi.middleware.cors import CORSMiddleware
 
 from feasibility_scorer import score_project_feasibility
@@ -923,6 +925,197 @@ def get_authorized_execution_evidence_attribution_service(
     )
 
 
+
+class ProjectScopedAttributionIdentityRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    project_direction_id: Optional[str] = None
+    roadmap_snapshot_id: Optional[str] = None
+
+    @field_validator(
+        "project_direction_id",
+        "roadmap_snapshot_id",
+        mode="before",
+    )
+    @classmethod
+    def normalize_optional_identity(
+        cls,
+        value,
+    ):
+        if value is None:
+            return None
+
+        if not isinstance(value, str):
+            return value
+
+        normalized = value.strip()
+
+        if not normalized:
+            raise ValueError(
+                "Attribution identity values must not "
+                "be blank."
+            )
+
+        return normalized
+
+    @model_validator(mode="after")
+    def require_roadmap_identity(
+        self,
+    ):
+        if (
+            self.project_direction_id is None
+            and self.roadmap_snapshot_id is None
+        ):
+            raise ValueError(
+                "Either project_direction_id or "
+                "roadmap_snapshot_id is required."
+            )
+
+        return self
+
+
+class ProjectScopedEvidenceAttributionAttachRequest(
+    ProjectScopedAttributionIdentityRequest
+):
+    repository_key: str
+    evidence_key: str
+    roadmap_node_id: str
+    rationale: str = ""
+    expected_revision: Optional[int] = Field(
+        default=None,
+        ge=0,
+    )
+
+    @field_validator(
+        "repository_key",
+        "evidence_key",
+        "roadmap_node_id",
+        mode="before",
+    )
+    @classmethod
+    def normalize_required_identity(
+        cls,
+        value,
+    ):
+        if not isinstance(value, str):
+            return value
+
+        normalized = value.strip()
+
+        if not normalized:
+            raise ValueError(
+                "Attribution identity values must not "
+                "be blank."
+            )
+
+        return normalized
+
+    @field_validator(
+        "rationale",
+        mode="before",
+    )
+    @classmethod
+    def normalize_rationale(
+        cls,
+        value,
+    ):
+        if not isinstance(value, str):
+            return value
+
+        return value.strip()
+
+
+class ProjectScopedEvidenceAttributionDetachRequest(
+    ProjectScopedAttributionIdentityRequest
+):
+    repository_key: str
+    evidence_key: str
+    roadmap_node_id: str
+    expected_revision: Optional[int] = Field(
+        default=None,
+        ge=0,
+    )
+
+    @field_validator(
+        "repository_key",
+        "evidence_key",
+        "roadmap_node_id",
+        mode="before",
+    )
+    @classmethod
+    def normalize_required_identity(
+        cls,
+        value,
+    ):
+        if not isinstance(value, str):
+            return value
+
+        normalized = value.strip()
+
+        if not normalized:
+            raise ValueError(
+                "Attribution identity values must not "
+                "be blank."
+            )
+
+        return normalized
+
+
+class ProjectScopedEvidenceAttributionListQuery(
+    ProjectScopedAttributionIdentityRequest
+):
+    repository_key: str
+    roadmap_node_id: Optional[str] = None
+
+    @field_validator(
+        "repository_key",
+        mode="before",
+    )
+    @classmethod
+    def normalize_repository_key(
+        cls,
+        value,
+    ):
+        if not isinstance(value, str):
+            return value
+
+        normalized = value.strip()
+
+        if not normalized:
+            raise ValueError(
+                "Repository key must not be blank."
+            )
+
+        return normalized
+
+    @field_validator(
+        "roadmap_node_id",
+        mode="before",
+    )
+    @classmethod
+    def normalize_optional_node_id(
+        cls,
+        value,
+    ):
+        if value is None:
+            return None
+
+        if not isinstance(value, str):
+            return value
+
+        normalized = value.strip()
+
+        if not normalized:
+            raise ValueError(
+                "Roadmap node ID must not be blank."
+            )
+
+        return normalized
+
+
+
 class ProjectStatusTransitionRequest(BaseModel):
     status: ProjectStatus
     reason: Optional[str] = Field(
@@ -1537,69 +1730,35 @@ def sync_execution_evidence_repository(
         ) from error
 
 
-def _load_trusted_attribution_roadmap(
+def _load_authorized_attribution_roadmap(
     *,
-    roadmap_registry: Optional[
-        RoadmapSnapshotRegistry
-    ],
+    roadmap_registry: SQLiteRoadmapSnapshotRegistry,
+    context: AuthorizedProjectContext,
     project_direction_id: Optional[str] = None,
-    project_id: Optional[str] = None,
     roadmap_snapshot_id: Optional[str] = None,
 ):
-    if roadmap_registry is None:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Trusted roadmap attribution is "
-                "unavailable. Migrate execution evidence "
-                "storage to trusted SQLite before using "
-                "durable attribution identities."
-            ),
-        )
-
-    has_durable_identity = (
-        project_id is not None
-        and roadmap_snapshot_id is not None
-    )
-
     try:
-        if has_durable_identity:
-            durable_roadmap = (
-                roadmap_registry
-                .load_by_durable_identity(
-                    project_id=project_id,
-                    roadmap_snapshot_id=(
-                        roadmap_snapshot_id
-                    ),
-                )
+        if project_direction_id is not None:
+            legacy_roadmap = roadmap_registry.load(
+                project_direction_id
             )
 
-            if project_direction_id is None:
-                stored_roadmap = durable_roadmap
-            else:
-                legacy_roadmap = roadmap_registry.load(
-                    project_direction_id
+            if (
+                legacy_roadmap is None
+                or legacy_roadmap.project_id
+                != context.project_id
+            ):
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        "Trusted project direction "
+                        "snapshot was not found."
+                    ),
                 )
 
-                if legacy_roadmap is None:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=(
-                            "Trusted project direction "
-                            "snapshot was not found."
-                        ),
-                    )
-
-                if legacy_roadmap.project_id != project_id:
-                    raise HTTPException(
-                        status_code=409,
-                        detail=(
-                            "project_id does not match the "
-                            "trusted project direction "
-                            "snapshot."
-                        ),
-                    )
-
+            if roadmap_snapshot_id is None:
+                stored_roadmap = legacy_roadmap
+            else:
                 if (
                     legacy_roadmap.roadmap_snapshot_id
                     != roadmap_snapshot_id
@@ -1613,6 +1772,16 @@ def _load_trusted_attribution_roadmap(
                         ),
                     )
 
+                durable_roadmap = (
+                    roadmap_registry
+                    .load_by_durable_identity(
+                        project_id=context.project_id,
+                        roadmap_snapshot_id=(
+                            roadmap_snapshot_id
+                        ),
+                    )
+                )
+
                 if durable_roadmap is None:
                     raise HTTPException(
                         status_code=409,
@@ -1623,11 +1792,49 @@ def _load_trusted_attribution_roadmap(
                         ),
                     )
 
+                if (
+                    durable_roadmap.project_direction_id
+                    != project_direction_id
+                ):
+                    raise HTTPException(
+                        status_code=409,
+                        detail=(
+                            "project_direction_id does not "
+                            "match the trusted durable "
+                            "roadmap identity."
+                        ),
+                    )
+
                 stored_roadmap = durable_roadmap
-        else:
-            stored_roadmap = roadmap_registry.load(
-                project_direction_id
+
+        elif roadmap_snapshot_id is not None:
+            stored_roadmap = (
+                roadmap_registry
+                .load_by_durable_identity(
+                    project_id=context.project_id,
+                    roadmap_snapshot_id=(
+                        roadmap_snapshot_id
+                    ),
+                )
             )
+
+            if stored_roadmap is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        "Trusted roadmap snapshot was "
+                        "not found."
+                    ),
+                )
+        else:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Either project_direction_id or "
+                    "roadmap_snapshot_id is required."
+                ),
+            )
+
     except HTTPException:
         raise
     except RoadmapRegistryError as error:
@@ -1639,32 +1846,12 @@ def _load_trusted_attribution_roadmap(
             ),
         ) from error
 
-    if stored_roadmap is None:
-        if project_direction_id is not None:
-            detail = (
-                "Trusted project direction snapshot "
-                "was not found."
-            )
-        else:
-            detail = (
-                "Trusted roadmap snapshot was not found."
-            )
-
+    if stored_roadmap.project_id != context.project_id:
         raise HTTPException(
             status_code=404,
-            detail=detail,
-        )
-
-    if (
-        project_direction_id is not None
-        and stored_roadmap.project_direction_id
-        != project_direction_id
-    ):
-        raise HTTPException(
-            status_code=409,
             detail=(
-                "project_direction_id does not match "
-                "the trusted durable roadmap identity."
+                "Trusted project direction snapshot "
+                "was not found."
             ),
         )
 
@@ -1672,27 +1859,42 @@ def _load_trusted_attribution_roadmap(
 
 
 @app.post(
-    "/v1/execution-evidence/attributions",
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+    "execution-evidence/attributions",
     response_model=AttributionMutationResult,
 )
 def attach_execution_evidence_attribution(
-    request: EvidenceAttributionAttachRequest,
-    service: EvidenceAttributionService = Depends(
-        get_execution_evidence_attribution_service
+    workspace_id: str,
+    project_id: str,
+    request: ProjectScopedEvidenceAttributionAttachRequest,
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
     ),
-    roadmap_registry: Optional[
-        RoadmapSnapshotRegistry
-    ] = Depends(
-        get_roadmap_snapshot_registry
+    service: EvidenceAttributionService = Depends(
+        get_authorized_execution_evidence_attribution_service
+    ),
+    roadmap_registry: SQLiteRoadmapSnapshotRegistry = Depends(
+        get_authorized_roadmap_registry
     ),
 ) -> AttributionMutationResult:
+    try:
+        require_capability(
+            context,
+            ProjectCapability.EXECUTION_EVIDENCE_MUTATE,
+        )
+    except ProjectCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+
     stored_roadmap = (
-        _load_trusted_attribution_roadmap(
+        _load_authorized_attribution_roadmap(
             roadmap_registry=roadmap_registry,
+            context=context,
             project_direction_id=(
                 request.project_direction_id
             ),
-            project_id=request.project_id,
             roadmap_snapshot_id=(
                 request.roadmap_snapshot_id
             ),
@@ -1780,27 +1982,42 @@ def attach_execution_evidence_attribution(
 
 
 @app.delete(
-    "/v1/execution-evidence/attributions",
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+    "execution-evidence/attributions",
     response_model=EvidenceAttributionDetachResponse,
 )
 def detach_execution_evidence_attribution(
-    request: EvidenceAttributionDetachRequest,
-    service: EvidenceAttributionService = Depends(
-        get_execution_evidence_attribution_service
+    workspace_id: str,
+    project_id: str,
+    request: ProjectScopedEvidenceAttributionDetachRequest,
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
     ),
-    roadmap_registry: Optional[
-        RoadmapSnapshotRegistry
-    ] = Depends(
-        get_roadmap_snapshot_registry
+    service: EvidenceAttributionService = Depends(
+        get_authorized_execution_evidence_attribution_service
+    ),
+    roadmap_registry: SQLiteRoadmapSnapshotRegistry = Depends(
+        get_authorized_roadmap_registry
     ),
 ) -> EvidenceAttributionDetachResponse:
+    try:
+        require_capability(
+            context,
+            ProjectCapability.EXECUTION_EVIDENCE_MUTATE,
+        )
+    except ProjectCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+
     stored_roadmap = (
-        _load_trusted_attribution_roadmap(
+        _load_authorized_attribution_roadmap(
             roadmap_registry=roadmap_registry,
+            context=context,
             project_direction_id=(
                 request.project_direction_id
             ),
-            project_id=request.project_id,
             roadmap_snapshot_id=(
                 request.roadmap_snapshot_id
             ),
@@ -1839,27 +2056,57 @@ def detach_execution_evidence_attribution(
 
 
 @app.get(
-    "/v1/execution-evidence/attributions",
+    "/v1/workspaces/{workspace_id}/projects/{project_id}/"
+    "execution-evidence/attributions",
     response_model=List[EvidenceAttribution],
 )
 def list_execution_evidence_attributions(
-    query: EvidenceAttributionListQuery = Depends(),
-    service: EvidenceAttributionService = Depends(
-        get_execution_evidence_attribution_service
+    workspace_id: str,
+    project_id: str,
+    repository_key: Optional[str] = None,
+    project_direction_id: Optional[str] = None,
+    roadmap_snapshot_id: Optional[str] = None,
+    roadmap_node_id: Optional[str] = None,
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
     ),
-    roadmap_registry: Optional[
-        RoadmapSnapshotRegistry
-    ] = Depends(
-        get_roadmap_snapshot_registry
+    service: EvidenceAttributionService = Depends(
+        get_authorized_execution_evidence_attribution_service
+    ),
+    roadmap_registry: SQLiteRoadmapSnapshotRegistry = Depends(
+        get_authorized_roadmap_registry
     ),
 ) -> List[EvidenceAttribution]:
+    try:
+        require_capability(
+            context,
+            ProjectCapability.EXECUTION_EVIDENCE_READ,
+        )
+    except ProjectCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+
+    try:
+        query = ProjectScopedEvidenceAttributionListQuery(
+            repository_key=repository_key,
+            project_direction_id=project_direction_id,
+            roadmap_snapshot_id=roadmap_snapshot_id,
+            roadmap_node_id=roadmap_node_id,
+        )
+    except ValidationError as error:
+        raise RequestValidationError(
+            error.errors()
+        ) from error
+
     stored_roadmap = (
-        _load_trusted_attribution_roadmap(
+        _load_authorized_attribution_roadmap(
             roadmap_registry=roadmap_registry,
+            context=context,
             project_direction_id=(
                 query.project_direction_id
             ),
-            project_id=query.project_id,
             roadmap_snapshot_id=(
                 query.roadmap_snapshot_id
             ),
