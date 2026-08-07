@@ -21,6 +21,7 @@ from execution_evidence.workspace_membership import (
 from execution_evidence.workspace_membership_store import (
     WorkspaceMembershipAlreadyExistsError,
     WorkspaceMembershipInactiveError,
+    WorkspaceMembershipLastManagerError,
     WorkspaceMembershipNotFoundError,
     WorkspaceMembershipPrincipalNotFoundError,
     WorkspaceMembershipRevisionConflictError,
@@ -586,6 +587,30 @@ class SQLiteWorkspaceMembershipStore(
                     "workspace manager."
                 )
 
+            target_is_manager = (
+                previous_role in {
+                    "owner",
+                    "admin",
+                }
+            )
+            target_remains_manager = (
+                new_role in {
+                    "owner",
+                    "admin",
+                }
+            )
+
+            if (
+                target_is_manager
+                and not target_remains_manager
+            ):
+                self._require_other_active_manager(
+                    connection,
+                    membership_row_id=int(
+                        row["membership_row_id"]
+                    ),
+                )
+
             touches_owner = (
                 previous_role == "owner"
                 or new_role == "owner"
@@ -961,6 +986,31 @@ class SQLiteWorkspaceMembershipStore(
                     )
                 )
 
+            target_is_active_manager = (
+                previous_status == "active"
+                and row["role"] in {
+                    "owner",
+                    "admin",
+                }
+            )
+            target_will_be_inactive = (
+                new_status in {
+                    "suspended",
+                    "removed",
+                }
+            )
+
+            if (
+                target_is_active_manager
+                and target_will_be_inactive
+            ):
+                self._require_other_active_manager(
+                    connection,
+                    membership_row_id=int(
+                        row["membership_row_id"]
+                    ),
+                )
+
             next_revision = current_revision + 1
 
             transition = WorkspaceMembershipTransition(
@@ -1236,6 +1286,35 @@ class SQLiteWorkspaceMembershipStore(
                 "status_changed_at"
             ],
         )
+
+    def _require_other_active_manager(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        membership_row_id: int,
+    ) -> None:
+        other_manager = connection.execute(
+            """
+            SELECT 1
+            FROM workspace_memberships
+            WHERE
+                workspace_id = ?
+                AND membership_row_id != ?
+                AND status = 'active'
+                AND role IN ('owner', 'admin')
+            LIMIT 1
+            """,
+            (
+                self._workspace_id,
+                membership_row_id,
+            ),
+        ).fetchone()
+
+        if other_manager is None:
+            raise WorkspaceMembershipLastManagerError(
+                "Workspace must retain at least one "
+                "active owner or admin."
+            )
 
     def _current_membership_exists(
         self,

@@ -57,6 +57,12 @@ class WorkspaceMembershipRoleAuthorizationError(
     pass
 
 
+class WorkspaceMembershipLastManagerError(
+    WorkspaceMembershipTransitionError
+):
+    pass
+
+
 class WorkspaceNotFoundError(
     WorkspaceMembershipStoreError
 ):
