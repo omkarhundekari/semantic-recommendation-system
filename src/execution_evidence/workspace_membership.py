@@ -305,6 +305,16 @@ def create_workspace_membership_role_transition_id(
     return f"wmr_{uuid4()}"
 
 
+class WorkspaceMembershipRoleMutationResult(BaseModel):
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+    )
+
+    membership: WorkspaceMembership
+    transition: WorkspaceMembershipRoleTransition
+
+
 class WorkspaceMembershipTransition(BaseModel):
     model_config = ConfigDict(
         frozen=True,

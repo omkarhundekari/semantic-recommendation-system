@@ -10,8 +10,12 @@ from execution_evidence.sqlite_schema import (
 from execution_evidence.workspace_membership import (
     WorkspaceMembership,
     WorkspaceMembershipMutationResult,
+    WorkspaceMembershipRole,
+    WorkspaceMembershipRoleMutationResult,
+    WorkspaceMembershipRoleTransition,
     WorkspaceMembershipStatus,
     WorkspaceMembershipTransition,
+    create_workspace_membership_role_transition_id,
     create_workspace_membership_transition_id,
 )
 from execution_evidence.workspace_membership_store import (
@@ -20,6 +24,7 @@ from execution_evidence.workspace_membership_store import (
     WorkspaceMembershipNotFoundError,
     WorkspaceMembershipPrincipalNotFoundError,
     WorkspaceMembershipRevisionConflictError,
+    WorkspaceMembershipRoleAuthorizationError,
     WorkspaceMembershipStore,
     WorkspaceMembershipStoreError,
     WorkspaceMembershipTransitionError,
@@ -364,6 +369,455 @@ class SQLiteWorkspaceMembershipStore(
             )
 
         return membership
+
+    def list_current_memberships(
+        self,
+    ) -> List[WorkspaceMembership]:
+        connection = (
+            connect_execution_evidence_database(
+                self._path
+            )
+        )
+
+        try:
+            rows = connection.execute(
+                """
+                SELECT
+                    membership_id,
+                    workspace_id,
+                    principal_id,
+                    status,
+                    role,
+                    revision,
+                    created_by_principal_id,
+                    created_at,
+                    updated_at,
+                    status_changed_at
+                FROM workspace_memberships
+                WHERE
+                    workspace_id = ?
+                    AND status != 'removed'
+                ORDER BY
+                    created_at ASC,
+                    membership_row_id ASC
+                """,
+                (self._workspace_id,),
+            ).fetchall()
+
+            return [
+                self._membership_from_row(row)
+                for row in rows
+            ]
+
+        except sqlite3.Error as error:
+            raise WorkspaceMembershipStoreError(
+                "Could not list current workspace "
+                "memberships."
+            ) from error
+        finally:
+            connection.close()
+
+    def transition_role(
+        self,
+        membership_id: str,
+        *,
+        new_role: WorkspaceMembershipRole,
+        changed_at,
+        expected_revision: int,
+        changed_by_principal_id: str,
+        reason: Optional[str] = None,
+    ) -> WorkspaceMembershipRoleMutationResult:
+        self._validate_identifier(
+            membership_id,
+            name="Membership ID",
+        )
+        self._validate_identifier(
+            changed_by_principal_id,
+            name="Role transition actor principal ID",
+        )
+
+        if expected_revision < 0:
+            raise ValueError(
+                "Expected revision must be non-negative."
+            )
+
+        if (
+            changed_at.tzinfo is None
+            or changed_at.utcoffset() is None
+        ):
+            raise ValueError(
+                "Membership role transition timestamp "
+                "must be timezone-aware."
+            )
+
+        if new_role not in {
+            "owner",
+            "admin",
+            "member",
+            "viewer",
+        }:
+            raise ValueError(
+                "Workspace membership role is invalid."
+            )
+
+        normalized_reason = (
+            reason.strip()
+            if reason is not None
+            and reason.strip()
+            else None
+        )
+
+        connection = (
+            connect_execution_evidence_database(
+                self._path
+            )
+        )
+
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+
+            row = connection.execute(
+                """
+                SELECT
+                    membership_row_id,
+                    membership_id,
+                    workspace_id,
+                    principal_id,
+                    status,
+                    role,
+                    revision,
+                    created_by_principal_id,
+                    created_at,
+                    updated_at,
+                    status_changed_at
+                FROM workspace_memberships
+                WHERE
+                    workspace_id = ?
+                    AND membership_id = ?
+                """,
+                (
+                    self._workspace_id,
+                    membership_id,
+                ),
+            ).fetchone()
+
+            if row is None:
+                raise WorkspaceMembershipNotFoundError(
+                    "Workspace membership does not exist."
+                )
+
+            if row["status"] != "active":
+                raise WorkspaceMembershipInactiveError(
+                    "Workspace membership is not active."
+                )
+
+            current_revision = int(
+                row["revision"]
+            )
+
+            if expected_revision != current_revision:
+                raise (
+                    WorkspaceMembershipRevisionConflictError(
+                        "Workspace membership revision "
+                        "conflict: "
+                        f"expected {expected_revision}, "
+                        f"found {current_revision}."
+                    )
+                )
+
+            previous_role = row["role"]
+
+            if previous_role == new_role:
+                raise WorkspaceMembershipTransitionError(
+                    "Workspace membership role "
+                    "self-transitions are not allowed."
+                )
+
+            target_principal_id = str(
+                row["principal_id"]
+            )
+
+            if (
+                target_principal_id
+                == changed_by_principal_id
+            ):
+                raise WorkspaceMembershipRoleAuthorizationError(
+                    "Workspace members cannot change "
+                    "their own role."
+                )
+
+            actor = connection.execute(
+                """
+                SELECT
+                    membership_id,
+                    status,
+                    role
+                FROM workspace_memberships
+                WHERE
+                    workspace_id = ?
+                    AND principal_id = ?
+                    AND status != 'removed'
+                LIMIT 1
+                """,
+                (
+                    self._workspace_id,
+                    changed_by_principal_id,
+                ),
+            ).fetchone()
+
+            if actor is None:
+                raise WorkspaceMembershipRoleAuthorizationError(
+                    "Role transition actor is not a "
+                    "current workspace member."
+                )
+
+            if actor["status"] != "active":
+                raise WorkspaceMembershipRoleAuthorizationError(
+                    "Role transition actor membership "
+                    "is not active."
+                )
+
+            if actor["role"] not in {
+                "owner",
+                "admin",
+            }:
+                raise WorkspaceMembershipRoleAuthorizationError(
+                    "Role transition actor must be a "
+                    "workspace manager."
+                )
+
+            touches_owner = (
+                previous_role == "owner"
+                or new_role == "owner"
+            )
+
+            if (
+                touches_owner
+                and actor["role"] != "owner"
+            ):
+                raise WorkspaceMembershipRoleAuthorizationError(
+                    "Only a workspace owner may assign "
+                    "or revoke the owner role."
+                )
+
+            next_revision = current_revision + 1
+
+            transition = (
+                WorkspaceMembershipRoleTransition(
+                    transition_id=(
+                        create_workspace_membership_role_transition_id()
+                    ),
+                    membership_id=membership_id,
+                    workspace_id=self._workspace_id,
+                    principal_id=target_principal_id,
+                    previous_role=previous_role,
+                    new_role=new_role,
+                    previous_revision=current_revision,
+                    resulting_revision=next_revision,
+                    changed_at=changed_at,
+                    changed_by_principal_id=(
+                        changed_by_principal_id
+                    ),
+                    reason=normalized_reason,
+                )
+            )
+
+            connection.execute(
+                """
+                INSERT INTO
+                    workspace_membership_role_transitions (
+                        role_transition_id,
+                        membership_row_id,
+                        membership_id,
+                        workspace_id,
+                        principal_id,
+                        previous_role,
+                        new_role,
+                        previous_revision,
+                        resulting_revision,
+                        changed_at,
+                        changed_by_principal_id,
+                        reason
+                    )
+                VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
+                (
+                    transition.transition_id,
+                    int(row["membership_row_id"]),
+                    transition.membership_id,
+                    transition.workspace_id,
+                    transition.principal_id,
+                    transition.previous_role,
+                    transition.new_role,
+                    transition.previous_revision,
+                    transition.resulting_revision,
+                    transition.changed_at.isoformat(),
+                    transition.changed_by_principal_id,
+                    transition.reason,
+                ),
+            )
+
+            stored = self._load_by_id_from_connection(
+                connection,
+                membership_id,
+            )
+
+            if (
+                stored.status != "active"
+                or stored.role != new_role
+                or stored.revision != next_revision
+                or stored.updated_at != changed_at
+            ):
+                raise WorkspaceMembershipStoreError(
+                    "Workspace membership role "
+                    "transition did not produce "
+                    "authoritative current state."
+                )
+
+            connection.execute("COMMIT")
+
+            return WorkspaceMembershipRoleMutationResult(
+                membership=stored,
+                transition=transition,
+            )
+
+        except (
+            WorkspaceMembershipStoreError,
+            ValueError,
+        ):
+            self._rollback(connection)
+            raise
+        except sqlite3.IntegrityError as error:
+            self._rollback(connection)
+            raise WorkspaceMembershipTransitionError(
+                "Workspace membership role transition "
+                "constraint conflict."
+            ) from error
+        except sqlite3.Error as error:
+            self._rollback(connection)
+            raise WorkspaceMembershipStoreError(
+                "Could not transition workspace "
+                "membership role."
+            ) from error
+        finally:
+            connection.close()
+
+    def list_role_transitions(
+        self,
+        membership_id: str,
+    ) -> List[WorkspaceMembershipRoleTransition]:
+        self._validate_identifier(
+            membership_id,
+            name="Membership ID",
+        )
+
+        connection = (
+            connect_execution_evidence_database(
+                self._path
+            )
+        )
+
+        try:
+            membership = connection.execute(
+                """
+                SELECT membership_row_id
+                FROM workspace_memberships
+                WHERE
+                    workspace_id = ?
+                    AND membership_id = ?
+                """,
+                (
+                    self._workspace_id,
+                    membership_id,
+                ),
+            ).fetchone()
+
+            if membership is None:
+                raise WorkspaceMembershipNotFoundError(
+                    "Workspace membership does not exist."
+                )
+
+            rows = connection.execute(
+                """
+                SELECT
+                    role_transition_id,
+                    membership_id,
+                    workspace_id,
+                    principal_id,
+                    previous_role,
+                    new_role,
+                    previous_revision,
+                    resulting_revision,
+                    changed_at,
+                    changed_by_principal_id,
+                    reason
+                FROM workspace_membership_role_transitions
+                WHERE membership_row_id = ?
+                ORDER BY resulting_revision ASC
+                """,
+                (
+                    int(
+                        membership[
+                            "membership_row_id"
+                        ]
+                    ),
+                ),
+            ).fetchall()
+
+            return [
+                WorkspaceMembershipRoleTransition(
+                    transition_id=row[
+                        "role_transition_id"
+                    ],
+                    membership_id=row[
+                        "membership_id"
+                    ],
+                    workspace_id=row[
+                        "workspace_id"
+                    ],
+                    principal_id=row[
+                        "principal_id"
+                    ],
+                    previous_role=row[
+                        "previous_role"
+                    ],
+                    new_role=row[
+                        "new_role"
+                    ],
+                    previous_revision=int(
+                        row[
+                            "previous_revision"
+                        ]
+                    ),
+                    resulting_revision=int(
+                        row[
+                            "resulting_revision"
+                        ]
+                    ),
+                    changed_at=row[
+                        "changed_at"
+                    ],
+                    changed_by_principal_id=row[
+                        "changed_by_principal_id"
+                    ],
+                    reason=row[
+                        "reason"
+                    ],
+                )
+                for row in rows
+            ]
+
+        except WorkspaceMembershipNotFoundError:
+            raise
+        except sqlite3.Error as error:
+            raise WorkspaceMembershipStoreError(
+                "Could not list workspace membership "
+                "role transitions."
+            ) from error
+        finally:
+            connection.close()
 
     def transition_status(
         self,

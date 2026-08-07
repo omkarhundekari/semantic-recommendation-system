@@ -7,6 +7,9 @@ from typing import List, Optional
 from execution_evidence.workspace_membership import (
     WorkspaceMembership,
     WorkspaceMembershipMutationResult,
+    WorkspaceMembershipRole,
+    WorkspaceMembershipRoleMutationResult,
+    WorkspaceMembershipRoleTransition,
     WorkspaceMembershipStatus,
     WorkspaceMembershipTransition,
 )
@@ -43,6 +46,12 @@ class WorkspaceMembershipRevisionConflictError(
 
 
 class WorkspaceMembershipTransitionError(
+    WorkspaceMembershipStoreError
+):
+    pass
+
+
+class WorkspaceMembershipRoleAuthorizationError(
     WorkspaceMembershipStoreError
 ):
     pass
@@ -92,6 +101,32 @@ class WorkspaceMembershipStore(ABC):
         self,
         principal_id: str,
     ) -> WorkspaceMembership:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_current_memberships(
+        self,
+    ) -> List[WorkspaceMembership]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def transition_role(
+        self,
+        membership_id: str,
+        *,
+        new_role: WorkspaceMembershipRole,
+        changed_at: datetime,
+        expected_revision: int,
+        changed_by_principal_id: str,
+        reason: Optional[str] = None,
+    ) -> WorkspaceMembershipRoleMutationResult:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_role_transitions(
+        self,
+        membership_id: str,
+    ) -> List[WorkspaceMembershipRoleTransition]:
         raise NotImplementedError
 
     @abstractmethod
