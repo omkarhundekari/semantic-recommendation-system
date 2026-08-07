@@ -871,6 +871,58 @@ def get_execution_evidence_attribution_service(
     )
 
 
+def get_authorized_execution_evidence_attribution_service(
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
+    ),
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> EvidenceAttributionService:
+    """Bind attribution storage to the authorized workspace."""
+    if not isinstance(
+        context,
+        AuthorizedProjectContext,
+    ):
+        raise TypeError(
+            "Authorized project context is required."
+        )
+
+    if not isinstance(
+        runtime,
+        ExecutionEvidenceStorageRuntime,
+    ):
+        raise TypeError(
+            "Execution evidence storage runtime is required."
+        )
+
+    trusted_service = runtime.trusted_sqlite_service
+
+    if not isinstance(
+        trusted_service,
+        TrustedSQLiteStorageService,
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted execution evidence attribution "
+                "storage is unavailable. Migrate execution "
+                "evidence storage to trusted SQLite first."
+            ),
+        )
+
+    store = (
+        trusted_service
+        .build_repository_evidence_store_for_authorized_project(
+            context
+        )
+    )
+
+    return EvidenceAttributionService(
+        store=store,
+    )
+
+
 class ProjectStatusTransitionRequest(BaseModel):
     status: ProjectStatus
     reason: Optional[str] = Field(

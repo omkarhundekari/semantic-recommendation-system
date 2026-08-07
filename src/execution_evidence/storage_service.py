@@ -133,6 +133,32 @@ class TrustedSQLiteStorageService:
             initialize_schema=False,
         )
 
+    def build_repository_evidence_store_for_authorized_project(
+        self,
+        context: AuthorizedProjectContext,
+    ) -> SQLiteRepositoryEvidenceStore:
+        """Build request-scoped evidence storage from proven tenancy.
+
+        Workspace provisioning belongs to trusted initialization
+        paths, not authorized request handling.
+        """
+        if not isinstance(
+            context,
+            AuthorizedProjectContext,
+        ):
+            raise TypeError(
+                "Authorized project repository evidence "
+                "storage requires an authorized project "
+                "context."
+            )
+
+        return SQLiteRepositoryEvidenceStore(
+            self._path,
+            workspace_id=context.workspace_id,
+            initialize_schema=False,
+            ensure_workspace=False,
+        )
+
     def build_roadmap_snapshot_registry(
         self,
     ) -> SQLiteRoadmapSnapshotRegistry:

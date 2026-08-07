@@ -45,6 +45,7 @@ class SQLiteRepositoryEvidenceStore(
         *,
         workspace_id: str = DEFAULT_WORKSPACE_ID,
         initialize_schema: bool = True,
+        ensure_workspace: bool = True,
     ) -> None:
         if not workspace_id.strip():
             raise ValueError(
@@ -59,7 +60,8 @@ class SQLiteRepositoryEvidenceStore(
                 self._path
             )
 
-        self._ensure_workspace()
+        if ensure_workspace:
+            self._ensure_workspace()
 
     @property
     def path(self) -> Path:
