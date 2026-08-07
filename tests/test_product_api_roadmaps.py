@@ -397,6 +397,7 @@ def _install_lifecycle_auth(
     runtime,
     *,
     project_id: str,
+    membership_role="admin",
 ):
     if runtime.roadmap_registry is None:
         raise ValueError(
@@ -411,6 +412,7 @@ def _install_lifecycle_auth(
     context = AuthorizedProjectContext(
         principal_id=PRINCIPAL_ID,
         membership_id=MEMBERSHIP_ID,
+        membership_role=membership_role,
         workspace_id=workspace_id,
         project_id=project_id,
     )
@@ -439,10 +441,12 @@ def _install_lifecycle_auth_for_scope(
     *,
     workspace_id: str,
     project_id: str,
+    membership_role="admin",
 ):
     context = AuthorizedProjectContext(
         principal_id=PRINCIPAL_ID,
         membership_id=MEMBERSHIP_ID,
+        membership_role=membership_role,
         workspace_id=workspace_id,
         project_id=project_id,
     )
@@ -1019,6 +1023,7 @@ def test_project_lifecycle_requires_authentication(
         AuthorizedProjectContext(
             principal_id=PRINCIPAL_ID,
             membership_id=MEMBERSHIP_ID,
+            membership_role="admin",
             workspace_id=workspace_id,
             project_id=stored.project_id,
         )
@@ -1077,6 +1082,7 @@ def test_inaccessible_project_lifecycle_is_404(
     context = AuthorizedProjectContext(
         principal_id=PRINCIPAL_ID,
         membership_id=MEMBERSHIP_ID,
+        membership_role="admin",
         workspace_id=workspace_id,
         project_id=stored.project_id,
     )
@@ -1137,6 +1143,7 @@ def test_lifecycle_uses_authorized_context_project_id(
     context = AuthorizedProjectContext(
         principal_id=PRINCIPAL_ID,
         membership_id=MEMBERSHIP_ID,
+        membership_role="admin",
         workspace_id=workspace_id,
         project_id=stored.project_id,
     )
@@ -1193,6 +1200,157 @@ def test_lifecycle_uses_authorized_context_project_id(
     assert loaded is not None
     assert loaded.project_status == "archived"
 
+
+
+def test_unassigned_membership_has_zero_lifecycle_capabilities(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+    stored = _create_lifecycle_project(runtime)
+
+    workspace_id, _ = _install_lifecycle_auth(
+        runtime,
+        project_id=stored.project_id,
+        membership_role=None,
+    )
+
+    headers = {
+        "Authorization": "Bearer token",
+    }
+
+    try:
+        with TestClient(app) as client:
+            mutation = client.post(
+                _lifecycle_status_path(
+                    workspace_id,
+                    stored.project_id,
+                ),
+                headers=headers,
+                json={
+                    "status": "archived",
+                    "expected_revision": 0,
+                },
+            )
+            history = client.get(
+                _lifecycle_history_path(
+                    workspace_id,
+                    stored.project_id,
+                ),
+                headers=headers,
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert mutation.status_code == 403
+    assert history.status_code == 403
+
+    assert mutation.json()["detail"] == (
+        "Project capability is required: "
+        "project.lifecycle.manage."
+    )
+    assert history.json()["detail"] == (
+        "Project capability is required: "
+        "project.read."
+    )
+
+    loaded = runtime.roadmap_registry.load(
+        stored.project_direction_id
+    )
+
+    assert loaded is not None
+    assert loaded.project_status == "active"
+    assert loaded.project_revision == 0
+
+
+def test_viewer_can_read_lifecycle_history_but_cannot_mutate(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+    stored = _create_lifecycle_project(runtime)
+
+    workspace_id, _ = _install_lifecycle_auth(
+        runtime,
+        project_id=stored.project_id,
+        membership_role="viewer",
+    )
+
+    headers = {
+        "Authorization": "Bearer token",
+    }
+
+    try:
+        with TestClient(app) as client:
+            mutation = client.post(
+                _lifecycle_status_path(
+                    workspace_id,
+                    stored.project_id,
+                ),
+                headers=headers,
+                json={
+                    "status": "archived",
+                    "expected_revision": 0,
+                },
+            )
+            history = client.get(
+                _lifecycle_history_path(
+                    workspace_id,
+                    stored.project_id,
+                ),
+                headers=headers,
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert mutation.status_code == 403
+    assert mutation.json()["detail"] == (
+        "Project capability is required: "
+        "project.lifecycle.manage."
+    )
+
+    assert history.status_code == 200
+    assert history.json() == []
+
+
+def test_admin_can_manage_project_lifecycle(
+    tmp_path: Path,
+):
+    runtime = _trusted_lifecycle_runtime(
+        tmp_path
+    )
+    stored = _create_lifecycle_project(runtime)
+
+    workspace_id, _ = _install_lifecycle_auth(
+        runtime,
+        project_id=stored.project_id,
+        membership_role="admin",
+    )
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                _lifecycle_status_path(
+                    workspace_id,
+                    stored.project_id,
+                ),
+                headers={
+                    "Authorization": "Bearer token",
+                },
+                json={
+                    "status": "archived",
+                    "expected_revision": 0,
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["project_id"] == (
+        stored.project_id
+    )
 
 def test_old_project_lifecycle_routes_are_unregistered(
     tmp_path: Path,

@@ -194,6 +194,11 @@ from execution_evidence.authenticated_request_principal import (
 from execution_evidence.authorized_project_context import (
     AuthorizedProjectContext,
 )
+from execution_evidence.project_capability import (
+    ProjectCapability,
+    ProjectCapabilityDeniedError,
+    require_capability,
+)
 from execution_evidence.request_authenticator import (
     RequestAuthenticationFailedError,
     RequestAuthenticationRequiredError,
@@ -1856,6 +1861,11 @@ def transition_project_status(
     ),
 ) -> ProjectStatusMutationResult:
     try:
+        require_capability(
+            context,
+            ProjectCapability.PROJECT_LIFECYCLE_MANAGE,
+        )
+
         return (
             roadmap_registry
             .transition_project_status(
@@ -1870,6 +1880,11 @@ def transition_project_status(
                 ),
             )
         )
+    except ProjectCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
     except ProjectNotFoundError as error:
         raise HTTPException(
             status_code=404,
@@ -1908,12 +1923,22 @@ def list_project_status_transition_history(
     ),
 ) -> List[ProjectStatusTransition]:
     try:
+        require_capability(
+            context,
+            ProjectCapability.PROJECT_READ,
+        )
+
         return (
             roadmap_registry
             .list_project_status_transitions(
                 context.project_id
             )
         )
+    except ProjectCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
     except ProjectNotFoundError as error:
         raise HTTPException(
             status_code=404,
