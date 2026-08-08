@@ -199,6 +199,23 @@ from execution_evidence.authorized_project_context import (
 from execution_evidence.authorized_workspace_context import (
     AuthorizedWorkspaceContext,
 )
+from execution_evidence.sqlite_workspace_membership_store import (
+    SQLiteWorkspaceMembershipStore,
+)
+from execution_evidence.workspace_membership import (
+    WorkspaceMembership,
+    WorkspaceMembershipRoleTransition,
+    WorkspaceMembershipTransition,
+)
+from execution_evidence.workspace_membership_store import (
+    WorkspaceMembershipNotFoundError,
+    WorkspaceMembershipStoreError,
+)
+from execution_evidence.workspace_capability import (
+    WorkspaceCapability,
+    WorkspaceCapabilityDeniedError,
+    require_workspace_capability,
+)
 from execution_evidence.project_capability import (
     ProjectCapability,
     ProjectCapabilityDeniedError,
@@ -692,6 +709,52 @@ def get_authorized_workspace_context(
             status_code=422,
             detail=str(error),
         ) from error
+
+
+def get_authorized_workspace_membership_store(
+    context: AuthorizedWorkspaceContext = Depends(
+        get_authorized_workspace_context
+    ),
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLiteWorkspaceMembershipStore:
+    """Bind membership storage to authorized workspace scope."""
+
+    if not isinstance(
+        context,
+        AuthorizedWorkspaceContext,
+    ):
+        raise TypeError(
+            "Authorized workspace context is required."
+        )
+
+    if not isinstance(
+        runtime,
+        ExecutionEvidenceStorageRuntime,
+    ):
+        raise TypeError(
+            "Execution evidence storage runtime is required."
+        )
+
+    trusted_service = runtime.trusted_sqlite_service
+
+    if not isinstance(
+        trusted_service,
+        TrustedSQLiteStorageService,
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted workspace membership storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return SQLiteWorkspaceMembershipStore(
+        trusted_service.path,
+        workspace_id=context.workspace_id,
+    )
 
 
 def get_project_access_service(
@@ -2205,6 +2268,118 @@ def list_execution_evidence_attributions(
         raise HTTPException(
             status_code=404,
             detail=str(error),
+        ) from error
+
+
+@app.get(
+    "/v1/workspaces/{workspace_id}/memberships",
+    response_model=List[WorkspaceMembership],
+)
+def list_workspace_memberships(
+    workspace_id: str,
+    context: AuthorizedWorkspaceContext = Depends(
+        get_authorized_workspace_context
+    ),
+    store: SQLiteWorkspaceMembershipStore = Depends(
+        get_authorized_workspace_membership_store
+    ),
+) -> List[WorkspaceMembership]:
+    try:
+        require_workspace_capability(
+            context,
+            WorkspaceCapability.MEMBERSHIP_READ,
+        )
+
+        return store.list_current_memberships()
+
+    except WorkspaceCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted workspace membership storage "
+                "could not list memberships."
+            ),
+        ) from error
+
+
+class WorkspaceMembershipHistoryResponse(BaseModel):
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+    )
+
+    membership: WorkspaceMembership
+    status_transitions: List[
+        WorkspaceMembershipTransition
+    ]
+    role_transitions: List[
+        WorkspaceMembershipRoleTransition
+    ]
+
+
+@app.get(
+    (
+        "/v1/workspaces/{workspace_id}/memberships/"
+        "{membership_id}/history"
+    ),
+    response_model=WorkspaceMembershipHistoryResponse,
+)
+def get_workspace_membership_history(
+    workspace_id: str,
+    membership_id: str,
+    context: AuthorizedWorkspaceContext = Depends(
+        get_authorized_workspace_context
+    ),
+    store: SQLiteWorkspaceMembershipStore = Depends(
+        get_authorized_workspace_membership_store
+    ),
+) -> WorkspaceMembershipHistoryResponse:
+    try:
+        require_workspace_capability(
+            context,
+            WorkspaceCapability.MEMBERSHIP_READ,
+        )
+
+        membership = store.load_by_id(
+            membership_id
+        )
+
+        return WorkspaceMembershipHistoryResponse(
+            membership=membership,
+            status_transitions=(
+                store.list_transitions(
+                    membership_id
+                )
+            ),
+            role_transitions=(
+                store.list_role_transitions(
+                    membership_id
+                )
+            ),
+        )
+
+    except WorkspaceCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace membership does not exist.",
+        ) from error
+    except WorkspaceMembershipStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted workspace membership storage "
+                "could not load membership history."
+            ),
         ) from error
 
 
