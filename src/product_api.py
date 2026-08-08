@@ -196,6 +196,9 @@ from execution_evidence.authenticated_request_principal import (
 from execution_evidence.authorized_project_context import (
     AuthorizedProjectContext,
 )
+from execution_evidence.authorized_workspace_context import (
+    AuthorizedWorkspaceContext,
+)
 from execution_evidence.project_capability import (
     ProjectCapability,
     ProjectCapabilityDeniedError,
@@ -211,6 +214,14 @@ from execution_evidence.project_access_service import (
     ProjectAccessNotFoundError,
     ProjectAccessService,
     ProjectAccessStoreError,
+)
+from execution_evidence.workspace_access_service import (
+    WorkspaceAccessNotFoundError,
+    WorkspaceAccessService,
+    WorkspaceAccessStoreError,
+)
+from execution_evidence.sqlite_workspace_access_service import (
+    SQLiteWorkspaceAccessService,
 )
 from execution_evidence.sqlite_project_access_service import (
     SQLiteProjectAccessService,
@@ -627,6 +638,59 @@ def get_authenticated_request_principal(
                 "Request authentication is temporarily "
                 "unavailable."
             ),
+        ) from error
+
+
+def get_workspace_access_service(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> WorkspaceAccessService:
+    if runtime.trusted_sqlite_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Workspace authorization storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return SQLiteWorkspaceAccessService(
+        runtime.trusted_sqlite_service.path
+    )
+
+
+def get_authorized_workspace_context(
+    workspace_id: str,
+    principal: AuthenticatedRequestPrincipal = Depends(
+        get_authenticated_request_principal
+    ),
+    access_service: WorkspaceAccessService = Depends(
+        get_workspace_access_service
+    ),
+) -> AuthorizedWorkspaceContext:
+    try:
+        return access_service.authorize(
+            principal=principal,
+            workspace_id=workspace_id,
+        )
+    except WorkspaceAccessNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace does not exist.",
+        ) from error
+    except WorkspaceAccessStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Workspace authorization storage is "
+                "temporarily unavailable."
+            ),
+        ) from error
+    except (TypeError, ValueError) as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
         ) from error
 
 
