@@ -204,12 +204,19 @@ from execution_evidence.sqlite_workspace_membership_store import (
 )
 from execution_evidence.workspace_membership import (
     WorkspaceMembership,
+    WorkspaceMembershipRole,
+    WorkspaceMembershipRoleMutationResult,
     WorkspaceMembershipRoleTransition,
     WorkspaceMembershipTransition,
 )
 from execution_evidence.workspace_membership_store import (
+    WorkspaceMembershipInactiveError,
+    WorkspaceMembershipLastManagerError,
     WorkspaceMembershipNotFoundError,
+    WorkspaceMembershipRevisionConflictError,
+    WorkspaceMembershipRoleAuthorizationError,
     WorkspaceMembershipStoreError,
+    WorkspaceMembershipTransitionError,
 )
 from execution_evidence.workspace_capability import (
     WorkspaceCapability,
@@ -2307,6 +2314,16 @@ def list_workspace_memberships(
         ) from error
 
 
+class WorkspaceMembershipRoleTransitionRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    role: WorkspaceMembershipRole
+    expected_revision: int = Field(ge=0)
+    reason: Optional[str] = None
+
+
 class WorkspaceMembershipHistoryResponse(BaseModel):
     model_config = ConfigDict(
         frozen=True,
@@ -2379,6 +2396,88 @@ def get_workspace_membership_history(
             detail=(
                 "Trusted workspace membership storage "
                 "could not load membership history."
+            ),
+        ) from error
+
+
+@app.patch(
+    (
+        "/v1/workspaces/{workspace_id}/memberships/"
+        "{membership_id}/role"
+    ),
+    response_model=WorkspaceMembershipRoleMutationResult,
+)
+def transition_workspace_membership_role(
+    workspace_id: str,
+    membership_id: str,
+    request: WorkspaceMembershipRoleTransitionRequest,
+    context: AuthorizedWorkspaceContext = Depends(
+        get_authorized_workspace_context
+    ),
+    store: SQLiteWorkspaceMembershipStore = Depends(
+        get_authorized_workspace_membership_store
+    ),
+) -> WorkspaceMembershipRoleMutationResult:
+    try:
+        require_workspace_capability(
+            context,
+            WorkspaceCapability.MEMBERSHIP_ROLE_MANAGE,
+        )
+
+        return store.transition_role(
+            membership_id,
+            new_role=request.role,
+            changed_at=datetime.now(
+                timezone.utc
+            ),
+            expected_revision=(
+                request.expected_revision
+            ),
+            changed_by_principal_id=(
+                context.principal_id
+            ),
+            reason=request.reason,
+        )
+
+    except WorkspaceCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace membership does not exist.",
+        ) from error
+    except WorkspaceMembershipRoleAuthorizationError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipLastManagerError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except (
+        WorkspaceMembershipInactiveError,
+        WorkspaceMembershipRevisionConflictError,
+    ) as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipTransitionError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted workspace membership storage "
+                "could not transition membership role."
             ),
         ) from error
 
