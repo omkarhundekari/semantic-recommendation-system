@@ -862,3 +862,589 @@ def test_role_mutation_inactive_target_is_409():
     assert response.json() == {
         "detail": "Workspace membership is not active."
     }
+
+
+def test_manager_can_transition_workspace_membership_status():
+    from datetime import datetime, timezone
+
+    from execution_evidence.workspace_membership import (
+        WorkspaceMembershipMutationResult,
+        WorkspaceMembershipTransition,
+    )
+
+    now = datetime(
+        2026,
+        8,
+        7,
+        12,
+        0,
+        tzinfo=timezone.utc,
+    )
+
+    target_principal_id = (
+        "prn_123e4567-e89b-42d3-a456-426614174020"
+    )
+    target_membership_id = (
+        "wsm_123e4567-e89b-42d3-a456-426614174021"
+    )
+    transition_id = (
+        "wmt_123e4567-e89b-42d3-a456-426614174022"
+    )
+
+    membership = WorkspaceMembership(
+        membership_id=target_membership_id,
+        workspace_id=WORKSPACE_ID,
+        principal_id=target_principal_id,
+        status="suspended",
+        role="member",
+        revision=2,
+        created_by_principal_id=None,
+        created_at=now,
+        updated_at=now,
+        status_changed_at=now,
+    )
+
+    transition = WorkspaceMembershipTransition(
+        transition_id=transition_id,
+        membership_id=target_membership_id,
+        workspace_id=WORKSPACE_ID,
+        principal_id=target_principal_id,
+        previous_status="active",
+        new_status="suspended",
+        previous_revision=1,
+        resulting_revision=2,
+        changed_at=now,
+        changed_by_principal_id=PRINCIPAL_ID,
+        reason="temporary suspension",
+    )
+
+    result = WorkspaceMembershipMutationResult(
+        membership=membership,
+        transition=transition,
+    )
+
+    class RecordingStore:
+        def __init__(self):
+            self.calls = []
+
+        def transition_status(
+            self,
+            membership_id,
+            *,
+            new_status,
+            changed_at,
+            expected_revision,
+            reason=None,
+            changed_by_principal_id=None,
+        ):
+            self.calls.append(
+                {
+                    "membership_id": membership_id,
+                    "new_status": new_status,
+                    "changed_at": changed_at,
+                    "expected_revision": expected_revision,
+                    "reason": reason,
+                    "changed_by_principal_id": (
+                        changed_by_principal_id
+                    ),
+                }
+            )
+            return result
+
+    store = RecordingStore()
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = lambda: _context("admin")
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: store
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{target_membership_id}/status"
+                ),
+                json={
+                    "status": "suspended",
+                    "expected_revision": 1,
+                    "reason": "temporary suspension",
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert (
+        response.json()["membership"]["status"]
+        == "suspended"
+    )
+
+    assert len(store.calls) == 1
+
+    call = store.calls[0]
+
+    assert (
+        call["membership_id"]
+        == target_membership_id
+    )
+    assert call["new_status"] == "suspended"
+    assert call["expected_revision"] == 1
+    assert (
+        call["changed_by_principal_id"]
+        == PRINCIPAL_ID
+    )
+    assert call["reason"] == "temporary suspension"
+    assert call["changed_at"].tzinfo is not None
+
+
+def test_status_mutation_body_cannot_supply_actor():
+    class RecordingStore:
+        def __init__(self):
+            self.calls = []
+
+        def transition_status(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+            raise AssertionError(
+                "Store must not run for invalid request body."
+            )
+
+    store = RecordingStore()
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = lambda: _context("owner")
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: store
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{MEMBERSHIP_ID}/status"
+                ),
+                json={
+                    "status": "suspended",
+                    "expected_revision": 0,
+                    "changed_by_principal_id": (
+                        PRINCIPAL_ID
+                    ),
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 422
+    assert store.calls == []
+
+
+def test_member_without_status_manage_cannot_mutate_status():
+    class RecordingStore:
+        def __init__(self):
+            self.calls = []
+
+        def transition_status(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+            raise AssertionError(
+                "Store must not run before capability denial."
+            )
+
+    store = RecordingStore()
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = lambda: _context("member")
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: store
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{MEMBERSHIP_ID}/status"
+                ),
+                json={
+                    "status": "suspended",
+                    "expected_revision": 0,
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+    assert store.calls == []
+
+
+def test_status_mutation_missing_membership_is_404():
+    from execution_evidence.workspace_membership_store import (
+        WorkspaceMembershipNotFoundError,
+    )
+
+    class MissingStore:
+        def transition_status(self, *args, **kwargs):
+            raise WorkspaceMembershipNotFoundError(
+                "Workspace membership does not exist."
+            )
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = lambda: _context("admin")
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: MissingStore()
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{MEMBERSHIP_ID}/status"
+                ),
+                json={
+                    "status": "removed",
+                    "expected_revision": 0,
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "Workspace membership does not exist."
+    }
+
+
+def test_status_mutation_revision_conflict_is_409():
+    from execution_evidence.workspace_membership_store import (
+        WorkspaceMembershipRevisionConflictError,
+    )
+
+    class ConflictStore:
+        def transition_status(self, *args, **kwargs):
+            raise WorkspaceMembershipRevisionConflictError(
+                "Workspace membership revision conflict."
+            )
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = lambda: _context("admin")
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: ConflictStore()
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{MEMBERSHIP_ID}/status"
+                ),
+                json={
+                    "status": "suspended",
+                    "expected_revision": 0,
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 409
+
+
+def test_status_mutation_last_manager_is_409():
+    from execution_evidence.workspace_membership_store import (
+        WorkspaceMembershipLastManagerError,
+    )
+
+    class LastManagerStore:
+        def transition_status(self, *args, **kwargs):
+            raise WorkspaceMembershipLastManagerError(
+                "Workspace must retain at least one "
+                "active owner or admin."
+            )
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = lambda: _context("owner")
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: LastManagerStore()
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{MEMBERSHIP_ID}/status"
+                ),
+                json={
+                    "status": "removed",
+                    "expected_revision": 0,
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 409
+
+
+def test_inaccessible_workspace_is_404_before_status_mutation():
+    class RecordingStore:
+        def __init__(self):
+            self.calls = []
+
+        def transition_status(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+            raise AssertionError(
+                "Status mutation storage must not run "
+                "before workspace tenancy succeeds."
+            )
+
+    store = RecordingStore()
+
+    def inaccessible_context():
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace does not exist.",
+        )
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = inaccessible_context
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: store
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{MEMBERSHIP_ID}/status"
+                ),
+                json={
+                    "status": "suspended",
+                    "expected_revision": 0,
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "Workspace does not exist."
+    }
+    assert store.calls == []
+
+
+def test_status_mutation_transition_conflict_is_409():
+    from execution_evidence.workspace_membership_store import (
+        WorkspaceMembershipTransitionError,
+    )
+
+    class TransitionConflictStore:
+        def transition_status(self, *args, **kwargs):
+            raise WorkspaceMembershipTransitionError(
+                "Workspace membership status "
+                "transition is not allowed."
+            )
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = lambda: _context("admin")
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: TransitionConflictStore()
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{MEMBERSHIP_ID}/status"
+                ),
+                json={
+                    "status": "removed",
+                    "expected_revision": 0,
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": (
+            "Workspace membership status "
+            "transition is not allowed."
+        )
+    }
+
+
+def test_status_mutation_store_failure_is_503():
+    from execution_evidence.workspace_membership_store import (
+        WorkspaceMembershipStoreError,
+    )
+
+    class FailingStore:
+        def transition_status(self, *args, **kwargs):
+            raise WorkspaceMembershipStoreError(
+                "Storage failed."
+            )
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = lambda: _context("admin")
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: FailingStore()
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{MEMBERSHIP_ID}/status"
+                ),
+                json={
+                    "status": "suspended",
+                    "expected_revision": 0,
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 503
+
+
+def test_status_mutation_forwards_self_removal_to_storage():
+    from datetime import datetime, timezone
+
+    from execution_evidence.workspace_membership import (
+        WorkspaceMembershipMutationResult,
+        WorkspaceMembershipTransition,
+    )
+
+    now = datetime(
+        2026,
+        8,
+        7,
+        12,
+        0,
+        tzinfo=timezone.utc,
+    )
+
+    removed_membership = WorkspaceMembership(
+        membership_id=MEMBERSHIP_ID,
+        workspace_id=WORKSPACE_ID,
+        principal_id=PRINCIPAL_ID,
+        status="removed",
+        role="admin",
+        revision=2,
+        created_by_principal_id=None,
+        created_at=now,
+        updated_at=now,
+        status_changed_at=now,
+    )
+
+    transition = WorkspaceMembershipTransition(
+        transition_id=(
+            "wmt_123e4567-e89b-42d3-a456-426614174030"
+        ),
+        membership_id=MEMBERSHIP_ID,
+        workspace_id=WORKSPACE_ID,
+        principal_id=PRINCIPAL_ID,
+        previous_status="active",
+        new_status="removed",
+        previous_revision=1,
+        resulting_revision=2,
+        changed_at=now,
+        changed_by_principal_id=PRINCIPAL_ID,
+        reason="leave workspace",
+    )
+
+    result = WorkspaceMembershipMutationResult(
+        membership=removed_membership,
+        transition=transition,
+    )
+
+    class RecordingStore:
+        def __init__(self):
+            self.calls = []
+
+        def transition_status(
+            self,
+            membership_id,
+            *,
+            new_status,
+            changed_at,
+            expected_revision,
+            reason=None,
+            changed_by_principal_id=None,
+        ):
+            self.calls.append(
+                {
+                    "membership_id": membership_id,
+                    "new_status": new_status,
+                    "expected_revision": expected_revision,
+                    "reason": reason,
+                    "changed_by_principal_id": (
+                        changed_by_principal_id
+                    ),
+                }
+            )
+            return result
+
+    store = RecordingStore()
+
+    app.dependency_overrides[
+        get_authorized_workspace_context
+    ] = lambda: _context("admin")
+
+    app.dependency_overrides[
+        get_authorized_workspace_membership_store
+    ] = lambda: store
+
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                (
+                    f"/v1/workspaces/{WORKSPACE_ID}/"
+                    f"memberships/{MEMBERSHIP_ID}/status"
+                ),
+                json={
+                    "status": "removed",
+                    "expected_revision": 1,
+                    "reason": "leave workspace",
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert len(store.calls) == 1
+
+    call = store.calls[0]
+
+    assert call["membership_id"] == MEMBERSHIP_ID
+    assert call["new_status"] == "removed"
+    assert call["expected_revision"] == 1
+    assert (
+        call["changed_by_principal_id"]
+        == PRINCIPAL_ID
+    )

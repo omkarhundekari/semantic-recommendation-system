@@ -204,9 +204,11 @@ from execution_evidence.sqlite_workspace_membership_store import (
 )
 from execution_evidence.workspace_membership import (
     WorkspaceMembership,
+    WorkspaceMembershipMutationResult,
     WorkspaceMembershipRole,
     WorkspaceMembershipRoleMutationResult,
     WorkspaceMembershipRoleTransition,
+    WorkspaceMembershipStatus,
     WorkspaceMembershipTransition,
 )
 from execution_evidence.workspace_membership_store import (
@@ -2314,6 +2316,16 @@ def list_workspace_memberships(
         ) from error
 
 
+class WorkspaceMembershipStatusTransitionRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    status: WorkspaceMembershipStatus
+    expected_revision: int = Field(ge=0)
+    reason: Optional[str] = None
+
+
 class WorkspaceMembershipRoleTransitionRequest(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -2478,6 +2490,80 @@ def transition_workspace_membership_role(
             detail=(
                 "Trusted workspace membership storage "
                 "could not transition membership role."
+            ),
+        ) from error
+
+
+@app.patch(
+    (
+        "/v1/workspaces/{workspace_id}/memberships/"
+        "{membership_id}/status"
+    ),
+    response_model=WorkspaceMembershipMutationResult,
+)
+def transition_workspace_membership_status(
+    workspace_id: str,
+    membership_id: str,
+    request: WorkspaceMembershipStatusTransitionRequest,
+    context: AuthorizedWorkspaceContext = Depends(
+        get_authorized_workspace_context
+    ),
+    store: SQLiteWorkspaceMembershipStore = Depends(
+        get_authorized_workspace_membership_store
+    ),
+) -> WorkspaceMembershipMutationResult:
+    try:
+        require_workspace_capability(
+            context,
+            WorkspaceCapability.MEMBERSHIP_STATUS_MANAGE,
+        )
+
+        return store.transition_status(
+            membership_id,
+            new_status=request.status,
+            changed_at=datetime.now(
+                timezone.utc
+            ),
+            expected_revision=(
+                request.expected_revision
+            ),
+            reason=request.reason,
+            changed_by_principal_id=(
+                context.principal_id
+            ),
+        )
+
+    except WorkspaceCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail="Workspace membership does not exist.",
+        ) from error
+    except WorkspaceMembershipLastManagerError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipRevisionConflictError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipTransitionError as error:
+        raise HTTPException(
+            status_code=409,
+            detail=str(error),
+        ) from error
+    except WorkspaceMembershipStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted workspace membership storage "
+                "could not transition membership status."
             ),
         ) from error
 
