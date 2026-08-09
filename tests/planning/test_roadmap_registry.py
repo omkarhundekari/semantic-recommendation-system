@@ -3,6 +3,8 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
+
+import sqlite3
 from threading import Barrier
 
 import pytest
@@ -1325,3 +1327,269 @@ def test_project_status_transition_requires_existing_project(
             new_status="archived",
             changed_at=CREATED_AT,
         )
+
+
+def _workspace_row_for_registry(
+    database_path: Path,
+    workspace_id: str,
+):
+    from execution_evidence.sqlite_schema import (
+        connect_execution_evidence_database,
+    )
+
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        return connection.execute(
+            """
+            SELECT
+                workspace_id,
+                workspace_kind,
+                created_at,
+                updated_at
+            FROM workspaces
+            WHERE workspace_id = ?
+            """,
+            (workspace_id,),
+        ).fetchone()
+    finally:
+        connection.close()
+
+
+def test_registry_implicit_ensure_creates_internal_workspace(
+    tmp_path: Path,
+):
+    workspace_id = "roadmap-internal-workspace"
+    database_path = tmp_path / "solvyn.db"
+
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path,
+        workspace_id=workspace_id,
+    )
+
+    stored = registry.create(_record())
+
+    row = _workspace_row_for_registry(
+        database_path,
+        workspace_id,
+    )
+
+    assert stored is not None
+    assert row is not None
+    assert row["workspace_kind"] == "internal"
+
+
+def test_registry_implicit_ensure_does_not_mutate_existing_workspace_metadata(
+    tmp_path: Path,
+):
+    from execution_evidence.sqlite_schema import (
+        connect_execution_evidence_database,
+    )
+
+    workspace_id = "roadmap-existing-workspace"
+    database_path = tmp_path / "solvyn.db"
+
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path,
+        workspace_id=workspace_id,
+    )
+
+    created_at = "2000-01-01T00:00:00+00:00"
+    updated_at = "2001-01-01T00:00:00+00:00"
+
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        connection.execute(
+            """
+            UPDATE workspaces
+            SET
+                created_at = ?,
+                updated_at = ?
+            WHERE workspace_id = ?
+            """,
+            (
+                created_at,
+                updated_at,
+                workspace_id,
+            ),
+        )
+    finally:
+        connection.close()
+
+    registry.create(_record())
+
+    row = _workspace_row_for_registry(
+        database_path,
+        workspace_id,
+    )
+
+    assert row is not None
+    assert row["workspace_kind"] == "internal"
+    assert row["created_at"] == created_at
+    assert row["updated_at"] == updated_at
+
+
+def test_registry_implicit_ensure_rejects_provisioned_namespace(
+    tmp_path: Path,
+):
+    workspace_id = (
+        "wsp_123e4567-e89b-42d3-a456-426614174000"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="reserved provisioned workspace ID",
+    ):
+        SQLiteRoadmapSnapshotRegistry(
+            tmp_path / "solvyn.db",
+            workspace_id=workspace_id,
+        )
+
+
+def test_registry_binding_only_can_write_existing_provisioned_workspace(
+    tmp_path: Path,
+):
+    from execution_evidence.sqlite_schema import (
+        connect_execution_evidence_database,
+        initialize_execution_evidence_database,
+    )
+
+    workspace_id = (
+        "wsp_123e4567-e89b-42d3-a456-426614174000"
+    )
+    database_path = tmp_path / "solvyn.db"
+
+    initialize_execution_evidence_database(
+        database_path
+    )
+
+    created_at = "2026-08-09T12:00:00+00:00"
+    updated_at = "2026-08-09T12:00:00+00:00"
+
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        connection.execute(
+            """
+            INSERT INTO workspaces (
+                workspace_id,
+                workspace_kind,
+                created_at,
+                updated_at
+            )
+            VALUES (
+                ?,
+                'provisioned',
+                ?,
+                ?
+            )
+            """,
+            (
+                workspace_id,
+                created_at,
+                updated_at,
+            ),
+        )
+    finally:
+        connection.close()
+
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path,
+        workspace_id=workspace_id,
+        initialize_schema=False,
+        ensure_workspace=False,
+    )
+
+    stored = registry.create(_record())
+
+    row = _workspace_row_for_registry(
+        database_path,
+        workspace_id,
+    )
+
+    assert stored is not None
+    assert row is not None
+    assert row["workspace_kind"] == "provisioned"
+    assert row["created_at"] == created_at
+    assert row["updated_at"] == updated_at
+
+
+def test_registry_binding_only_does_not_create_missing_workspace(
+    tmp_path: Path,
+):
+    from execution_evidence.sqlite_schema import (
+        connect_execution_evidence_database,
+        initialize_execution_evidence_database,
+    )
+
+    workspace_id = (
+        "wsp_123e4567-e89b-42d3-a456-426614174000"
+    )
+    database_path = tmp_path / "solvyn.db"
+
+    initialize_execution_evidence_database(
+        database_path
+    )
+
+    registry = SQLiteRoadmapSnapshotRegistry(
+        database_path,
+        workspace_id=workspace_id,
+        initialize_schema=False,
+        ensure_workspace=False,
+    )
+
+    with pytest.raises(
+        RoadmapSnapshotConflictError,
+        match=(
+            "Roadmap snapshot registry "
+            "constraint conflict"
+        ),
+    ) as raised:
+        registry.create(_record())
+
+    assert isinstance(
+        raised.value.__cause__,
+        sqlite3.IntegrityError,
+    )
+    assert (
+        _workspace_row_for_registry(
+            database_path,
+            workspace_id,
+        )
+        is None
+    )
+
+    connection = connect_execution_evidence_database(
+        database_path
+    )
+
+    try:
+        project_count = connection.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM projects
+            WHERE workspace_id = ?
+            """,
+            (workspace_id,),
+        ).fetchone()["count"]
+
+        roadmap_count = connection.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM roadmap_registry
+            WHERE workspace_id = ?
+            """,
+            (workspace_id,),
+        ).fetchone()["count"]
+    finally:
+        connection.close()
+
+    assert project_count == 0
+    assert roadmap_count == 0

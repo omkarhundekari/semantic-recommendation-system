@@ -200,10 +200,14 @@ class SQLiteRoadmapSnapshotRegistry(
         *,
         workspace_id: str = "local",
         initialize_schema: bool = True,
+        ensure_workspace: bool = True,
     ) -> None:
         self._path = Path(path)
         self._workspace_id = (
             workspace_id.strip()
+        )
+        self._ensure_workspace_enabled = (
+            ensure_workspace
         )
 
         if not self._workspace_id:
@@ -212,10 +216,22 @@ class SQLiteRoadmapSnapshotRegistry(
                 "must not be empty."
             )
 
+        if (
+            self._ensure_workspace_enabled
+            and self._workspace_id.startswith("wsp_")
+        ):
+            raise ValueError(
+                "Implicit workspace creation cannot use "
+                "the reserved provisioned workspace ID "
+                "prefix 'wsp_'."
+            )
+
         if initialize_schema:
             initialize_execution_evidence_database(
                 self._path
             )
+
+        if self._ensure_workspace_enabled:
             self._ensure_workspace()
 
     @property
@@ -256,9 +272,11 @@ class SQLiteRoadmapSnapshotRegistry(
 
         try:
             connection.execute("BEGIN IMMEDIATE")
-            self._ensure_workspace_on_connection(
-                connection
-            )
+
+            if self._ensure_workspace_enabled:
+                self._ensure_workspace_on_connection(
+                    connection
+                )
 
             stored_records = []
 
@@ -1099,8 +1117,7 @@ class SQLiteRoadmapSnapshotRegistry(
                 )
             )
             ON CONFLICT(workspace_id)
-            DO UPDATE SET
-                updated_at = excluded.updated_at
+            DO NOTHING
             """,
             (self._workspace_id,),
         )

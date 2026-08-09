@@ -961,6 +961,7 @@ def get_authorized_roadmap_registry(
         base_registry.path,
         workspace_id=context.workspace_id,
         initialize_schema=False,
+        ensure_workspace=False,
     )
 
 

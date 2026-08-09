@@ -52,8 +52,20 @@ class SQLiteRepositoryEvidenceStore(
                 "SQLite workspace ID must be non-empty."
             )
 
+        resolved_workspace_id = workspace_id.strip()
+
+        if (
+            ensure_workspace
+            and resolved_workspace_id.startswith("wsp_")
+        ):
+            raise ValueError(
+                "Implicit workspace creation cannot use "
+                "the reserved provisioned workspace ID "
+                "prefix 'wsp_'."
+            )
+
         self._path = Path(path)
-        self._workspace_id = workspace_id.strip()
+        self._workspace_id = resolved_workspace_id
 
         if initialize_schema:
             initialize_execution_evidence_database(
@@ -732,8 +744,7 @@ class SQLiteRepositoryEvidenceStore(
                 )
             )
             ON CONFLICT(workspace_id)
-            DO UPDATE SET
-                updated_at = excluded.updated_at
+            DO NOTHING
             """,
             (self._workspace_id,),
         )
