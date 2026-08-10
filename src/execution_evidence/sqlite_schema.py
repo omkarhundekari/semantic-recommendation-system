@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 23
+CURRENT_SQLITE_SCHEMA_VERSION = 24
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -2233,6 +2233,22 @@ PRAGMA user_version = 23;
 """
 
 
+
+ADD_WORKSPACE_DISCOVERY_INDEX_SQL = """
+CREATE INDEX
+    idx_workspace_memberships_principal_discovery
+ON workspace_memberships(
+    principal_id,
+    status,
+    updated_at DESC,
+    workspace_id ASC
+)
+WHERE role IS NOT NULL;
+
+PRAGMA user_version = 24;
+"""
+
+
 CREATE_PRINCIPAL_IDENTITY_FOUNDATION_SQL = """
 CREATE TABLE identity_providers (
     identity_provider_row_id INTEGER
@@ -2949,6 +2965,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=23,
         name="create_workspace_provisioning_idempotency",
         sql=CREATE_WORKSPACE_PROVISIONING_IDEMPOTENCY_SQL,
+    ),
+    SQLiteMigration(
+        version=24,
+        name="add_workspace_discovery_index",
+        sql=ADD_WORKSPACE_DISCOVERY_INDEX_SQL,
     ),
 )
 

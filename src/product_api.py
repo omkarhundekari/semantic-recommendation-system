@@ -83,6 +83,11 @@ from schemas.product_models import (
 )
 from source_router import retrieve_evidence
 
+from execution_evidence.workspace_discovery import (
+    DiscoveredWorkspace,
+    SQLiteWorkspaceDiscoveryService,
+    WorkspaceDiscoveryStoreError,
+)
 from execution_evidence.workspace_provisioning import (
     SQLiteWorkspaceProvisioningService,
     WorkspaceProvisioningIdempotencyConflictError,
@@ -806,6 +811,68 @@ def provision_workspace_endpoint(
     )
 
     return provisioning.result
+
+# === workspace discovery API ===
+def get_workspace_discovery_service(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLiteWorkspaceDiscoveryService:
+    trusted_service = runtime.trusted_sqlite_service
+
+    if trusted_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Workspace discovery storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return SQLiteWorkspaceDiscoveryService(
+        trusted_service.path
+    )
+
+
+@app.get(
+    "/v1/workspaces",
+    response_model=List[DiscoveredWorkspace],
+)
+def list_accessible_workspaces_endpoint(
+    principal: AuthenticatedRequestPrincipal = Depends(
+        get_authenticated_request_principal
+    ),
+    discovery_service: (
+        SQLiteWorkspaceDiscoveryService
+    ) = Depends(
+        get_workspace_discovery_service
+    ),
+) -> List[DiscoveredWorkspace]:
+    """List workspaces currently accessible to the caller.
+
+    Workspace identities are derived from durable active
+    memberships for the authenticated request principal.
+    No caller-supplied workspace scope is trusted.
+    """
+
+    try:
+        return discovery_service.list_accessible(
+            principal=principal
+        )
+    except WorkspaceDiscoveryStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Workspace discovery is temporarily "
+                "unavailable."
+            ),
+        ) from error
+    except (TypeError, ValueError) as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
+
 
 def get_workspace_access_service(
     runtime: ExecutionEvidenceStorageRuntime = Depends(

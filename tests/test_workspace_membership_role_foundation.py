@@ -237,8 +237,8 @@ def test_current_schema_includes_role_foundation(
         )
     )
 
-    assert version == 23
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 23
+    assert version == 24
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 24
 
 
 def test_fresh_schema_contains_role_foundation(
@@ -384,14 +384,14 @@ def test_version_19_membership_upgrades_unassigned(
             get_execution_evidence_schema_version(
                 connection
             )
-            == 23
+            == 24
         )
 
         assert int(
             connection.execute(
                 "PRAGMA user_version"
             ).fetchone()[0]
-        ) == 23
+        ) == 24
     finally:
         connection.close()
 
