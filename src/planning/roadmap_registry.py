@@ -7,7 +7,11 @@ from pathlib import Path
 from typing import List, Literal, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+)
 
 from execution_evidence.sqlite_schema import (
     connect_execution_evidence_database,
@@ -94,6 +98,28 @@ class StoredRoadmapSnapshot(BaseModel):
     snapshot: RoadmapSnapshot
     created_at: datetime
     supersedes_id: Optional[str] = None
+
+    @field_validator("created_at")
+    @classmethod
+    def require_created_at_utc(
+        cls,
+        value: datetime,
+    ) -> datetime:
+        if (
+            value.tzinfo is None
+            or value.utcoffset() is None
+        ):
+            raise ValueError(
+                "Project created_at must be "
+                "timezone-aware."
+            )
+
+        if value.utcoffset().total_seconds() != 0:
+            raise ValueError(
+                "Project created_at must use UTC."
+            )
+
+        return value
 
 
 def create_stored_roadmap_snapshot(

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 25
+CURRENT_SQLITE_SCHEMA_VERSION = 26
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -2267,6 +2267,34 @@ PRAGMA user_version = 25;
 """
 
 
+ADD_PROJECT_DISCOVERY_FOUNDATION_SQL = """
+CREATE INDEX
+    idx_projects_workspace_discovery
+ON projects(
+    workspace_id,
+    status,
+    created_at DESC,
+    project_id ASC
+);
+
+CREATE TRIGGER
+    prevent_project_discovery_identity_update
+BEFORE UPDATE OF
+    workspace_id,
+    project_id,
+    created_at
+ON projects
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Project discovery identity fields are immutable'
+    );
+END;
+
+PRAGMA user_version = 26;
+"""
+
+
 CREATE_PRINCIPAL_IDENTITY_FOUNDATION_SQL = """
 CREATE TABLE identity_providers (
     identity_provider_row_id INTEGER
@@ -2993,6 +3021,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=25,
         name="add_stable_workspace_discovery_cursor_index",
         sql=ADD_STABLE_WORKSPACE_DISCOVERY_CURSOR_INDEX_SQL,
+    ),
+    SQLiteMigration(
+        version=26,
+        name="add_project_discovery_foundation",
+        sql=ADD_PROJECT_DISCOVERY_FOUNDATION_SQL,
     ),
 )
 

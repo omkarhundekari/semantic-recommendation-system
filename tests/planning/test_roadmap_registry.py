@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 import sqlite3
@@ -1309,6 +1309,32 @@ def test_project_status_transition_is_workspace_scoped(
     assert first.load(
         stored.project_direction_id
     ).project_status == "active"
+
+
+def test_stored_roadmap_snapshot_created_at_requires_utc():
+    non_utc = datetime(
+        2026,
+        8,
+        10,
+        9,
+        0,
+        tzinfo=timezone(
+            -timedelta(hours=4)
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Project created_at must use UTC",
+    ):
+        create_stored_roadmap_snapshot(
+            project_id="proj_non_utc",
+            response_direction_id="direction-non-utc",
+            title="Non UTC project",
+            snapshot=_snapshot(),
+            created_at=non_utc,
+        )
+
 
 
 def test_project_status_transition_requires_existing_project(

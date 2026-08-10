@@ -242,7 +242,14 @@ from execution_evidence.workspace_capability import (
     WorkspaceCapabilityDeniedError,
     require_workspace_capability,
 )
+from execution_evidence.project_discovery import (
+    MAX_PROJECT_DISCOVERY_RESULTS,
+    DiscoveredProject,
+    ProjectDiscoveryStoreError,
+    SQLiteProjectDiscoveryService,
+)
 from execution_evidence.project_capability import (
+    capabilities_for_role,
     ProjectCapability,
     ProjectCapabilityDeniedError,
     require_capability,
@@ -971,6 +978,111 @@ def get_authorized_workspace_context(
             status_code=422,
             detail=str(error),
         ) from error
+
+
+
+def get_project_discovery_service(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLiteProjectDiscoveryService:
+    trusted_service = runtime.trusted_sqlite_service
+
+    if trusted_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Project discovery storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return SQLiteProjectDiscoveryService(
+        trusted_service.path
+    )
+
+
+@app.get(
+    "/v1/workspaces/{workspace_id}/projects",
+    response_model=List[DiscoveredProject],
+)
+def list_workspace_projects_endpoint(
+    workspace_id: str,
+    response: Response,
+    cursor: Optional[str] = Query(
+        default=None,
+    ),
+    page_size: int = Query(
+        default=MAX_PROJECT_DISCOVERY_RESULTS,
+        ge=1,
+        le=MAX_PROJECT_DISCOVERY_RESULTS,
+    ),
+    context: AuthorizedWorkspaceContext = Depends(
+        get_authorized_workspace_context
+    ),
+    discovery_service: (
+        SQLiteProjectDiscoveryService
+    ) = Depends(
+        get_project_discovery_service
+    ),
+) -> List[DiscoveredProject]:
+    """Discover active projects visible in one workspace.
+
+    Authentication and workspace tenancy are resolved before
+    project capability enforcement. Project discovery never
+    trusts caller-supplied principal scope.
+    """
+
+    if (
+        ProjectCapability.PROJECT_READ
+        not in capabilities_for_role(
+            context.membership_role
+        )
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Project capability is required: "
+                f"{ProjectCapability.PROJECT_READ.value}."
+            ),
+        )
+
+    try:
+        discovery = discovery_service.discover(
+            workspace_id=context.workspace_id,
+            cursor=cursor,
+            page_size=page_size,
+        )
+
+    except ProjectDiscoveryStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Project discovery is temporarily "
+                "unavailable."
+            ),
+        ) from error
+
+    except (TypeError, ValueError) as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
+
+    response.headers[
+        "Project-Discovery-Truncated"
+    ] = (
+        "true"
+        if discovery.truncated
+        else "false"
+    )
+
+    if discovery.next_cursor is not None:
+        response.headers[
+            "Project-Discovery-Next-Cursor"
+        ] = discovery.next_cursor
+
+    return discovery.projects
 
 
 def get_authorized_workspace_membership_store(
