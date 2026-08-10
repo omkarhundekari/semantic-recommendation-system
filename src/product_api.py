@@ -11,6 +11,7 @@ from fastapi import (
     Header,
     HTTPException,
     Request,
+    Response,
 )
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
@@ -82,6 +83,15 @@ from schemas.product_models import (
 )
 from source_router import retrieve_evidence
 
+from execution_evidence.workspace_provisioning import (
+    SQLiteWorkspaceProvisioningService,
+    WorkspaceProvisioningIdempotencyConflictError,
+    WorkspaceProvisioningIdentityCollisionError,
+    WorkspaceProvisioningPrincipalUnavailableError,
+    WorkspaceProvisioningResult,
+    WorkspaceProvisioningStateError,
+    WorkspaceProvisioningUnavailableError,
+)
 from execution_evidence.api_models import (
     EvidenceAttributionAttachRequest,
     EvidenceAttributionDetachRequest,
@@ -666,6 +676,136 @@ def get_authenticated_request_principal(
             ),
         ) from error
 
+
+
+# === workspace provisioning API ===
+class WorkspaceProvisioningRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    reason: Optional[str] = None
+
+
+def get_workspace_provisioning_service(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLiteWorkspaceProvisioningService:
+    trusted_service = runtime.trusted_sqlite_service
+
+    if trusted_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Workspace provisioning storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return SQLiteWorkspaceProvisioningService(
+        trusted_service.path
+    )
+
+
+@app.post(
+    "/v1/workspaces",
+    response_model=WorkspaceProvisioningResult,
+    status_code=201,
+)
+def provision_workspace_endpoint(
+    request: WorkspaceProvisioningRequest,
+    response: Response,
+    idempotency_key: str = Header(
+        ...,
+        alias="Idempotency-Key",
+    ),
+    principal: AuthenticatedRequestPrincipal = Depends(
+        get_authenticated_request_principal
+    ),
+    provisioning_service: (
+        SQLiteWorkspaceProvisioningService
+    ) = Depends(
+        get_workspace_provisioning_service
+    ),
+) -> WorkspaceProvisioningResult:
+    """Create one self-service provisioned workspace.
+
+    The target workspace does not exist yet, so this route
+    is authorized by the authenticated request principal
+    rather than by workspace authorization.
+    """
+
+    try:
+        provisioning = (
+            provisioning_service.provision_idempotent(
+                principal_id=principal.principal_id,
+                idempotency_key=idempotency_key,
+                created_at=datetime.now(timezone.utc),
+                reason=request.reason,
+            )
+        )
+    except (
+        WorkspaceProvisioningPrincipalUnavailableError
+    ) as error:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+            headers={
+                "WWW-Authenticate": "Bearer",
+            },
+        ) from error
+    except (
+        WorkspaceProvisioningIdempotencyConflictError
+    ) as error:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Idempotency-Key was reused with "
+                "different workspace provisioning "
+                "request content."
+            ),
+        ) from error
+    except WorkspaceProvisioningUnavailableError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Workspace provisioning storage is "
+                "temporarily unavailable."
+            ),
+        ) from error
+    except (
+        WorkspaceProvisioningIdentityCollisionError,
+        WorkspaceProvisioningStateError,
+    ) as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Workspace provisioning is temporarily "
+                "unavailable."
+            ),
+        ) from error
+    except (TypeError, ValueError) as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
+
+    response.status_code = (
+        200
+        if provisioning.replayed
+        else 201
+    )
+
+    response.headers[
+        "Idempotency-Replayed"
+    ] = (
+        "true"
+        if provisioning.replayed
+        else "false"
+    )
+
+    return provisioning.result
 
 def get_workspace_access_service(
     runtime: ExecutionEvidenceStorageRuntime = Depends(
