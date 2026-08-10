@@ -65,7 +65,7 @@ def _seed_workspace_and_project(
 
 
 def test_github_source_binding_foundation_is_schema_version_19():
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 22
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 23
 
     migration = next(
         migration
@@ -134,8 +134,8 @@ def test_fresh_schema_contains_github_source_binding_foundation(
     finally:
         connection.close()
 
-    assert version == 22
-    assert user_version == 22
+    assert version == 23
+    assert user_version == 23
 
     assert "github_source_bindings" in tables
     assert "github_webhook_credentials" in tables

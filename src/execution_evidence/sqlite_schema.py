@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 22
+CURRENT_SQLITE_SCHEMA_VERSION = 23
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -2155,6 +2155,84 @@ PRAGMA user_version = 22;
 """
 
 
+CREATE_WORKSPACE_PROVISIONING_IDEMPOTENCY_SQL = """
+CREATE TABLE workspace_provisioning_idempotency (
+    provisioning_idempotency_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+    principal_id TEXT NOT NULL,
+    idempotency_key TEXT NOT NULL,
+    operation TEXT NOT NULL,
+    request_fingerprint TEXT NOT NULL,
+    workspace_id TEXT NOT NULL UNIQUE,
+    membership_id TEXT NOT NULL UNIQUE,
+    owner_role_transition_id TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (workspace_id)
+        REFERENCES workspaces(workspace_id)
+        ON DELETE RESTRICT,
+    FOREIGN KEY (membership_id)
+        REFERENCES workspace_memberships(
+            membership_id
+        )
+        ON DELETE RESTRICT,
+    FOREIGN KEY (owner_role_transition_id)
+        REFERENCES workspace_membership_role_transitions(
+            role_transition_id
+        )
+        ON DELETE RESTRICT,
+    UNIQUE (
+        principal_id,
+        idempotency_key
+    ),
+    CHECK (
+        length(idempotency_key) >= 1
+        AND length(idempotency_key) <= 255
+    ),
+    CHECK (
+        length(operation) >= 1
+    ),
+    CHECK (
+        length(request_fingerprint) = 64
+        AND request_fingerprint
+            NOT GLOB '*[^0-9a-f]*'
+    )
+);
+
+CREATE INDEX
+    idx_workspace_provisioning_idempotency_workspace
+ON workspace_provisioning_idempotency(
+    workspace_id
+);
+
+CREATE TRIGGER
+    prevent_workspace_provisioning_idempotency_update
+BEFORE UPDATE
+ON workspace_provisioning_idempotency
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Workspace provisioning idempotency records are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_workspace_provisioning_idempotency_delete
+BEFORE DELETE
+ON workspace_provisioning_idempotency
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Workspace provisioning idempotency records cannot be deleted'
+    );
+END;
+
+PRAGMA user_version = 23;
+"""
+
+
 CREATE_PRINCIPAL_IDENTITY_FOUNDATION_SQL = """
 CREATE TABLE identity_providers (
     identity_provider_row_id INTEGER
@@ -2866,6 +2944,11 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         version=22,
         name="classify_workspace_kind",
         sql=CLASSIFY_WORKSPACE_KIND_SQL,
+    ),
+    SQLiteMigration(
+        version=23,
+        name="create_workspace_provisioning_idempotency",
+        sql=CREATE_WORKSPACE_PROVISIONING_IDEMPOTENCY_SQL,
     ),
 )
 
