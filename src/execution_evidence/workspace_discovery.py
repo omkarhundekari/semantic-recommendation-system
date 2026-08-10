@@ -85,6 +85,19 @@ class DiscoveredWorkspace(BaseModel):
         return value
 
 
+class WorkspaceDiscoveryResult(BaseModel):
+    """Bounded principal-scoped workspace discovery result."""
+
+    model_config = ConfigDict(
+        frozen=True,
+        extra="forbid",
+    )
+
+    workspaces: List[DiscoveredWorkspace]
+    truncated: bool
+
+
+
 class SQLiteWorkspaceDiscoveryService:
     """Discover current workspaces visible to one principal.
 
@@ -112,11 +125,11 @@ class SQLiteWorkspaceDiscoveryService:
     def path(self) -> Path:
         return self._path
 
-    def list_accessible(
+    def discover(
         self,
         *,
         principal: AuthenticatedRequestPrincipal,
-    ) -> List[DiscoveredWorkspace]:
+    ) -> WorkspaceDiscoveryResult:
         if not isinstance(
             principal,
             AuthenticatedRequestPrincipal,
@@ -174,14 +187,26 @@ class SQLiteWorkspaceDiscoveryService:
                 """,
                 (
                     principal.principal_id,
-                    MAX_WORKSPACE_DISCOVERY_RESULTS,
+                    (
+                        MAX_WORKSPACE_DISCOVERY_RESULTS
+                        + 1
+                    ),
                 ),
             ).fetchall()
 
             if connection.in_transaction:
                 connection.rollback()
 
-            return [
+            truncated = (
+                len(rows)
+                > MAX_WORKSPACE_DISCOVERY_RESULTS
+            )
+
+            bounded_rows = rows[
+                :MAX_WORKSPACE_DISCOVERY_RESULTS
+            ]
+
+            workspaces = [
                 DiscoveredWorkspace(
                     workspace_id=row[
                         "workspace_id"
@@ -213,8 +238,13 @@ class SQLiteWorkspaceDiscoveryService:
                         "membership_updated_at"
                     ],
                 )
-                for row in rows
+                for row in bounded_rows
             ]
+
+            return WorkspaceDiscoveryResult(
+                workspaces=workspaces,
+                truncated=truncated,
+            )
 
         except (
             TypeError,
@@ -233,3 +263,20 @@ class SQLiteWorkspaceDiscoveryService:
             ) from error
         finally:
             connection.close()
+
+
+    def list_accessible(
+        self,
+        *,
+        principal: AuthenticatedRequestPrincipal,
+    ) -> List[DiscoveredWorkspace]:
+        """Return the bounded workspace list only.
+
+        Call discover() when the caller also needs to know
+        whether the server-owned discovery ceiling truncated
+        additional accessible workspaces.
+        """
+
+        return self.discover(
+            principal=principal
+        ).workspaces

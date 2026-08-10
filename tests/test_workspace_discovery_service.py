@@ -537,18 +537,19 @@ def test_discovery_applies_server_owned_result_ceiling(
     discovered = (
         SQLiteWorkspaceDiscoveryService(
             path
-        ).list_accessible(
+        ).discover(
             principal=_authenticated_principal(
                 PRINCIPAL_A
             )
         )
     )
 
-    assert len(discovered) == 2
+    assert discovered.truncated is True
+    assert len(discovered.workspaces) == 2
 
     assert [
         item.workspace_id
-        for item in discovered
+        for item in discovered.workspaces
     ] == [
         third.workspace.workspace_id,
         second.workspace.workspace_id,
@@ -558,7 +559,7 @@ def test_discovery_applies_server_owned_result_ceiling(
         first.workspace.workspace_id
         not in {
             item.workspace_id
-            for item in discovered
+            for item in discovered.workspaces
         }
     )
 
@@ -640,3 +641,51 @@ def test_discovery_query_uses_principal_discovery_index_without_temp_sort(
         for detail in details
     )
 
+def test_discovery_exact_ceiling_is_not_truncated(
+    tmp_path: Path,
+    monkeypatch,
+):
+    path = _database(tmp_path)
+
+    _principal(path, PRINCIPAL_A)
+
+    service = SQLiteWorkspaceProvisioningService(
+        path
+    )
+
+    first = service.provision(
+        principal_id=PRINCIPAL_A,
+        created_at=NOW,
+    )
+
+    second = service.provision(
+        principal_id=PRINCIPAL_A,
+        created_at=(
+            NOW + timedelta(seconds=1)
+        ),
+    )
+
+    monkeypatch.setattr(
+        workspace_discovery,
+        "MAX_WORKSPACE_DISCOVERY_RESULTS",
+        2,
+    )
+
+    result = SQLiteWorkspaceDiscoveryService(
+        path
+    ).discover(
+        principal=_authenticated_principal(
+            PRINCIPAL_A
+        )
+    )
+
+    assert result.truncated is False
+    assert len(result.workspaces) == 2
+
+    assert {
+        item.workspace_id
+        for item in result.workspaces
+    } == {
+        first.workspace.workspace_id,
+        second.workspace.workspace_id,
+    }

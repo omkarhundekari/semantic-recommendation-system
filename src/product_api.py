@@ -839,6 +839,7 @@ def get_workspace_discovery_service(
     response_model=List[DiscoveredWorkspace],
 )
 def list_accessible_workspaces_endpoint(
+    response: Response,
     principal: AuthenticatedRequestPrincipal = Depends(
         get_authenticated_request_principal
     ),
@@ -856,7 +857,7 @@ def list_accessible_workspaces_endpoint(
     """
 
     try:
-        return discovery_service.list_accessible(
+        discovery = discovery_service.discover(
             principal=principal
         )
     except WorkspaceDiscoveryStoreError as error:
@@ -872,6 +873,16 @@ def list_accessible_workspaces_endpoint(
             status_code=422,
             detail=str(error),
         ) from error
+
+    response.headers[
+        "Workspace-Discovery-Truncated"
+    ] = (
+        "true"
+        if discovery.truncated
+        else "false"
+    )
+
+    return discovery.workspaces
 
 
 def get_workspace_access_service(

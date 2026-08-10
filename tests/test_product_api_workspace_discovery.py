@@ -8,6 +8,7 @@ from execution_evidence.authenticated_request_principal import (
 )
 from execution_evidence.workspace_discovery import (
     DiscoveredWorkspace,
+    WorkspaceDiscoveryResult,
     WorkspaceDiscoveryStoreError,
 )
 from product_api import (
@@ -69,6 +70,7 @@ class FakeDiscoveryService:
         *,
         result=None,
         error=None,
+        truncated=False,
     ):
         self.result = (
             []
@@ -77,8 +79,9 @@ class FakeDiscoveryService:
         )
         self.error = error
         self.calls = []
+        self.truncated = truncated
 
-    def list_accessible(
+    def discover(
         self,
         *,
         principal,
@@ -88,7 +91,23 @@ class FakeDiscoveryService:
         if self.error is not None:
             raise self.error
 
-        return self.result
+        return WorkspaceDiscoveryResult(
+            workspaces=self.result,
+            truncated=getattr(
+                self,
+                "truncated",
+                False,
+            ),
+        )
+
+    def list_accessible(
+        self,
+        *,
+        principal,
+    ):
+        return self.discover(
+            principal=principal
+        ).workspaces
 
 
 def _install(service):
@@ -123,6 +142,12 @@ def test_authenticated_principal_can_discover_workspaces():
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
+    assert (
+        response.headers[
+            "Workspace-Discovery-Truncated"
+        ]
+        == "false"
+    )
 
     assert response.json() == [
         discovered.model_dump(
@@ -261,3 +286,34 @@ def test_workspace_discovery_does_not_accept_principal_scope_from_query():
 
     assert response.status_code == 200
     assert service.calls == [principal]
+
+def test_workspace_discovery_reports_server_truncation():
+    discovered = _workspace()
+
+    service = FakeDiscoveryService(
+        result=[discovered],
+        truncated=True,
+    )
+
+    _install(service)
+
+    try:
+        with TestClient(app) as client:
+            response = client.get(
+                "/v1/workspaces"
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == [
+        discovered.model_dump(
+            mode="json"
+        )
+    ]
+    assert (
+        response.headers[
+            "Workspace-Discovery-Truncated"
+        ]
+        == "true"
+    )
