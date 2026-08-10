@@ -10,6 +10,7 @@ from fastapi import (
     FastAPI,
     Header,
     HTTPException,
+    Query,
     Request,
     Response,
 )
@@ -84,6 +85,7 @@ from schemas.product_models import (
 from source_router import retrieve_evidence
 
 from execution_evidence.workspace_discovery import (
+    MAX_WORKSPACE_DISCOVERY_RESULTS,
     DiscoveredWorkspace,
     SQLiteWorkspaceDiscoveryService,
     WorkspaceDiscoveryStoreError,
@@ -840,6 +842,14 @@ def get_workspace_discovery_service(
 )
 def list_accessible_workspaces_endpoint(
     response: Response,
+    cursor: Optional[str] = Query(
+        default=None,
+    ),
+    page_size: int = Query(
+        default=MAX_WORKSPACE_DISCOVERY_RESULTS,
+        ge=1,
+        le=MAX_WORKSPACE_DISCOVERY_RESULTS,
+    ),
     principal: AuthenticatedRequestPrincipal = Depends(
         get_authenticated_request_principal
     ),
@@ -857,8 +867,28 @@ def list_accessible_workspaces_endpoint(
     """
 
     try:
+        discovery_arguments = {
+            "principal": principal,
+        }
+
+        # Preserve compatibility with simple dependency
+        # overrides used by existing tests and callers.
+        if cursor is not None:
+            discovery_arguments[
+                "cursor"
+            ] = cursor
+
+        if (
+            cursor is not None
+            or page_size
+            != MAX_WORKSPACE_DISCOVERY_RESULTS
+        ):
+            discovery_arguments[
+                "page_size"
+            ] = page_size
+
         discovery = discovery_service.discover(
-            principal=principal
+            **discovery_arguments
         )
     except WorkspaceDiscoveryStoreError as error:
         raise HTTPException(
@@ -881,6 +911,11 @@ def list_accessible_workspaces_endpoint(
         if discovery.truncated
         else "false"
     )
+
+    if discovery.next_cursor is not None:
+        response.headers[
+            "Workspace-Discovery-Next-Cursor"
+        ] = discovery.next_cursor
 
     return discovery.workspaces
 

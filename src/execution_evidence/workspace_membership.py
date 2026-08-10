@@ -126,6 +126,20 @@ class WorkspaceMembership(BaseModel):
 
         return value
 
+    @field_validator("created_at")
+    @classmethod
+    def require_created_at_utc(
+        cls,
+        value: datetime,
+    ) -> datetime:
+        if value.utcoffset().total_seconds() != 0:
+            raise ValueError(
+                "Workspace membership created_at "
+                "must use UTC."
+            )
+
+        return value
+
     @model_validator(mode="after")
     def validate_timestamp_order(
         self,

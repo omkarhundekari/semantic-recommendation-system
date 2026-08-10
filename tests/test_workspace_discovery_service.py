@@ -593,7 +593,7 @@ def test_discovery_query_uses_principal_discovery_index_without_temp_sort(
                     AS membership_revision,
                 membership.created_at
                     AS membership_created_at,
-                membership.updated_at
+                membership.created_at
                     AS membership_updated_at
             FROM principals AS principal
             JOIN workspace_memberships AS membership
@@ -610,7 +610,7 @@ def test_discovery_query_uses_principal_discovery_index_without_temp_sort(
                 AND membership.status = 'active'
                 AND membership.role IS NOT NULL
             ORDER BY
-                membership.updated_at DESC,
+                membership.created_at DESC,
                 membership.workspace_id ASC
             LIMIT ?
             """,
@@ -629,7 +629,7 @@ def test_discovery_query_uses_principal_discovery_index_without_temp_sort(
 
     assert any(
         (
-            "idx_workspace_memberships_principal_discovery"
+            "idx_workspace_memberships_principal_discovery_v2"
             in detail
         )
         for detail in details

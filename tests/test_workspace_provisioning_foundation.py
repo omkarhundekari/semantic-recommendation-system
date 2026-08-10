@@ -29,7 +29,7 @@ NOW = datetime(
 
 
 def test_schema_version_is_23():
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 24
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 25
 
 
 def test_fresh_database_has_workspace_kind(
@@ -67,7 +67,7 @@ def test_fresh_database_has_workspace_kind(
             get_execution_evidence_schema_version(
                 connection
             )
-            == 24
+            == 25
         )
     finally:
         connection.close()
@@ -269,7 +269,7 @@ def test_v21_workspace_upgrades_as_internal(
             get_execution_evidence_schema_version(
                 connection
             )
-            == 24
+            == 25
         )
     finally:
         connection.close()

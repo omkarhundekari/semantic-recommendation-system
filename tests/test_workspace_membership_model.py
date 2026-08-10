@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from pydantic import ValidationError
@@ -286,6 +286,29 @@ def test_membership_requires_timezone_aware_dates():
     ):
         _membership(
             updated_at=naive
+        )
+
+
+def test_membership_created_at_requires_utc():
+    non_utc = datetime(
+        2026,
+        8,
+        2,
+        8,
+        0,
+        tzinfo=timezone(
+            -timedelta(hours=4)
+        ),
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="created_at must use UTC",
+    ):
+        _membership(
+            created_at=non_utc,
+            updated_at=non_utc,
+            status_changed_at=non_utc,
         )
 
 
