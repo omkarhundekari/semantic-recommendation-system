@@ -251,6 +251,56 @@ def test_authorizes_active_workspace_membership(
     assert context.project_id == PROJECT_ID
 
 
+
+def test_deleted_project_collapses_to_not_found(
+    database_path: Path,
+):
+    _setup(database_path)
+
+    connection = (
+        connect_execution_evidence_database(
+            database_path
+        )
+    )
+
+    try:
+        connection.execute(
+            """
+            UPDATE projects
+            SET
+                status = 'deleted',
+                revision = revision + 1,
+                updated_at = ?
+            WHERE
+                workspace_id = ?
+                AND project_id = ?
+            """,
+            (
+                (
+                    NOW
+                    + timedelta(seconds=1)
+                ).isoformat(),
+                WORKSPACE_ONE,
+                PROJECT_ID,
+            ),
+        )
+    finally:
+        connection.close()
+
+    with pytest.raises(
+        ProjectAccessNotFoundError,
+        match="Project does not exist",
+    ):
+        SQLiteProjectAccessService(
+            database_path
+        ).authorize(
+            principal=_principal(),
+            workspace_id=WORKSPACE_ONE,
+            project_id=PROJECT_ID,
+        )
+
+
+
 @pytest.mark.parametrize(
     "membership_status",
     [

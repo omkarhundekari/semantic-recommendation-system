@@ -84,6 +84,7 @@ class SQLiteProjectAccessService(
                         project.workspace_id =
                             membership.workspace_id
                         AND project.project_id = ?
+                        AND project.status != 'deleted'
                 WHERE
                     principal.principal_id = ?
                     AND principal.status = 'active'
