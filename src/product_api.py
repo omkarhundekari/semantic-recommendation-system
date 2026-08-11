@@ -276,6 +276,12 @@ from execution_evidence.sqlite_workspace_access_service import (
 from execution_evidence.sqlite_project_access_service import (
     SQLiteProjectAccessService,
 )
+from execution_evidence.project_read_service import (
+    ProjectReadNotFoundError,
+    ProjectReadRecord,
+    ProjectReadStoreError,
+    SQLiteProjectReadService,
+)
 from execution_evidence.authentication_runtime import (
     AuthenticationRuntime,
     build_authentication_runtime,
@@ -1183,6 +1189,69 @@ def get_authorized_project_context(
         raise HTTPException(
             status_code=422,
             detail=str(error),
+        ) from error
+
+
+def get_project_read_service(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLiteProjectReadService:
+    if runtime.trusted_sqlite_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Project read storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return SQLiteProjectReadService(
+        runtime.trusted_sqlite_service.path
+    )
+
+
+@app.get(
+    "/v1/workspaces/{workspace_id}/projects/{project_id}",
+    response_model=ProjectReadRecord,
+)
+def get_workspace_project(
+    workspace_id: str,
+    project_id: str,
+    context: AuthorizedProjectContext = Depends(
+        get_authorized_project_context
+    ),
+    service: SQLiteProjectReadService = Depends(
+        get_project_read_service
+    ),
+) -> ProjectReadRecord:
+    try:
+        require_capability(
+            context,
+            ProjectCapability.PROJECT_READ,
+        )
+
+        return service.load(
+            context
+        )
+
+    except ProjectCapabilityDeniedError as error:
+        raise HTTPException(
+            status_code=403,
+            detail=str(error),
+        ) from error
+    except ProjectReadNotFoundError as error:
+        raise HTTPException(
+            status_code=404,
+            detail="Project does not exist.",
+        ) from error
+    except ProjectReadStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Project read storage is "
+                "temporarily unavailable."
+            ),
         ) from error
 
 
