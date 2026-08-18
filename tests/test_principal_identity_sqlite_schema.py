@@ -133,7 +133,7 @@ def _end_link(
 
 
 def test_principal_identity_foundation_is_schema_version_17():
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 26
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 28
     assert MIGRATIONS[16].version == 17
     assert (
         MIGRATIONS[16].name
@@ -185,7 +185,7 @@ def test_fresh_schema_contains_identity_foundation(
     finally:
         connection.close()
 
-    assert version == 26
+    assert version == 28
     assert {
         "identity_providers",
         "principal_identity_links",
@@ -197,7 +197,7 @@ def test_fresh_schema_contains_identity_foundation(
         "idx_principal_identity_links_principal_status",
     }.issubset(indexes)
 
-    assert user_version == 26
+    assert user_version == 28
 
 
 def test_version_16_upgrades_to_identity_foundation(

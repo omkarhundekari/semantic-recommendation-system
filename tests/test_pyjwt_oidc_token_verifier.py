@@ -539,3 +539,210 @@ def test_provider_selected_from_unverified_issuer_is_bound():
         identity.identity_provider_id
         == first.identity_provider_id
     )
+
+
+
+# === SOLVYN MILESTONE 1C-4 LOGIN ID TOKEN NONCE BINDING ===
+
+LOGIN_NONCE = (
+    "solvyn-login-nonce-"
+    "12345678901234567890123456789012"
+)
+
+
+def _login_token_with_nonce(
+    private_key,
+    *,
+    nonce=LOGIN_NONCE,
+    include_nonce=True,
+):
+    """Re-sign the normal valid fixture with a login nonce."""
+
+    ordinary_token = _token(
+        private_key
+    )
+
+    claims = jwt.decode(
+        ordinary_token,
+        options={
+            "verify_signature": False,
+            "verify_exp": False,
+            "verify_nbf": False,
+            "verify_iss": False,
+            "verify_aud": False,
+        },
+    )
+
+    header = jwt.get_unverified_header(
+        ordinary_token
+    )
+
+    if include_nonce:
+        claims["nonce"] = nonce
+    else:
+        claims.pop("nonce", None)
+
+    return jwt.encode(
+        claims,
+        private_key,
+        algorithm="RS256",
+        headers=header,
+    )
+
+
+def test_login_id_token_requires_matching_nonce():
+    private_key = _private_key()
+
+    verifier, _ = _verifier(
+        keys=[
+            _jwk(private_key)
+        ]
+    )
+
+    token = _login_token_with_nonce(
+        private_key,
+    )
+
+    identity = (
+        verifier.verify_login_id_token(
+            token,
+            expected_nonce=LOGIN_NONCE,
+        )
+    )
+
+    assert identity.subject == "subject-123"
+
+
+def test_login_id_token_missing_nonce_is_invalid():
+    private_key = _private_key()
+
+    verifier, _ = _verifier(
+        keys=[
+            _jwk(private_key)
+        ]
+    )
+
+    token = _login_token_with_nonce(
+        private_key,
+        include_nonce=False,
+    )
+
+    with pytest.raises(
+        OIDCTokenInvalidError
+    ):
+        verifier.verify_login_id_token(
+            token,
+            expected_nonce=LOGIN_NONCE,
+        )
+
+
+def test_login_id_token_wrong_nonce_is_invalid():
+    private_key = _private_key()
+
+    verifier, _ = _verifier(
+        keys=[
+            _jwk(private_key)
+        ]
+    )
+
+    token = _login_token_with_nonce(
+        private_key,
+        nonce=(
+            "different-login-nonce-"
+            "12345678901234567890123456789012"
+        ),
+    )
+
+    with pytest.raises(
+        OIDCTokenInvalidError
+    ):
+        verifier.verify_login_id_token(
+            token,
+            expected_nonce=LOGIN_NONCE,
+        )
+
+
+@pytest.mark.parametrize(
+    "nonce",
+    [
+        "",
+        " nonce-with-leading-space",
+        "nonce-with-trailing-space ",
+    ],
+)
+def test_login_id_token_rejects_invalid_nonce_claim(
+    nonce,
+):
+    private_key = _private_key()
+
+    verifier, _ = _verifier(
+        keys=[
+            _jwk(private_key)
+        ]
+    )
+
+    token = _login_token_with_nonce(
+        private_key,
+        nonce=nonce,
+    )
+
+    with pytest.raises(
+        OIDCTokenInvalidError
+    ):
+        verifier.verify_login_id_token(
+            token,
+            expected_nonce=LOGIN_NONCE,
+        )
+
+
+@pytest.mark.parametrize(
+    "expected_nonce",
+    [
+        "",
+        " expected",
+        "expected ",
+    ],
+)
+def test_login_verification_rejects_invalid_expected_nonce(
+    expected_nonce,
+):
+    private_key = _private_key()
+
+    verifier, _ = _verifier(
+        keys=[
+            _jwk(private_key)
+        ]
+    )
+
+    token = _login_token_with_nonce(
+        private_key,
+    )
+
+    with pytest.raises(
+        OIDCTokenInvalidError
+    ):
+        verifier.verify_login_id_token(
+            token,
+            expected_nonce=expected_nonce,
+        )
+
+
+def test_normal_request_verification_does_not_require_nonce():
+    """Resource-server verify() contract remains unchanged."""
+
+    private_key = _private_key()
+
+    verifier, _ = _verifier(
+        keys=[
+            _jwk(private_key)
+        ]
+    )
+
+    token = _login_token_with_nonce(
+        private_key,
+        include_nonce=False,
+    )
+
+    identity = verifier.verify(token)
+
+    assert identity.subject == "subject-123"

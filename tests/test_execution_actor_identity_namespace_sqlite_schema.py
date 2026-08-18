@@ -89,7 +89,7 @@ def _insert_namespace(
 
 
 def test_namespace_foundation_is_schema_version_18():
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 26
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 28
     assert MIGRATIONS[17].version == 18
     assert (
         MIGRATIONS[17].name
@@ -143,7 +143,7 @@ def test_fresh_schema_contains_namespace_foundation(
     finally:
         connection.close()
 
-    assert version == 26
+    assert version == 28
     assert table is not None
     assert (
         "prevent_execution_actor_namespace_update"
@@ -153,7 +153,7 @@ def test_fresh_schema_contains_namespace_foundation(
         "prevent_execution_actor_namespace_delete"
         in triggers
     )
-    assert user_version == 26
+    assert user_version == 28
 
 
 def test_version_17_upgrades_to_namespace_foundation(

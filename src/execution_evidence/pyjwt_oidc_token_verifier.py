@@ -196,6 +196,102 @@ class PyJWTOIDCTokenVerifier(
             subject=subject,
         )
 
+    def verify_login_id_token(
+        self,
+        token: str,
+        *,
+        expected_nonce: str,
+    ) -> VerifiedOIDCIdentity:
+        """Verify one login ID token and bind it to its nonce.
+
+        This is intentionally separate from verify().
+
+        RequestAuthenticator continues to use verify(), which
+        preserves the resource-server authentication contract.
+        Only the interactive login/callback path should use this
+        method.
+
+        The ordinary verifier performs all signature, algorithm,
+        issuer, audience, expiry, not-before, subject, JWKS, and
+        key-strength validation first. Only after that succeeds do
+        we inspect the nonce from the exact same token.
+        """
+
+        if (
+            not isinstance(expected_nonce, str)
+            or not expected_nonce
+            or expected_nonce
+            != expected_nonce.strip()
+        ):
+            raise OIDCTokenInvalidError(
+                "OIDC bearer token is invalid."
+            )
+
+        identity = self.verify(token)
+
+        try:
+            claims = jwt.decode(
+                token,
+                options={
+                    "verify_signature": False,
+                    "verify_exp": False,
+                    "verify_nbf": False,
+                    "verify_iss": False,
+                    "verify_aud": False,
+                },
+            )
+        except jwt.InvalidTokenError as error:
+            # Reaching this branch after verify() succeeded would
+            # indicate an internally inconsistent token parse.
+            # It still fails closed as an invalid login token.
+            raise OIDCTokenInvalidError(
+                "OIDC bearer token is invalid."
+            ) from error
+
+        if not isinstance(claims, dict):
+            raise OIDCTokenInvalidError(
+                "OIDC bearer token is invalid."
+            )
+
+        nonce = claims.get("nonce")
+
+        if (
+            not isinstance(nonce, str)
+            or not nonce
+            or nonce != nonce.strip()
+        ):
+            raise OIDCTokenInvalidError(
+                "OIDC bearer token is invalid."
+            )
+
+        expected_bytes = expected_nonce.encode(
+            "utf-8"
+        )
+        received_bytes = nonce.encode(
+            "utf-8"
+        )
+
+        if (
+            len(expected_bytes)
+            != len(received_bytes)
+        ):
+            raise OIDCTokenInvalidError(
+                "OIDC bearer token is invalid."
+            )
+
+        import hmac
+
+        if not hmac.compare_digest(
+            expected_bytes,
+            received_bytes,
+        ):
+            raise OIDCTokenInvalidError(
+                "OIDC bearer token is invalid."
+            )
+
+        return identity
+
+
     @staticmethod
     def _read_unverified_issuer(
         token: str,

@@ -45,6 +45,9 @@ class AuthenticationRuntime:
     authenticator: Optional[RequestAuthenticator]
     configured_provider_ids: Tuple[str, ...]
     errors: Tuple[str, ...]
+    login_token_verifier: Optional[
+        PyJWTOIDCTokenVerifier
+    ] = None
 
     @property
     def ready(self) -> bool:
@@ -147,4 +150,5 @@ def build_authentication_runtime(
         authenticator=authenticator,
         configured_provider_ids=provider_ids,
         errors=(),
+        login_token_verifier=verifier,
     )

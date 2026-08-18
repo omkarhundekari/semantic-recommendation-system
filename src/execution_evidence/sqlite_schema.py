@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 
-CURRENT_SQLITE_SCHEMA_VERSION = 26
+CURRENT_SQLITE_SCHEMA_VERSION = 28
 
 
 class SQLiteMigrationError(RuntimeError):
@@ -2872,6 +2872,196 @@ PRAGMA user_version = 18;
 """
 
 
+
+CREATE_LOGIN_SESSION_FOUNDATION_SQL = """
+CREATE TABLE login_sessions (
+    session_row_id INTEGER
+        PRIMARY KEY AUTOINCREMENT,
+
+    session_id TEXT NOT NULL UNIQUE,
+
+    token_hash TEXT NOT NULL UNIQUE
+        CHECK (
+            length(token_hash) = 64
+            AND token_hash = lower(token_hash)
+        ),
+
+    principal_id TEXT NOT NULL,
+    identity_link_id TEXT NOT NULL,
+
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+
+    revoked_at TEXT,
+    revoke_reason TEXT,
+
+    FOREIGN KEY (principal_id)
+        REFERENCES principals(principal_id)
+        ON DELETE RESTRICT,
+
+    FOREIGN KEY (identity_link_id)
+        REFERENCES principal_identity_links(link_id)
+        ON DELETE RESTRICT,
+
+    CHECK (
+        expires_at > created_at
+    ),
+
+    CHECK (
+        (
+            revoked_at IS NULL
+            AND revoke_reason IS NULL
+        )
+        OR
+        (
+            revoked_at IS NOT NULL
+            AND revoke_reason IS NOT NULL
+            AND length(revoke_reason) > 0
+        )
+    )
+);
+
+CREATE INDEX
+    idx_login_sessions_principal
+ON login_sessions(
+    principal_id,
+    expires_at
+);
+
+CREATE INDEX
+    idx_login_sessions_identity_link
+ON login_sessions(
+    identity_link_id,
+    expires_at
+);
+
+CREATE TRIGGER
+    enforce_login_session_identity_binding
+BEFORE INSERT
+ON login_sessions
+WHEN NOT EXISTS (
+    SELECT 1
+    FROM principals AS p
+    JOIN principal_identity_links AS l
+      ON l.principal_id = p.principal_id
+    WHERE
+        p.principal_id = NEW.principal_id
+        AND p.status = 'active'
+        AND l.link_id = NEW.identity_link_id
+        AND l.status = 'active'
+)
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Login session identity binding is not active'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_login_session_identity_update
+BEFORE UPDATE OF
+    session_id,
+    token_hash,
+    principal_id,
+    identity_link_id,
+    created_at,
+    expires_at
+ON login_sessions
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Login session identity fields are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    enforce_login_session_revocation
+BEFORE UPDATE OF
+    revoked_at,
+    revoke_reason
+ON login_sessions
+WHEN
+    OLD.revoked_at IS NULL
+    AND (
+        NEW.revoked_at IS NULL
+        OR NEW.revoke_reason IS NULL
+        OR length(NEW.revoke_reason) = 0
+    )
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Login sessions may only transition to revoked'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_revoked_login_session_update
+BEFORE UPDATE OF
+    revoked_at,
+    revoke_reason
+ON login_sessions
+WHEN OLD.revoked_at IS NOT NULL
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Revoked login sessions are terminal'
+    );
+END;
+
+PRAGMA user_version = 27;
+"""
+
+
+CREATE_LOGIN_TRANSACTION_CONSUMPTION_SQL = """
+CREATE TABLE consumed_login_transactions (
+    transaction_id TEXT PRIMARY KEY,
+
+    session_id TEXT NOT NULL UNIQUE,
+
+    consumed_at TEXT NOT NULL,
+
+    FOREIGN KEY (session_id)
+        REFERENCES login_sessions(session_id)
+        ON DELETE RESTRICT,
+
+    CHECK (
+        length(transaction_id) >= 32
+        AND transaction_id = trim(transaction_id)
+    )
+);
+
+CREATE INDEX
+    idx_consumed_login_transactions_session
+ON consumed_login_transactions(
+    session_id
+);
+
+CREATE TRIGGER
+    prevent_consumed_login_transaction_update
+BEFORE UPDATE
+ON consumed_login_transactions
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Consumed login transactions are immutable'
+    );
+END;
+
+CREATE TRIGGER
+    prevent_consumed_login_transaction_delete
+BEFORE DELETE
+ON consumed_login_transactions
+BEGIN
+    SELECT RAISE(
+        ABORT,
+        'Consumed login transactions cannot be deleted'
+    );
+END;
+
+PRAGMA user_version = 28;
+"""
+
+
 MIGRATIONS: Sequence[SQLiteMigration] = (
     SQLiteMigration(
         version=1,
@@ -3027,6 +3217,17 @@ MIGRATIONS: Sequence[SQLiteMigration] = (
         name="add_project_discovery_foundation",
         sql=ADD_PROJECT_DISCOVERY_FOUNDATION_SQL,
     ),
+    SQLiteMigration(
+        version=27,
+        name="create_login_session_foundation",
+        sql=CREATE_LOGIN_SESSION_FOUNDATION_SQL,
+    ),
+    SQLiteMigration(
+        version=28,
+        name="consume_login_transactions_once",
+        sql=CREATE_LOGIN_TRANSACTION_CONSUMPTION_SQL,
+    ),
+
 )
 
 

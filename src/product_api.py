@@ -10,6 +10,7 @@ from fastapi import (
     FastAPI,
     Header,
     HTTPException,
+    Request,
     Query,
     Request,
     Response,
@@ -289,6 +290,27 @@ from execution_evidence.authentication_runtime import (
 from execution_evidence.environment_oidc_provider_config_source import (
     EnvironmentOIDCProviderConfigSource,
 )
+from execution_evidence.oidc_token_verifier import (
+    OIDCTokenInvalidError,
+    OIDCTokenVerifierUnavailableError,
+)
+from execution_evidence.principal_provisioning import (
+    PrincipalProvisioningAccessDenied,
+    PrincipalProvisioningConfigurationError,
+    PrincipalProvisioningService,
+    PrincipalProvisioningUnavailableError,
+)
+from execution_evidence.pyjwt_oidc_token_verifier import (
+    PyJWTOIDCTokenVerifier,
+)
+from execution_evidence.sqlite_login_session_store import (
+    LoginSessionCreationDeniedError,
+    LoginSessionNotFoundError,
+    LoginSessionStoreError,
+    LoginSessionTransitionError,
+    LoginTransactionAlreadyConsumedError,
+    SQLiteLoginSessionStore,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -310,8 +332,21 @@ app.add_middleware(
         "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    ],
+    allow_headers=[
+        "Accept",
+        "Content-Type",
+        "Authorization",
+        "If-Match",
+        "If-None-Match",
+    ],
 )
 
 
@@ -695,6 +730,680 @@ def get_authenticated_request_principal(
                 "unavailable."
             ),
         ) from error
+
+
+
+# === internal interactive-login completion API ===
+
+SOLVYN_INTERNAL_LOGIN_SECRET_ENV = (
+    "SOLVYN_INTERNAL_LOGIN_SECRET"
+)
+
+SOLVYN_INTERNAL_LOGIN_SECRET_HEADER = (
+    "X-Solvyn-Internal-Login-Secret"
+)
+
+MIN_INTERNAL_LOGIN_SECRET_BYTES = 32
+MAX_INTERNAL_LOGIN_SECRET_BYTES = 4 * 1024
+
+
+class InternalLoginCompletionRequest(BaseModel):
+    """Server-to-server interactive login completion.
+
+    The Next.js BFF sends the raw Google ID token and the
+    nonce from Solvyn's signed authentication transaction.
+
+    It MUST NOT send pre-decoded issuer/subject identity
+    claims for the backend to trust.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    id_token: str
+    expected_nonce: str
+    transaction_id: str
+
+
+
+def _require_internal_server_transport(
+    request: Request,
+) -> None:
+    """Reject browser-origin access to internal auth routes.
+
+    Internal authentication endpoints are server-to-server
+    interfaces used by the trusted Next.js BFF.
+
+    Browser-origin requests are never valid callers.
+
+    This is defense in depth only:
+    the internal shared secret remains mandatory, and future
+    production deployment must additionally keep /internal/*
+    unreachable at the public edge.
+    """
+
+    if request.headers.get("origin") is not None:
+        raise HTTPException(
+            status_code=404,
+            detail="Not found.",
+        )
+
+    if (
+        request.headers.get(
+            "access-control-request-method"
+        )
+        is not None
+        or request.headers.get(
+            "access-control-request-headers"
+        )
+        is not None
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Not found.",
+        )
+
+
+def _require_internal_login_secret(
+    provided_secret: Optional[str],
+) -> None:
+    """Authenticate the trusted BFF -> FastAPI boundary."""
+
+    import hmac
+
+    configured_secret = os.getenv(
+        SOLVYN_INTERNAL_LOGIN_SECRET_ENV
+    )
+
+    if (
+        configured_secret is None
+        or not configured_secret
+    ):
+        logger.error(
+            "Internal interactive-login authentication "
+            "secret is not configured."
+        )
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Interactive authentication is "
+                "temporarily unavailable."
+            ),
+        )
+
+    configured_bytes = configured_secret.encode(
+        "utf-8"
+    )
+
+    if (
+        len(configured_bytes)
+        < MIN_INTERNAL_LOGIN_SECRET_BYTES
+        or len(configured_bytes)
+        > MAX_INTERNAL_LOGIN_SECRET_BYTES
+    ):
+        logger.error(
+            "Internal interactive-login authentication "
+            "secret has an invalid configured length."
+        )
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Interactive authentication is "
+                "temporarily unavailable."
+            ),
+        )
+
+    if (
+        provided_secret is None
+        or not isinstance(
+            provided_secret,
+            str,
+        )
+        or not provided_secret
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        )
+
+    provided_bytes = provided_secret.encode(
+        "utf-8"
+    )
+
+    if (
+        len(provided_bytes)
+        > MAX_INTERNAL_LOGIN_SECRET_BYTES
+        or not hmac.compare_digest(
+            configured_bytes,
+            provided_bytes,
+        )
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        )
+
+
+def get_interactive_login_token_verifier(
+    runtime: AuthenticationRuntime = Depends(
+        get_authentication_runtime
+    ),
+) -> PyJWTOIDCTokenVerifier:
+    """Return the process-shared verifier for login only.
+
+    Ordinary API authentication continues through
+    RequestAuthenticator and its verify() call.
+    """
+
+    verifier = runtime.login_token_verifier
+
+    if (
+        not runtime.ready
+        or verifier is None
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Interactive authentication is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return verifier
+
+
+def get_principal_login_provisioning_service(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> PrincipalProvisioningService:
+    trusted_service = runtime.trusted_sqlite_service
+
+    if trusted_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Interactive authentication is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return PrincipalProvisioningService(
+        trusted_service.path
+    )
+
+
+def get_login_session_store(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLiteLoginSessionStore:
+    trusted_service = runtime.trusted_sqlite_service
+
+    if trusted_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Interactive authentication is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return SQLiteLoginSessionStore(
+        trusted_service.path
+    )
+
+
+@app.post(
+    "/internal/v1/auth/google/complete"
+)
+def complete_google_interactive_login(
+    request: InternalLoginCompletionRequest,
+    _transport: None = Depends(
+        _require_internal_server_transport
+    ),
+    internal_secret: Optional[str] = Header(
+        default=None,
+        alias=(
+            SOLVYN_INTERNAL_LOGIN_SECRET_HEADER
+        ),
+    ),
+    token_verifier: PyJWTOIDCTokenVerifier = Depends(
+        get_interactive_login_token_verifier
+    ),
+    provisioning_service: PrincipalProvisioningService = Depends(
+        get_principal_login_provisioning_service
+    ),
+    session_store: SQLiteLoginSessionStore = Depends(
+        get_login_session_store
+    ),
+):
+    """Verify Google's ID token and resolve/provision principal.
+
+    This is a server-to-server boundary for the Next.js BFF.
+
+    Security invariants:
+
+    - the BFF supplies the RAW Google ID token;
+    - Python performs cryptographic token verification;
+    - the login nonce is verified here;
+    - durable identity is derived only from the verified token;
+    - provisioning is invoked exactly once;
+    - all user-denial reasons collapse externally;
+    - no workspace or tenant state is created here.
+    """
+
+    _require_internal_login_secret(
+        internal_secret
+    )
+
+    if (
+        not isinstance(request.id_token, str)
+        or not request.id_token
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        )
+
+    if (
+        not isinstance(
+            request.expected_nonce,
+            str,
+        )
+        or not request.expected_nonce
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        )
+
+    if (
+        not isinstance(
+            request.transaction_id,
+            str,
+        )
+        or not request.transaction_id
+        or request.transaction_id
+            != request.transaction_id.strip()
+        or len(
+            request.transaction_id.encode(
+                "utf-8"
+            )
+        ) < 32
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        )
+
+    try:
+        identity = (
+            token_verifier
+            .verify_login_id_token(
+                request.id_token,
+                expected_nonce=(
+                    request.expected_nonce
+                ),
+            )
+        )
+    except OIDCTokenInvalidError as error:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        ) from error
+    except (
+        OIDCTokenVerifierUnavailableError
+    ) as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Interactive authentication is "
+                "temporarily unavailable."
+            ),
+        ) from error
+
+    try:
+        # IMPORTANT:
+        # This is the one and only provisioning call.
+        #
+        # The timestamp comes from the backend server clock,
+        # never from the browser or callback request.
+        result = (
+            provisioning_service
+            .resolve_or_provision(
+                identity,
+                now=datetime.now(
+                    timezone.utc
+                ),
+            )
+        )
+    except (
+        PrincipalProvisioningConfigurationError
+    ) as error:
+        logger.error(
+            "Interactive login principal provisioning "
+            "configuration failure."
+        )
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Interactive authentication is "
+                "temporarily unavailable."
+            ),
+        ) from error
+    except (
+        PrincipalProvisioningUnavailableError
+    ) as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Interactive authentication is "
+                "temporarily unavailable."
+            ),
+        ) from error
+
+    if isinstance(
+        result,
+        PrincipalProvisioningAccessDenied,
+    ):
+        # Rich reason remains internal only.
+        #
+        # Never return link_ended vs suspended vs disabled
+        # to the browser/BFF response contract.
+        logger.warning(
+            "Interactive login access denied. "
+            "reason=%s",
+            result.reason,
+        )
+
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        )
+
+    principal = result.principal
+
+    try:
+        issued_session = (
+            session_store
+            .create_session_for_login_transaction(
+                transaction_id=(
+                    request.transaction_id
+                ),
+                principal_id=(
+                    principal.principal_id
+                ),
+                identity_link_id=(
+                    principal.identity_link_id
+                ),
+                now=datetime.now(
+                    timezone.utc
+                ),
+            )
+        )
+    except LoginTransactionAlreadyConsumedError as error:
+        # Replay is deliberately indistinguishable from an
+        # ordinary authentication failure to the caller.
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        ) from error
+    except LoginSessionCreationDeniedError as error:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        ) from error
+    except LoginSessionStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Interactive authentication is "
+                "temporarily unavailable."
+            ),
+        ) from error
+
+    return {
+        "status": result.status,
+        "principal_id": (
+            principal.principal_id
+        ),
+        "identity_link_id": (
+            principal.identity_link_id
+        ),
+        "session_token": (
+            issued_session.token
+        ),
+        "session_expires_at": (
+            issued_session.session
+            .expires_at.isoformat()
+        ),
+    }
+
+
+
+# === internal durable-session resolution API ===
+
+class InternalSessionResolutionRequest(BaseModel):
+    """Opaque browser-session credential from trusted BFF only."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    session_token: str
+
+
+def _require_internal_session_resolution_secret(
+    provided_secret: Optional[str] = Header(
+        default=None,
+        alias=SOLVYN_INTERNAL_LOGIN_SECRET_HEADER,
+    ),
+) -> None:
+    """Authenticate BFF before session-store resolution."""
+
+    _require_internal_login_secret(
+        provided_secret
+    )
+
+
+def get_internal_session_resolution_store(
+    _transport: None = Depends(
+        _require_internal_server_transport
+    ),
+    _authorized: None = Depends(
+        _require_internal_session_resolution_secret
+    ),
+    session_store=Depends(
+        get_login_session_store
+    ),
+):
+    """Resolve store only behind authenticated internal boundary."""
+
+    return session_store
+
+
+@app.post(
+    "/internal/v1/auth/session/resolve",
+)
+def resolve_internal_login_session(
+    request: InternalSessionResolutionRequest,
+    session_store=Depends(
+        get_internal_session_resolution_store
+    ),
+):
+    """Resolve one opaque Solvyn session without mutating it.
+
+    This endpoint is intentionally internal-only.
+
+    It does not:
+    - provision principals;
+    - create or refresh sessions;
+    - mutate login-session timestamps;
+    - provision workspaces;
+    - expose the raw session credential in its response.
+    """
+
+    token = request.session_token
+
+    if (
+        not isinstance(token, str)
+        or not token
+        or token != token.strip()
+        or len(token.encode("utf-8"))
+            < 32
+        or len(token.encode("utf-8"))
+            > 1024
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        )
+
+    try:
+        session = session_store.resolve_session(
+            token,
+            now=datetime.now(
+                timezone.utc
+            ),
+        )
+
+    except LoginSessionNotFoundError as error:
+        # Missing, expired, revoked, suspended-principal,
+        # and ended-link states remain indistinguishable.
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        ) from error
+
+    except ValueError as error:
+        # Token validation remains a uniform authentication
+        # failure rather than exposing parser details.
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        ) from error
+
+    except LoginSessionStoreError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Session authentication is "
+                "temporarily unavailable."
+            ),
+        ) from error
+
+    return {
+        "principal_id":
+            session.principal_id,
+        "identity_link_id":
+            session.identity_link_id,
+        "session_id":
+            session.session_id,
+        "session_expires_at":
+            session.expires_at.isoformat(),
+    }
+
+
+
+
+# === internal durable-session revocation API ===
+
+class InternalSessionRevocationRequest(BaseModel):
+    """Opaque browser-session credential from trusted BFF only."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    session_token: str
+
+
+def get_internal_session_revocation_store(
+    _transport: None = Depends(
+        _require_internal_server_transport
+    ),
+    _authorized: None = Depends(
+        _require_internal_session_resolution_secret
+    ),
+    session_store=Depends(
+        get_login_session_store
+    ),
+):
+    """Return session authority only behind trusted BFF boundary."""
+
+    return session_store
+
+
+@app.post(
+    "/internal/v1/auth/session/revoke",
+    status_code=204,
+)
+def revoke_internal_login_session(
+    request: InternalSessionRevocationRequest,
+    session_store=Depends(
+        get_internal_session_revocation_store
+    ),
+):
+    """Terminally revoke one opaque Solvyn login session.
+
+    Logout is deliberately idempotent at this boundary.
+
+    Missing, malformed, or already-revoked credentials all
+    converge on the same successful logged-out state.
+
+    A genuine storage failure remains distinguishable as
+    temporary unavailability so the BFF can preserve the
+    browser cookie rather than converting an outage into a
+    mass logout.
+
+    This endpoint does not:
+    - return principal or identity identifiers;
+    - return the raw session credential;
+    - create or refresh sessions;
+    - provision principals;
+    - provision workspaces.
+    """
+
+    token = request.session_token
+
+    try:
+        session_store.revoke_session(
+            token,
+            now=datetime.now(
+                timezone.utc
+            ),
+            reason="logout",
+        )
+
+    except (
+        LoginSessionNotFoundError,
+        LoginSessionTransitionError,
+        ValueError,
+    ):
+        # Logout is an idempotent state transition from the
+        # browser's perspective.
+        #
+        # A missing, malformed, or already-revoked credential
+        # is already equivalent to "logged out".
+        return None
+
+    except LoginSessionStoreError as error:
+        # Do not collapse an indeterminate storage outage into
+        # successful revocation. The caller must preserve the
+        # browser credential so recovery can happen naturally.
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Session logout is temporarily unavailable."
+            ),
+        ) from error
+
+    return None
 
 
 

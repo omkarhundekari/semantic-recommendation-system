@@ -19,3 +19,666 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+/* === SOLVYN EXPERIENCE FOUNDATION v1 === */
+
+:root {
+  --solvyn-space-1000: #02060d;
+  --solvyn-space-950: #040914;
+  --solvyn-space-900: #07111f;
+  --solvyn-space-850: #091625;
+
+  --solvyn-sky: #7dd3fc;
+  --solvyn-cyan: #a5f3fc;
+  --solvyn-indigo: #a5b4fc;
+  --solvyn-violet: #c4b5fd;
+  --solvyn-emerald: #6ee7b7;
+
+  --solvyn-border: rgba(255, 255, 255, 0.08);
+  --solvyn-border-strong: rgba(255, 255, 255, 0.13);
+
+  --solvyn-glass:
+    linear-gradient(
+      145deg,
+      rgba(14, 29, 47, 0.68),
+      rgba(4, 11, 22, 0.5)
+    );
+
+  --solvyn-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.32);
+}
+
+
+.solvyn-experience {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      180deg,
+      var(--solvyn-space-1000) 0%,
+      var(--solvyn-space-950) 38%,
+      var(--solvyn-space-900) 100%
+    );
+}
+
+
+.solvyn-cosmos {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+
+.solvyn-cosmos::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(
+      rgba(125, 211, 252, 0.025) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(125, 211, 252, 0.025) 1px,
+      transparent 1px
+    );
+  background-size: 72px 72px;
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent,
+      black 22%,
+      black 70%,
+      transparent
+    );
+}
+
+
+.solvyn-nebula {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.2;
+}
+
+
+.solvyn-nebula-a {
+  left: 18%;
+  top: -12%;
+  width: 42rem;
+  height: 42rem;
+  background: #0284c7;
+}
+
+
+.solvyn-nebula-b {
+  right: -10%;
+  top: 30%;
+  width: 36rem;
+  height: 36rem;
+  background: #4f46e5;
+  opacity: 0.13;
+}
+
+
+.solvyn-nebula-c {
+  bottom: -16%;
+  left: 32%;
+  width: 42rem;
+  height: 28rem;
+  background: #059669;
+  opacity: 0.08;
+}
+
+
+.solvyn-star-field {
+  position: absolute;
+  inset: 0;
+}
+
+
+.solvyn-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgba(226, 232, 240, 0.85);
+  box-shadow:
+    0 0 5px rgba(186, 230, 253, 0.7),
+    0 0 14px rgba(125, 211, 252, 0.2);
+  animation:
+    solvyn-star-pulse 5.8s ease-in-out infinite;
+}
+
+
+.solvyn-orbit {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(125, 211, 252, 0.055);
+  transform: rotate(-13deg);
+}
+
+
+.solvyn-orbit-a {
+  right: -19rem;
+  top: 4rem;
+  width: 64rem;
+  height: 33rem;
+}
+
+
+.solvyn-orbit-b {
+  left: -25rem;
+  bottom: 2rem;
+  width: 58rem;
+  height: 32rem;
+  border-color: rgba(165, 180, 252, 0.04);
+}
+
+
+.solvyn-horizon {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -7rem;
+  height: 12rem;
+  border-radius: 50%;
+  background: rgba(14, 165, 233, 0.04);
+  filter: blur(45px);
+}
+
+
+.solvyn-nav {
+  display: flex;
+  min-height: 4.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+
+.solvyn-nav-link {
+  position: relative;
+  padding: 0.5rem 0;
+  font-size: 0.75rem;
+  color: rgb(100 116 139);
+  transition:
+    color 180ms ease;
+}
+
+
+.solvyn-nav-link::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  transform: scaleX(0);
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(125, 211, 252, 0.8),
+      transparent
+    );
+  transition:
+    transform 180ms ease;
+}
+
+
+.solvyn-nav-link:hover {
+  color: rgb(226 232 240);
+}
+
+
+.solvyn-nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+
+.solvyn-mark {
+  position: relative;
+  display: grid;
+  width: 2.55rem;
+  height: 2.55rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 0.9rem;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(56, 189, 248, 0.12),
+      rgba(99, 102, 241, 0.05)
+    );
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.05),
+    0 8px 30px rgba(2, 132, 199, 0.08);
+}
+
+
+.solvyn-mark-orbit {
+  position: absolute;
+  width: 2.1rem;
+  height: 0.85rem;
+  border: 1px solid rgba(125, 211, 252, 0.23);
+  border-radius: 50%;
+  transform: rotate(-28deg);
+}
+
+
+.solvyn-glass {
+  position: relative;
+  border: 1px solid var(--solvyn-border);
+  border-radius: 1.55rem;
+  background: var(--solvyn-glass);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.035),
+    var(--solvyn-shadow);
+  backdrop-filter: blur(24px);
+}
+
+
+.solvyn-glass::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      130deg,
+      rgba(255, 255, 255, 0.035),
+      transparent 33%
+    );
+}
+
+
+.solvyn-eyebrow {
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.19em;
+  color: rgb(100 116 139);
+}
+
+
+.solvyn-text-spectrum {
+  color: transparent;
+  background:
+    linear-gradient(
+      100deg,
+      #bae6fd 2%,
+      #67e8f9 38%,
+      #a5b4fc 72%,
+      #ddd6fe 100%
+    );
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+
+.solvyn-signal {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid;
+  border-radius: 9999px;
+  padding: 0.42rem 0.7rem;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+}
+
+
+.solvyn-signal-dot {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 9999px;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+
+.solvyn-signal-sky {
+  border-color: rgba(125, 211, 252, 0.16);
+  background: rgba(56, 189, 248, 0.06);
+  color: #bae6fd;
+}
+
+
+.solvyn-signal-emerald {
+  border-color: rgba(110, 231, 183, 0.16);
+  background: rgba(16, 185, 129, 0.055);
+  color: #a7f3d0;
+}
+
+
+.solvyn-signal-amber {
+  border-color: rgba(252, 211, 77, 0.16);
+  background: rgba(245, 158, 11, 0.055);
+  color: #fde68a;
+}
+
+
+.solvyn-signal-violet {
+  border-color: rgba(196, 181, 253, 0.16);
+  background: rgba(139, 92, 246, 0.055);
+  color: #ddd6fe;
+}
+
+
+.solvyn-button-primary,
+.solvyn-button-secondary {
+  display: inline-flex;
+  min-height: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border-radius: 0.9rem;
+  padding: 0 1.05rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+
+.solvyn-button-primary {
+  border: 1px solid rgba(186, 230, 253, 0.38);
+  background:
+    linear-gradient(
+      110deg,
+      #7dd3fc,
+      #67e8f9 45%,
+      #a5b4fc
+    );
+  color: #03101c;
+  box-shadow:
+    0 12px 40px rgba(56, 189, 248, 0.13);
+}
+
+
+.solvyn-button-primary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 16px 48px rgba(56, 189, 248, 0.2);
+}
+
+
+.solvyn-button-secondary {
+  border: 1px solid var(--solvyn-border);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgb(148 163 184);
+}
+
+
+.solvyn-button-secondary:hover {
+  transform: translateY(-1px);
+  border-color: var(--solvyn-border-strong);
+  background: rgba(255, 255, 255, 0.045);
+  color: white;
+}
+
+
+.solvyn-mission-orbit {
+  position: relative;
+  display: grid;
+  width: min(34rem, 92vw);
+  aspect-ratio: 1;
+  place-items: center;
+  margin-inline: auto;
+}
+
+
+.solvyn-mission-orbit::before {
+  content: "";
+  position: absolute;
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(14, 165, 233, 0.11),
+      rgba(14, 165, 233, 0.025) 42%,
+      transparent 68%
+    );
+  filter: blur(12px);
+}
+
+
+.solvyn-mission-orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+}
+
+
+.solvyn-mission-orbit-ring-a {
+  width: 86%;
+  height: 47%;
+  border: 1px solid rgba(125, 211, 252, 0.13);
+  transform: rotate(-19deg);
+}
+
+
+.solvyn-mission-orbit-ring-b {
+  width: 66%;
+  height: 88%;
+  border: 1px solid rgba(165, 180, 252, 0.09);
+  transform: rotate(32deg);
+}
+
+
+.solvyn-mission-core {
+  position: relative;
+  display: flex;
+  width: 17rem;
+  min-height: 13rem;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(125, 211, 252, 0.15);
+  border-radius: 50%;
+  padding: 2.3rem;
+  background:
+    radial-gradient(
+      circle at 44% 35%,
+      rgba(56, 189, 248, 0.12),
+      rgba(7, 17, 31, 0.86) 55%,
+      rgba(3, 9, 18, 0.95)
+    );
+  box-shadow:
+    inset 0 0 42px rgba(56, 189, 248, 0.04),
+    0 0 110px rgba(14, 165, 233, 0.08);
+}
+
+
+.solvyn-core-halo {
+  position: absolute;
+  inset: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  border-radius: 50%;
+}
+
+
+.solvyn-orbit-node {
+  position: absolute;
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  border: 1px solid rgba(125, 211, 252, 0.17);
+  border-radius: 50%;
+  background: rgba(4, 11, 22, 0.86);
+  color: #bae6fd;
+  box-shadow:
+    0 0 30px rgba(56, 189, 248, 0.11);
+  backdrop-filter: blur(12px);
+}
+
+
+.solvyn-orbit-node-a {
+  right: 8%;
+  top: 33%;
+}
+
+
+.solvyn-orbit-node-b {
+  bottom: 12%;
+  left: 27%;
+  color: #c4b5fd;
+}
+
+
+.solvyn-orbit-node-c {
+  left: 7%;
+  top: 26%;
+  color: #6ee7b7;
+}
+
+
+.solvyn-signal-row {
+  display: flex;
+  min-height: 4.35rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+
+.solvyn-signal-row:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+
+.solvyn-trajectory {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+
+.solvyn-trajectory-line {
+  position: absolute;
+  top: 1rem;
+  right: 12%;
+  left: 12%;
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(110, 231, 183, 0.7),
+      rgba(125, 211, 252, 0.6) 38%,
+      rgba(255, 255, 255, 0.07) 55%,
+      rgba(255, 255, 255, 0.04)
+    );
+}
+
+
+.solvyn-trajectory-node {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid;
+  border-radius: 50%;
+  background: #07111f;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  font-size: 0.65rem;
+}
+
+
+.solvyn-trajectory-node-complete {
+  border-color: rgba(110, 231, 183, 0.34);
+  color: #6ee7b7;
+  box-shadow:
+    0 0 22px rgba(16, 185, 129, 0.1);
+}
+
+
+.solvyn-trajectory-node-active {
+  border-color: rgba(125, 211, 252, 0.5);
+  color: #bae6fd;
+  box-shadow:
+    0 0 0 5px rgba(56, 189, 248, 0.05),
+    0 0 26px rgba(56, 189, 248, 0.18);
+}
+
+
+.solvyn-trajectory-node-future {
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgb(71 85 105);
+}
+
+
+.solvyn-decision-glow {
+  pointer-events: none;
+  position: absolute;
+  right: -7rem;
+  bottom: -9rem;
+  width: 24rem;
+  height: 24rem;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.09);
+  filter: blur(60px);
+}
+
+
+@keyframes solvyn-star-pulse {
+  0%,
+  100% {
+    opacity: 0.24;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scale(1.25);
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .solvyn-star {
+    animation: none;
+  }
+
+  .solvyn-button-primary,
+  .solvyn-button-secondary,
+  .solvyn-nav-link,
+  .solvyn-nav-link::after {
+    transition: none;
+  }
+}

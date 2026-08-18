@@ -14,6 +14,11 @@ from execution_evidence.request_principal_resolver import (
 from execution_evidence.sqlite_schema import (
     connect_execution_evidence_database,
 )
+
+from execution_evidence.principal_identity_inspection import (
+    PrincipalIdentityInspection,
+)
+
 from execution_evidence.verified_oidc_identity import (
     VerifiedOIDCIdentity,
 )
@@ -31,6 +36,178 @@ class SQLiteRequestPrincipalResolver(
     @property
     def path(self) -> Path:
         return self._path
+
+
+    def inspect(
+        self,
+        identity: VerifiedOIDCIdentity,
+    ) -> PrincipalIdentityInspection:
+        """Inspect one verified identity for login provisioning.
+
+        This method is intentionally richer than resolve().
+
+        It is for the login/callback path only.
+        Request authentication must continue to use resolve()
+        so account state is not exposed through API auth.
+        """
+
+        if not isinstance(
+            identity,
+            VerifiedOIDCIdentity,
+        ):
+            raise TypeError(
+                "Principal inspection requires a "
+                "verified OIDC identity."
+            )
+
+        connection = (
+            connect_execution_evidence_database(
+                self._path
+            )
+        )
+
+        try:
+            provider = connection.execute(
+                """
+                SELECT
+                    identity_provider_id,
+                    issuer,
+                    status
+                FROM identity_providers
+                WHERE
+                    identity_provider_id = ?
+                    AND issuer = ?
+                """,
+                (
+                    identity.identity_provider_id,
+                    identity.issuer,
+                ),
+            ).fetchone()
+
+            if provider is None:
+                return PrincipalIdentityInspection(
+                    kind="provider_not_configured"
+                )
+
+            if provider["status"] != "active":
+                return PrincipalIdentityInspection(
+                    kind="provider_disabled"
+                )
+
+            link = connection.execute(
+                """
+                SELECT
+                    link_id,
+                    principal_id,
+                    status
+                FROM principal_identity_links
+                WHERE
+                    identity_provider_id = ?
+                    AND issuer = ?
+                    AND subject = ?
+                ORDER BY
+                    identity_link_row_id DESC
+                LIMIT 1
+                """,
+                (
+                    identity.identity_provider_id,
+                    identity.issuer,
+                    identity.subject,
+                ),
+            ).fetchone()
+
+            if link is None:
+                return PrincipalIdentityInspection(
+                    kind="unknown_identity"
+                )
+
+            if link["status"] == "ended":
+                return PrincipalIdentityInspection(
+                    kind="link_ended",
+                    principal_id=(
+                        str(link["principal_id"])
+                    ),
+                    identity_link_id=(
+                        str(link["link_id"])
+                    ),
+                )
+
+            principal = connection.execute(
+                """
+                SELECT
+                    principal_id,
+                    status
+                FROM principals
+                WHERE principal_id = ?
+                """,
+                (link["principal_id"],),
+            ).fetchone()
+
+            if principal is None:
+                raise (
+                    RequestPrincipalResolutionStoreError(
+                        "Principal identity link references "
+                        "a missing durable principal."
+                    )
+                )
+
+            if principal["status"] == "suspended":
+                return PrincipalIdentityInspection(
+                    kind="principal_suspended",
+                    principal_id=(
+                        str(principal["principal_id"])
+                    ),
+                    identity_link_id=(
+                        str(link["link_id"])
+                    ),
+                )
+
+            if principal["status"] == "deactivated":
+                return PrincipalIdentityInspection(
+                    kind="principal_deactivated",
+                    principal_id=(
+                        str(principal["principal_id"])
+                    ),
+                    identity_link_id=(
+                        str(link["link_id"])
+                    ),
+                )
+
+            try:
+                authenticated = self.resolve(
+                    identity
+                )
+            except RequestPrincipalNotFoundError as error:
+                raise (
+                    RequestPrincipalResolutionStoreError(
+                        "Identity inspection found active "
+                        "durable state that resolve() could "
+                        "not authenticate."
+                    )
+                ) from error
+
+            return PrincipalIdentityInspection(
+                kind="active",
+                principal=authenticated,
+                principal_id=(
+                    authenticated.principal_id
+                ),
+                identity_link_id=(
+                    authenticated.identity_link_id
+                ),
+            )
+
+        except RequestPrincipalResolutionStoreError:
+            raise
+        except Exception as error:
+            raise (
+                RequestPrincipalResolutionStoreError(
+                    "Could not inspect durable request "
+                    "principal identity state."
+                )
+            ) from error
+        finally:
+            connection.close()
 
     def resolve(
         self,

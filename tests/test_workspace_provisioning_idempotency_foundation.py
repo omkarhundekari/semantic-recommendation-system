@@ -48,7 +48,7 @@ def _database(
     )
 
     assert version == CURRENT_SQLITE_SCHEMA_VERSION
-    assert version == 26
+    assert version == 28
 
     return path
 
@@ -121,7 +121,7 @@ def _insert_ledger(
 
 
 def test_schema_version_is_23():
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 26
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 28
 
 
 def test_fresh_database_has_provisioning_idempotency_ledger(

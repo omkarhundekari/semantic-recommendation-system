@@ -155,8 +155,8 @@ def test_status_actor_attribution_is_schema_version_21(
         path
     )
 
-    assert version == 26
-    assert CURRENT_SQLITE_SCHEMA_VERSION == 26
+    assert version == 28
+    assert CURRENT_SQLITE_SCHEMA_VERSION == 28
 
     connection = connect_execution_evidence_database(
         path
@@ -263,7 +263,7 @@ def test_version_20_history_upgrades_without_actor(
             get_execution_evidence_schema_version(
                 connection
             )
-            == 26
+            == 28
         )
 
         row = connection.execute(
