@@ -305,7 +305,7 @@ def test_internal_secret_is_required_before_token_verification():
         secret="wrong-secret-value",
     )
 
-    assert response.status_code == 401
+    assert response.status_code == 403
     assert response.json() == {
         "detail": "Authentication failed."
     }
@@ -780,7 +780,7 @@ def test_internal_secret_rejection_does_not_touch_session_store():
         secret="wrong-secret-value",
     )
 
-    assert response.status_code == 401
+    assert response.status_code == 403
 
     assert verifier.calls == []
     assert provisioning.calls == []

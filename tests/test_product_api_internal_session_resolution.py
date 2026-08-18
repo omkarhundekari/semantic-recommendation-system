@@ -191,7 +191,7 @@ def test_wrong_internal_secret_rejected_before_store_resolution():
         secret="wrong-secret",
     )
 
-    assert response.status_code == 401
+    assert response.status_code == 403
 
     assert response.json() == {
         "detail": "Authentication failed."
@@ -211,7 +211,7 @@ def test_missing_internal_secret_rejected_before_store_resolution():
         secret=None,
     )
 
-    assert response.status_code == 401
+    assert response.status_code == 403
 
     assert response.json() == {
         "detail": "Authentication failed."

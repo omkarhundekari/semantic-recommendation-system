@@ -264,6 +264,44 @@ describe(
     );
 
     it(
+      "preserves the browser credential when internal session transport is rejected",
+      async () => {
+        const fetchImpl =
+          vi.fn(
+            async () =>
+              new Response(
+                JSON.stringify({
+                  detail:
+                    "Authentication failed.",
+                }),
+                {
+                  status: 403,
+                  headers: {
+                    "Content-Type":
+                      "application/json",
+                  },
+                },
+              ),
+          ) as typeof fetch;
+
+        await expect(
+          resolveBrowserSessionToken({
+            sessionToken:
+              SESSION_TOKEN,
+            fetchImpl,
+          }),
+        ).rejects.toBeInstanceOf(
+          BrowserSessionUnavailableError,
+        );
+
+        expect(
+          fetchImpl,
+        ).toHaveBeenCalledTimes(1);
+      },
+    );
+
+
+    it(
       "maps backend outage to unavailable",
       async () => {
         const fetchImpl =

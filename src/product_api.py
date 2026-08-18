@@ -1206,7 +1206,7 @@ def _require_internal_login_secret(
         or not provided_secret
     ):
         raise HTTPException(
-            status_code=401,
+            status_code=403,
             detail="Authentication failed.",
         )
 
@@ -1223,7 +1223,7 @@ def _require_internal_login_secret(
         )
     ):
         raise HTTPException(
-            status_code=401,
+            status_code=403,
             detail="Authentication failed.",
         )
 
