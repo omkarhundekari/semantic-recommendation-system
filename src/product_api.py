@@ -313,6 +313,13 @@ from execution_evidence.sqlite_login_session_store import (
 )
 
 
+from execution_evidence.principal_profile import (
+    PrincipalProfile,
+    PrincipalProfileNotFoundError,
+    PrincipalProfileReadError,
+    SQLitePrincipalProfileReader,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -731,6 +738,124 @@ def get_authenticated_request_principal(
             ),
         ) from error
 
+
+
+
+# === current authenticated principal profile API ===
+
+def get_principal_profile_reader(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLitePrincipalProfileReader:
+    """Return the minimal durable principal-profile reader."""
+
+    trusted_service = (
+        runtime.trusted_sqlite_service
+    )
+
+    if trusted_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Principal profile storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return SQLitePrincipalProfileReader(
+        trusted_service.path
+    )
+
+
+def _apply_principal_profile_response_headers(
+    response: Response,
+) -> None:
+    """Prevent principal-specific profile responses from caching."""
+
+    response.headers[
+        "Cache-Control"
+    ] = "no-store"
+
+    response.headers[
+        "Pragma"
+    ] = "no-cache"
+
+    response.headers[
+        "Vary"
+    ] = "Authorization"
+
+
+@app.get(
+    "/v1/me",
+    response_model=PrincipalProfile,
+)
+def get_current_principal_profile(
+    response: Response,
+    principal: AuthenticatedRequestPrincipal = Depends(
+        get_authenticated_request_principal
+    ),
+    reader: SQLitePrincipalProfileReader = Depends(
+        get_principal_profile_reader
+    ),
+) -> PrincipalProfile:
+    """Return minimal browser-safe identity for the caller.
+
+    Authentication is resolved exclusively through the
+    existing request-authentication authority.
+
+    This endpoint does not expose external identity details,
+    session identifiers, workspace state, or project state.
+    It performs no provisioning and no mutation.
+    """
+
+    _apply_principal_profile_response_headers(
+        response
+    )
+
+    try:
+        return reader.read(
+            principal.principal_id
+        )
+
+    except PrincipalProfileNotFoundError as error:
+        # The caller authenticated successfully immediately
+        # before this read, but durable principal state may
+        # have changed concurrently.
+        #
+        # Collapse that race back into authentication failure
+        # rather than exposing account-state distinctions.
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+            headers={
+                "WWW-Authenticate": "Bearer",
+            },
+        ) from error
+
+    except PrincipalProfileReadError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Principal profile is temporarily "
+                "unavailable."
+            ),
+        ) from error
+
+    except (TypeError, ValueError) as error:
+        # principal_id is produced by the authenticated
+        # principal authority and is not caller input.
+        #
+        # A validation failure therefore indicates an
+        # internal invariant or durable-state problem,
+        # never an unprocessable client request.
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Principal profile is temporarily "
+                "unavailable."
+            ),
+        ) from error
 
 
 # === internal interactive-login completion API ===
