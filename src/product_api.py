@@ -303,6 +303,12 @@ from execution_evidence.principal_provisioning import (
 from execution_evidence.pyjwt_oidc_token_verifier import (
     PyJWTOIDCTokenVerifier,
 )
+from execution_evidence.sqlite_session_authenticated_principal_resolver import (
+    SessionAuthenticatedPrincipalNotFoundError,
+    SessionAuthenticatedPrincipalStoreError,
+    SQLiteSessionAuthenticatedPrincipalResolver,
+)
+
 from execution_evidence.sqlite_login_session_store import (
     LoginSessionCreationDeniedError,
     LoginSessionNotFoundError,
@@ -741,6 +747,223 @@ def get_authenticated_request_principal(
 
 
 
+
+SOLVYN_INTERNAL_LOGIN_SECRET_ENV = (
+    "SOLVYN_INTERNAL_LOGIN_SECRET"
+)
+
+SOLVYN_INTERNAL_LOGIN_SECRET_HEADER = (
+    "X-Solvyn-Internal-Login-Secret"
+)
+
+SOLVYN_BROWSER_SESSION_HEADER = (
+    "X-Solvyn-Browser-Session"
+)
+
+MIN_INTERNAL_LOGIN_SECRET_BYTES = 32
+MAX_INTERNAL_LOGIN_SECRET_BYTES = 4 * 1024
+
+
+# === converged request/browser-session principal authority ===
+
+def get_session_authenticated_principal_resolver(
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLiteSessionAuthenticatedPrincipalResolver:
+    trusted_service = (
+        runtime.trusted_sqlite_service
+    )
+
+    if trusted_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Request authentication is temporarily "
+                "unavailable."
+            ),
+        )
+
+    return SQLiteSessionAuthenticatedPrincipalResolver(
+        trusted_service.path
+    )
+
+
+def get_product_authenticated_principal(
+    request: Request,
+    authorization: Optional[str] = Header(
+        default=None,
+        alias="Authorization",
+    ),
+    browser_session: Optional[str] = Header(
+        default=None,
+        alias=SOLVYN_BROWSER_SESSION_HEADER,
+    ),
+    internal_secret: Optional[str] = Header(
+        default=None,
+        alias=SOLVYN_INTERNAL_LOGIN_SECRET_HEADER,
+    ),
+    authentication_runtime: AuthenticationRuntime = Depends(
+        get_authentication_runtime
+    ),
+    storage_runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> AuthenticatedRequestPrincipal:
+    """Authenticate one product request through exactly one authority.
+
+    Supported credential modes:
+
+    1. ordinary bearer authentication;
+    2. trusted BFF browser-session authentication.
+
+    The two credential authorities are deliberately resolved
+    lazily after credential-mode selection.
+
+    Therefore an outage in the bearer/OIDC authentication
+    runtime cannot poison browser-session authentication, and
+    an outage in durable session storage cannot poison bearer
+    authentication.
+
+    Both credential formats converge only after successful
+    authentication by returning AuthenticatedRequestPrincipal.
+    """
+
+    has_bearer = (
+        authorization is not None
+    )
+
+    has_browser_session = (
+        browser_session is not None
+    )
+
+    if (
+        has_bearer
+        and has_browser_session
+    ):
+        # Ambiguous credentials never choose a preferred
+        # authority and never fall back from one authority
+        # to the other.
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+        )
+
+    if has_browser_session:
+        # Browser-session credentials are accepted only from
+        # the trusted server-to-server BFF boundary.
+        _require_internal_server_transport(
+            request
+        )
+
+        _require_internal_login_secret(
+            internal_secret
+        )
+
+        trusted_service = (
+            storage_runtime
+            .trusted_sqlite_service
+        )
+
+        if trusted_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Request authentication is temporarily "
+                    "unavailable."
+                ),
+            )
+
+        session_resolver = (
+            SQLiteSessionAuthenticatedPrincipalResolver(
+                trusted_service.path
+            )
+        )
+
+        try:
+            return session_resolver.resolve(
+                browser_session,
+                now=datetime.now(
+                    timezone.utc
+                ),
+            )
+
+        except (
+            SessionAuthenticatedPrincipalNotFoundError,
+            ValueError,
+        ) as error:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication failed.",
+            ) from error
+
+        except (
+            SessionAuthenticatedPrincipalStoreError
+        ) as error:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Request authentication is temporarily "
+                    "unavailable."
+                ),
+            ) from error
+
+    # No browser-session credential exists.
+    #
+    # The request remains entirely on the established bearer
+    # authority. An internal secret by itself is not an
+    # authentication credential and cannot elevate the call.
+    if (
+        not authentication_runtime.ready
+        or authentication_runtime.authenticator is None
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Request authentication runtime is "
+                "temporarily unavailable."
+            ),
+        )
+
+    authenticator = (
+        authentication_runtime.authenticator
+    )
+
+    try:
+        return authenticator.authenticate(
+            authorization
+        )
+
+    except RequestAuthenticationRequiredError as error:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication is required.",
+            headers={
+                "WWW-Authenticate":
+                    "Bearer",
+            },
+        ) from error
+
+    except RequestAuthenticationFailedError as error:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed.",
+            headers={
+                "WWW-Authenticate":
+                    "Bearer",
+            },
+        ) from error
+
+    except RequestAuthenticationUnavailableError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Request authentication is temporarily "
+                "unavailable."
+            ),
+        ) from error
+
+
 # === current authenticated principal profile API ===
 
 def get_principal_profile_reader(
@@ -783,7 +1006,10 @@ def _apply_principal_profile_response_headers(
 
     response.headers[
         "Vary"
-    ] = "Authorization"
+    ] = (
+        "Authorization, Cookie, "
+        + SOLVYN_BROWSER_SESSION_HEADER
+    )
 
 
 @app.get(
@@ -793,7 +1019,7 @@ def _apply_principal_profile_response_headers(
 def get_current_principal_profile(
     response: Response,
     principal: AuthenticatedRequestPrincipal = Depends(
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ),
     reader: SQLitePrincipalProfileReader = Depends(
         get_principal_profile_reader
@@ -860,16 +1086,6 @@ def get_current_principal_profile(
 
 # === internal interactive-login completion API ===
 
-SOLVYN_INTERNAL_LOGIN_SECRET_ENV = (
-    "SOLVYN_INTERNAL_LOGIN_SECRET"
-)
-
-SOLVYN_INTERNAL_LOGIN_SECRET_HEADER = (
-    "X-Solvyn-Internal-Login-Secret"
-)
-
-MIN_INTERNAL_LOGIN_SECRET_BYTES = 32
-MAX_INTERNAL_LOGIN_SECRET_BYTES = 4 * 1024
 
 
 class InternalLoginCompletionRequest(BaseModel):
