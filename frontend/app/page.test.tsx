@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react";
 import {
   afterEach,
+  beforeEach,
   describe,
   expect,
   it,
@@ -18,6 +19,63 @@ import {
 import {
   WORKSPACE_STORAGE_KEY,
 } from "@/lib/workspacePersistence";
+
+
+const {
+  useAuthMock,
+  discoverWorkspacesMock,
+  provisionWorkspaceMock,
+} = vi.hoisted(
+  () => ({
+    useAuthMock:
+      vi.fn(),
+
+    discoverWorkspacesMock:
+      vi.fn(),
+
+    provisionWorkspaceMock:
+      vi.fn(),
+  }),
+);
+
+
+vi.mock(
+  "@/lib/auth/AuthProvider",
+  () => ({
+    useAuth:
+      useAuthMock,
+  }),
+);
+
+
+vi.mock(
+  "@/lib/workspaces/workspaceClient",
+  async (
+    importOriginal,
+  ) => {
+    const actual =
+      await importOriginal<
+        typeof import(
+          "@/lib/workspaces/workspaceClient"
+        )
+      >();
+
+    return {
+      ...actual,
+
+      discoverWorkspaces:
+        discoverWorkspacesMock,
+
+      provisionWorkspace:
+        provisionWorkspaceMock,
+    };
+  },
+);
+
+
+import {
+  WorkspaceClientAuthenticationError,
+} from "@/lib/workspaces/workspaceClient";
 
 import Home from "./page";
 
@@ -55,6 +113,58 @@ function readBlob(blob: Blob): Promise<string> {
     reader.readAsText(blob);
   });
 }
+
+beforeEach(() => {
+  vi.clearAllMocks();
+
+  useAuthMock.mockReturnValue({
+    state: {
+      status:
+        "authenticated",
+      principal: {
+        principalId:
+          "prn_test",
+        principalKind:
+          "human",
+      },
+    },
+    isRetrying:
+      false,
+    retry:
+      vi.fn(),
+  });
+
+  discoverWorkspacesMock
+    .mockResolvedValue({
+      workspaces: [
+        {
+          workspaceId:
+            "ws_existing",
+          membershipId:
+            "wsm_existing",
+          membershipRole:
+            "owner",
+        },
+      ],
+      truncated:
+        false,
+      nextCursor:
+        null,
+    });
+
+  provisionWorkspaceMock
+    .mockResolvedValue({
+      workspaceId:
+        "ws_provisioned",
+      membershipId:
+        "wsm_provisioned",
+      membershipRole:
+        "owner",
+      replayed:
+        false,
+    });
+});
+
 
 afterEach(() => {
   vi.useRealTimers();
@@ -1062,3 +1172,357 @@ describe("workspace backup UI", () => {
     );
   });
 });
+describe(
+  "authenticated durable workspace bootstrap",
+  () => {
+    it(
+      "discovers an existing account workspace without provisioning",
+      async () => {
+        render(
+          <Home />,
+        );
+
+        expect(
+          await screen.findByText(
+            "Account workspace ready",
+          ),
+        ).toBeInTheDocument();
+
+        expect(
+          discoverWorkspacesMock,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          discoverWorkspacesMock,
+        ).toHaveBeenCalledWith();
+
+        expect(
+          provisionWorkspaceMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+
+    it(
+      "provisions exactly one workspace when authenticated discovery is empty",
+      async () => {
+        discoverWorkspacesMock
+          .mockResolvedValue({
+            workspaces: [],
+            truncated:
+              false,
+            nextCursor:
+              null,
+          });
+
+        render(
+          <Home />,
+        );
+
+        expect(
+          await screen.findByText(
+            "Account workspace ready",
+          ),
+        ).toBeInTheDocument();
+
+        expect(
+          provisionWorkspaceMock,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        const call =
+          provisionWorkspaceMock
+            .mock.calls[0][0];
+
+        expect(
+          call.reason,
+        ).toBe(
+          "browser bootstrap",
+        );
+
+        expect(
+          call.idempotencyKey,
+        ).toBe(
+          "browser-default-workspace-v1",
+        );
+
+        expect(
+          call,
+        ).not.toHaveProperty(
+          "principalId",
+        );
+
+        expect(
+          call,
+        ).not.toHaveProperty(
+          "principal_id",
+        );
+      },
+    );
+
+
+    it(
+      "does not query or provision durable workspaces while signed out",
+      async () => {
+        useAuthMock
+          .mockReturnValue({
+            state: {
+              status:
+                "unauthenticated",
+            },
+            isRetrying:
+              false,
+            retry:
+              vi.fn(),
+          });
+
+        render(
+          <Home />,
+        );
+
+        expect(
+          await screen.findByText(
+            "Sign in to connect an account workspace",
+          ),
+        ).toBeInTheDocument();
+
+        expect(
+          discoverWorkspacesMock,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          provisionWorkspaceMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+
+    it(
+      "keeps indeterminate workspace failure separate from signed-out state",
+      async () => {
+        discoverWorkspacesMock
+          .mockRejectedValue(
+            new Error(
+              "storage unavailable",
+            ),
+          );
+
+        render(
+          <Home />,
+        );
+
+        expect(
+          await screen.findByText(
+            "Account workspace is temporarily unavailable",
+          ),
+        ).toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            "Sign in to connect an account workspace",
+          ),
+        ).not.toBeInTheDocument();
+      },
+    );
+
+
+    it(
+      "maps definitive workspace authentication failure to signed-out workspace state",
+      async () => {
+        discoverWorkspacesMock
+          .mockRejectedValue(
+            new WorkspaceClientAuthenticationError(),
+          );
+
+        render(
+          <Home />,
+        );
+
+        expect(
+          await screen.findByText(
+            "Sign in to connect an account workspace",
+          ),
+        ).toBeInTheDocument();
+      },
+    );
+
+
+    it(
+      "ignores stale discovery completion after authentication state changes",
+      async () => {
+        let resolveDiscovery:
+          (
+            value: {
+              workspaces: Array<{
+                workspaceId: string;
+                membershipId: string;
+                membershipRole: string;
+              }>;
+              truncated: boolean;
+              nextCursor: null;
+            },
+          ) => void =
+            () => {};
+
+        const pendingDiscovery =
+          new Promise<{
+            workspaces: Array<{
+              workspaceId: string;
+              membershipId: string;
+              membershipRole: string;
+            }>;
+            truncated: boolean;
+            nextCursor: null;
+          }>(
+            (
+              resolve,
+            ) => {
+              resolveDiscovery =
+                resolve;
+            },
+          );
+
+        discoverWorkspacesMock
+          .mockReturnValue(
+            pendingDiscovery,
+          );
+
+        const {
+          rerender,
+        } =
+          render(
+            <Home />,
+          );
+
+        expect(
+          await screen.findByText(
+            "Preparing your workspace...",
+          ),
+        ).toBeInTheDocument();
+
+        useAuthMock
+          .mockReturnValue({
+            state: {
+              status:
+                "unauthenticated",
+            },
+            isRetrying:
+              false,
+            retry:
+              vi.fn(),
+          });
+
+        rerender(
+          <Home />,
+        );
+
+        expect(
+          await screen.findByText(
+            "Sign in to connect an account workspace",
+          ),
+        ).toBeInTheDocument();
+
+        await act(
+          async () => {
+            resolveDiscovery({
+              workspaces: [
+                {
+                  workspaceId:
+                    "ws_stale",
+                  membershipId:
+                    "wsm_stale",
+                  membershipRole:
+                    "owner",
+                },
+              ],
+              truncated:
+                false,
+              nextCursor:
+                null,
+            });
+
+            await pendingDiscovery;
+          },
+        );
+
+        expect(
+          screen.getByText(
+            "Sign in to connect an account workspace",
+          ),
+        ).toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            "Account workspace ready",
+          ),
+        ).not.toBeInTheDocument();
+      },
+    );
+
+
+    it(
+      "does not persist durable workspace identity in local storage",
+      async () => {
+        discoverWorkspacesMock
+          .mockResolvedValue({
+            workspaces: [
+              {
+                workspaceId:
+                  "ws_durable_secret_scope",
+                membershipId:
+                  "wsm_durable_secret_scope",
+                membershipRole:
+                  "owner",
+              },
+            ],
+            truncated:
+              false,
+            nextCursor:
+              null,
+          });
+
+        render(
+          <Home />,
+        );
+
+        expect(
+          await screen.findByText(
+            "Account workspace ready",
+          ),
+        ).toBeInTheDocument();
+
+        const serializedStorage =
+          Object.keys(
+            window.localStorage,
+          )
+            .map(
+              (
+                key,
+              ) =>
+                window.localStorage
+                  .getItem(
+                    key,
+                  ),
+            )
+            .join(
+              "\n",
+            );
+
+        expect(
+          serializedStorage,
+        ).not.toContain(
+          "ws_durable_secret_scope",
+        );
+
+        expect(
+          serializedStorage,
+        ).not.toContain(
+          "wsm_durable_secret_scope",
+        );
+      },
+    );
+  },
+);

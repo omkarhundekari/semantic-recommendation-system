@@ -18,6 +18,48 @@ import {
   EXECUTION_EVIDENCE_REPOSITORY_KEY,
 } from "@/lib/executionEvidencePersistence";
 
+import {
+  AuthProvider,
+} from "@/lib/auth/AuthProvider";
+
+
+const {
+  discoverWorkspacesMock,
+  provisionWorkspaceMock,
+} = vi.hoisted(
+  () => ({
+    discoverWorkspacesMock:
+      vi.fn(),
+    provisionWorkspaceMock:
+      vi.fn(),
+  }),
+);
+
+
+vi.mock(
+  "@/lib/workspaces/workspaceClient",
+  async (
+    importOriginal,
+  ) => {
+    const actual =
+      await importOriginal<
+        typeof import(
+          "@/lib/workspaces/workspaceClient"
+        )
+      >();
+
+    return {
+      ...actual,
+
+      discoverWorkspaces:
+        discoverWorkspacesMock,
+
+      provisionWorkspace:
+        provisionWorkspaceMock,
+    };
+  },
+);
+
 import Home from "./page";
 
 function successfulPayload() {
@@ -100,6 +142,51 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
+function renderAuthenticatedHome() {
+  discoverWorkspacesMock
+    .mockResolvedValue({
+      workspaces: [
+        {
+          workspaceId:
+            "ws_execution_evidence_test",
+          membershipId:
+            "wsm_execution_evidence_test",
+          membershipRole:
+            "owner",
+        },
+      ],
+      truncated:
+        false,
+      nextCursor:
+        null,
+    });
+
+  provisionWorkspaceMock
+    .mockRejectedValue(
+      new Error(
+        "Provisioning must not run in execution-evidence tests.",
+      ),
+    );
+
+  return render(
+    <AuthProvider
+      initialState={{
+        status:
+          "authenticated",
+        principal: {
+          principalId:
+            "prn_execution_evidence_test",
+          principalKind:
+            "human",
+        },
+      }}
+    >
+      <Home />
+    </AuthProvider>,
+  );
+}
+
+
 describe("execution evidence panel", () => {
   it("restores stored execution evidence on reload", async () => {
     const payload = successfulPayload();
@@ -125,7 +212,7 @@ describe("execution evidence panel", () => {
       ),
     );
 
-    render(<Home />);
+    renderAuthenticatedHome();
 
     expect(
       screen.getByRole("button", {
@@ -153,7 +240,7 @@ describe("execution evidence panel", () => {
   });
 
   it("keeps repository sync available without a planned project", () => {
-    render(<Home />);
+    renderAuthenticatedHome();
 
     expect(
       screen.getByLabelText(
@@ -184,7 +271,7 @@ describe("execution evidence panel", () => {
       ),
     );
 
-    render(<Home />);
+    renderAuthenticatedHome();
 
     fireEvent.change(
       screen.getByLabelText(
@@ -256,7 +343,7 @@ describe("execution evidence panel", () => {
       ),
     );
 
-    render(<Home />);
+    renderAuthenticatedHome();
 
     fireEvent.change(
       screen.getByLabelText(

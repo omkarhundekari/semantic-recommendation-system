@@ -56,6 +56,16 @@ import {
   formatWorkspaceSaveFreshness,
 } from "@/lib/workspaceSaveFreshness";
 import {
+  useAuth,
+} from "@/lib/auth/AuthProvider";
+import {
+  DEFAULT_WORKSPACE_BOOTSTRAP_IDEMPOTENCY_KEY,
+  WorkspaceClientAuthenticationError,
+  discoverWorkspaces,
+  provisionWorkspace,
+  type WorkspaceSummary,
+} from "@/lib/workspaces/workspaceClient";
+import {
   ExecutionEvidenceApiError,
   getExecutionEvidenceCounts,
   loadExecutionEvidenceRepository,
@@ -104,6 +114,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -302,6 +313,25 @@ type WorkspaceTransferFeedback = {
   message: string;
 } | null;
 
+
+type DurableWorkspaceBootstrapState =
+  | {
+      status: "idle";
+    }
+  | {
+      status: "loading";
+    }
+  | {
+      status: "ready";
+      workspace: WorkspaceSummary;
+    }
+  | {
+      status: "unauthenticated";
+    }
+  | {
+      status: "unavailable";
+    };
+
 function readSavedWorkspace(): SavedWorkspace | null {
   if (typeof window === "undefined") {
     return null;
@@ -494,6 +524,20 @@ function getDecisionTracePresentation(
 }
 
 export default function Home() {
+  const {
+    state: authState,
+  } = useAuth();
+
+  const [
+    durableWorkspaceState,
+    setDurableWorkspaceState,
+  ] = useState<DurableWorkspaceBootstrapState>({
+    status: "idle",
+  });
+
+  const durableWorkspaceGenerationRef =
+    useRef(0);
+
   const [savedWorkspace] = useState<SavedWorkspace | null>(() =>
     readSavedWorkspace(),
   );
@@ -593,6 +637,169 @@ export default function Home() {
 
   const [shouldScrollToHelpChooser, setShouldScrollToHelpChooser] =
     useState(false);
+
+  useEffect(
+    () => {
+      durableWorkspaceGenerationRef.current += 1;
+
+      const generation =
+        durableWorkspaceGenerationRef.current;
+
+      let cancelled =
+        false;
+
+      const isCurrent =
+        () =>
+          !cancelled
+          && generation
+            === durableWorkspaceGenerationRef.current;
+
+      // Authentication status itself owns loading,
+      // signed-out, and authentication-unavailable
+      // presentation. Durable workspace resolution runs
+      // only after authentication is definitive.
+      if (
+        authState.status
+        !== "authenticated"
+      ) {
+        return () => {
+          cancelled = true;
+
+          durableWorkspaceGenerationRef.current += 1;
+        };
+      }
+
+      void (
+        async () => {
+          // Keep state updates asynchronous relative to the
+          // effect body. This avoids cascading synchronous
+          // effect renders while still exposing bootstrap
+          // progress once the authenticated operation begins.
+          await Promise.resolve();
+
+          if (!isCurrent()) {
+            return;
+          }
+
+          setDurableWorkspaceState({
+            status: "loading",
+          });
+
+          try {
+            const discovery =
+              await discoverWorkspaces();
+
+            if (!isCurrent()) {
+              return;
+            }
+
+            const existingWorkspace =
+              discovery.workspaces[0];
+
+            if (
+              existingWorkspace
+              !== undefined
+            ) {
+              setDurableWorkspaceState({
+                status: "ready",
+                workspace:
+                  existingWorkspace,
+              });
+
+              return;
+            }
+
+            const provisioned =
+              await provisionWorkspace({
+                idempotencyKey:
+                  DEFAULT_WORKSPACE_BOOTSTRAP_IDEMPOTENCY_KEY,
+                reason:
+                  "browser bootstrap",
+              });
+
+            if (!isCurrent()) {
+              return;
+            }
+
+            if (
+              provisioned.membershipRole
+              === null
+            ) {
+              setDurableWorkspaceState({
+                status: "unavailable",
+              });
+
+              return;
+            }
+
+            setDurableWorkspaceState({
+              status: "ready",
+              workspace: {
+                workspaceId:
+                  provisioned.workspaceId,
+                membershipId:
+                  provisioned.membershipId,
+                membershipRole:
+                  provisioned.membershipRole,
+              },
+            });
+          } catch (
+            error
+          ) {
+            if (!isCurrent()) {
+              return;
+            }
+
+            if (
+              error
+              instanceof WorkspaceClientAuthenticationError
+            ) {
+              setDurableWorkspaceState({
+                status: "unauthenticated",
+              });
+
+              return;
+            }
+
+            // Validation, conflict, transport,
+            // authorization, malformed upstream success,
+            // and storage failure remain indeterminate.
+            // Never reinterpret uncertainty as signed-out.
+            setDurableWorkspaceState({
+              status: "unavailable",
+            });
+          }
+        }
+      )();
+
+      return () => {
+        cancelled = true;
+
+        durableWorkspaceGenerationRef.current += 1;
+      };
+    },
+    [
+      authState,
+    ],
+  );
+
+
+  const presentedDurableWorkspaceState:
+    DurableWorkspaceBootstrapState =
+      authState.status === "loading"
+        ? {
+            status: "loading",
+          }
+        : authState.status === "unauthenticated"
+          ? {
+              status: "unauthenticated",
+            }
+          : authState.status === "unavailable"
+            ? {
+                status: "unavailable",
+              }
+            : durableWorkspaceState;
+
 
   useEffect(() => {
     if (!restoredExecutionEvidenceRepositoryKey) {
@@ -1415,6 +1622,51 @@ export default function Home() {
             </div>
           </div>
         </nav>
+
+        {presentedDurableWorkspaceState.status !== "idle" && (
+          <div
+            data-testid="durable-workspace-status"
+            role="status"
+            aria-live="polite"
+            className="mt-4 flex items-center gap-2 text-xs text-slate-400"
+          >
+            {presentedDurableWorkspaceState.status === "loading" && (
+              <>
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                <span>
+                  Preparing your workspace...
+                </span>
+              </>
+            )}
+
+            {presentedDurableWorkspaceState.status === "ready" && (
+              <>
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
+                <span>
+                  Account workspace ready
+                </span>
+              </>
+            )}
+
+            {presentedDurableWorkspaceState.status === "unauthenticated" && (
+              <>
+                <AlertCircle className="h-3.5 w-3.5 text-amber-300" />
+                <span>
+                  Sign in to connect an account workspace
+                </span>
+              </>
+            )}
+
+            {presentedDurableWorkspaceState.status === "unavailable" && (
+              <>
+                <AlertCircle className="h-3.5 w-3.5 text-amber-300" />
+                <span>
+                  Account workspace is temporarily unavailable
+                </span>
+              </>
+            )}
+          </div>
+        )}
 
         {workspaceTransferFeedback && (
           <p
