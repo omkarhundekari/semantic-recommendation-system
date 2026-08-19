@@ -14,6 +14,9 @@ from execution_evidence.sqlite_execution_event_store import (
 from execution_evidence.authorized_project_context import (
     AuthorizedProjectContext,
 )
+from execution_evidence.authorized_workspace_context import (
+    AuthorizedWorkspaceContext,
+)
 from execution_evidence.store import (
     RepositoryEvidenceStore,
 )
@@ -166,6 +169,33 @@ class TrustedSQLiteStorageService:
             self._path,
             workspace_id=self._workspace_id,
             initialize_schema=False,
+        )
+
+    def build_roadmap_snapshot_registry_for_authorized_workspace(
+        self,
+        context: AuthorizedWorkspaceContext,
+    ) -> SQLiteRoadmapSnapshotRegistry:
+        """Build roadmap storage from proven workspace tenancy.
+
+        User-facing workspace requests must resolve tenancy
+        before constructing workspace-scoped persistence.
+        Authorized request handling must never implicitly
+        create a caller-selected workspace.
+        """
+        if not isinstance(
+            context,
+            AuthorizedWorkspaceContext,
+        ):
+            raise TypeError(
+                "Authorized workspace roadmap storage "
+                "requires an authorized workspace context."
+            )
+
+        return SQLiteRoadmapSnapshotRegistry(
+            self._path,
+            workspace_id=context.workspace_id,
+            initialize_schema=False,
+            ensure_workspace=False,
         )
 
     def build_execution_event_store(

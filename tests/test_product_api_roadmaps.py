@@ -1409,3 +1409,513 @@ def test_old_project_lifecycle_routes_are_unregistered(
 
     assert mutation.status_code == 404
     assert history.status_code == 404
+
+
+def test_workspace_scoped_intelligence_persists_projects_only_in_authorized_workspace(
+    tmp_path,
+):
+    from execution_evidence.authenticated_request_principal import (
+        AuthenticatedRequestPrincipal,
+    )
+    from execution_evidence.principal import Principal
+    from execution_evidence.sqlite_principal_store import (
+        SQLitePrincipalStore,
+    )
+    from execution_evidence.project_discovery import (
+        SQLiteProjectDiscoveryService,
+    )
+    from execution_evidence.workspace_provisioning import (
+        SQLiteWorkspaceProvisioningService,
+    )
+    from product_api import (
+        app,
+        get_execution_evidence_storage_runtime,
+        get_product_authenticated_principal,
+    )
+    from fastapi.testclient import TestClient
+    from datetime import datetime, timezone
+
+    database_path = tmp_path / "solvyn.db"
+
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-08-19T12:00:00+00:00",
+    )
+
+    trusted_service = TrustedSQLiteStorageService(
+        database_path
+    )
+
+    runtime = ExecutionEvidenceStorageRuntime(
+        evidence_store=(
+            trusted_service
+            .build_repository_evidence_store()
+        ),
+        trusted_sqlite_service=trusted_service,
+        roadmap_registry=(
+            trusted_service
+            .build_roadmap_snapshot_registry()
+        ),
+        roadmap_registry_status="ready",
+        remediation=None,
+    )
+
+    now = datetime(
+        2026,
+        8,
+        19,
+        12,
+        0,
+        tzinfo=timezone.utc,
+    )
+
+    principal_id = (
+        "prn_123e4567-e89b-42d3-a456-426614174100"
+    )
+
+    SQLitePrincipalStore(
+        database_path
+    ).create(
+        Principal(
+            principal_id=principal_id,
+            principal_kind="human",
+            status="active",
+            created_at=now,
+            updated_at=now,
+        )
+    )
+
+    provisioned = (
+        SQLiteWorkspaceProvisioningService(
+            database_path
+        ).provision(
+            principal_id=principal_id,
+            created_at=now,
+            reason="vertical slice test",
+        )
+    )
+
+    workspace_id = (
+        provisioned.workspace.workspace_id
+    )
+
+    principal = AuthenticatedRequestPrincipal(
+        principal_id=principal_id,
+        identity_provider_id=(
+            "idp_123e4567-e89b-42d3-a456-426614174101"
+        ),
+        identity_link_id=(
+            "pil_123e4567-e89b-42d3-a456-426614174102"
+        ),
+        issuer="https://issuer.example",
+        subject="workspace-vertical-slice",
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    app.dependency_overrides[
+        get_product_authenticated_principal
+    ] = lambda: principal
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                (
+                    f"/v1/workspaces/"
+                    f"{workspace_id}/"
+                    "project-intelligence"
+                ),
+                json={
+                    "goal": (
+                        "Build a RAG evaluation project "
+                        "for question answering"
+                    )
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+
+    payload = response.json()
+
+    assert payload["status"] == "ready"
+
+    project_ids = {
+        direction["project_id"]
+        for direction in payload["directions"]
+    }
+
+    assert len(project_ids) == 3
+    assert None not in project_ids
+
+    discovered = SQLiteProjectDiscoveryService(
+        database_path
+    ).discover(
+        workspace_id=workspace_id,
+    )
+
+    discovered_ids = {
+        project.project_id
+        for project in discovered.projects
+    }
+
+    assert project_ids == discovered_ids
+
+
+def test_workspace_scoped_intelligence_rejects_workspace_not_owned_by_principal(
+    tmp_path,
+):
+    from datetime import datetime, timezone
+
+    from execution_evidence.authenticated_request_principal import (
+        AuthenticatedRequestPrincipal,
+    )
+    from execution_evidence.principal import Principal
+    from execution_evidence.sqlite_principal_store import (
+        SQLitePrincipalStore,
+    )
+    from execution_evidence.project_discovery import (
+        SQLiteProjectDiscoveryService,
+    )
+    from execution_evidence.workspace_provisioning import (
+        SQLiteWorkspaceProvisioningService,
+    )
+    from fastapi.testclient import TestClient
+    from product_api import (
+        app,
+        get_execution_evidence_storage_runtime,
+        get_product_authenticated_principal,
+    )
+
+    database_path = tmp_path / "solvyn.db"
+
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-08-19T12:00:00+00:00",
+    )
+
+    trusted_service = TrustedSQLiteStorageService(
+        database_path
+    )
+
+    runtime = ExecutionEvidenceStorageRuntime(
+        evidence_store=(
+            trusted_service
+            .build_repository_evidence_store()
+        ),
+        trusted_sqlite_service=trusted_service,
+        roadmap_registry=(
+            trusted_service
+            .build_roadmap_snapshot_registry()
+        ),
+        roadmap_registry_status="ready",
+        remediation=None,
+    )
+
+    now = datetime(
+        2026,
+        8,
+        19,
+        12,
+        0,
+        tzinfo=timezone.utc,
+    )
+
+    principal_a_id = (
+        "prn_123e4567-e89b-42d3-a456-426614174110"
+    )
+    principal_b_id = (
+        "prn_123e4567-e89b-42d3-a456-426614174111"
+    )
+
+    principal_store = SQLitePrincipalStore(
+        database_path
+    )
+
+    for principal_id in (
+        principal_a_id,
+        principal_b_id,
+    ):
+        principal_store.create(
+            Principal(
+                principal_id=principal_id,
+                principal_kind="human",
+                status="active",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+    workspace_a = (
+        SQLiteWorkspaceProvisioningService(
+            database_path
+        ).provision(
+            principal_id=principal_a_id,
+            created_at=now,
+            reason="principal A workspace",
+        )
+    )
+
+    principal_b = AuthenticatedRequestPrincipal(
+        principal_id=principal_b_id,
+        identity_provider_id=(
+            "idp_123e4567-e89b-42d3-a456-426614174112"
+        ),
+        identity_link_id=(
+            "pil_123e4567-e89b-42d3-a456-426614174113"
+        ),
+        issuer="https://issuer.example",
+        subject="principal-b",
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    app.dependency_overrides[
+        get_product_authenticated_principal
+    ] = lambda: principal_b
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                (
+                    f"/v1/workspaces/"
+                    f"{workspace_a.workspace.workspace_id}/"
+                    "project-intelligence"
+                ),
+                json={
+                    "goal": (
+                        "Build a RAG evaluation project "
+                        "for question answering"
+                    )
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+
+    discovered = SQLiteProjectDiscoveryService(
+        database_path
+    ).discover(
+        workspace_id=(
+            workspace_a.workspace.workspace_id
+        ),
+    )
+
+    assert discovered.projects == []
+
+
+def test_workspace_scoped_intelligence_viewer_cannot_create_projects(
+    tmp_path,
+):
+    from datetime import datetime, timedelta, timezone
+
+    from execution_evidence.authenticated_request_principal import (
+        AuthenticatedRequestPrincipal,
+    )
+    from execution_evidence.principal import Principal
+    from execution_evidence.project_discovery import (
+        SQLiteProjectDiscoveryService,
+    )
+    from execution_evidence.sqlite_principal_store import (
+        SQLitePrincipalStore,
+    )
+    from execution_evidence.sqlite_workspace_membership_store import (
+        SQLiteWorkspaceMembershipStore,
+    )
+    from execution_evidence.workspace_membership import (
+        WorkspaceMembership,
+    )
+    from execution_evidence.workspace_provisioning import (
+        SQLiteWorkspaceProvisioningService,
+    )
+    from fastapi.testclient import TestClient
+    from product_api import (
+        app,
+        get_execution_evidence_storage_runtime,
+        get_product_authenticated_principal,
+    )
+
+    database_path = tmp_path / "solvyn.db"
+
+    initialize_fresh_trusted_store(
+        database_path,
+        created_at="2026-08-19T12:00:00+00:00",
+    )
+
+    trusted_service = TrustedSQLiteStorageService(
+        database_path
+    )
+
+    runtime = ExecutionEvidenceStorageRuntime(
+        evidence_store=(
+            trusted_service
+            .build_repository_evidence_store()
+        ),
+        trusted_sqlite_service=trusted_service,
+        roadmap_registry=(
+            trusted_service
+            .build_roadmap_snapshot_registry()
+        ),
+        roadmap_registry_status="ready",
+        remediation=None,
+    )
+
+    now = datetime(
+        2026,
+        8,
+        19,
+        12,
+        0,
+        tzinfo=timezone.utc,
+    )
+
+    owner_principal_id = (
+        "prn_123e4567-e89b-42d3-a456-426614174120"
+    )
+
+    viewer_principal_id = (
+        "prn_123e4567-e89b-42d3-a456-426614174123"
+    )
+
+    principal_store = SQLitePrincipalStore(
+        database_path
+    )
+
+    for principal_id in (
+        owner_principal_id,
+        viewer_principal_id,
+    ):
+        principal_store.create(
+            Principal(
+                principal_id=principal_id,
+                principal_kind="human",
+                status="active",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+    provisioned = (
+        SQLiteWorkspaceProvisioningService(
+            database_path
+        ).provision(
+            principal_id=owner_principal_id,
+            created_at=now,
+            reason="viewer capability regression",
+        )
+    )
+
+    workspace_id = (
+        provisioned.workspace.workspace_id
+    )
+
+    membership_store = (
+        SQLiteWorkspaceMembershipStore(
+            database_path,
+            workspace_id=workspace_id,
+        )
+    )
+
+    viewer_membership_id = (
+        "wsm_123e4567-e89b-42d3-a456-426614174124"
+    )
+
+    viewer_membership = membership_store.create(
+        WorkspaceMembership(
+            membership_id=viewer_membership_id,
+            workspace_id=workspace_id,
+            principal_id=viewer_principal_id,
+            status="active",
+            role=None,
+            revision=0,
+            created_by_principal_id=(
+                owner_principal_id
+            ),
+            created_at=(
+                now + timedelta(seconds=1)
+            ),
+            updated_at=(
+                now + timedelta(seconds=1)
+            ),
+            status_changed_at=(
+                now + timedelta(seconds=1)
+            ),
+        )
+    )
+
+    assert viewer_membership.role is None
+    assert viewer_membership.revision == 0
+
+    viewer = membership_store.transition_role(
+        viewer_membership_id,
+        new_role="viewer",
+        changed_at=(
+            now + timedelta(seconds=2)
+        ),
+        expected_revision=0,
+        changed_by_principal_id=(
+            owner_principal_id
+        ),
+        reason="viewer capability regression",
+    )
+
+    assert viewer.membership.role == "viewer"
+    assert viewer.membership.revision == 1
+
+    principal = AuthenticatedRequestPrincipal(
+        principal_id=viewer_principal_id,
+        identity_provider_id=(
+            "idp_123e4567-e89b-42d3-a456-426614174125"
+        ),
+        identity_link_id=(
+            "pil_123e4567-e89b-42d3-a456-426614174126"
+        ),
+        issuer="https://issuer.example",
+        subject="viewer-capability-regression",
+    )
+
+    app.dependency_overrides[
+        get_execution_evidence_storage_runtime
+    ] = lambda: runtime
+
+    app.dependency_overrides[
+        get_product_authenticated_principal
+    ] = lambda: principal
+
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                (
+                    f"/v1/workspaces/"
+                    f"{workspace_id}/"
+                    "project-intelligence"
+                ),
+                json={
+                    "goal": (
+                        "Build a RAG evaluation project "
+                        "for question answering"
+                    )
+                },
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+    assert (
+        "project.lifecycle.manage"
+        in response.json()["detail"]
+    )
+
+    discovered = SQLiteProjectDiscoveryService(
+        database_path
+    ).discover(
+        workspace_id=workspace_id,
+    )
+
+    assert discovered.projects == []

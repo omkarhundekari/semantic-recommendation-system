@@ -2037,6 +2037,58 @@ def get_authorized_workspace_context(
 
 
 
+def get_authorized_workspace_roadmap_registry(
+    context: AuthorizedWorkspaceContext = Depends(
+        get_authorized_workspace_context
+    ),
+    runtime: ExecutionEvidenceStorageRuntime = Depends(
+        get_execution_evidence_storage_runtime
+    ),
+) -> SQLiteRoadmapSnapshotRegistry:
+    """Bind roadmap persistence to authorized workspace scope.
+
+    The request path may identify a workspace, but storage
+    tenancy is taken exclusively from AuthorizedWorkspaceContext.
+    No request-scoped path may implicitly create a workspace.
+    """
+    if not isinstance(
+        context,
+        AuthorizedWorkspaceContext,
+    ):
+        raise TypeError(
+            "Authorized workspace context is required."
+        )
+
+    if not isinstance(
+        runtime,
+        ExecutionEvidenceStorageRuntime,
+    ):
+        raise TypeError(
+            "Execution evidence storage runtime is required."
+        )
+
+    trusted_service = runtime.trusted_sqlite_service
+
+    if not isinstance(
+        trusted_service,
+        TrustedSQLiteStorageService,
+    ):
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Trusted project planning storage is "
+                "temporarily unavailable."
+            ),
+        )
+
+    return (
+        trusted_service
+        .build_roadmap_snapshot_registry_for_authorized_workspace(
+            context
+        )
+    )
+
+
 def get_project_discovery_service(
     runtime: ExecutionEvidenceStorageRuntime = Depends(
         get_execution_evidence_storage_runtime
@@ -4793,6 +4845,49 @@ def generate_project_intelligence(
         ),
         directions=directions,
         pipeline=pipeline,
+    )
+
+
+@app.post(
+    "/v1/workspaces/{workspace_id}/project-intelligence",
+    response_model=ProjectIntelligenceResponse,
+)
+def generate_workspace_project_intelligence_endpoint(
+    workspace_id: str,
+    request: ProjectIntelligenceRequest,
+    context: AuthorizedWorkspaceContext = Depends(
+        get_authorized_workspace_context
+    ),
+    roadmap_registry: SQLiteRoadmapSnapshotRegistry = Depends(
+        get_authorized_workspace_roadmap_registry
+    ),
+) -> ProjectIntelligenceResponse:
+    """Generate and persist project directions in authorized scope.
+
+    The workspace path is authorized before persistence is
+    constructed. Generated project identities therefore belong
+    only to the authenticated principal's authorized workspace.
+    """
+
+    if (
+        ProjectCapability.PROJECT_LIFECYCLE_MANAGE
+        not in capabilities_for_role(
+            context.membership_role
+        )
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Project capability is required: "
+                f"{ProjectCapability.PROJECT_LIFECYCLE_MANAGE.value}."
+            ),
+        )
+
+    return generate_project_intelligence(
+        request,
+        roadmap_registry=roadmap_registry,
+        roadmap_registry_status="ready",
+        roadmap_registry_remediation=None,
     )
 
 
