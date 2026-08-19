@@ -24,7 +24,7 @@ from execution_evidence.workspace_provisioning import (
 )
 from product_api import (
     app,
-    get_authenticated_request_principal,
+    get_product_authenticated_principal,
     get_workspace_provisioning_service,
 )
 
@@ -151,7 +151,7 @@ def _install(
     service: FakeProvisioningService,
 ):
     app.dependency_overrides[
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ] = _principal
 
     app.dependency_overrides[
@@ -502,7 +502,7 @@ def test_workspace_provisioning_replay_succeeds_after_durable_principal_deactiva
         SQLiteWorkspaceProvisioningService,
     )
     from product_api import (
-        get_authenticated_request_principal,
+        get_product_authenticated_principal,
         get_workspace_provisioning_service,
     )
 
@@ -562,7 +562,7 @@ def test_workspace_provisioning_replay_succeeds_after_durable_principal_deactiva
     )
 
     app.dependency_overrides[
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ] = lambda: authenticated_principal
 
     app.dependency_overrides[
@@ -660,4 +660,3 @@ def test_workspace_provisioning_replay_succeeds_after_durable_principal_deactiva
         == "true"
     )
     assert replay.json() == first_payload
-

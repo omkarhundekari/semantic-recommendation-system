@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -29,7 +30,7 @@ from product_api import (
     generate_project_intelligence,
     get_execution_evidence_storage_runtime,
     get_project_access_service,
-    get_request_authenticator,
+    get_authentication_runtime,
 )
 from execution_evidence.storage_service import (
     TrustedSQLiteStorageService,
@@ -427,8 +428,11 @@ def _install_lifecycle_auth(
         get_execution_evidence_storage_runtime
     ] = lambda: runtime
     app.dependency_overrides[
-        get_request_authenticator
-    ] = lambda: _LifecycleAuthenticator()
+        get_authentication_runtime
+    ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=_LifecycleAuthenticator(),
+        )
     app.dependency_overrides[
         get_project_access_service
     ] = lambda: access_service
@@ -461,8 +465,11 @@ def _install_lifecycle_auth_for_scope(
         get_execution_evidence_storage_runtime
     ] = lambda: runtime
     app.dependency_overrides[
-        get_request_authenticator
-    ] = lambda: _LifecycleAuthenticator()
+        get_authentication_runtime
+    ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=_LifecycleAuthenticator(),
+        )
     app.dependency_overrides[
         get_project_access_service
     ] = lambda: access_service
@@ -1039,8 +1046,11 @@ def test_project_lifecycle_requires_authentication(
         get_execution_evidence_storage_runtime
     ] = lambda: runtime
     app.dependency_overrides[
-        get_request_authenticator
-    ] = lambda: authenticator
+        get_authentication_runtime
+    ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=authenticator,
+        )
     app.dependency_overrides[
         get_project_access_service
     ] = lambda: access
@@ -1098,8 +1108,11 @@ def test_inaccessible_project_lifecycle_is_404(
         get_execution_evidence_storage_runtime
     ] = lambda: runtime
     app.dependency_overrides[
-        get_request_authenticator
-    ] = lambda: _LifecycleAuthenticator()
+        get_authentication_runtime
+    ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=_LifecycleAuthenticator(),
+        )
     app.dependency_overrides[
         get_project_access_service
     ] = lambda: access
@@ -1156,8 +1169,11 @@ def test_lifecycle_uses_authorized_context_project_id(
         get_execution_evidence_storage_runtime
     ] = lambda: runtime
     app.dependency_overrides[
-        get_request_authenticator
-    ] = lambda: _LifecycleAuthenticator()
+        get_authentication_runtime
+    ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=_LifecycleAuthenticator(),
+        )
     app.dependency_overrides[
         get_project_access_service
     ] = lambda: access

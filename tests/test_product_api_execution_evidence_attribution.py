@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from datetime import datetime
 from typing import Optional
 
@@ -1842,7 +1843,7 @@ def test_attribution_routes_require_authentication_before_access():
     )
     from product_api import (
         get_project_access_service,
-        get_request_authenticator,
+        get_authentication_runtime,
     )
 
     class FailingAuthenticator:
@@ -1881,8 +1882,11 @@ def test_attribution_routes_require_authentication_before_access():
     access = RecordingAccessService()
 
     app.dependency_overrides[
-        get_request_authenticator
-    ] = lambda: FailingAuthenticator()
+        get_authentication_runtime
+    ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=FailingAuthenticator(),
+        )
     app.dependency_overrides[
         get_project_access_service
     ] = lambda: access
@@ -1923,7 +1927,7 @@ def test_inaccessible_attribution_project_is_404_not_403():
     )
     from product_api import (
         get_project_access_service,
-        get_request_authenticator,
+        get_authentication_runtime,
     )
 
     class SuccessfulAuthenticator:
@@ -1959,8 +1963,11 @@ def test_inaccessible_attribution_project_is_404_not_403():
             )
 
     app.dependency_overrides[
-        get_request_authenticator
-    ] = lambda: SuccessfulAuthenticator()
+        get_authentication_runtime
+    ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=SuccessfulAuthenticator(),
+        )
     app.dependency_overrides[
         get_project_access_service
     ] = lambda: InaccessibleProjectAccessService()
@@ -2045,7 +2052,7 @@ def test_attribution_query_validation_occurs_after_authentication():
     )
     from product_api import (
         get_project_access_service,
-        get_request_authenticator,
+        get_authentication_runtime,
     )
 
     class FailingAuthenticator:
@@ -2080,8 +2087,11 @@ def test_attribution_query_validation_occurs_after_authentication():
     access = RecordingAccessService()
 
     app.dependency_overrides[
-        get_request_authenticator
-    ] = lambda: FailingAuthenticator()
+        get_authentication_runtime
+    ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=FailingAuthenticator(),
+        )
     app.dependency_overrides[
         get_project_access_service
     ] = lambda: access
@@ -2121,7 +2131,7 @@ def test_attribution_query_validation_occurs_after_tenancy():
     )
     from product_api import (
         get_project_access_service,
-        get_request_authenticator,
+        get_authentication_runtime,
     )
 
     class SuccessfulAuthenticator:
@@ -2153,8 +2163,11 @@ def test_attribution_query_validation_occurs_after_tenancy():
             )
 
     app.dependency_overrides[
-        get_request_authenticator
-    ] = lambda: SuccessfulAuthenticator()
+        get_authentication_runtime
+    ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=SuccessfulAuthenticator(),
+        )
     app.dependency_overrides[
         get_project_access_service
     ] = lambda: InaccessibleProjectAccessService()

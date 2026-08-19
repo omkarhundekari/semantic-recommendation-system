@@ -13,7 +13,7 @@ from execution_evidence.workspace_discovery import (
 )
 from product_api import (
     app,
-    get_authenticated_request_principal,
+    get_product_authenticated_principal,
     get_workspace_discovery_service,
 )
 
@@ -114,7 +114,7 @@ def _install(service):
     principal = _principal()
 
     app.dependency_overrides[
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ] = lambda: principal
 
     app.dependency_overrides[
@@ -242,7 +242,7 @@ def test_workspace_discovery_authentication_failure_prevents_store_access():
         )
 
     app.dependency_overrides[
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ] = authentication_failure
 
     app.dependency_overrides[

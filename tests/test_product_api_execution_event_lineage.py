@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from datetime import datetime, timezone
 
 import pytest
@@ -36,10 +37,9 @@ from execution_evidence.request_authenticator import (
 )
 from product_api import (
     app,
-    get_authenticated_request_principal,
     get_authorized_execution_event_projection_service,
     get_project_access_service,
-    get_request_authenticator,
+    get_authentication_runtime,
 )
 
 
@@ -212,8 +212,11 @@ def _install(
 ):
     if authenticator is not None:
         app.dependency_overrides[
-            get_request_authenticator
-        ] = lambda: authenticator
+            get_authentication_runtime
+        ] = lambda: SimpleNamespace(
+            ready=True,
+            authenticator=authenticator,
+        )
 
     if access_service is not None:
         app.dependency_overrides[

@@ -29,7 +29,7 @@ from execution_evidence.workspace_provisioning import (
 )
 from product_api import (
     app,
-    get_authenticated_request_principal,
+    get_product_authenticated_principal,
     get_workspace_discovery_service,
 )
 
@@ -732,7 +732,7 @@ def test_api_returns_next_cursor_and_continues(
     )
 
     app.dependency_overrides[
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ] = lambda: authenticated
 
     app.dependency_overrides[
@@ -810,7 +810,7 @@ def test_api_malformed_cursor_returns_422(
     )
 
     app.dependency_overrides[
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ] = lambda: authenticated
 
     app.dependency_overrides[

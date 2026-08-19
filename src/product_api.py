@@ -1791,7 +1791,7 @@ def provision_workspace_endpoint(
         alias="Idempotency-Key",
     ),
     principal: AuthenticatedRequestPrincipal = Depends(
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ),
     provisioning_service: (
         SQLiteWorkspaceProvisioningService
@@ -1914,7 +1914,7 @@ def list_accessible_workspaces_endpoint(
         le=MAX_WORKSPACE_DISCOVERY_RESULTS,
     ),
     principal: AuthenticatedRequestPrincipal = Depends(
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ),
     discovery_service: (
         SQLiteWorkspaceDiscoveryService
@@ -2005,7 +2005,7 @@ def get_workspace_access_service(
 def get_authorized_workspace_context(
     workspace_id: str,
     principal: AuthenticatedRequestPrincipal = Depends(
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ),
     access_service: WorkspaceAccessService = Depends(
         get_workspace_access_service
@@ -2210,7 +2210,7 @@ def get_authorized_project_context(
     workspace_id: str,
     project_id: str,
     principal: AuthenticatedRequestPrincipal = Depends(
-        get_authenticated_request_principal
+        get_product_authenticated_principal
     ),
     access_service: ProjectAccessService = Depends(
         get_project_access_service
