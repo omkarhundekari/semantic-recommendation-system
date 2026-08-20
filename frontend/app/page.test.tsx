@@ -1526,3 +1526,581 @@ describe(
     );
   },
 );
+
+
+describe(
+  "authenticated project intelligence authority",
+  () => {
+    function intelligencePayload() {
+      return {
+        response_schema_version:
+          3,
+
+        persistence: {
+          roadmap_registry: {
+            status:
+              "ready",
+            remediation:
+              null,
+          },
+        },
+
+        status:
+          "ready",
+
+        directions: [
+          {
+            id:
+              "grounded-rag",
+
+            project_id:
+              "prj_123e4567-e89b-42d3-a456-426614174200",
+
+            roadmap_snapshot_id:
+              "rms_123e4567-e89b-42d3-a456-426614174201",
+
+            project_direction_id:
+              "pdr_123e4567-e89b-42d3-a456-426614174202",
+
+            title:
+              "Grounded RAG Evaluation System",
+
+            summary:
+              "Build and evaluate a grounded retrieval workflow.",
+
+            scope:
+              "Implement retrieval, evaluation, and evidence capture.",
+
+            estimated_effort:
+              "3 weeks",
+
+            portfolio_tier:
+              "strong",
+
+            difficulty:
+              "Medium",
+
+            career_signal:
+              "Demonstrates retrieval and evaluation engineering.",
+
+            why_it_fits:
+              "Matches the requested ML engineering goal.",
+
+            mvp_steps: [
+              "Build retrieval",
+              "Measure quality",
+            ],
+
+            advanced_extensions: [],
+
+            tech_stack: [
+              "Python",
+              "React",
+            ],
+
+            target_roles: [
+              "ML Engineer",
+            ],
+
+            evidence: [],
+
+            roadmap: [
+              {
+                id:
+                  "build-retrieval",
+
+                title:
+                  "Build retrieval",
+
+                purpose:
+                  "Create the grounded retrieval path.",
+
+                tasks: [
+                  "Implement retrieval.",
+                ],
+
+                stage_type:
+                  "implementation",
+
+                objective:
+                  "Return grounded candidate evidence.",
+
+                why_it_matters:
+                  "Retrieval quality determines downstream grounding.",
+
+                commands: [],
+
+                expected_outputs: [],
+
+                acceptance_criteria: [],
+
+                validation_checks: [],
+
+                common_errors: [],
+
+                portfolio_artifact:
+                  null,
+
+                unlock_condition:
+                  null,
+
+                guided_steps: [],
+              },
+            ],
+
+            risks: [],
+            repairs_applied: [],
+
+            verification: {
+              status:
+                "passed",
+              score:
+                3,
+              max_score:
+                3,
+              checks: {},
+              warnings: [],
+            },
+          },
+        ],
+      };
+    }
+
+
+    async function submitGoal(
+      goal:
+        string = "Build a grounded RAG evaluation project",
+    ) {
+      expect(
+        await screen.findByText(
+          "Account workspace ready",
+        ),
+      ).toBeInTheDocument();
+
+      const input =
+        screen.getByPlaceholderText(
+          /I want an AI project for an ML engineer role/i,
+        );
+
+      fireEvent.change(
+        input,
+        {
+          target: {
+            value:
+              goal,
+          },
+        },
+      );
+
+      const form =
+        input.closest(
+          "form",
+        );
+
+      if (!form) {
+        throw new Error(
+          "Project generation form was not found.",
+        );
+      }
+
+      fireEvent.submit(
+        form,
+      );
+    }
+
+
+    it(
+      "creates project intelligence only through the durable workspace BFF",
+      async () => {
+        const payload =
+          intelligencePayload();
+
+        const fetchMock =
+          vi.spyOn(
+            globalThis,
+            "fetch",
+          ).mockResolvedValue(
+            new Response(
+              JSON.stringify(
+                payload,
+              ),
+              {
+                status:
+                  200,
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+              },
+            ),
+          );
+
+        render(
+          <Home />,
+        );
+
+        await submitGoal();
+
+        await waitFor(
+          () => {
+            expect(
+              fetchMock,
+            ).toHaveBeenCalledTimes(
+              1,
+            );
+          },
+        );
+
+        const [
+          requestUrl,
+          requestInit,
+        ] =
+          fetchMock.mock.calls[0];
+
+        expect(
+          requestUrl,
+        ).toBe(
+          "/api/workspaces/ws_existing/project-intelligence",
+        );
+
+        expect(
+          String(
+            requestUrl,
+          ),
+        ).not.toContain(
+          "/v1/project-intelligence",
+        );
+
+        expect(
+          requestInit,
+        ).toMatchObject({
+          method:
+            "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+        });
+
+        const requestBody =
+          JSON.parse(
+            String(
+              requestInit?.body,
+            ),
+          );
+
+        expect(
+          requestBody.goal,
+        ).toBe(
+          "Build a grounded RAG evaluation project",
+        );
+
+        expect(
+          requestBody,
+        ).not.toHaveProperty(
+          "workspace_id",
+        );
+
+        expect(
+          requestBody,
+        ).not.toHaveProperty(
+          "principal_id",
+        );
+
+        expect(
+          requestBody,
+        ).not.toHaveProperty(
+          "project_id",
+        );
+
+        expect(
+          await screen.findByRole(
+            "heading",
+            {
+              name:
+                "Grounded RAG Evaluation System",
+              level:
+                3,
+            },
+          ),
+        ).toBeInTheDocument();
+      },
+    );
+
+
+    it(
+      "preserves backend-issued durable project identities in browser state",
+      async () => {
+        const payload =
+          intelligencePayload();
+
+        vi.spyOn(
+          globalThis,
+          "fetch",
+        ).mockResolvedValue(
+          new Response(
+            JSON.stringify(
+              payload,
+            ),
+            {
+              status:
+                200,
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+            },
+          ),
+        );
+
+        render(
+          <Home />,
+        );
+
+        await submitGoal();
+
+        expect(
+          await screen.findByRole(
+            "heading",
+            {
+              name:
+                "Grounded RAG Evaluation System",
+              level:
+                3,
+            },
+          ),
+        ).toBeInTheDocument();
+
+        await waitFor(
+          () => {
+            const raw =
+              window.localStorage.getItem(
+                WORKSPACE_STORAGE_KEY,
+              );
+
+            expect(
+              raw,
+            ).not.toBeNull();
+
+            const stored =
+              JSON.parse(
+                raw ?? "{}",
+              );
+
+            const direction =
+              stored
+                ?.result
+                ?.directions
+                ?.[0];
+
+            expect(
+              direction
+                ?.project_id,
+            ).toBe(
+              payload
+                .directions[0]
+                .project_id,
+            );
+
+            expect(
+              direction
+                ?.roadmap_snapshot_id,
+            ).toBe(
+              payload
+                .directions[0]
+                .roadmap_snapshot_id,
+            );
+
+            expect(
+              direction
+                ?.project_direction_id,
+            ).toBe(
+              payload
+                .directions[0]
+                .project_direction_id,
+            );
+          },
+          {
+            timeout:
+              1500,
+          },
+        );
+      },
+    );
+
+
+    it(
+      "surfaces project creation denial as authorization rather than authentication or availability",
+      async () => {
+        const fetchMock =
+          vi.spyOn(
+            globalThis,
+            "fetch",
+          ).mockResolvedValue(
+            new Response(
+              JSON.stringify({
+                error:
+                  "Project creation is not permitted in this workspace.",
+              }),
+              {
+                status:
+                  403,
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+              },
+            ),
+          );
+
+        render(
+          <Home />,
+        );
+
+        await submitGoal();
+
+        expect(
+          await screen.findByText(
+            "You do not have permission to create projects in this workspace.",
+          ),
+        ).toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            "Your session is no longer authenticated. Sign in again to create a project.",
+          ),
+        ).not.toBeInTheDocument();
+
+        expect(
+          screen.queryByText(
+            "Project intelligence is temporarily unavailable. Please try again.",
+          ),
+        ).not.toBeInTheDocument();
+
+        expect(
+          fetchMock,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+      },
+    );
+
+
+    it(
+      "does not attempt project creation before durable workspace authority is ready",
+      async () => {
+        let resolveDiscovery:
+          (
+            value: {
+              workspaces: Array<{
+                workspaceId:
+                  string;
+                membershipId:
+                  string;
+                membershipRole:
+                  string;
+              }>;
+              truncated:
+                boolean;
+              nextCursor:
+                null;
+            },
+          ) => void =
+            () => {};
+
+        discoverWorkspacesMock
+          .mockReturnValue(
+            new Promise(
+              (
+                resolve,
+              ) => {
+                resolveDiscovery =
+                  resolve;
+              },
+            ),
+          );
+
+        const fetchMock =
+          vi.spyOn(
+            globalThis,
+            "fetch",
+          );
+
+        render(
+          <Home />,
+        );
+
+        expect(
+          await screen.findByText(
+            "Preparing your workspace...",
+          ),
+        ).toBeInTheDocument();
+
+        const input =
+          screen.getByPlaceholderText(
+            /I want an AI project for an ML engineer role/i,
+          );
+
+        fireEvent.change(
+          input,
+          {
+            target: {
+              value:
+                "Build a grounded RAG evaluation project",
+            },
+          },
+        );
+
+        const form =
+          input.closest(
+            "form",
+        );
+
+        if (!form) {
+          throw new Error(
+            "Project generation form was not found.",
+          );
+        }
+
+        fireEvent.submit(
+          form,
+        );
+
+        expect(
+          await screen.findByText(
+            "Your account workspace must be ready before creating a project.",
+          ),
+        ).toBeInTheDocument();
+
+        expect(
+          fetchMock,
+        ).not.toHaveBeenCalled();
+
+        await act(
+          async () => {
+            resolveDiscovery({
+              workspaces: [
+                {
+                  workspaceId:
+                    "ws_existing",
+                  membershipId:
+                    "wsm_existing",
+                  membershipRole:
+                    "owner",
+                },
+              ],
+              truncated:
+                false,
+              nextCursor:
+                null,
+            });
+          },
+        );
+      },
+    );
+  },
+);

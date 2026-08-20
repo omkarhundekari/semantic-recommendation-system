@@ -184,7 +184,14 @@ type RoadmapNode = {
 
 type Direction = {
   id: string;
+
+  // Durable identities are minted only by the authenticated backend.
+  // The browser must preserve them exactly rather than deriving or
+  // manufacturing project authority locally.
+  project_id: string | null;
+  roadmap_snapshot_id: string | null;
   project_direction_id: string | null;
+
   title: string;
   summary: string;
   scope: string;
@@ -1073,49 +1080,151 @@ export default function Home() {
     setIsLoading(true);
 
     try {
+      if (
+        presentedDurableWorkspaceState.status
+        !== "ready"
+      ) {
+        if (
+          presentedDurableWorkspaceState.status
+          === "unauthenticated"
+        ) {
+          setError(
+            "Sign in before creating a project.",
+          );
+        } else {
+          setError(
+            "Your account workspace must be ready before creating a project.",
+          );
+        }
+
+        return;
+      }
+
+      const workspaceId =
+        presentedDurableWorkspaceState
+          .workspace
+          .workspaceId;
+
       const response = await fetch(
-        `${API_BASE_URL}/v1/project-intelligence`,
+        `/api/workspaces/${encodeURIComponent(
+          workspaceId,
+        )}/project-intelligence`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
-            goal: nextGoal.trim(),
-            selected_direction: selectedDirection ?? null,
+            goal:
+              nextGoal.trim(),
+            selected_direction:
+              selectedDirection ?? null,
             constraints: {
-              skill_level: skillLevel,
-              time_available: timeAvailable,
-              target_roles: targetRole ? [targetRole] : [],
-              preferred_stack: preferredStack
-                ? preferredStack
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean)
-                : [],
+              skill_level:
+                skillLevel,
+              time_available:
+                timeAvailable,
+              target_roles:
+                targetRole
+                  ? [targetRole]
+                  : [],
+              preferred_stack:
+                preferredStack
+                  ? preferredStack
+                      .split(",")
+                      .map(
+                        (item) =>
+                          item.trim(),
+                      )
+                      .filter(Boolean)
+                  : [],
             },
           }),
         },
       );
 
-      const payload = (await response.json()) as IntelligenceResponse;
+      let payload:
+        IntelligenceResponse | null =
+          null;
+
+      try {
+        payload =
+          (
+            await response.json()
+          ) as IntelligenceResponse;
+      } catch {
+        // The BFF owns the authenticated transport boundary.
+        // Malformed upstream success/error bodies must not be
+        // interpreted as valid planning state.
+      }
 
       if (!response.ok) {
-        throw new Error("The planning API returned an unexpected response.");
+        if (response.status === 401) {
+          setError(
+            "Your session is no longer authenticated. Sign in again to create a project.",
+          );
+          return;
+        }
+
+        if (response.status === 403) {
+          setError(
+            "You do not have permission to create projects in this workspace.",
+          );
+          return;
+        }
+
+        if (response.status === 404) {
+          setError(
+            "Your account workspace could not be found. Refresh the page and try again.",
+          );
+          return;
+        }
+
+        if (
+          response.status === 400
+          || response.status === 422
+        ) {
+          setError(
+            "The project request is invalid. Review the goal and constraints and try again.",
+          );
+          return;
+        }
+
+        setError(
+          "Project intelligence is temporarily unavailable. Please try again.",
+        );
+        return;
+      }
+
+      if (payload === null) {
+        setError(
+          "Project intelligence returned an invalid response. Please try again.",
+        );
+        return;
       }
 
       if (payload.status !== "ready") {
-        setShouldScrollToClarification(true);
+        setShouldScrollToClarification(
+          true,
+        );
       }
 
-      if (payload.status === "ready" && payload.directions.length > 0) {
-        setShouldScrollToDirections(true);
+      if (
+        payload.status === "ready"
+        && payload.directions.length > 0
+      ) {
+        setShouldScrollToDirections(
+          true,
+        );
       }
 
-      setResult(payload);
+      setResult(
+        payload,
+      );
     } catch {
       setError(
-        "Could not reach the planning API. Confirm FastAPI is running on port 8000.",
+        "Project intelligence is temporarily unavailable. Please try again.",
       );
     } finally {
       setIsLoading(false);

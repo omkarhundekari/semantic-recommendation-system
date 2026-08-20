@@ -4889,25 +4889,3 @@ def generate_workspace_project_intelligence_endpoint(
         roadmap_registry_status="ready",
         roadmap_registry_remediation=None,
     )
-
-
-@app.post(
-    "/v1/project-intelligence",
-    response_model=ProjectIntelligenceResponse,
-)
-def generate_project_intelligence_endpoint(
-    request: ProjectIntelligenceRequest,
-    runtime: ExecutionEvidenceStorageRuntime = Depends(
-        get_execution_evidence_storage_runtime
-    ),
-) -> ProjectIntelligenceResponse:
-    return generate_project_intelligence(
-        request,
-        roadmap_registry=runtime.roadmap_registry,
-        roadmap_registry_status=(
-            runtime.roadmap_registry_status
-        ),
-        roadmap_registry_remediation=(
-            runtime.remediation
-        ),
-    )
