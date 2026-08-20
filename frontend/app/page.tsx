@@ -44,7 +44,6 @@ import {
   createWorkspaceBackup,
   createWorkspaceBackupFilename,
   importWorkspaceBackup,
-  readWorkspaceFromStorage,
   removeWorkspaceFromStorage,
   writeWorkspaceToStorage,
   type PersistedWorkspace,
@@ -339,21 +338,6 @@ type DurableWorkspaceBootstrapState =
       status: "unavailable";
     };
 
-function readSavedWorkspace(): SavedWorkspace | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const workspace =
-    readWorkspaceFromStorage<IntelligenceResponse>(
-      window.localStorage,
-    );
-
-  return workspace
-    ? sanitizeWorkspaceReferences(workspace)
-    : null;
-}
-
 const examplePrompts = [
   "AI project for an ML engineer role in 3 weeks",
   "React portfolio project for frontend roles",
@@ -545,11 +529,7 @@ export default function Home() {
   const durableWorkspaceGenerationRef =
     useRef(0);
 
-  const [savedWorkspace] = useState<SavedWorkspace | null>(() =>
-    readSavedWorkspace(),
-  );
-
-  const [goal, setGoal] = useState(savedWorkspace?.goal ?? "");
+  const [goal, setGoal] = useState("");
   const [showConstraints, setShowConstraints] = useState(false);
   const [skillLevel, setSkillLevel] = useState("intermediate");
   const [timeAvailable, setTimeAvailable] = useState("3 weeks");
@@ -578,50 +558,46 @@ export default function Home() {
   ] = useState(
     restoredExecutionEvidenceRepositoryKey !== null,
   );
-  const [result, setResult] = useState<IntelligenceResponse | null>(
-    savedWorkspace?.result ?? null,
-  );
+  const [result, setResult] =
+    useState<IntelligenceResponse | null>(
+      null,
+    );
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showHelpChooser, setShowHelpChooser] = useState(false);
   const [revealedArtifacts, setRevealedArtifacts] =
     useState(hiddenArtifacts);
 
-  const [selectedDirectionId, setSelectedDirectionId] = useState<string | null>(
-    savedWorkspace?.selectedDirectionId ?? null,
-  );
-
-  const [activeRoadmapNodeId, setActiveRoadmapNodeId] = useState<string | null>(
-    savedWorkspace?.activeRoadmapNodeId ?? null,
-  );
-
-  const [completedRoadmapNodeIds, setCompletedRoadmapNodeIds] = useState<
-    string[]
-  >(savedWorkspace?.completedRoadmapNodeIds ?? []);
-
-  const [guidedStepProofs, setGuidedStepProofs] = useState<
-    Record<string, string>
-  >(savedWorkspace?.guidedStepProofs ?? {});
-  const [decisionAnswers, setDecisionAnswers] = useState<
-    Record<string, string>
-  >(savedWorkspace?.decisionAnswers ?? {});
-  const [completedGuidedStepIds, setCompletedGuidedStepIds] = useState<
-    string[]
-  >(savedWorkspace?.completedGuidedStepIds ?? []);
-  const [adaptationDecisions, setAdaptationDecisions] =
-    useState<AdaptationDecisionMap>(
-      savedWorkspace?.adaptationDecisions ?? {},
+  const [selectedDirectionId, setSelectedDirectionId] =
+    useState<string | null>(
+      null,
     );
-  const [adaptationEvidence, setAdaptationEvidence] = useState<
-    Record<string, string>
-  >(savedWorkspace?.adaptationEvidence ?? {});
+
+  const [activeRoadmapNodeId, setActiveRoadmapNodeId] =
+    useState<string | null>(
+      null,
+    );
+
+  const [completedRoadmapNodeIds, setCompletedRoadmapNodeIds] =
+    useState<string[]>([]);
+
+  const [guidedStepProofs, setGuidedStepProofs] =
+    useState<Record<string, string>>({});
+  const [decisionAnswers, setDecisionAnswers] =
+    useState<Record<string, string>>({});
+  const [completedGuidedStepIds, setCompletedGuidedStepIds] =
+    useState<string[]>([]);
+  const [adaptationDecisions, setAdaptationDecisions] =
+    useState<AdaptationDecisionMap>({});
+  const [adaptationEvidence, setAdaptationEvidence] =
+    useState<Record<string, string>>({});
   const [workspaceSaveStatus, setWorkspaceSaveStatus] =
     useState<WorkspaceSaveStatus>(
-      savedWorkspace ? "saved" : "idle",
+      "idle",
     );
   const [lastWorkspaceSavedAt, setLastWorkspaceSavedAt] =
     useState<string | null>(
-      savedWorkspace?.savedAt ?? null,
+      null,
     );
   const [workspaceFreshnessNow, setWorkspaceFreshnessNow] =
     useState(() => new Date());
@@ -1760,9 +1736,17 @@ export default function Home() {
             {presentedDurableWorkspaceState.status === "unauthenticated" && (
               <>
                 <AlertCircle className="h-3.5 w-3.5 text-amber-300" />
+
                 <span>
                   Sign in to connect an account workspace
                 </span>
+
+                <a
+                  href="/api/auth/google/start?returnTo=%2F"
+                  className="ml-2 inline-flex items-center rounded-lg border border-white/10 bg-white/[0.045] px-3 py-1.5 font-medium text-white transition hover:border-sky-300/30 hover:bg-sky-400/10"
+                >
+                  Continue with Google
+                </a>
               </>
             )}
 
