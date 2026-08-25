@@ -926,6 +926,362 @@ def generate_ngram_spans(
 
 
 # =========================================================
+# L2.7a.6g — STRUCTURAL ROLE OVERRIDES
+#
+# Role assignment now has three deliberately separate sources:
+#
+#   1. bounded role constructions
+#   2. cue-scope propagation
+#   3. weak role morphology/context fallback
+#
+# A bounded construction is allowed to override cue scope
+# because both edges of the construction are explicit.
+#
+# Weak morphology is intentionally much weaker: it may only
+# supply ROLE when cue scope returned UNKNOWN.
+#
+# None of these rules inspect technology identity or corpus
+# evidence.
+# =========================================================
+
+
+_SHADOW_BOUNDED_ROLE_PATTERNS = (
+    # Example:
+    #
+    #   I want something for a data engineer role.
+    #
+    # "for" opens the construction and role/roles closes it.
+    # This is structurally different from the old greedy clause
+    # captures because both boundaries are explicit.
+    re.compile(
+        r"\bfor\s+"
+        r"(?:an?\s+|the\s+)?"
+        r"("
+        r"[A-Za-z][A-Za-z0-9+#.-]*"
+        r"(?:\s+[A-Za-z][A-Za-z0-9+#.-]*){0,4}"
+        r")"
+        r"\s+roles?\b",
+        re.IGNORECASE,
+    ),
+)
+
+
+# Occupational heads are a deliberately small closed-class
+# grammatical/morphological signal, not an open-world dictionary
+# of job titles.
+_SHADOW_ROLE_HEAD_PATTERN = re.compile(
+    r"\b(?:"
+    r"engineer"
+    r"|analyst"
+    r"|scientist"
+    r"|developer"
+    r"|architect"
+    r"|administrator"
+    r")s?\b",
+    re.IGNORECASE,
+)
+
+
+# Weak role morphology requires explicit career/portfolio
+# framing nearby. The occupational head alone is not enough.
+_SHADOW_ROLE_CONTEXT_PATTERN = re.compile(
+    r"\b(?:"
+    r"portfolio"
+    r"|career"
+    r"|job"
+    r"|jobs"
+    r"|role"
+    r"|roles"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _shadow_bounded_role_spans(
+    query: str,
+):
+    """
+    Return closed ROLE construction intervals.
+
+    Output tuples:
+
+        (
+            captured_start,
+            captured_end,
+            full_start,
+            full_end,
+        )
+
+    Candidate identity is irrelevant; only source positions are
+    used.
+    """
+    result = []
+
+    for pattern in (
+        _SHADOW_BOUNDED_ROLE_PATTERNS
+    ):
+        for match in pattern.finditer(
+            query
+        ):
+            captured_start, captured_end = (
+                match.span(1)
+            )
+
+            result.append(
+                (
+                    captured_start,
+                    captured_end,
+                    match.start(),
+                    match.end(),
+                )
+            )
+
+    return result
+
+
+def _shadow_bounded_role_for_occurrence(
+    query: str,
+    *,
+    char_span: Optional[
+        tuple[int, int]
+    ],
+) -> ClauseRole:
+    """
+    Strong ROLE override for candidates contained inside a
+    closed role construction.
+    """
+    if char_span is None:
+        return ClauseRole.UNKNOWN
+
+    start, end = char_span
+
+    for (
+        role_start,
+        role_end,
+        _full_start,
+        _full_end,
+    ) in _shadow_bounded_role_spans(
+        query
+    ):
+        if (
+            start >= role_start
+            and end <= role_end
+        ):
+            return ClauseRole.ROLE
+
+    return ClauseRole.UNKNOWN
+
+
+def _shadow_role_morphology_for_occurrence(
+    query: str,
+    *,
+    char_span: Optional[
+        tuple[int, int]
+    ],
+    segment_index: Optional[int] = None,
+) -> ClauseRole:
+    """
+    Weak ROLE fallback.
+
+    This helper is intentionally conservative:
+
+      * the candidate's own segment must contain an
+        occupational head; and
+      * the nearby segment/framing context must contain a
+        career/portfolio marker.
+
+    It must never override a non-UNKNOWN cue-scope result.
+    """
+    if char_span is None:
+        return ClauseRole.UNKNOWN
+
+    start, end = char_span
+
+    matching_bounds = None
+
+    for (
+        current_segment_index,
+        left_scope_start,
+        segment_start,
+        segment_end,
+        _segment,
+    ) in _shadow_segment_scope_bounds(
+        query
+    ):
+        if (
+            start >= segment_start
+            and end <= segment_end
+        ):
+            if (
+                segment_index is not None
+                and current_segment_index
+                != segment_index
+            ):
+                continue
+
+            matching_bounds = (
+                left_scope_start,
+                segment_start,
+                segment_end,
+            )
+            break
+
+    if matching_bounds is None:
+        return ClauseRole.UNKNOWN
+
+    (
+        left_scope_start,
+        segment_start,
+        segment_end,
+    ) = matching_bounds
+
+    segment_text = query[
+        segment_start:segment_end
+    ]
+
+    # Candidate hygiene may deliberately remove framing
+    # vocabulary such as:
+    #
+    #   portfolio
+    #   role
+    #   roles
+    #   job
+    #
+    # Those tokens must stay out of technical candidate
+    # generation, but weak role morphology still needs to inspect
+    # them as raw structural context.
+    #
+    # Therefore the morphology context extends from this
+    # segment's left scope through the raw text immediately after
+    # the candidate segment, stopping at the next candidate
+    # segment when one exists.
+    next_segment_start = len(query)
+
+    for (
+        next_segment_index,
+        _next_left_scope_start,
+        next_start,
+        _next_end,
+        _next_segment,
+    ) in _shadow_segment_scope_bounds(
+        query
+    ):
+        if (
+            next_segment_index
+            > current_segment_index
+        ):
+            next_segment_start = next_start
+            break
+
+    nearby_text = query[
+        left_scope_start:next_segment_start
+    ]
+
+    if not _SHADOW_ROLE_HEAD_PATTERN.search(
+        segment_text
+    ):
+        return ClauseRole.UNKNOWN
+
+    if not _SHADOW_ROLE_CONTEXT_PATTERN.search(
+        nearby_text
+    ):
+        return ClauseRole.UNKNOWN
+
+    return ClauseRole.ROLE
+
+
+def _shadow_structural_role_for_occurrence(
+    query: str,
+    *,
+    char_span: Optional[
+        tuple[int, int]
+    ],
+    segment_index: Optional[int] = None,
+) -> ClauseRole:
+    """
+    L2.7a.6g composite shadow role policy.
+
+    Precedence:
+
+        bounded ROLE construction
+        > non-GOAL cue scope
+        > contextual ROLE morphology
+        > generic GOAL cue
+        > UNKNOWN
+    """
+    bounded_role = (
+        _shadow_bounded_role_for_occurrence(
+            query,
+            char_span=char_span,
+        )
+    )
+
+    if bounded_role != ClauseRole.UNKNOWN:
+        return bounded_role
+
+    cue_role = (
+        _shadow_segment_bounded_role_for_occurrence(
+            query,
+            char_span=char_span,
+        )
+    )
+
+    # Specialized grammatical cues are stronger than weak
+    # occupational morphology.
+    #
+    # Examples:
+    #
+    #   I know software engineering
+    #       -> SKILL_HELD
+    #
+    #   I want to learn software engineering
+    #       -> SKILL_TARGET
+    #
+    #   I want to use Python
+    #       -> STACK_PREFERENCE
+    #
+    # ROLE cues such as "targeting" / "become" also remain
+    # authoritative.
+    #
+    # Generic GOAL cues are handled separately below because
+    # nearby career framing + an occupational head can provide a
+    # more specific interpretation:
+    #
+    #   need project for job maybe ml engineer
+    #
+    # Here "need" opens a broad GOAL scope, while
+    # "job" + "engineer" provide the narrower ROLE reading.
+    if cue_role not in {
+        ClauseRole.UNKNOWN,
+        ClauseRole.GOAL,
+    }:
+        return cue_role
+
+    morphology_role = (
+        _shadow_role_morphology_for_occurrence(
+            query,
+            char_span=char_span,
+            segment_index=segment_index,
+        )
+    )
+
+    # Contextual career-role evidence may override only a generic
+    # GOAL scope. It must never override SKILL_HELD,
+    # SKILL_TARGET, STACK_PREFERENCE, or explicit ROLE cues.
+    if (
+        morphology_role
+        != ClauseRole.UNKNOWN
+    ):
+        return morphology_role
+
+    if cue_role == ClauseRole.GOAL:
+        return ClauseRole.GOAL
+
+    return ClauseRole.UNKNOWN
+
+
+
+# =========================================================
 # L2.7a.6a — SHADOW CUE-SCOPE ROLE MODEL
 #
 # This is intentionally diagnostic-only.
