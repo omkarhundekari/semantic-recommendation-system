@@ -175,3 +175,125 @@ def test_same_segment_domain_conflict_abstains():
     assert snapshot.primary_focus is None
     assert snapshot.primary_family is None
     assert snapshot.domain_ambiguous is True
+
+
+# =========================================================
+# L2.8A.6 — CANONICAL SEMANTIC ANCHOR COMPRESSION
+# =========================================================
+
+
+def test_anchor_compression_prefers_complete_role_phrase():
+    snapshot = build_query_semantic_snapshot(
+        "cybersecurity analyst portfolio using FastAPI"
+    )
+
+    anchors = list(snapshot.anchors)
+
+    assert "cybersecurity analyst" in anchors
+    assert "FastAPI" in anchors
+
+    assert "cybersecurity" not in anchors
+    assert "analyst" not in anchors
+
+
+def test_anchor_compression_keeps_goal_and_role_phrase_distinct():
+    snapshot = build_query_semantic_snapshot(
+        "I want to build an AI project "
+        "for an ML engineer role."
+    )
+
+    anchors = list(snapshot.anchors)
+
+    assert "AI" in anchors
+    assert "ML engineer" in anchors
+
+    # The complete occupational phrase represents the same ROLE
+    # occurrence more faithfully than its contained ML token.
+    assert "ML" not in anchors
+
+
+def test_unresolved_unknown_composite_does_not_hide_atomic_concepts():
+    snapshot = build_query_semantic_snapshot(
+        "python react ai"
+    )
+
+    normalized = {
+        anchor.lower()
+        for anchor in snapshot.anchors
+    }
+
+    assert normalized == {
+        "python",
+        "react",
+        "ai",
+    }
+
+    assert (
+        "python react ai"
+        not in normalized
+    )
+
+
+def test_open_world_unresolved_stack_survives_anchor_compression():
+    snapshot = build_query_semantic_snapshot(
+        "build something with ZorvexQL"
+    )
+
+    assert list(
+        snapshot.anchors
+    ) == [
+        "ZorvexQL",
+    ]
+
+
+def test_distinct_semantic_roles_are_not_compressed_together():
+    snapshot = build_query_semantic_snapshot(
+        "I want a RAG app using Qdrant "
+        "and want to learn Kubernetes"
+    )
+
+    normalized = {
+        anchor.lower()
+        for anchor in snapshot.anchors
+    }
+
+    assert normalized == {
+        "rag",
+        "qdrant",
+        "kubernetes",
+    }
+
+
+def test_anchor_compression_does_not_mutate_selected_provenance():
+    snapshot = build_query_semantic_snapshot(
+        "cybersecurity analyst portfolio using FastAPI"
+    )
+
+    selected = {
+        (
+            span.normalized_form,
+            span.char_span,
+            span.clause_role.value,
+        )
+        for span in snapshot.selected_spans
+    }
+
+    # Compression is presentation-only. The full occurrence lattice
+    # remains available to downstream semantic reasoning.
+    assert (
+        "cybersecurity analyst",
+        (0, 21),
+        "role",
+    ) in selected
+
+    assert (
+        "cybersecurity",
+        (0, 13),
+        "role",
+    ) in selected
+
+    assert (
+        "analyst",
+        (14, 21),
+        "role",
+    ) in selected

@@ -629,25 +629,199 @@ def _anchor_key(
     )
 
 
+def _is_synthetic_unknown_composite(
+    span: ResolvedConceptSpan,
+) -> bool:
+    """
+    Return whether a multi-token span is only an unresolved
+    composition of otherwise independent concepts.
+
+    Example:
+
+        python react ai
+
+    The generated trigram is useful as structural provenance, but
+    it is not a better user-facing anchor than the three concepts
+    themselves.
+
+    This rule is deliberately role/evidence based. It contains no
+    technology vocabulary.
+    """
+    return (
+        span.ngram_size > 1
+        and span.clause_role
+        == ClauseRole.UNKNOWN
+        and span.resolution_status
+        == ResolutionStatus.UNRESOLVED
+    )
+
+
+def _anchor_span_dominates(
+    outer: ResolvedConceptSpan,
+    inner: ResolvedConceptSpan,
+) -> bool:
+    """
+    Decide whether ``outer`` is the semantically complete anchor
+    representation of ``inner``.
+
+    Compression is occurrence-local and role-local:
+
+      * both spans must belong to the same semantic segment;
+      * ``outer`` must strictly contain ``inner``;
+      * both spans must express the same grammatical role.
+
+    An unresolved ROLE phrase is still allowed to dominate its
+    constituents because the occupational construction itself is
+    strong structural evidence:
+
+        cybersecurity analyst
+        ML engineer
+
+    Other phrases must have evidence at least as authoritative as
+    the contained span. This prevents a weak or fabricated phrase
+    from hiding a stronger atomic concept.
+
+    Unresolved UNKNOWN composites never dominate.
+    """
+    if outer is inner:
+        return False
+
+    if (
+        outer.segment_index is None
+        or inner.segment_index is None
+        or outer.segment_index
+        != inner.segment_index
+    ):
+        return False
+
+    if not _contains(
+        outer,
+        inner,
+    ):
+        return False
+
+    if (
+        outer.char_span
+        == inner.char_span
+    ):
+        return False
+
+    if (
+        outer.clause_role
+        != inner.clause_role
+    ):
+        return False
+
+    if (
+        outer.ngram_size
+        <= inner.ngram_size
+    ):
+        return False
+
+    if _is_synthetic_unknown_composite(
+        outer
+    ):
+        return False
+
+    # Closed occupational structure is independently meaningful,
+    # even when corpus evidence does not contain the full phrase.
+    if (
+        outer.clause_role
+        == ClauseRole.ROLE
+    ):
+        return True
+
+    return (
+        _STATUS_PRIORITY[
+            outer.resolution_status
+        ]
+        >=
+        _STATUS_PRIORITY[
+            inner.resolution_status
+        ]
+        and outer.resolution_status
+        != ResolutionStatus.UNRESOLVED
+    )
+
+
+def _compress_anchor_spans(
+    selected: Sequence[ResolvedConceptSpan],
+) -> List[ResolvedConceptSpan]:
+    """
+    Reduce overlap only for anchor presentation.
+
+    ``selected_spans`` remains untouched and keeps complete
+    occurrence-level provenance for later planning/reasoning.
+
+    This layer removes redundant presentation anchors without
+    collapsing genuinely distinct concepts, roles, segments, or
+    open-world technologies.
+    """
+    usable = [
+        span
+        for span in selected
+        if not _is_synthetic_unknown_composite(
+            span
+        )
+    ]
+
+    result = []
+
+    for candidate in usable:
+        dominated = any(
+            _anchor_span_dominates(
+                other,
+                candidate,
+            )
+            for other in usable
+            if other is not candidate
+        )
+
+        if dominated:
+            continue
+
+        result.append(candidate)
+
+    return result
+
+
 def _semantic_anchors(
     selected: Sequence[ResolvedConceptSpan],
     *,
     limit: int = 6,
 ) -> List[str]:
     """
-    Preserve open-world query concepts without requiring taxonomy
-    membership.
+    Produce compact semantic anchors for downstream planning.
 
-    Unknown technologies such as:
+    Anchor compression is structural rather than vocabulary based:
 
-        ZorvexQL
-        NewVectorDB42
+      * complete same-role phrases may subsume redundant
+        constituents;
+      * distinct roles and segments remain independent;
+      * unresolved UNKNOWN composites do not replace atomic
+        concepts;
+      * unresolved/open-world technologies remain valid anchors.
 
-    remain valid anchors even when they have no corpus/domain
-    resolution.
+    Examples:
+
+        cybersecurity analyst portfolio using FastAPI
+            -> cybersecurity analyst, FastAPI
+
+        I want an AI project for an ML engineer role
+            -> AI, ML engineer
+
+        python react ai
+            -> python / react / ai independently
+
+        build something with ZorvexQL
+            -> ZorvexQL
     """
+    compressed = _compress_anchor_spans(
+        selected
+    )
+
     ranked = sorted(
-        selected,
+        compressed,
         key=_anchor_key,
         reverse=True,
     )
@@ -667,6 +841,9 @@ def _semantic_anchors(
         if not normalized or not surface:
             continue
 
+        # Presentation-level deduplication is intentionally
+        # normalized-form based. Occurrence-level distinctions remain
+        # preserved in selected_spans.
         if normalized in seen:
             continue
 
