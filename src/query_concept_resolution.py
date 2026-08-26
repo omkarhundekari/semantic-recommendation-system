@@ -945,22 +945,80 @@ def generate_ngram_spans(
 # =========================================================
 
 
-_SHADOW_BOUNDED_ROLE_PATTERNS = (
+# Tokens that invalidate a supposedly bounded ``for ... role``
+# construction.
+#
+# A ROLE construction is allowed to contain an open-class role
+# description, but it must not cross into a subordinate clause,
+# stack phrase, infinitive, contrast, or another structural
+# relation.
+#
+# Example that must NOT become one ROLE span:
+#
+#     for React that helps with data roles
+#
+# The old bounded regex could consume:
+#
+#     React that helps with data
+#
+# simply because a later ``roles`` token existed.  That is a
+# greedy-extent failure inside an otherwise closed construction.
+#
+# We therefore constrain the interior grammar rather than tuning
+# an arbitrary token-count limit.
+_BOUNDED_ROLE_INTERIOR_BLOCKERS = (
+    "that",
+    "which",
+    "who",
+    "whom",
+    "whose",
+    "with",
+    "using",
+    "use",
+    "uses",
+    "to",
+    "by",
+    "but",
+    "however",
+    "although",
+    "though",
+    "whereas",
+)
+
+
+_BOUNDED_ROLE_BLOCKER_PATTERN = (
+    "|".join(
+        re.escape(token)
+        for token in _BOUNDED_ROLE_INTERIOR_BLOCKERS
+    )
+)
+
+
+_BOUNDED_ROLE_PATTERNS = (
     # Example:
     #
     #   I want something for a data engineer role.
     #
-    # "for" opens the construction and role/roles closes it.
-    # This is structurally different from the old greedy clause
-    # captures because both boundaries are explicit.
+    # Both edges are explicit:
+    #
+    #   for  ........  role
+    #
+    # and the interior is forbidden from crossing a known
+    # structural relation.  This preserves open-class role names
+    # without allowing an unrelated relative clause to be
+    # swallowed by the construction.
     re.compile(
         r"\bfor\s+"
         r"(?:an?\s+|the\s+)?"
         r"("
+        r"(?:(?!\b(?:"
+        + _BOUNDED_ROLE_BLOCKER_PATTERN
+        + r")\b)"
         r"[A-Za-z][A-Za-z0-9+#.-]*"
-        r"(?:\s+[A-Za-z][A-Za-z0-9+#.-]*){0,4}"
+        r"(?:\s+|(?=\s+roles?\b))"
+        r")+?"
         r")"
-        r"\s+roles?\b",
+        r"\s*roles?\b",
         re.IGNORECASE,
     ),
 )
@@ -969,7 +1027,7 @@ _SHADOW_BOUNDED_ROLE_PATTERNS = (
 # Occupational heads are a deliberately small closed-class
 # grammatical/morphological signal, not an open-world dictionary
 # of job titles.
-_SHADOW_ROLE_HEAD_PATTERN = re.compile(
+_ROLE_HEAD_PATTERN = re.compile(
     r"\b(?:"
     r"engineer"
     r"|analyst"
@@ -984,7 +1042,7 @@ _SHADOW_ROLE_HEAD_PATTERN = re.compile(
 
 # Weak role morphology requires explicit career/portfolio
 # framing nearby. The occupational head alone is not enough.
-_SHADOW_ROLE_CONTEXT_PATTERN = re.compile(
+_ROLE_CONTEXT_PATTERN = re.compile(
     r"\b(?:"
     r"portfolio"
     r"|career"
@@ -997,7 +1055,7 @@ _SHADOW_ROLE_CONTEXT_PATTERN = re.compile(
 )
 
 
-def _shadow_bounded_role_spans(
+def _bounded_role_spans(
     query: str,
 ):
     """
@@ -1018,7 +1076,7 @@ def _shadow_bounded_role_spans(
     result = []
 
     for pattern in (
-        _SHADOW_BOUNDED_ROLE_PATTERNS
+        _BOUNDED_ROLE_PATTERNS
     ):
         for match in pattern.finditer(
             query
@@ -1039,7 +1097,7 @@ def _shadow_bounded_role_spans(
     return result
 
 
-def _shadow_bounded_role_for_occurrence(
+def _bounded_role_for_occurrence(
     query: str,
     *,
     char_span: Optional[
@@ -1060,7 +1118,7 @@ def _shadow_bounded_role_for_occurrence(
         role_end,
         _full_start,
         _full_end,
-    ) in _shadow_bounded_role_spans(
+    ) in _bounded_role_spans(
         query
     ):
         if (
@@ -1072,7 +1130,7 @@ def _shadow_bounded_role_for_occurrence(
     return ClauseRole.UNKNOWN
 
 
-def _shadow_role_morphology_for_occurrence(
+def _role_morphology_for_occurrence(
     query: str,
     *,
     char_span: Optional[
@@ -1085,8 +1143,9 @@ def _shadow_role_morphology_for_occurrence(
 
     This helper is intentionally conservative:
 
-      * the candidate's own segment must contain an
-        occupational head; and
+      * the candidate must end at the segment's occupational
+        head, or be immediately followed by that terminal head;
+        and
       * the nearby segment/framing context must contain a
         career/portfolio marker.
 
@@ -1105,7 +1164,7 @@ def _shadow_role_morphology_for_occurrence(
         segment_start,
         segment_end,
         _segment,
-    ) in _shadow_segment_scope_bounds(
+    ) in _segment_scope_bounds(
         query
     ):
         if (
@@ -1135,8 +1194,8 @@ def _shadow_role_morphology_for_occurrence(
         segment_end,
     ) = matching_bounds
 
-    segment_text = query[
-        segment_start:segment_end
+    candidate_text = query[
+        start:end
     ]
 
     # Candidate hygiene may deliberately remove framing
@@ -1163,7 +1222,7 @@ def _shadow_role_morphology_for_occurrence(
         next_start,
         _next_end,
         _next_segment,
-    ) in _shadow_segment_scope_bounds(
+    ) in _segment_scope_bounds(
         query
     ):
         if (
@@ -1177,12 +1236,94 @@ def _shadow_role_morphology_for_occurrence(
         left_scope_start:next_segment_start
     ]
 
-    if not _SHADOW_ROLE_HEAD_PATTERN.search(
-        segment_text
+    # -----------------------------------------------------
+    # TERMINAL OCCUPATIONAL-HEAD LOCALITY
+    #
+    # Career morphology must not leak from an occupational
+    # word elsewhere in the same candidate segment.
+    #
+    # Bad:
+    #
+    #   want a data scientist dashboard for my job
+    #
+    # ``scientist`` is role-shaped, but ``dashboard`` is the
+    # actual terminal concept and must remain GOAL.
+    #
+    # Good:
+    #
+    #   cybersecurity analyst portfolio
+    #   need project for job maybe ml engineer
+    #
+    # In those cases the occupational head is the terminal head
+    # of the segment.
+    #
+    # A candidate therefore receives morphology ROLE only when:
+    #
+    #   1. it itself ends in the occupational head AND reaches
+    #      the end of the candidate segment; or
+    #
+    #   2. it is a modifier immediately followed by the
+    #      occupational head, and that head reaches the end of
+    #      the candidate segment.
+    #
+    # This preserves constituent role propagation such as
+    # ``ml`` -> ROLE in ``ml engineer`` without allowing a
+    # preceding ``scientist`` to contaminate ``dashboard``.
+    # -----------------------------------------------------
+
+    candidate_head_matches = list(
+        _ROLE_HEAD_PATTERN.finditer(
+            candidate_text
+        )
+    )
+
+    candidate_ends_with_terminal_head = (
+        end == segment_end
+        and bool(candidate_head_matches)
+        and candidate_head_matches[-1].end()
+        == len(candidate_text)
+    )
+
+    right_tail = query[
+        end:segment_end
+    ]
+
+    right_tail_stripped = (
+        right_tail.lstrip()
+    )
+
+    right_head_match = (
+        _ROLE_HEAD_PATTERN.match(
+            right_tail_stripped
+        )
+    )
+
+    right_adjacent_terminal_head = False
+
+    if right_head_match is not None:
+        leading_whitespace = (
+            len(right_tail)
+            - len(right_tail_stripped)
+        )
+
+        absolute_head_end = (
+            end
+            + leading_whitespace
+            + right_head_match.end()
+        )
+
+        right_adjacent_terminal_head = (
+            absolute_head_end
+            == segment_end
+        )
+
+    if not (
+        candidate_ends_with_terminal_head
+        or right_adjacent_terminal_head
     ):
         return ClauseRole.UNKNOWN
 
-    if not _SHADOW_ROLE_CONTEXT_PATTERN.search(
+    if not _ROLE_CONTEXT_PATTERN.search(
         nearby_text
     ):
         return ClauseRole.UNKNOWN
@@ -1190,7 +1331,7 @@ def _shadow_role_morphology_for_occurrence(
     return ClauseRole.ROLE
 
 
-def _shadow_structural_role_for_occurrence(
+def _structural_role_for_occurrence(
     query: str,
     *,
     char_span: Optional[
@@ -1199,7 +1340,7 @@ def _shadow_structural_role_for_occurrence(
     segment_index: Optional[int] = None,
 ) -> ClauseRole:
     """
-    L2.7a.6g composite shadow role policy.
+    L2.7a structural role policy.
 
     Precedence:
 
@@ -1210,7 +1351,7 @@ def _shadow_structural_role_for_occurrence(
         > UNKNOWN
     """
     bounded_role = (
-        _shadow_bounded_role_for_occurrence(
+        _bounded_role_for_occurrence(
             query,
             char_span=char_span,
         )
@@ -1220,7 +1361,7 @@ def _shadow_structural_role_for_occurrence(
         return bounded_role
 
     cue_role = (
-        _shadow_segment_bounded_role_for_occurrence(
+        _segment_bounded_role_for_occurrence(
             query,
             char_span=char_span,
         )
@@ -1258,7 +1399,7 @@ def _shadow_structural_role_for_occurrence(
         return cue_role
 
     morphology_role = (
-        _shadow_role_morphology_for_occurrence(
+        _role_morphology_for_occurrence(
             query,
             char_span=char_span,
             segment_index=segment_index,
@@ -1282,9 +1423,7 @@ def _shadow_structural_role_for_occurrence(
 
 
 # =========================================================
-# L2.7a.6a — SHADOW CUE-SCOPE ROLE MODEL
-#
-# This is intentionally diagnostic-only.
+# STRUCTURAL CUE-SCOPE ROLE MODEL
 #
 # Candidate identity must never determine grammatical role.
 # Roles come only from cue positions and query structure.
@@ -1295,7 +1434,7 @@ def _shadow_structural_role_for_occurrence(
 # =========================================================
 
 
-_SHADOW_ROLE_CUE_PATTERNS = (
+_ROLE_CUE_PATTERNS = (
     # -----------------------------------------------------
     # SKILL_HELD
     #
@@ -1395,7 +1534,7 @@ _SHADOW_ROLE_CUE_PATTERNS = (
     ),
     (
         re.compile(
-            r"\bteaches?\b",
+            r"\bteach(?:es)?\b",
             re.IGNORECASE,
         ),
         ClauseRole.SKILL_TARGET,
@@ -1523,7 +1662,7 @@ _SHADOW_ROLE_CUE_PATTERNS = (
 #   I know React, Python and TypeScript
 #
 # should remain one SKILL_HELD scope.
-_SHADOW_ROLE_SCOPE_RESET = re.compile(
+_ROLE_SCOPE_RESET = re.compile(
     r"""
     [;.!?]
     |
@@ -1543,7 +1682,7 @@ _SHADOW_ROLE_SCOPE_RESET = re.compile(
 )
 
 
-def _shadow_role_cue_occurrences(
+def _role_cue_occurrences(
     query: str,
 ):
     """
@@ -1566,7 +1705,7 @@ def _shadow_role_cue_occurrences(
         pattern,
         role,
         cue_name,
-    ) in _SHADOW_ROLE_CUE_PATTERNS:
+    ) in _ROLE_CUE_PATTERNS:
         for match in pattern.finditer(query):
             found.append(
                 (
@@ -1613,7 +1752,7 @@ def _shadow_role_cue_occurrences(
     return result
 
 
-def _shadow_cue_scope_role_for_occurrence(
+def _cue_scope_role_for_occurrence(
     query: str,
     *,
     char_span: Optional[
@@ -1622,7 +1761,7 @@ def _shadow_cue_scope_role_for_occurrence(
     left_scope_start: int = 0,
 ) -> ClauseRole:
     """
-    Diagnostic L2.7a.6 role assignment.
+    Occurrence-aware cue-scope role assignment.
 
     Rule:
       nearest valid preceding cue owns the candidate until
@@ -1637,7 +1776,7 @@ def _shadow_cue_scope_role_for_occurrence(
 
     preceding = [
         cue
-        for cue in _shadow_role_cue_occurrences(
+        for cue in _role_cue_occurrences(
             query
         )
         if (
@@ -1662,7 +1801,7 @@ def _shadow_cue_scope_role_for_occurrence(
         cue_end:candidate_start
     ]
 
-    if _SHADOW_ROLE_SCOPE_RESET.search(
+    if _ROLE_SCOPE_RESET.search(
         between
     ):
         return ClauseRole.UNKNOWN
@@ -1670,7 +1809,7 @@ def _shadow_cue_scope_role_for_occurrence(
     return role
 
 
-def _shadow_segment_scope_bounds(
+def _segment_scope_bounds(
     query: str,
 ):
     """
@@ -1709,7 +1848,7 @@ def _shadow_segment_scope_bounds(
     return result
 
 
-def _shadow_segment_bounded_role_for_occurrence(
+def _segment_bounded_role_for_occurrence(
     query: str,
     *,
     char_span: Optional[
@@ -1717,7 +1856,7 @@ def _shadow_segment_bounded_role_for_occurrence(
     ],
 ) -> ClauseRole:
     """
-    L2.7a.6b shadow role assignment.
+    Segment-bounded cue-scope role assignment.
 
     Candidate role comes from the latest preceding cue inside
     the candidate's own segment-local left scope.
@@ -1733,14 +1872,14 @@ def _shadow_segment_bounded_role_for_occurrence(
         segment_start,
         segment_end,
         _segment,
-    ) in _shadow_segment_scope_bounds(
+    ) in _segment_scope_bounds(
         query
     ):
         if (
             start >= segment_start
             and end <= segment_end
         ):
-            return _shadow_cue_scope_role_for_occurrence(
+            return _cue_scope_role_for_occurrence(
                 query,
                 char_span=char_span,
                 left_scope_start=left_scope_start,
@@ -1749,11 +1888,11 @@ def _shadow_segment_bounded_role_for_occurrence(
     return ClauseRole.UNKNOWN
 
 
-def _shadow_cue_scope_trace(
+def _role_cue_scope_trace(
     query: str,
 ):
     """
-    Small diagnostic helper for L2.7a.6a tests.
+    Return a diagnostic trace of detected role cues.
     """
     return [
         {
@@ -1770,7 +1909,7 @@ def _shadow_cue_scope_trace(
             end,
             role,
             cue_name,
-        ) in _shadow_role_cue_occurrences(
+        ) in _role_cue_occurrences(
             query
         )
     ]
@@ -1783,10 +1922,7 @@ def _best_clause_role_for_span(
     char_span: Optional[
         tuple[int, int]
     ] = None,
-    constituent_char_spans: tuple[
-        tuple[int, int],
-        ...
-    ] = tuple(),
+    segment_index: Optional[int] = None,
 ) -> ClauseRole:
     structure = understand_query_structure(
         query
@@ -1808,64 +1944,33 @@ def _best_clause_role_for_span(
     )
 
     # -----------------------------------------------------
-    # OCCURRENCE-AWARE PATH
+    # PRODUCTION OCCURRENCE-AWARE PATH
     #
-    # Once exact provenance exists, role inference is local
-    # to this occurrence only. An equal surface form elsewhere
-    # in the query must not donate its role.
+    # L2.7A.7A
+    #
+    # Exact occurrence provenance activates the validated
+    # structural role model:
+    #
+    #     bounded ROLE construction
+    #       > cue scope
+    #       > contextual career morphology
+    #       > UNKNOWN
+    #
+    # Candidate identity, taxonomy, retrieval evidence, and
+    # technology vocabulary do not participate in grammatical
+    # role assignment.
+    #
+    # UNKNOWN is authoritative on this path. Falling back to
+    # legacy regex ownership after structural UNKNOWN would
+    # reintroduce the greedy scope-leakage failure that the
+    # structural model was built to eliminate.
     # -----------------------------------------------------
     if char_span is not None:
-        # Exact structural phrase over the same interval wins.
-        for candidate in candidates:
-            if (
-                candidate.normalized_form
-                == normalized_span
-                and candidate.char_span
-                == char_span
-            ):
-                return candidate.clause_role
-
-        occurrence_roles = []
-
-        for constituent_span in (
-            constituent_char_spans
-        ):
-            for candidate in candidates:
-                if (
-                    candidate.char_span
-                    == constituent_span
-                ):
-                    occurrence_roles.append(
-                        candidate.clause_role
-                    )
-
-        non_unknown = {
-            role
-            for role in occurrence_roles
-            if role != ClauseRole.UNKNOWN
-        }
-
-        if len(non_unknown) == 1:
-            return next(
-                iter(non_unknown)
-            )
-
-        if not non_unknown:
-            return ClauseRole.UNKNOWN
-
-        priority = (
-            ClauseRole.ROLE,
-            ClauseRole.GOAL,
-            ClauseRole.SKILL_TARGET,
-            ClauseRole.SKILL_HELD,
-            ClauseRole.STACK_PREFERENCE,
+        return _structural_role_for_occurrence(
+            query,
+            char_span=char_span,
+            segment_index=segment_index,
         )
-
-        for role in priority:
-            if role in non_unknown:
-                return role
-
-        return ClauseRole.UNKNOWN
 
     # -----------------------------------------------------
     # LEGACY TEXT-ONLY PATH
@@ -2019,9 +2124,7 @@ def resolve_concept_span(
                     span,
                     query,
                     char_span=char_span,
-                    constituent_char_spans=(
-                        constituent_char_spans
-                    ),
+                    segment_index=segment_index,
                 )
             ),
             ngram_size=len(
@@ -2130,9 +2233,7 @@ def resolve_concept_span(
                 span,
                 query,
                 char_span=char_span,
-                constituent_char_spans=(
-                    constituent_char_spans
-                ),
+                segment_index=segment_index,
             )
         ),
         ngram_size=len(
