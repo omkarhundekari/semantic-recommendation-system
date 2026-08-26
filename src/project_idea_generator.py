@@ -1,7 +1,15 @@
 import re
-from typing import Dict, List
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    List,
+    Optional,
+)
 
 from query_expander import get_query_metadata
+
+if TYPE_CHECKING:
+    from query_semantics import QuerySemanticSnapshot
 from constraint_adapter import apply_constraints_to_idea
 from project_intelligence import (
     build_project_intelligence,
@@ -224,6 +232,9 @@ def generate_project_ideas(
     max_ideas: int = 3,
     constraints: Dict = None,
     detected_domain: str = None,
+    semantic_snapshot: Optional[
+        "QuerySemanticSnapshot"
+    ] = None,
 ) -> List[Dict]:
     if not search_results:
         return []

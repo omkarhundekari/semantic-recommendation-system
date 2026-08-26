@@ -28,6 +28,7 @@ from portfolio_ladder import apply_portfolio_ladder
 from project_decision_trace import build_project_decision_trace
 from project_idea_generator import generate_project_ideas
 from query_expander import get_query_metadata
+from query_semantics import build_query_semantic_snapshot
 from query_understanding import understand_query
 from research_evidence_assessment import build_evidence_assessment
 from research_query_anchors import extract_required_anchor_terms
@@ -4417,6 +4418,18 @@ def generate_project_intelligence(
             pipeline=pipeline,
         )
 
+    # Build canonical query semantics exactly once for this
+    # production request.
+    #
+    # Downstream stages receive the same immutable snapshot so
+    # semantic interpretation cannot drift between retrieval,
+    # planning, and generation.
+    semantic_snapshot = (
+        build_query_semantic_snapshot(
+            corrected_query
+        )
+    )
+
     retrieval_intent_hints = [
         hint
         for hint in (
@@ -4431,6 +4444,7 @@ def generate_project_intelligence(
         top_k=6,
         intent_hints=retrieval_intent_hints,
         selected_direction=selected_direction,
+        semantic_snapshot=semantic_snapshot,
     )
 
     inference = evidence_payload["inference"]
@@ -4573,6 +4587,7 @@ def generate_project_intelligence(
         max_ideas=3,
         constraints=constraints,
         detected_domain=planning_domain,
+        semantic_snapshot=semantic_snapshot,
     )
 
     enrichment = enrich_product_ideas(

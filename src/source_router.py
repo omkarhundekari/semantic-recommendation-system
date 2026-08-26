@@ -1,10 +1,18 @@
-from typing import Dict, List, Optional
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    List,
+    Optional,
+)
 
 from research_retrieval_service import retrieve_ranked_evidence
 from evidence_domain_inference import infer_domain_from_evidence
 from github_corpus_search import search_github_project_corpus
 from project_corpus_search import search_project_corpus
 from query_expander import get_query_metadata
+
+if TYPE_CHECKING:
+    from query_semantics import QuerySemanticSnapshot
 
 
 def add_source_type(
@@ -153,6 +161,9 @@ def retrieve_evidence(
     top_k: int = 6,
     intent_hints: Optional[List[str]] = None,
     selected_direction: Optional[str] = None,
+    semantic_snapshot: Optional[
+        "QuerySemanticSnapshot"
+    ] = None,
 ) -> Dict:
     """
     Two-pass evidence retrieval.
