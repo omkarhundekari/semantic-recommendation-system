@@ -614,9 +614,18 @@ def _choose_primary_domain(
     return focus, family, False
 
 
-def _anchor_key(
+def semantic_priority_key(
     span: ResolvedConceptSpan,
 ):
+    """
+    Return the canonical semantic-importance ordering key.
+
+    This module owns semantic ranking policy. Downstream projection and
+    planning layers may consume this ordering but must not redefine it.
+
+    The returned key may use resolver evidence internally; consumers do
+    not need access to those resolver details.
+    """
     return (
         _ANCHOR_ROLE_PRIORITY[
             span.clause_role
@@ -626,6 +635,14 @@ def _anchor_key(
         ],
         span.ngram_size,
         span.confidence,
+    )
+
+
+def _anchor_key(
+    span: ResolvedConceptSpan,
+):
+    return semantic_priority_key(
+        span
     )
 
 
