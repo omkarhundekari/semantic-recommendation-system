@@ -4661,7 +4661,7 @@ def generate_project_intelligence(
         mission_context = build_mission_context(
             idea=idea,
             user_goal=request.goal,
-            query=corrected_query,
+            planning_semantics=planning_semantics,
             resolved_planning_domain=planning_domain,
             constraints={
                 "skill_level": getattr(request.constraints, "skill_level", "intermediate"),

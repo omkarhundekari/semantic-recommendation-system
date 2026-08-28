@@ -1,8 +1,11 @@
+from query_concept_resolution import ResolutionStatus
 from query_concept_understanding import ClauseRole
 from query_semantic_projections import (
+    PlanningConcept,
     available_skills,
     build_planning_semantic_projection,
     learning_targets,
+    mission_focus_concepts,
     required_stack,
 )
 from query_semantics import build_query_semantic_snapshot
@@ -17,6 +20,57 @@ def _triples(concepts):
         )
         for concept in concepts
     ]
+
+
+def _planning_concept(
+    surface: str,
+    role: ClauseRole,
+    start: int = 0,
+) -> PlanningConcept:
+    return PlanningConcept(
+        surface_form=surface,
+        normalized_form=surface.lower(),
+        clause_role=role,
+        resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+        char_span=(start, start + len(surface)),
+        segment_index=0,
+    )
+
+
+def test_mission_focus_does_not_promote_held_skill():
+    react = _planning_concept(
+        "React",
+        ClauseRole.SKILL_HELD,
+    )
+
+    assert mission_focus_concepts((react,)) == ()
+
+
+def test_mission_focus_suppresses_unknown_when_intentional_concept_exists():
+    goal = _planning_concept(
+        "AI",
+        ClauseRole.GOAL,
+    )
+    unknown = _planning_concept(
+        "ZorvexQL",
+        ClauseRole.UNKNOWN,
+        3,
+    )
+
+    assert mission_focus_concepts(
+        (goal, unknown)
+    ) == (goal,)
+
+
+def test_mission_focus_preserves_unknown_as_open_world_fallback():
+    unknown = _planning_concept(
+        "ZorvexQL",
+        ClauseRole.UNKNOWN,
+    )
+
+    assert mission_focus_concepts(
+        (unknown,)
+    ) == (unknown,)
 
 
 def test_projection_preserves_roles_instead_of_flattening_to_strings():

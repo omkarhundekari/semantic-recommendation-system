@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 
 from planning.guided_step_generator import build_guided_steps_for_stage
 from planning.mission_context import MissionContext
+from query_semantic_projections import mission_focus_concepts
 from schemas.product_models import RoadmapStage
 
 
@@ -460,8 +461,15 @@ def _unlock_condition(
 
 
 def _anchor_phrase(context: MissionContext) -> str:
-    if context.query_anchors:
-        return " ".join(context.query_anchors[:3])
+    concepts = mission_focus_concepts(
+        context.planning_concepts
+    )
+
+    if concepts:
+        return " ".join(
+            concept.surface_form
+            for concept in concepts[:3]
+        )
 
     return context.project_title
 

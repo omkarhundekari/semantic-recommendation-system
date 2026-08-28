@@ -1,6 +1,41 @@
-from planning.guided_step_generator import build_guided_steps_for_stage
+from planning.guided_step_generator import (
+    _anchor_phrase,
+    build_guided_steps_for_stage,
+)
 from planning.mission_context import build_mission_context
+from query_concept_resolution import ResolutionStatus
+from query_concept_understanding import ClauseRole
+from query_semantic_projections import (
+    PlanningConcept,
+    PlanningSemanticProjection,
+)
 from schemas.product_models import RoadmapStage
+
+
+
+def _concept(
+    surface: str,
+    role: ClauseRole,
+    start: int,
+) -> PlanningConcept:
+    return PlanningConcept(
+        surface_form=surface,
+        normalized_form=surface.lower(),
+        clause_role=role,
+        resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+        char_span=(start, start + len(surface)),
+        segment_index=0,
+    )
+
+
+def _projection(
+    *concepts: PlanningConcept,
+) -> PlanningSemanticProjection:
+    return PlanningSemanticProjection(
+        semantic_rank=concepts,
+        source_order=concepts,
+        presentation_order=concepts,
+    )
 
 
 def _rag_context(skill_level="intermediate"):
@@ -13,10 +48,15 @@ def _rag_context(skill_level="intermediate"):
         "advanced_extensions": ["Add reranking comparison."],
     }
 
+    planning_semantics = _projection(
+        _concept("RAG evaluation", ClauseRole.GOAL, 8),
+        _concept("question answering", ClauseRole.GOAL, 35),
+    )
+
     return build_mission_context(
         idea=idea,
         user_goal="Build a RAG evaluation project for question answering",
-        query="Build a RAG evaluation project for question answering",
+        planning_semantics=planning_semantics,
         resolved_planning_domain="rag_llm",
         constraints={
             "skill_level": skill_level,
@@ -37,10 +77,15 @@ def _frontend_context():
         "mvp_scope": ["Create one interactive frontend workflow."],
     }
 
+    planning_semantics = _projection(
+        _concept("React", ClauseRole.STACK_PREFERENCE, 8),
+        _concept("frontend portfolio", ClauseRole.GOAL, 14),
+    )
+
     return build_mission_context(
         idea=idea,
         user_goal="Build a React frontend portfolio project",
-        query="Build a React frontend portfolio project",
+        planning_semantics=planning_semantics,
         resolved_planning_domain="frontend",
         constraints={
             "skill_level": "intermediate",
@@ -185,3 +230,19 @@ def test_explanation_steps_require_reasoning_specific_patterns():
     failure_step = validate_steps[1]
 
     assert failure_step.expected_output_patterns == ["failure", "why", "improve"]
+
+def test_empty_semantics_anchor_falls_back_to_project_title():
+    context = build_mission_context(
+        idea={
+            "project_title": "Fallback Project",
+            "project_summary": "Build a useful project.",
+            "suggested_tech_stack": [],
+        },
+        user_goal="something impressive",
+        planning_semantics=_projection(),
+        resolved_planning_domain="generic",
+        constraints={},
+        evidence_coverage={},
+    )
+
+    assert _anchor_phrase(context) == "Fallback Project"

@@ -179,6 +179,32 @@ def goals(
     )
 
 
+
+def mission_focus_concepts(
+    concepts: Sequence[PlanningConcept],
+) -> Tuple[PlanningConcept, ...]:
+    intentional_roles = {
+        ClauseRole.GOAL,
+        ClauseRole.ROLE,
+        ClauseRole.STACK_PREFERENCE,
+    }
+
+    intentional = tuple(
+        concept
+        for concept in concepts
+        if concept.clause_role in intentional_roles
+    )
+
+    if intentional:
+        return intentional
+
+    return tuple(
+        concept
+        for concept in concepts
+        if concept.clause_role == ClauseRole.UNKNOWN
+    )
+
+
 def _to_planning_concept(
     span: ResolvedConceptSpan,
 ) -> PlanningConcept:

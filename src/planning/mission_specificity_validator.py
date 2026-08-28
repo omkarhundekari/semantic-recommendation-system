@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import List
 
 from planning.mission_context import MissionContext
+from query_semantic_projections import mission_focus_concepts
 from schemas.product_models import RoadmapStage
 
 
@@ -54,7 +55,7 @@ def validate_mission_specificity(
         ]
     )
 
-    _validate_query_anchor_presence(
+    _validate_mission_focus_presence(
         objective=objective,
         context=context,
         violations=violations,
@@ -112,26 +113,35 @@ def validate_roadmap_specificity(
     )
 
 
-def _validate_query_anchor_presence(
+def _validate_mission_focus_presence(
     *,
     objective: str,
     context: MissionContext,
     violations: List[str],
 ) -> None:
-    if not context.query_anchors:
+    concepts = mission_focus_concepts(
+        context.planning_concepts
+    )
+
+    required_terms = [
+        concept.surface_form
+        for concept in concepts[:3]
+    ]
+
+    if not required_terms:
         return
 
     normalized_objective = objective.lower()
-    missing_anchors = [
-        anchor
-        for anchor in context.query_anchors[:3]
-        if not _contains_term(normalized_objective, anchor)
+    missing_terms = [
+        term
+        for term in required_terms
+        if not _contains_term(normalized_objective, term)
     ]
 
-    if missing_anchors:
+    if missing_terms:
         violations.append(
-            "Objective missing query anchor(s): "
-            + ", ".join(missing_anchors)
+            "Objective missing mission focus concept(s): "
+            + ", ".join(missing_terms)
         )
 
 

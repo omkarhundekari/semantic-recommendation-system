@@ -5,61 +5,15 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from planning.domain_playbook_loader import DomainPlaybook, load_playbook_or_generic
-from planning.query_anchor_direction_adapter import extract_query_anchors
+from query_semantic_projections import (
+    PlanningConcept,
+    PlanningSemanticProjection,
+    available_skills,
+    learning_targets,
+    required_stack,
+    target_roles as semantic_target_role_concepts,
+)
 
-
-KNOWN_STACK_TERMS = [
-    "Next.js",
-    "TypeScript",
-    "JavaScript",
-    "React",
-    "Vue",
-    "Angular",
-    "Python",
-    "FastAPI",
-    "Flask",
-    "Django",
-    "Node.js",
-    "Express",
-    "PostgreSQL",
-    "MySQL",
-    "MongoDB",
-    "Redis",
-    "Docker",
-    "Kubernetes",
-    "AWS",
-    "Firebase",
-    "Tailwind",
-]
-
-DOMAIN_STACK_TERMS = {
-    "frontend": {
-        "Next.js",
-        "TypeScript",
-        "JavaScript",
-        "React",
-        "Vue",
-        "Angular",
-        "Tailwind",
-        "Firebase",
-    },
-    "rag_llm": {
-        "Python",
-        "FastAPI",
-        "PostgreSQL",
-        "Docker",
-        "AWS",
-    },
-    "education_tech": {
-        "React",
-        "Next.js",
-        "TypeScript",
-        "JavaScript",
-        "Python",
-        "FastAPI",
-        "Firebase",
-    },
-}
 
 
 @dataclass(frozen=True)
@@ -68,7 +22,6 @@ class MissionContext:
     project_title: str
     project_summary: str
     resolved_planning_domain: str
-    query_anchors: List[str]
     skill_level: str
     timeline: str
     preferred_stack: List[str]
@@ -80,6 +33,11 @@ class MissionContext:
     playbook: DomainPlaybook
     timeline_bucket: str
     primary_stack: List[str] = field(default_factory=list)
+    planning_concepts: tuple[PlanningConcept, ...] = field(default_factory=tuple)
+    requested_stack: List[str] = field(default_factory=list)
+    learning_targets: List[str] = field(default_factory=list)
+    available_skills: List[str] = field(default_factory=list)
+    semantic_target_roles: List[str] = field(default_factory=list)
 
 
 def build_mission_context(
@@ -87,7 +45,7 @@ def build_mission_context(
     idea: Dict[str, Any],
     user_goal: str,
     resolved_planning_domain: Optional[str],
-    query: str,
+    planning_semantics: PlanningSemanticProjection,
     constraints: Optional[Dict[str, Any]] = None,
     evidence_coverage: Optional[Dict[str, Any]] = None,
 ) -> MissionContext:
@@ -101,34 +59,33 @@ def build_mission_context(
     )
 
     preferred_stack = _as_string_list(safe_constraints.get("preferred_stack"))
-    query_stack = _extract_stack_terms(
-        " ".join(
-            [
-                user_goal,
-                query,
-                str(idea.get("project_title", "") or ""),
-            ]
-        )
-    )
-    idea_stack = _filter_stack_for_domain(
-        stack=_as_string_list(idea.get("suggested_tech_stack")),
-        domain=domain,
-        has_explicit_stack=bool(preferred_stack or query_stack),
-    )
-    primary_stack = _dedupe_preserve_order(
-        preferred_stack + query_stack + idea_stack
-    )[:5]
 
-    query_anchors = extract_query_anchors(query or user_goal)
-    if not query_anchors:
-        query_anchors = extract_query_anchors(
-            " ".join(
-                [
-                    str(idea.get("project_title", "") or ""),
-                    str(idea.get("project_summary", "") or ""),
-                ]
-            )
-        )
+    semantic_requested_stack = _concept_surfaces(
+        required_stack(planning_semantics)
+    )
+    requested_stack = resolve_requested_stack(
+        preferred_stack=preferred_stack,
+        semantic_requested_stack=semantic_requested_stack,
+    )
+
+    learning_stack = _concept_surfaces(
+        learning_targets(planning_semantics)
+    )
+    held_skills = _concept_surfaces(
+        available_skills(planning_semantics)
+    )
+    semantic_roles = _concept_surfaces(
+        semantic_target_role_concepts(planning_semantics)
+    )
+
+    suggested_stack = _as_string_list(
+        idea.get("suggested_tech_stack")
+    )
+
+    primary_stack = resolve_primary_stack(
+        requested_stack=requested_stack,
+        suggested_stack=suggested_stack,
+    )
 
     return MissionContext(
         user_goal=user_goal,
@@ -140,7 +97,6 @@ def build_mission_context(
             or ""
         ),
         resolved_planning_domain=domain,
-        query_anchors=query_anchors[:4],
         skill_level=str(safe_constraints.get("skill_level") or "intermediate"),
         timeline=str(safe_constraints.get("time_available") or "2-3 weeks"),
         timeline_bucket=_bucket_timeline(
@@ -156,6 +112,13 @@ def build_mission_context(
         warnings=_as_string_list(safe_coverage.get("warnings")),
         playbook=load_playbook_or_generic(domain),
         primary_stack=primary_stack,
+        planning_concepts=tuple(
+            planning_semantics.presentation_order
+        ),
+        requested_stack=requested_stack,
+        learning_targets=learning_stack,
+        available_skills=held_skills,
+        semantic_target_roles=semantic_roles,
     )
 
 
@@ -188,6 +151,38 @@ def _dedupe_preserve_order(items: List[str]) -> List[str]:
     return deduped
 
 
+
+
+def _concept_surfaces(
+    concepts: tuple[PlanningConcept, ...],
+) -> List[str]:
+    return [
+        concept.surface_form
+        for concept in concepts
+        if concept.surface_form.strip()
+    ]
+
+
+def resolve_requested_stack(
+    *,
+    preferred_stack: List[str],
+    semantic_requested_stack: List[str],
+) -> List[str]:
+    return _dedupe_preserve_order(
+        preferred_stack + semantic_requested_stack
+    )
+
+
+def resolve_primary_stack(
+    *,
+    requested_stack: List[str],
+    suggested_stack: List[str],
+) -> List[str]:
+    return _dedupe_preserve_order(
+        requested_stack + suggested_stack
+    )
+
+
 def _bucket_timeline(timeline: str) -> str:
     normalized = timeline.lower().strip()
 
@@ -204,56 +199,3 @@ def _bucket_timeline(timeline: str) -> str:
         return "semester"
 
     return "2_3_weeks"
-
-
-def _extract_stack_terms(text: str) -> List[str]:
-    normalized = text.lower()
-    detected = []
-
-    for stack in KNOWN_STACK_TERMS:
-        if _contains_stack_term(normalized, stack):
-            detected.append(stack)
-
-    return detected
-
-
-def _contains_stack_term(normalized_text: str, stack: str) -> bool:
-    normalized_stack = stack.lower()
-
-    aliases = {
-        "next.js": ["next.js", "nextjs", "next js"],
-        "node.js": ["node.js", "nodejs", "node js"],
-        "typescript": ["typescript", "type script", "ts"],
-        "javascript": ["javascript", "java script", "js"],
-        "postgresql": ["postgresql", "postgres"],
-    }
-
-    candidates = aliases.get(normalized_stack, [normalized_stack])
-
-    return any(
-        re.search(
-            rf"(?<![a-z0-9]){re.escape(candidate)}(?![a-z0-9])",
-            normalized_text,
-        )
-        for candidate in candidates
-    )
-
-
-def _filter_stack_for_domain(
-    *,
-    stack: List[str],
-    domain: str,
-    has_explicit_stack: bool,
-) -> List[str]:
-    if not has_explicit_stack:
-        return stack
-
-    allowed = DOMAIN_STACK_TERMS.get(domain)
-    if not allowed:
-        return stack
-
-    return [
-        item
-        for item in stack
-        if item in allowed
-    ]

@@ -1,5 +1,42 @@
-from planning.roadmap_execution_enrichment import enrich_roadmap_for_execution
+from planning.roadmap_execution_enrichment import (
+    _anchor_phrase,
+    enrich_roadmap_for_execution,
+)
+from query_concept_resolution import ResolutionStatus
+from query_concept_understanding import ClauseRole
+from query_semantic_projections import (
+    PlanningConcept,
+    PlanningSemanticProjection,
+)
 from schemas.product_models import RoadmapStage
+
+
+
+def _concept(
+    surface: str,
+    role: ClauseRole,
+    start: int,
+    *,
+    status: ResolutionStatus = ResolutionStatus.EVIDENCE_RESOLVED,
+) -> PlanningConcept:
+    return PlanningConcept(
+        surface_form=surface,
+        normalized_form=surface.lower(),
+        clause_role=role,
+        resolution_status=status,
+        char_span=(start, start + len(surface)),
+        segment_index=0,
+    )
+
+
+def _projection(
+    *concepts: PlanningConcept,
+) -> PlanningSemanticProjection:
+    return PlanningSemanticProjection(
+        semantic_rank=concepts,
+        source_order=concepts,
+        presentation_order=concepts,
+    )
 
 
 def test_enrich_roadmap_adds_execution_fields():
@@ -55,10 +92,31 @@ def test_enrich_roadmap_uses_domain_playbook_context():
         "advanced_extensions": ["Add student feedback tracking."],
     }
 
+    planning_semantics = _projection(
+        _concept(
+            "AR",
+            ClauseRole.UNKNOWN,
+            0,
+            status=ResolutionStatus.UNRESOLVED,
+        ),
+        _concept(
+            "VR",
+            ClauseRole.UNKNOWN,
+            3,
+            status=ResolutionStatus.UNRESOLVED,
+        ),
+        _concept(
+            "education",
+            ClauseRole.UNKNOWN,
+            6,
+            status=ResolutionStatus.UNRESOLVED,
+        ),
+    )
+
     context = build_mission_context(
         idea=idea,
         user_goal="AR VR education project",
-        query="AR VR education project",
+        planning_semantics=planning_semantics,
         resolved_planning_domain="education_tech",
         constraints={
             "skill_level": "intermediate",
@@ -127,10 +185,15 @@ def test_enriched_roadmap_attaches_guided_steps_when_context_is_available():
         "advanced_extensions": ["Add reranking comparison."],
     }
 
+    planning_semantics = _projection(
+        _concept("RAG evaluation", ClauseRole.GOAL, 8),
+        _concept("question answering", ClauseRole.GOAL, 35),
+    )
+
     context = build_mission_context(
         idea=idea,
         user_goal="Build a RAG evaluation project for question answering",
-        query="Build a RAG evaluation project for question answering",
+        planning_semantics=planning_semantics,
         resolved_planning_domain="rag_llm",
         constraints={
             "skill_level": "intermediate",
@@ -186,3 +249,21 @@ def test_enriched_roadmap_attaches_guided_steps_when_context_is_available():
     assert "retrieval" in guided_text
     assert "proof" in guided_text or "paste" in guided_text
     assert "interview" in guided_text or "structured the project" in guided_text
+
+def test_empty_semantics_anchor_falls_back_to_project_title():
+    from planning.mission_context import build_mission_context
+
+    context = build_mission_context(
+        idea={
+            "project_title": "Fallback Project",
+            "project_summary": "Build a useful project.",
+            "suggested_tech_stack": [],
+        },
+        user_goal="something impressive",
+        planning_semantics=_projection(),
+        resolved_planning_domain="generic",
+        constraints={},
+        evidence_coverage={},
+    )
+
+    assert _anchor_phrase(context) == "Fallback Project"

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import List, Optional
 
 from planning.mission_context import MissionContext
+from query_semantic_projections import mission_focus_concepts
 from schemas.product_models import GuidedMissionStep, RoadmapStage
 
 
@@ -370,8 +371,15 @@ def _dedupe_preserve_order(values: List[str]) -> List[str]:
 
 
 def _anchor_phrase(context: MissionContext) -> str:
-    if context.query_anchors:
-        return " ".join(context.query_anchors[:3])
+    concepts = mission_focus_concepts(
+        context.planning_concepts
+    )
+
+    if concepts:
+        return " ".join(
+            concept.surface_form
+            for concept in concepts[:3]
+        )
 
     return context.project_title
 
