@@ -4444,10 +4444,7 @@ def generate_project_intelligence(
 
     retrieval_intent_hints = [
         hint
-        for hint in (
-            understanding["direction_hints"]
-            + [correction_metadata.get("detected_domain")]
-        )
+        for hint in understanding["direction_hints"]
         if hint
     ]
 

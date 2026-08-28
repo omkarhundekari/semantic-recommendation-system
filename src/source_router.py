@@ -9,7 +9,6 @@ from research_retrieval_service import retrieve_ranked_evidence
 from evidence_domain_inference import infer_domain_from_evidence
 from github_corpus_search import search_github_project_corpus
 from project_corpus_search import search_project_corpus
-from query_expander import get_query_metadata
 
 if TYPE_CHECKING:
     from query_semantics import QuerySemanticSnapshot
@@ -169,17 +168,15 @@ def retrieve_evidence(
     Two-pass evidence retrieval.
 
     Pass 1:
-    Broad retrieval across research, project patterns, and GitHub references.
+    Broad retrieval across research, project patterns, and GitHub references
+    using the corrected user query without domain-derived expansion.
 
     Pass 2:
     Evidence-based family/focus inference, followed by focused retrieval.
     """
-    query_metadata = get_query_metadata(user_query)
-
-    expanded_query = query_metadata.get(
-        "expanded_query",
-        user_query,
-    )
+    # Broad retrieval must remain independent of domain inference.
+    # Keep this compatibility field equal to the actual broad query.
+    expanded_query = user_query
 
     broad_top_k = max(top_k, 6)
     focused_top_k = max(top_k, 6)
@@ -294,10 +291,7 @@ def retrieve_evidence(
         "query": user_query,
         "expanded_query": expanded_query,
         "focused_query": focused_query,
-        "detected_intent": query_metadata.get(
-            "detected_intent",
-            "unknown",
-        ),
+        "detected_intent": "unknown",
         "selected_route": "broad_then_focused",
         "selected_direction": normalize_selected_direction(
             selected_direction,

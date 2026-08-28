@@ -308,3 +308,89 @@ def test_typed_adapter_does_not_reparse_raw_query():
     ]
 
     assert "query" not in argument_names
+
+def test_source_router_does_not_use_legacy_query_metadata_for_retrieval():
+    tree = _module_tree(
+        "src/source_router.py"
+    )
+
+    imported_modules = set()
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported_modules.update(
+                alias.name
+                for alias in node.names
+            )
+        elif (
+            isinstance(node, ast.ImportFrom)
+            and node.module
+        ):
+            imported_modules.add(node.module)
+
+    assert "query_expander" not in imported_modules
+
+    retrieve = _function_node(
+        tree,
+        "retrieve_evidence",
+    )
+
+    assert not _calls_named(
+        retrieve,
+        "get_query_metadata",
+    )
+
+
+def test_product_retrieval_hints_use_understanding_not_correction_metadata():
+    tree = _module_tree(
+        "src/product_api.py"
+    )
+
+    handler = _function_node(
+        tree,
+        "generate_project_intelligence",
+    )
+
+    retrieval_calls = _calls_named(
+        handler,
+        "retrieve_evidence",
+    )
+
+    assert len(retrieval_calls) == 1
+
+    assignments = [
+        node
+        for node in ast.walk(handler)
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name)
+                and target.id == "retrieval_intent_hints"
+                for target in node.targets
+            )
+        )
+    ]
+
+    assert len(assignments) == 1
+
+    assigned_value = assignments[0].value
+
+    referenced_names = {
+        node.id
+        for node in ast.walk(assigned_value)
+        if isinstance(node, ast.Name)
+    }
+
+    referenced_strings = {
+        node.value
+        for node in ast.walk(assigned_value)
+        if (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+        )
+    }
+
+    assert "correction_metadata" not in referenced_names
+    assert "detected_domain" not in referenced_strings
+    assert "understanding" in referenced_names
+    assert "direction_hints" in referenced_strings
