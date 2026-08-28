@@ -29,6 +29,9 @@ from project_decision_trace import build_project_decision_trace
 from project_idea_generator import generate_project_ideas
 from query_expander import get_query_metadata
 from query_semantics import build_query_semantic_snapshot
+from query_semantic_projections import (
+    build_planning_semantic_projection,
+)
 from query_understanding import understand_query
 from research_evidence_assessment import build_evidence_assessment
 from research_query_anchors import extract_required_anchor_terms
@@ -47,7 +50,7 @@ from planning.coverage_aware_direction_notes import (
 )
 from planning.product_enrichment import enrich_product_ideas
 from planning.query_anchor_direction_adapter import (
-    adapt_ideas_to_query_anchors,
+    adapt_ideas_to_planning_semantics,
 )
 from planning.roadmap_execution_enrichment import (
     enrich_roadmap_for_execution,
@@ -4430,6 +4433,15 @@ def generate_project_intelligence(
         )
     )
 
+    # Project canonical semantics into the narrow planning contract once
+    # at the orchestration boundary. Planning consumers must not reparse
+    # the raw query to infer semantic intent.
+    planning_semantics = (
+        build_planning_semantic_projection(
+            semantic_snapshot
+        )
+    )
+
     retrieval_intent_hints = [
         hint
         for hint in (
@@ -4598,9 +4610,9 @@ def generate_project_intelligence(
         ideas=enrichment.ideas,
         evidence_coverage=evidence_coverage,
     )
-    ideas = adapt_ideas_to_query_anchors(
+    ideas = adapt_ideas_to_planning_semantics(
         ideas=ideas,
-        query=corrected_query,
+        planning_semantics=planning_semantics,
         resolved_domain=planning_domain,
     )
     final_verification_results = (

@@ -10,6 +10,7 @@ from query_concept_resolution import (
 from query_concept_understanding import ClauseRole
 from query_semantics import (
     QuerySemanticSnapshot,
+    semantic_anchor_spans,
     semantic_priority_key,
 )
 
@@ -40,17 +41,23 @@ class PlanningSemanticProjection:
     Pure planning projection over canonical query semantics.
 
     semantic_rank
-        Canonical semantic-importance ordering.
+        Complete selected concepts in canonical semantic-importance order.
 
     source_order
-        Stable occurrence order from the user's original query.
+        Complete selected concepts in stable occurrence order from the
+        user's original query.
 
-    These are intentionally separate. Semantic importance and natural
-    presentation order answer different questions.
+    presentation_order
+        Canonically compressed and deduplicated semantic-anchor concepts,
+        arranged back into source order for natural presentation.
+
+    Semantic importance, occurrence provenance, and presentation order are
+    deliberately separate views over the same canonical authority.
     """
 
     semantic_rank: Tuple[PlanningConcept, ...]
     source_order: Tuple[PlanningConcept, ...]
+    presentation_order: Tuple[PlanningConcept, ...]
 
 
 def build_planning_semantic_projection(
@@ -78,6 +85,13 @@ def build_planning_semantic_projection(
         key=_source_order_key,
     )
 
+    presentation_spans = sorted(
+        semantic_anchor_spans(
+            snapshot.selected_spans
+        ),
+        key=_source_order_key,
+    )
+
     return PlanningSemanticProjection(
         semantic_rank=tuple(
             _to_planning_concept(span)
@@ -86,6 +100,10 @@ def build_planning_semantic_projection(
         source_order=tuple(
             _to_planning_concept(span)
             for span in source_spans
+        ),
+        presentation_order=tuple(
+            _to_planning_concept(span)
+            for span in presentation_spans
         ),
     )
 

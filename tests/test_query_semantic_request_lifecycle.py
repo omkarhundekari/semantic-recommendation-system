@@ -223,3 +223,88 @@ def test_downstream_semantic_snapshot_parameters_remain_optional():
             isinstance(default, ast.Constant)
             and default.value is None
         )
+
+
+
+def test_product_request_builds_planning_projection_once():
+    tree = _module_tree(
+        "src/product_api.py"
+    )
+
+    handler = _function_node(
+        tree,
+        "generate_project_intelligence",
+    )
+
+    builders = _calls_named(
+        handler,
+        "build_planning_semantic_projection",
+    )
+
+    assert len(builders) == 1
+
+    assert (
+        builders[0].args
+        and isinstance(builders[0].args[0], ast.Name)
+        and builders[0].args[0].id == "semantic_snapshot"
+    )
+
+
+def test_product_adapter_consumes_planning_projection_not_raw_query():
+    tree = _module_tree(
+        "src/product_api.py"
+    )
+
+    handler = _function_node(
+        tree,
+        "generate_project_intelligence",
+    )
+
+    typed_calls = _calls_named(
+        handler,
+        "adapt_ideas_to_planning_semantics",
+    )
+
+    legacy_calls = _calls_named(
+        handler,
+        "adapt_ideas_to_query_anchors",
+    )
+
+    assert len(typed_calls) == 1
+    assert not legacy_calls
+
+    assert (
+        _keyword_value_name(
+            typed_calls[0],
+            "planning_semantics",
+        )
+        == "planning_semantics"
+    )
+
+    assert all(
+        keyword.arg != "query"
+        for keyword in typed_calls[0].keywords
+    )
+
+
+def test_typed_adapter_does_not_reparse_raw_query():
+    tree = _module_tree(
+        "src/planning/query_anchor_direction_adapter.py"
+    )
+
+    adapter = _function_node(
+        tree,
+        "adapt_ideas_to_planning_semantics",
+    )
+
+    assert not _calls_named(
+        adapter,
+        "extract_query_anchors",
+    )
+
+    argument_names = [
+        arg.arg
+        for arg in adapter.args.args
+    ]
+
+    assert "query" not in argument_names

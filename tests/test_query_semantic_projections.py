@@ -223,3 +223,78 @@ def test_projection_keeps_required_learning_and_available_buckets_distinct():
         concept.surface_form
         for concept in required_stack(projection)
     ] == ["FastAPI"]
+
+
+
+def test_presentation_order_uses_canonical_compression_in_source_order():
+    snapshot = build_query_semantic_snapshot(
+        "AR VR education project"
+    )
+
+    projection = build_planning_semantic_projection(
+        snapshot
+    )
+
+    assert [
+        concept.surface_form
+        for concept in projection.presentation_order
+    ] == [
+        "AR",
+        "VR",
+        "education",
+    ]
+
+    # Snapshot anchors retain canonical semantic-importance order.
+    assert list(snapshot.anchors) == [
+        "education",
+        "AR",
+        "VR",
+    ]
+
+
+def test_presentation_order_preserves_complete_role_phrase():
+    snapshot = build_query_semantic_snapshot(
+        "cybersecurity analyst portfolio using FastAPI"
+    )
+
+    projection = build_planning_semantic_projection(
+        snapshot
+    )
+
+    assert [
+        concept.surface_form
+        for concept in projection.presentation_order
+    ] == [
+        "cybersecurity analyst",
+        "FastAPI",
+    ]
+
+    assert (
+        projection.presentation_order[0].clause_role
+        == ClauseRole.ROLE
+    )
+
+
+def test_presentation_order_keeps_role_information_for_adapter_policy():
+    snapshot = build_query_semantic_snapshot(
+        "I know React but want an AI project using FastAPI"
+    )
+
+    projection = build_planning_semantic_projection(
+        snapshot
+    )
+
+    presented = [
+        (
+            concept.surface_form,
+            concept.clause_role,
+        )
+        for concept in projection.presentation_order
+    ]
+
+    assert ("React", ClauseRole.SKILL_HELD) in presented
+    assert ("AI", ClauseRole.GOAL) in presented
+    assert (
+        "FastAPI",
+        ClauseRole.STACK_PREFERENCE,
+    ) in presented

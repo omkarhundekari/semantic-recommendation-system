@@ -802,36 +802,19 @@ def _compress_anchor_spans(
     return result
 
 
-def _semantic_anchors(
+def semantic_anchor_spans(
     selected: Sequence[ResolvedConceptSpan],
     *,
     limit: int = 6,
-) -> List[str]:
+) -> tuple[ResolvedConceptSpan, ...]:
     """
-    Produce compact semantic anchors for downstream planning.
+    Return the canonical typed spans used for semantic-anchor presentation.
 
-    Anchor compression is structural rather than vocabulary based:
+    This is the single authority for anchor compression, semantic ranking,
+    and presentation-level normalized-form deduplication.
 
-      * complete same-role phrases may subsume redundant
-        constituents;
-      * distinct roles and segments remain independent;
-      * unresolved UNKNOWN composites do not replace atomic
-        concepts;
-      * unresolved/open-world technologies remain valid anchors.
-
-    Examples:
-
-        cybersecurity analyst portfolio using FastAPI
-            -> cybersecurity analyst, FastAPI
-
-        I want an AI project for an ML engineer role
-            -> AI, ML engineer
-
-        python react ai
-            -> python / react / ai independently
-
-        build something with ZorvexQL
-            -> ZorvexQL
+    Downstream consumers may reorder these returned spans for presentation,
+    but must not independently reinterpret or recompress raw query text.
     """
     compressed = _compress_anchor_spans(
         selected
@@ -843,7 +826,7 @@ def _semantic_anchors(
         reverse=True,
     )
 
-    anchors = []
+    spans = []
     seen = set()
 
     for span in ranked:
@@ -865,12 +848,33 @@ def _semantic_anchors(
             continue
 
         seen.add(normalized)
-        anchors.append(surface)
+        spans.append(span)
 
-        if len(anchors) >= limit:
+        if len(spans) >= limit:
             break
 
-    return anchors
+    return tuple(spans)
+
+
+def _semantic_anchors(
+    selected: Sequence[ResolvedConceptSpan],
+    *,
+    limit: int = 6,
+) -> List[str]:
+    """
+    Produce compact semantic anchors for downstream planning.
+
+    String anchors are only a presentation view over the canonical typed
+    anchor spans. Compression, ranking, and deduplication remain owned by
+    semantic_anchor_spans().
+    """
+    return [
+        span.surface_form.strip()
+        for span in semantic_anchor_spans(
+            selected,
+            limit=limit,
+        )
+    ]
 
 
 def build_query_semantic_snapshot(

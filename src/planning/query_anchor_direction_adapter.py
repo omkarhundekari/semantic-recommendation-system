@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import re
 from copy import deepcopy
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Sequence
+
+from query_concept_understanding import ClauseRole
+from query_semantic_projections import (
+    PlanningConcept,
+    PlanningSemanticProjection,
+)
 
 
 ANCHOR_STOP_WORDS = {
@@ -28,13 +34,110 @@ ANCHOR_ALIASES = {
 }
 
 
+def adapt_ideas_to_planning_semantics(
+    *,
+    ideas: List[Dict[str, Any]],
+    planning_semantics: PlanningSemanticProjection,
+    resolved_domain: str | None = None,
+) -> List[Dict[str, Any]]:
+    """
+    Adapt generated directions using canonical typed planning semantics.
+
+    Production callers must use this API instead of reparsing the raw
+    query. The projection is already the authoritative interpretation of
+    the user's concepts and grammatical roles.
+
+    SKILL_HELD concepts remain available to planning but are not promoted
+    into project-title/focus language as if the user requested them.
+
+    UNKNOWN concepts are used only as a fallback when no stronger
+    intentional concepts are available.
+    """
+    concepts = _presentation_concepts_for_adapter(
+        planning_semantics
+    )
+
+    anchors = [
+        concept.surface_form.strip()
+        for concept in concepts
+        if concept.surface_form.strip()
+    ][:4]
+
+    return _adapt_ideas_with_anchors(
+        ideas=ideas,
+        anchors=anchors,
+        resolved_domain=resolved_domain,
+    )
+
+
+def _presentation_concepts_for_adapter(
+    planning_semantics: PlanningSemanticProjection,
+) -> tuple[PlanningConcept, ...]:
+    """
+    Select which already-interpreted concepts should be emphasized.
+
+    This is presentation policy, not semantic interpretation:
+      * requested goals, learning targets, roles, and stack preferences
+        are eligible;
+      * held skills are preserved by the projection but not promoted;
+      * UNKNOWN concepts provide an open-world fallback when no stronger
+        intentional concepts exist.
+
+    Source order is preserved by planning_semantics.presentation_order.
+    """
+    intentional_roles = {
+        ClauseRole.GOAL,
+        ClauseRole.SKILL_TARGET,
+        ClauseRole.ROLE,
+        ClauseRole.STACK_PREFERENCE,
+    }
+
+    intentional = tuple(
+        concept
+        for concept in planning_semantics.presentation_order
+        if concept.clause_role in intentional_roles
+    )
+
+    if intentional:
+        return intentional
+
+    return tuple(
+        concept
+        for concept in planning_semantics.presentation_order
+        if concept.clause_role == ClauseRole.UNKNOWN
+    )
+
+
 def adapt_ideas_to_query_anchors(
     *,
     ideas: List[Dict[str, Any]],
     query: str,
     resolved_domain: str | None = None,
 ) -> List[Dict[str, Any]]:
-    anchors = extract_query_anchors(query)
+    """
+    Legacy compatibility path.
+
+    Production orchestration must use adapt_ideas_to_planning_semantics()
+    so semantic intent is not independently reconstructed from raw text.
+    """
+    return _adapt_ideas_with_anchors(
+        ideas=ideas,
+        anchors=extract_query_anchors(query),
+        resolved_domain=resolved_domain,
+    )
+
+
+def _adapt_ideas_with_anchors(
+    *,
+    ideas: List[Dict[str, Any]],
+    anchors: Sequence[str],
+    resolved_domain: str | None,
+) -> List[Dict[str, Any]]:
+    anchors = [
+        str(anchor).strip()
+        for anchor in anchors
+        if str(anchor).strip()
+    ][:4]
 
     if not anchors:
         return ideas
@@ -45,23 +148,32 @@ def adapt_ideas_to_query_anchors(
         updated = deepcopy(idea)
         title = str(updated.get("project_title", "") or "")
 
-        if not _title_preserves_strong_anchors(title, anchors):
+        if not _title_preserves_strong_anchors(
+            title,
+            list(anchors),
+        ):
             updated["project_title"] = _anchored_title(
                 title=title,
-                anchors=anchors,
+                anchors=list(anchors),
                 resolved_domain=resolved_domain,
                 index=index,
             )
 
         updated["idea_angle"] = _prepend_anchor_context(
             text=str(updated.get("idea_angle", "") or ""),
-            anchors=anchors,
+            anchors=list(anchors),
             resolved_domain=resolved_domain,
         )
 
         updated["evidence_focus_statement"] = _prepend_anchor_context(
-            text=str(updated.get("evidence_focus_statement", "") or ""),
-            anchors=anchors,
+            text=str(
+                updated.get(
+                    "evidence_focus_statement",
+                    "",
+                )
+                or ""
+            ),
+            anchors=list(anchors),
             resolved_domain=resolved_domain,
         )
 
