@@ -25,6 +25,13 @@ class ConceptCandidate:
 
 
 @dataclass(frozen=True)
+class LexicalConceptCandidate:
+    surface_form: str
+    normalized_form: str
+    char_span: tuple[int, int]
+
+
+@dataclass(frozen=True)
 class StructuralQueryUnderstanding:
     raw_query: str
     candidates: Sequence[ConceptCandidate]
@@ -429,11 +436,17 @@ def _extract_timeline_hint(
     return _clean(match.group(1))
 
 
-def _token_candidates(
+def extract_lexical_concept_candidates(
     query: str,
-    spans: Sequence[tuple[int, int, ClauseRole]],
-) -> List[ConceptCandidate]:
-    candidates: List[ConceptCandidate] = []
+) -> List[LexicalConceptCandidate]:
+    timeline_spans = [
+        match.span()
+        for match in TIMELINE_PATTERN.finditer(query)
+    ]
+
+    candidates: List[
+        LexicalConceptCandidate
+    ] = []
 
     for match in TOKEN_PATTERN.finditer(query):
         surface = _clean(match.group(0))
@@ -441,25 +454,62 @@ def _token_candidates(
         if _is_noise_token(surface):
             continue
 
-        role = _role_for_span(
-            match.start(),
-            match.end(),
-            spans,
-        )
+        start = match.start()
+        end = match.end()
 
-        # Timeline words belong to the constraint channel, not
-        # the technical-concept channel.
-        if role == ClauseRole.CONSTRAINT:
+        if any(
+            start >= timeline_start
+            and end <= timeline_end
+            for timeline_start, timeline_end
+            in timeline_spans
+        ):
             continue
 
         candidates.append(
-            ConceptCandidate(
+            LexicalConceptCandidate(
                 surface_form=surface,
-                normalized_form=_normalize(surface),
+                normalized_form=_normalize(
+                    surface
+                ),
+                char_span=(start, end),
+            )
+        )
+
+    return candidates
+
+
+def _token_candidates(
+    query: str,
+    spans: Sequence[tuple[int, int, ClauseRole]],
+) -> List[ConceptCandidate]:
+    candidates: List[ConceptCandidate] = []
+
+    for lexical_candidate in (
+        extract_lexical_concept_candidates(
+            query
+        )
+    ):
+        start, end = (
+            lexical_candidate.char_span
+        )
+
+        role = _role_for_span(
+            start,
+            end,
+            spans,
+        )
+
+        candidates.append(
+            ConceptCandidate(
+                surface_form=(
+                    lexical_candidate.surface_form
+                ),
+                normalized_form=(
+                    lexical_candidate.normalized_form
+                ),
                 clause_role=role,
                 char_span=(
-                    match.start(),
-                    match.end(),
+                    lexical_candidate.char_span
                 ),
             )
         )

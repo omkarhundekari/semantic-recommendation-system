@@ -1,3 +1,6 @@
+import ast
+from pathlib import Path
+
 import pytest
 
 import query_concept_resolution as qcr
@@ -313,12 +316,7 @@ def _production_role_rows(query):
         query,
         max_n=4,
     ):
-        role = qcr._best_clause_role_for_span(
-            span.surface_form,
-            query,
-            char_span=span.char_span,
-            segment_index=span.segment_index,
-        )
+        role = span.clause_role
 
         rows.append(
             {
@@ -369,6 +367,7 @@ def test_structural_role_gold_cases(
             span.constituent_char_spans
         ),
         segment_index=span.segment_index,
+            clause_role=span.clause_role,
     )
 
     assert (
@@ -439,6 +438,7 @@ def test_teach_cue_forms(
             span.constituent_char_spans
         ),
         segment_index=span.segment_index,
+            clause_role=span.clause_role,
     )
 
     assert (
@@ -502,6 +502,7 @@ def test_open_world_identity_does_not_control_role(
                 span.constituent_char_spans
             ),
             segment_index=span.segment_index,
+            clause_role=span.clause_role,
         )
 
         assert result.clause_role.value == expected
@@ -534,6 +535,7 @@ def test_keyword_only_input_does_not_invent_roles(
                 span.constituent_char_spans
             ),
             segment_index=span.segment_index,
+            clause_role=span.clause_role,
         )
 
         assert (
@@ -653,3 +655,266 @@ def test_role_morphology_does_not_leak_into_interview_prep_goal():
     assert roles["interview"] == "goal"
     assert roles["prep"] == "goal"
     assert roles["interview prep"] == "goal"
+
+
+# =========================================================
+# A.7R5 — ROLE AUTHORITY ARCHITECTURE GUARDS
+#
+# Evidence may change concept support, confidence, status, and
+# inferred domain. It must never change the grammatical role of
+# the same occurrence in the user's query.
+# =========================================================
+
+
+def _resolved_role_map(query):
+    return {
+        (
+            span.normalized_form,
+            span.char_span,
+            span.segment_index,
+        ): span.clause_role
+        for span in qcr.resolve_query_spans_shadow(
+            query,
+            max_n=4,
+            top_k=6,
+        )
+    }
+
+
+def test_resolution_role_is_independent_of_evidence_population(
+    monkeypatch,
+):
+    evidence = [
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="Evidence A",
+            category="machine_learning",
+            focus="recommendation_systems",
+            family="ai_ml",
+            score=0.95,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=8.0,
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="github_repository",
+            title="Evidence B",
+            category="machine_learning",
+            focus="recommendation_systems",
+            family="ai_ml",
+            score=0.90,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Evidence C",
+            category="cloud",
+            focus="cloud_platform",
+            family="cloud_platform",
+            score=0.80,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="Evidence D",
+            category="machine_learning",
+            focus="recommendation_systems",
+            family="ai_ml",
+            score=0.75,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=5.0,
+        ),
+    ]
+
+    populations = {
+        "full": list(evidence),
+        "truncated": list(evidence[:2]),
+        "reversed": list(reversed(evidence)),
+        "empty": [],
+    }
+
+    queries = sorted(
+        {
+            case[0]
+            for case in GOLD_CASES
+        }
+        | {
+            "build something with ZorvexQL",
+            "i know BlorbX but want FlimNet99",
+            "python react ai",
+            (
+                "I know React but want an AI project "
+                "using FastAPI"
+            ),
+        }
+    )
+
+    baseline = None
+
+    for population_name, population in populations.items():
+        monkeypatch.setattr(
+            qcr,
+            "_collect_span_evidence",
+            (
+                lambda *args,
+                population=population,
+                **kwargs: list(population)
+            ),
+        )
+
+        current = {
+            query: _resolved_role_map(query)
+            for query in queries
+        }
+
+        if baseline is None:
+            baseline = current
+            continue
+
+        assert current == baseline, (
+            population_name,
+            {
+                query: {
+                    "expected": baseline[query],
+                    "actual": current[query],
+                }
+                for query in queries
+                if current[query] != baseline[query]
+            },
+        )
+
+
+def test_resolution_module_has_single_grammatical_role_authority():
+    path = Path(
+        "src/query_concept_resolution.py"
+    )
+
+    source = path.read_text(
+        encoding="utf-8"
+    )
+
+    tree = ast.parse(
+        source,
+        filename=str(path),
+    )
+
+    forbidden_names = {
+        "_legacy_atomic_candidate_roles",
+        "_best_clause_role_for_span",
+        "understand_query_structure",
+    }
+
+    defined_functions = {
+        node.name
+        for node in tree.body
+        if isinstance(
+            node,
+            (
+                ast.FunctionDef,
+                ast.AsyncFunctionDef,
+            ),
+        )
+    }
+
+    referenced_names = {
+        node.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Name)
+    }
+
+    forbidden_definitions = (
+        forbidden_names
+        & defined_functions
+    )
+
+    forbidden_references = (
+        forbidden_names
+        & referenced_names
+    )
+
+    assert not forbidden_definitions, (
+        "Retired grammatical-role authorities "
+        f"were redefined: "
+        f"{sorted(forbidden_definitions)}"
+    )
+
+    assert not forbidden_references, (
+        "Resolver regained an independent "
+        "grammatical-role path: "
+        f"{sorted(forbidden_references)}"
+    )
+
+    structural_calls = [
+        node
+        for node in ast.walk(tree)
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(
+                node.func,
+                ast.Name,
+            )
+            and node.func.id
+            == "_structural_role_for_occurrence"
+        )
+    ]
+
+    assert len(structural_calls) == 2, (
+        "Expected exactly two production calls to the "
+        "single occurrence-level role authority: "
+        "constituent composition and generated-span role."
+    )
+
+    resolve_function = next(
+        (
+            node
+            for node in tree.body
+            if (
+                isinstance(node, ast.FunctionDef)
+                and node.name
+                == "resolve_concept_span"
+            )
+        ),
+        None,
+    )
+
+    assert resolve_function is not None
+
+    resolve_args = {
+        argument.arg
+        for argument in (
+            list(
+                resolve_function.args.args
+            )
+            + list(
+                resolve_function.args.kwonlyargs
+            )
+        )
+    }
+
+    assert "clause_role" in resolve_args
+
+    resolver_role_rederivations = [
+        node
+        for node in ast.walk(
+            resolve_function
+        )
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(
+                node.func,
+                ast.Name,
+            )
+            and node.func.id
+            == "_structural_role_for_occurrence"
+        )
+    ]
+
+    assert not resolver_role_rederivations, (
+        "resolve_concept_span must preserve the "
+        "generated role, not derive grammar again."
+    )

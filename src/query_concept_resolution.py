@@ -18,8 +18,8 @@ from project_corpus_search import (
 )
 from query_concept_understanding import (
     ClauseRole,
-    ConceptCandidate,
-    understand_query_structure,
+    LexicalConceptCandidate,
+    extract_lexical_concept_candidates,
 )
 from research_retrieval_service import (
     retrieve_ranked_evidence,
@@ -52,6 +52,7 @@ class ConceptEvidenceHit:
 class GeneratedConceptSpan:
     surface_form: str
     normalized_form: str
+    clause_role: ClauseRole
 
     # Exact interval in the original user query covering the
     # generated reading.
@@ -643,36 +644,22 @@ def _confidence(
 
 def _candidate_tokens(
     query: str,
-) -> List[ConceptCandidate]:
-    structure = understand_query_structure(
-        query
-    )
-
-    candidates = sorted(
-        structure.candidates,
+) -> List[LexicalConceptCandidate]:
+    return sorted(
+        extract_lexical_concept_candidates(
+            query
+        ),
         key=lambda candidate: (
             candidate.char_span[0],
             candidate.char_span[1],
         ),
     )
 
-    # Phrase candidates and token candidates can overlap.
-    # For n-gram generation, retain atomic candidates only.
-    atomic = [
-        candidate
-        for candidate in candidates
-        if len(
-            candidate.normalized_form.split()
-        ) == 1
-    ]
-
-    return atomic
-
 
 def _has_hard_boundary(
     query: str,
-    left: ConceptCandidate,
-    right: ConceptCandidate,
+    left: LexicalConceptCandidate,
+    right: LexicalConceptCandidate,
 ) -> bool:
     between = query[
         left.char_span[1]
@@ -719,15 +706,15 @@ def _has_hard_boundary(
 
 def _candidate_segments(
     query: str,
-) -> List[List[ConceptCandidate]]:
+) -> List[List[LexicalConceptCandidate]]:
     candidates = _candidate_tokens(query)
 
     if not candidates:
         return []
 
-    segments: List[List[ConceptCandidate]] = []
-    current: List[ConceptCandidate] = []
-    previous_valid: Optional[ConceptCandidate] = None
+    segments: List[List[LexicalConceptCandidate]] = []
+    current: List[LexicalConceptCandidate] = []
+    previous_valid: Optional[LexicalConceptCandidate] = None
 
     for candidate in candidates:
         # A removed/noise token is a boundary, not whitespace.
@@ -770,7 +757,7 @@ def _candidate_segments(
 
 
 def _valid_candidate(
-    candidate: ConceptCandidate,
+    candidate: LexicalConceptCandidate,
 ) -> bool:
     normalized = candidate.normalized_form
 
@@ -825,10 +812,19 @@ def generate_structured_ngram_spans(
 
                 # Preserve the existing structural rule exactly:
                 # do not manufacture phrases across role changes.
-                roles = {
-                    candidate.clause_role
+                group_roles = [
+                    _structural_role_for_occurrence(
+                        query,
+                        char_span=candidate.char_span,
+                        segment_index=segment_index,
+                    )
                     for candidate in group
-                    if candidate.clause_role
+                ]
+
+                roles = {
+                    role
+                    for role in group_roles
+                    if role
                     != ClauseRole.UNKNOWN
                 }
 
@@ -873,10 +869,19 @@ def generate_structured_ngram_spans(
                     occurrence_key
                 )
 
+                clause_role = (
+                    _structural_role_for_occurrence(
+                        query,
+                        char_span=char_span,
+                        segment_index=segment_index,
+                    )
+                )
+
                 spans.append(
                     GeneratedConceptSpan(
                         surface_form=surface,
                         normalized_form=normalized,
+                        clause_role=clause_role,
                         char_span=char_span,
                         constituent_char_spans=tuple(
                             candidate.char_span
@@ -1915,123 +1920,6 @@ def _role_cue_scope_trace(
     ]
 
 
-def _best_clause_role_for_span(
-    span: str,
-    query: str,
-    *,
-    char_span: Optional[
-        tuple[int, int]
-    ] = None,
-    segment_index: Optional[int] = None,
-) -> ClauseRole:
-    structure = understand_query_structure(
-        query
-    )
-
-    span_tokens = _surface_tokens(span)
-
-    if not span_tokens:
-        return ClauseRole.UNKNOWN
-
-    candidates = [
-        candidate
-        for candidate in structure.candidates
-        if candidate.normalized_form
-    ]
-
-    normalized_span = _normalize_span(
-        span
-    )
-
-    # -----------------------------------------------------
-    # PRODUCTION OCCURRENCE-AWARE PATH
-    #
-    # L2.7A.7A
-    #
-    # Exact occurrence provenance activates the validated
-    # structural role model:
-    #
-    #     bounded ROLE construction
-    #       > cue scope
-    #       > contextual career morphology
-    #       > UNKNOWN
-    #
-    # Candidate identity, taxonomy, retrieval evidence, and
-    # technology vocabulary do not participate in grammatical
-    # role assignment.
-    #
-    # UNKNOWN is authoritative on this path. Falling back to
-    # legacy regex ownership after structural UNKNOWN would
-    # reintroduce the greedy scope-leakage failure that the
-    # structural model was built to eliminate.
-    # -----------------------------------------------------
-    if char_span is not None:
-        return _structural_role_for_occurrence(
-            query,
-            char_span=char_span,
-            segment_index=segment_index,
-        )
-
-    # -----------------------------------------------------
-    # LEGACY TEXT-ONLY PATH
-    #
-    # Preserve direct callers that do not yet provide
-    # occurrence provenance.
-    # -----------------------------------------------------
-
-    for candidate in candidates:
-        if (
-            candidate.normalized_form
-            == normalized_span
-        ):
-            return candidate.clause_role
-
-    matching_roles = []
-
-    span_token_set = set(span_tokens)
-
-    for candidate in candidates:
-        candidate_tokens = set(
-            candidate.normalized_form.split()
-        )
-
-        if (
-            candidate_tokens
-            and candidate_tokens.issubset(
-                span_token_set
-            )
-        ):
-            matching_roles.append(
-                candidate.clause_role
-            )
-
-    non_unknown = {
-        role
-        for role in matching_roles
-        if role != ClauseRole.UNKNOWN
-    }
-
-    if len(non_unknown) == 1:
-        return next(
-            iter(non_unknown)
-        )
-
-    priority = (
-        ClauseRole.ROLE,
-        ClauseRole.GOAL,
-        ClauseRole.SKILL_TARGET,
-        ClauseRole.SKILL_HELD,
-        ClauseRole.STACK_PREFERENCE,
-        ClauseRole.UNKNOWN,
-    )
-
-    for role in priority:
-        if role in matching_roles:
-            return role
-
-    return ClauseRole.UNKNOWN
-
-
 def resolve_concept_span(
     span: str,
     *,
@@ -2046,6 +1934,7 @@ def resolve_concept_span(
         ...
     ] = tuple(),
     segment_index: Optional[int] = None,
+    clause_role: ClauseRole,
 ) -> ResolvedConceptSpan:
     all_hits = _collect_span_evidence(
         span,
@@ -2119,14 +2008,7 @@ def resolve_concept_span(
             normalized_form=_normalize_span(
                 span
             ),
-            clause_role=(
-                _best_clause_role_for_span(
-                    span,
-                    query,
-                    char_span=char_span,
-                    segment_index=segment_index,
-                )
-            ),
+            clause_role=clause_role,
             ngram_size=len(
                 _surface_tokens(span)
             ),
@@ -2228,14 +2110,7 @@ def resolve_concept_span(
         normalized_form=_normalize_span(
             span
         ),
-        clause_role=(
-            _best_clause_role_for_span(
-                span,
-                query,
-                char_span=char_span,
-                segment_index=segment_index,
-            )
-        ),
+        clause_role=clause_role,
         ngram_size=len(
             _surface_tokens(span)
         ),
@@ -2293,6 +2168,7 @@ def resolve_query_spans_shadow(
                 span.constituent_char_spans
             ),
             segment_index=span.segment_index,
+            clause_role=span.clause_role,
         )
         for span in spans
     ]
