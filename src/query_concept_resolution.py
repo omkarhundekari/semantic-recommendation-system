@@ -756,6 +756,43 @@ def _candidate_segments(
     return segments
 
 
+def _candidate_cohesive_runs(
+    query: str,
+    candidates: List[LexicalConceptCandidate],
+) -> List[List[LexicalConceptCandidate]]:
+    """
+    Partition supplied candidate occurrences by raw-text cohesion.
+
+    Candidates remain in the same run only when the text between
+    their source occurrences contains whitespace and nothing else.
+    This observes omission boundaries; it does not infer syntax.
+    """
+    if not candidates:
+        return []
+
+    runs: List[List[LexicalConceptCandidate]] = []
+    current = [candidates[0]]
+
+    for left, right in zip(
+        candidates,
+        candidates[1:],
+    ):
+        gap = query[
+            left.char_span[1]:
+            right.char_span[0]
+        ]
+
+        if gap and not gap.isspace():
+            runs.append(current)
+            current = [right]
+            continue
+
+        current.append(right)
+
+    runs.append(current)
+    return runs
+
+
 def _valid_candidate(
     candidate: LexicalConceptCandidate,
 ) -> bool:

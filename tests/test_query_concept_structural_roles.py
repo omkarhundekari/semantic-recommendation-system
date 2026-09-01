@@ -921,6 +921,188 @@ def test_resolution_module_has_single_grammatical_role_authority():
 
 
 # =========================================================
+# A.7T1c2p — CANDIDATE COHESION PRIMITIVE
+#
+# Cohesion observes raw omission boundaries only. It does not
+# infer phrase type, grammatical head, or semantic relation.
+# =========================================================
+
+
+def _cohesive_run_surfaces(query):
+    segments = qcr._candidate_segments(query)
+
+    return [
+        [
+            [
+                candidate.surface_form
+                for candidate in run
+            ]
+            for run in qcr._candidate_cohesive_runs(
+                query,
+                segment,
+            )
+        ]
+        for segment in segments
+    ]
+
+
+@pytest.mark.parametrize(
+    "query, expected",
+    [
+        (
+            "DevOps observability dashboard project",
+            [
+                [
+                    [
+                        "DevOps",
+                        "observability",
+                        "dashboard",
+                    ]
+                ]
+            ],
+        ),
+        (
+            "monitoring dashboard project",
+            [
+                [
+                    [
+                        "monitoring",
+                        "dashboard",
+                    ]
+                ]
+            ],
+        ),
+        (
+            "testing framework project",
+            [
+                [
+                    [
+                        "testing",
+                        "framework",
+                    ]
+                ]
+            ],
+        ),
+        (
+            "Zorvex blenko project",
+            [
+                [
+                    [
+                        "Zorvex",
+                        "blenko",
+                    ]
+                ]
+            ],
+        ),
+    ],
+)
+def test_candidate_cohesion_preserves_whitespace_only_runs(
+    query,
+    expected,
+):
+    assert _cohesive_run_surfaces(query) == expected
+
+
+@pytest.mark.parametrize(
+    "query, expected",
+    [
+        (
+            "reviewing a React project",
+            [
+                [
+                    ["reviewing"],
+                    ["React"],
+                ]
+            ],
+        ),
+        (
+            "testing a React project",
+            [
+                [
+                    ["testing"],
+                    ["React"],
+                ]
+            ],
+        ),
+        (
+            "seeking a React project",
+            [
+                [
+                    ["seeking"],
+                    ["React"],
+                ]
+            ],
+        ),
+        (
+            "looking into a React project",
+            [
+                [
+                    [
+                        "looking",
+                        "into",
+                    ],
+                    ["React"],
+                ]
+            ],
+        ),
+    ],
+)
+def test_candidate_cohesion_splits_on_non_whitespace_gap(
+    query,
+    expected,
+):
+    assert _cohesive_run_surfaces(query) == expected
+
+
+@pytest.mark.parametrize(
+    "query, expected_run",
+    [
+        (
+            "testing React project",
+            [
+                "testing",
+                "React",
+            ],
+        ),
+        (
+            "reviewing React project",
+            [
+                "reviewing",
+                "React",
+            ],
+        ),
+        (
+            "seeking React project",
+            [
+                "seeking",
+                "React",
+            ],
+        ),
+        (
+            "seeking information about React project",
+            [
+                "seeking",
+                "information",
+                "about",
+                "React",
+            ],
+        ),
+    ],
+)
+def test_candidate_cohesion_does_not_claim_articleless_syntax(
+    query,
+    expected_run,
+):
+    runs = _cohesive_run_surfaces(query)
+
+    assert runs == [
+        [
+            expected_run,
+        ]
+    ]
+
+
+# =========================================================
 # A.7T1a — TERSE NOMINAL PROJECT REQUEST
 #
 # A terminal structural "project" head may establish GOAL
