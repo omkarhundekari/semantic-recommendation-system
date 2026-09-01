@@ -1116,7 +1116,6 @@ def test_candidate_cohesion_does_not_claim_articleless_syntax(
 @pytest.mark.parametrize(
     "query",
     [
-        "seeking a React project",
         "looking at a React project",
         "looking into a React project",
         "looking through a React project",
@@ -1137,6 +1136,54 @@ def test_terse_project_fallback_rejects_split_candidate_runs(
     assert all(
         row["role"] != "goal"
         for row in rows
+    )
+
+
+def test_terse_project_fallback_still_rejects_seeking_split_run():
+    query = "seeking a React project"
+
+    segments = qcr._candidate_segments(query)
+
+    assert len(segments) == 1
+
+    runs = qcr._candidate_cohesive_runs(
+        query,
+        segments[0],
+    )
+
+    assert [
+        [
+            candidate.surface_form
+            for candidate in run
+        ]
+        for run in runs
+    ] == [
+        ["seeking"],
+        ["React"],
+    ]
+
+    for char_span in (
+        (0, 7),
+        (10, 15),
+        (0, 15),
+    ):
+        assert (
+            qcr._terse_nominal_goal_for_occurrence(
+                query,
+                char_span=char_span,
+                segment_index=0,
+            )
+            == qcr.ClauseRole.UNKNOWN
+        )
+
+    # c2b1 may still assign GOAL through its stronger explicit
+    # bounded cue. This test protects the fallback path only.
+    cues = qcr._role_cue_occurrences(query)
+
+    assert any(
+        cue[3] == "seeking_project"
+        and cue[2] == qcr.ClauseRole.GOAL
+        for cue in cues
     )
 
 
@@ -1799,4 +1846,255 @@ def test_for_project_frame_requires_stack_governed_predecessor(
     assert all(
         row["role"] == "unknown"
         for row in matches
+    )
+
+
+# =========================================================
+# A.7T1c2b1 — BOUNDED SEEKING PROJECT CUE
+#
+# "seeking" becomes a GOAL cue only for the bounded structural
+# construction:
+#
+#   seeking + article + cohesive content + terminal project
+#
+# The cue producer observes structure only. It does not inspect
+# concept identity, evidence, taxonomy, or existing role output.
+# =========================================================
+
+
+@pytest.mark.parametrize(
+    "query, normalized",
+    [
+        (
+            "seeking a React project",
+            "react",
+        ),
+        (
+            "I am seeking a React project",
+            "react",
+        ),
+        (
+            "seeking a Zorvex project",
+            "zorvex",
+        ),
+        (
+            "seeking an AR VR education project",
+            "education",
+        ),
+    ],
+)
+def test_bounded_seeking_project_assigns_goal_to_requested_content(
+    query,
+    normalized,
+):
+    cues = qcr._role_cue_occurrences(query)
+
+    seeking_cues = [
+        cue
+        for cue in cues
+        if cue[3] == "seeking_project"
+    ]
+
+    assert len(seeking_cues) == 1
+
+    start, end, role, _ = seeking_cues[0]
+
+    assert query[start:end].lower() == "seeking"
+    assert role == qcr.ClauseRole.GOAL
+
+    rows = _production_role_rows(query)
+
+    matches = [
+        row
+        for row in rows
+        if row["normalized"] == normalized
+    ]
+
+    assert matches
+    assert all(
+        row["role"] == "goal"
+        for row in matches
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "seeking information about a React project",
+        "seeking advice about a React project",
+        "seeking examples of a React project",
+        "seeking help with a React project",
+        "seeking a mentor",
+        "seeking an internship",
+        "seeking a group project partner",
+        "seeking a project",
+        "seeking a React project for my portfolio",
+    ],
+)
+def test_bounded_seeking_project_rejects_non_bounded_frames(
+    query,
+):
+    cues = qcr._role_cue_occurrences(query)
+
+    assert not any(
+        cue[3] == "seeking_project"
+        for cue in cues
+    )
+
+
+def test_bounded_seeking_project_preserves_held_skill_before_contrast():
+    query = (
+        "I know React but am seeking an AI project"
+    )
+
+    rows = _production_role_rows(query)
+
+    react = [
+        row
+        for row in rows
+        if row["normalized"] == "react"
+    ]
+
+    ai = [
+        row
+        for row in rows
+        if row["normalized"] == "ai"
+    ]
+
+    assert react
+    assert ai
+
+    assert all(
+        row["role"] == "skill_held"
+        for row in react
+    )
+
+    assert all(
+        row["role"] == "goal"
+        for row in ai
+    )
+
+
+def test_bounded_seeking_project_supersedes_older_stack_scope_for_request():
+    query = (
+        "I use Python and am seeking "
+        "a data engineering project"
+    )
+
+    rows = _production_role_rows(query)
+
+    python_rows = [
+        row
+        for row in rows
+        if row["normalized"] == "python"
+    ]
+
+    data_engineering = [
+        row
+        for row in rows
+        if row["normalized"]
+        == "data engineering"
+    ]
+
+    assert python_rows
+    assert data_engineering
+
+    assert all(
+        row["role"] == "stack_preference"
+        for row in python_rows
+    )
+
+    assert all(
+        row["role"] == "goal"
+        for row in data_engineering
+    )
+
+
+def test_bounded_seeking_project_does_not_overlap_later_specialized_cue():
+    query = "seeking a DSA practice project"
+
+    cues = qcr._role_cue_occurrences(query)
+
+    cue_names = [
+        cue[3]
+        for cue in cues
+    ]
+
+    assert "seeking_project" not in cue_names
+    assert "practice" in cue_names
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "seeking React project",
+        "seeking information about React project",
+    ],
+)
+def test_bounded_seeking_project_does_not_claim_articleless_ambiguity(
+    query,
+):
+    cues = qcr._role_cue_occurrences(query)
+
+    assert not any(
+        cue[3] == "seeking_project"
+        for cue in cues
+    )
+
+
+def test_synthesized_seeking_cue_is_pre_role_only():
+    path = Path(
+        "src/query_concept_resolution.py"
+    )
+
+    tree = ast.parse(
+        path.read_text(
+            encoding="utf-8"
+        ),
+        filename=str(path),
+    )
+
+    helper = next(
+        (
+            node
+            for node in tree.body
+            if (
+                isinstance(node, ast.FunctionDef)
+                and node.name
+                == "_bounded_seeking_project_cues"
+            )
+        ),
+        None,
+    )
+
+    assert helper is not None
+
+    forbidden_calls = {
+        "_structural_role_for_occurrence",
+        "_segment_bounded_role_for_occurrence",
+        "_cue_scope_role_for_occurrence",
+        "_bounded_role_for_occurrence",
+        "_role_morphology_for_occurrence",
+        "resolve_concept_span",
+        "resolve_query_spans_shadow",
+    }
+
+    helper_calls = {
+        node.func.id
+        for node in ast.walk(helper)
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(
+                node.func,
+                ast.Name,
+            )
+        )
+    }
+
+    assert not (
+        helper_calls
+        & forbidden_calls
+    ), (
+        "Synthesized cue construction must "
+        "remain pre-role structural logic."
     )

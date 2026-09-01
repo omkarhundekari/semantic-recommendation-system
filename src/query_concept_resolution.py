@@ -1994,6 +1994,124 @@ _ROLE_SCOPE_RESET = re.compile(
 )
 
 
+def _bounded_seeking_project_cues(
+    query: str,
+):
+    """
+    Return structurally bounded ``seeking ... project`` cues.
+
+    This observes candidate positions, raw omission boundaries,
+    and the terminal project head only. It does not assign roles
+    to candidates or inspect concept identity or evidence.
+    """
+    cues = []
+
+    for match in re.finditer(
+        r"\bseeking\b",
+        query,
+        re.IGNORECASE,
+    ):
+        seeking_start = match.start()
+        seeking_end = match.end()
+
+        matched_segment = None
+
+        for segment in _candidate_segments(query):
+            if any(
+                candidate.char_span[0]
+                <= seeking_start
+                and candidate.char_span[1]
+                >= seeking_end
+                for candidate in segment
+            ):
+                matched_segment = segment
+                break
+
+        if matched_segment is None:
+            continue
+
+        runs = _candidate_cohesive_runs(
+            query,
+            matched_segment,
+        )
+
+        seeking_run_index = None
+
+        for index, run in enumerate(runs):
+            if any(
+                candidate.char_span[0]
+                <= seeking_start
+                and candidate.char_span[1]
+                >= seeking_end
+                for candidate in run
+            ):
+                seeking_run_index = index
+                break
+
+        if seeking_run_index is None:
+            continue
+
+        requested_index = seeking_run_index + 1
+
+        if requested_index >= len(runs):
+            continue
+
+        requested_run = runs[requested_index]
+
+        # The bounded construction admits only an article between
+        # the request verb and requested candidate material.
+        gap = query[
+            seeking_end:
+            requested_run[0].char_span[0]
+        ]
+
+        if not re.fullmatch(
+            r"\s+(?:a|an|the)\s+",
+            gap,
+            re.IGNORECASE,
+        ):
+            continue
+
+        requested_end = (
+            requested_run[-1].char_span[1]
+        )
+
+        tail = query[requested_end:]
+
+        head_match = re.match(
+            r"\s+project\b",
+            tail,
+            re.IGNORECASE,
+        )
+
+        if head_match is None:
+            continue
+
+        trailing = tail[
+            head_match.end():
+        ].strip()
+
+        if (
+            trailing
+            and not re.fullmatch(
+                r"[,;.!?:]+",
+                trailing,
+            )
+        ):
+            continue
+
+        cues.append(
+            (
+                seeking_start,
+                seeking_end,
+                ClauseRole.GOAL,
+                "seeking_project",
+            )
+        )
+
+    return cues
+
+
 def _role_cue_occurrences(
     query: str,
 ):
@@ -2011,7 +2129,11 @@ def _role_cue_occurrences(
             cue_name,
         )
     """
-    found = []
+    found = list(
+        _bounded_seeking_project_cues(
+            query
+        )
+    )
 
     for (
         pattern,
