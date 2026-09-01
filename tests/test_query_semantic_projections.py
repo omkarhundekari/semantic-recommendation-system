@@ -294,15 +294,19 @@ def test_presentation_order_uses_canonical_compression_in_source_order():
         for concept in projection.presentation_order
     ] == [
         "AR",
+        "AR VR education",
         "VR",
         "education",
     ]
 
-    # Snapshot anchors retain canonical semantic-importance order.
+    # The terse project construction now grammatically sanctions
+    # the full phrase. Because the phrase remains unresolved, it
+    # does not hide its better-supported constituents.
     assert list(snapshot.anchors) == [
         "education",
         "AR",
         "VR",
+        "AR VR education",
     ]
 
 

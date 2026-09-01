@@ -918,3 +918,344 @@ def test_resolution_module_has_single_grammatical_role_authority():
         "resolve_concept_span must preserve the "
         "generated role, not derive grammar again."
     )
+
+
+# =========================================================
+# A.7T1a — TERSE NOMINAL PROJECT REQUEST
+#
+# A terminal structural "project" head may establish GOAL
+# intent without identifying or resolving the technical domain.
+# =========================================================
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "DevOps observability dashboard project",
+        "MLOps experiment tracking project",
+    ],
+)
+def test_terse_nominal_project_assigns_goal_to_content(
+    query,
+):
+    rows = _production_role_rows(query)
+
+    assert rows
+    assert all(
+        row["role"] == "goal"
+        for row in rows
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "FinTech fraud detection project",
+        "AR VR education project",
+    ],
+)
+def test_terse_nominal_project_generalizes_to_held_out_domains(
+    query,
+):
+    rows = _production_role_rows(query)
+
+    assert rows
+    assert all(
+        row["role"] == "goal"
+        for row in rows
+    )
+
+
+def test_terse_nominal_project_is_open_world():
+    rows = _production_role_rows(
+        "Zorvex blenko project"
+    )
+
+    roles = {
+        row["normalized"]: row["role"]
+        for row in rows
+    }
+
+    assert roles["zorvex"] == "goal"
+    assert roles["blenko"] == "goal"
+    assert roles["zorvex blenko"] == "goal"
+
+
+def test_terse_nominal_project_does_not_cross_skill_held_scope():
+    rows = _production_role_rows(
+        "I know React for my project"
+    )
+
+    react = [
+        row
+        for row in rows
+        if row["normalized"] == "react"
+    ]
+
+    assert react
+    assert all(
+        row["role"] == "skill_held"
+        for row in react
+    )
+
+
+def test_terse_nominal_project_does_not_override_skill_target():
+    rows = _production_role_rows(
+        "learn Kubernetes for a project"
+    )
+
+    kubernetes = [
+        row
+        for row in rows
+        if row["normalized"] == "kubernetes"
+    ]
+
+    assert kubernetes
+    assert all(
+        row["role"] == "skill_target"
+        for row in kubernetes
+    )
+
+
+def test_terse_nominal_project_does_not_override_stack_preference():
+    rows = _production_role_rows(
+        "using FastAPI for the project"
+    )
+
+    fastapi = [
+        row
+        for row in rows
+        if row["normalized"] == "fastapi"
+    ]
+
+    assert fastapi
+    assert all(
+        row["role"] == "stack_preference"
+        for row in fastapi
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "my current project uses React",
+        "compare React and Vue project structures",
+        "python react ai",
+    ],
+)
+def test_non_request_terse_input_does_not_gain_goal_from_project(
+    query,
+):
+    rows = _production_role_rows(query)
+
+    assert not any(
+        row["role"] == "goal"
+        for row in rows
+    )
+
+
+def test_project_manager_role_does_not_gain_terse_goal():
+    rows = _production_role_rows(
+        "project manager role"
+    )
+
+    assert not any(
+        row["role"] == "goal"
+        for row in rows
+    )
+
+
+def test_existing_frontend_role_boundary_is_preserved():
+    rows = _production_role_rows(
+        "React portfolio project for frontend roles"
+    )
+
+    frontend = [
+        row
+        for row in rows
+        if row["normalized"] == "frontend"
+    ]
+
+    assert frontend
+    assert all(
+        row["role"] == "role"
+        for row in frontend
+    )
+
+
+def test_existing_cued_control_roles_are_unchanged():
+    rows = _production_role_rows(
+        "I know React but want a DevOps "
+        "observability dashboard project"
+    )
+
+    react_roles = {
+        row["role"]
+        for row in rows
+        if row["normalized"] == "react"
+    }
+
+    devops_roles = {
+        row["role"]
+        for row in rows
+        if row["normalized"] == "devops"
+    }
+
+    assert react_roles == {
+        "skill_held",
+    }
+
+    assert devops_roles == {
+        "goal",
+    }
+
+
+def test_postposed_want_does_not_activate_terse_project_goal():
+    rows = _production_role_rows(
+        "react i used before now ml project want"
+    )
+
+    ml = [
+        row
+        for row in rows
+        if row["normalized"] == "ml"
+    ]
+
+    assert ml
+    assert all(
+        row["role"] == "unknown"
+        for row in ml
+    )
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "I worked on a React project",
+        "I have worked on a React project",
+        "I previously worked on a React project",
+        "I built a React project",
+        "I created a React project",
+        "I developed a React project",
+        "My previous React project",
+        "worked for a React project",
+    ],
+)
+def test_terse_project_fallback_rejects_non_nominal_clause_framing(
+    query,
+):
+    rows = _production_role_rows(query)
+
+    assert not any(
+        row["role"] == "goal"
+        for row in rows
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "React project",
+        "a React project",
+        "an AI project",
+        "the DevOps dashboard project",
+        "DevOps observability dashboard project",
+        "MLOps experiment tracking project",
+        "FinTech fraud detection project",
+        "AR VR education project",
+        "Zorvex blenko project",
+    ],
+)
+def test_terse_project_fallback_accepts_clause_initial_nominal_frame(
+    query,
+):
+    rows = _production_role_rows(query)
+
+    assert any(
+        row["role"] == "goal"
+        for row in rows
+    )
+
+
+def test_looking_for_project_is_not_owned_by_terse_fallback():
+    rows = _production_role_rows(
+        "looking for a React project"
+    )
+
+    react = [
+        row
+        for row in rows
+        if row["normalized"] == "react"
+    ]
+
+    assert react
+    assert all(
+        row["role"] == "unknown"
+        for row in react
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "I want to use Python for a data engineering project",
+        "use Python for a data engineering project",
+        "using Python for a data engineering project",
+    ],
+)
+def test_stack_governed_project_complement_becomes_goal(
+    query,
+):
+    rows = _production_role_rows(query)
+
+    data_engineering = [
+        row
+        for row in rows
+        if row["normalized"]
+        == "data engineering"
+    ]
+
+    assert data_engineering
+    assert all(
+        row["role"] == "goal"
+        for row in data_engineering
+    )
+
+
+@pytest.mark.parametrize(
+    ("query", "concept"),
+    [
+        (
+            "worked for a React project",
+            "react",
+        ),
+        (
+            "I worked for a React project",
+            "react",
+        ),
+        (
+            "I worked on Python for a React project",
+            "react",
+        ),
+        (
+            "looking for a React project",
+            "react",
+        ),
+    ],
+)
+def test_for_project_frame_requires_stack_governed_predecessor(
+    query,
+    concept,
+):
+    rows = _production_role_rows(query)
+
+    matches = [
+        row
+        for row in rows
+        if row["normalized"] == concept
+    ]
+
+    assert matches
+    assert all(
+        row["role"] == "unknown"
+        for row in matches
+    )

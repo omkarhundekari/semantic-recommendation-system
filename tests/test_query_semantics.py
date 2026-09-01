@@ -41,8 +41,8 @@ from query_semantics import (
         (
             "I know Python already, but I want to use Python "
             "for a data engineering project.",
-            None,
-            None,
+            "data_engineering",
+            "cloud_platform",
             False,
         ),
         (
@@ -297,3 +297,51 @@ def test_anchor_compression_does_not_mutate_selected_provenance():
         (14, 21),
         "role",
     ) in selected
+
+
+
+def test_anchor_compression_preserves_supported_unknown_phrases_but_suppresses_unresolved_synthetic_composites():
+    from query_semantics import (
+        build_query_semantic_snapshot,
+        semantic_anchor_spans,
+    )
+
+    supported = build_query_semantic_snapshot(
+        "data engineering"
+    )
+
+    supported_anchors = semantic_anchor_spans(
+        supported.selected_spans,
+        limit=20,
+    )
+
+    assert any(
+        span.surface_form == "data engineering"
+        and span.clause_role.value == "unknown"
+        and span.resolution_status.value
+        == "evidence_resolved"
+        for span in supported_anchors
+    )
+
+    synthetic = build_query_semantic_snapshot(
+        "python react ai"
+    )
+
+    synthetic_anchors = semantic_anchor_spans(
+        synthetic.selected_spans,
+        limit=20,
+    )
+
+    assert not any(
+        span.surface_form == "python react ai"
+        for span in synthetic_anchors
+    )
+
+    assert {
+        span.surface_form
+        for span in synthetic_anchors
+    } >= {
+        "python",
+        "react",
+        "ai",
+    }

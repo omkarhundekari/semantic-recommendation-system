@@ -1336,6 +1336,236 @@ def _role_morphology_for_occurrence(
     return ClauseRole.ROLE
 
 
+
+_TERSE_NOMINAL_REQUEST_HEADS = frozenset(
+    {
+        "project",
+    }
+)
+
+
+def _terse_nominal_goal_for_occurrence(
+    query: str,
+    *,
+    char_span: Optional[
+        tuple[int, int]
+    ],
+    segment_index: Optional[int] = None,
+) -> ClauseRole:
+    """
+    Weak GOAL fallback for a terminal nominal project request.
+
+    The structural project head is filtered from concept
+    candidates, so this rule relates raw query framing to the
+    canonical candidate segment without using concept identity or
+    evidence.
+    """
+    if char_span is None:
+        return ClauseRole.UNKNOWN
+
+    start, end = char_span
+    segment_bounds = _segment_scope_bounds(
+        query
+    )
+
+    matched_position = None
+    matched_bounds = None
+
+    for position, bounds in enumerate(
+        segment_bounds
+    ):
+        (
+            current_segment_index,
+            _current_left_scope_start,
+            current_segment_start,
+            current_segment_end,
+            _segment,
+        ) = bounds
+
+        if not (
+            start >= current_segment_start
+            and end <= current_segment_end
+        ):
+            continue
+
+        if (
+            segment_index is not None
+            and current_segment_index
+            != segment_index
+        ):
+            continue
+
+        matched_position = position
+        matched_bounds = bounds
+        break
+
+    if (
+        matched_position is None
+        or matched_bounds is None
+    ):
+        return ClauseRole.UNKNOWN
+
+    (
+        _matched_segment_index,
+        left_scope_start,
+        segment_start,
+        segment_end,
+        _matched_segment,
+    ) = matched_bounds
+
+    left_frame = query[
+        left_scope_start:segment_start
+    ]
+
+    # Remove only an established sentence/contrast role reset.
+    # Candidate boundaries such as "for", "with", and "using"
+    # are not equivalent to clause resets.
+    reset_matches = list(
+        _ROLE_SCOPE_RESET.finditer(
+            left_frame
+        )
+    )
+
+    if reset_matches:
+        last_reset = reset_matches[-1]
+
+        if not left_frame[
+            :last_reset.start()
+        ].strip():
+            left_frame = left_frame[
+                last_reset.end():
+            ]
+
+    left_tokens = [
+        match.group(0).lower()
+        for match in TOKEN_PATTERN.finditer(
+            left_frame
+        )
+    ]
+
+    bare_nominal_frame = (
+        left_tokens
+        in (
+            [],
+            ["a"],
+            ["an"],
+            ["the"],
+        )
+    )
+
+    if not bare_nominal_frame:
+        relational_frame = (
+            left_tokens
+            in (
+                ["for"],
+                ["for", "a"],
+                ["for", "an"],
+                ["for", "the"],
+            )
+        )
+
+        if (
+            not relational_frame
+            or matched_position == 0
+        ):
+            return ClauseRole.UNKNOWN
+
+        (
+            _previous_segment_index,
+            previous_left_scope_start,
+            _previous_segment_start,
+            _previous_segment_end,
+            previous_segment,
+        ) = segment_bounds[
+            matched_position - 1
+        ]
+
+        if not previous_segment:
+            return ClauseRole.UNKNOWN
+
+        previous_occurrence = (
+            previous_segment[-1]
+        )
+
+        previous_cue_role = (
+            _cue_scope_role_for_occurrence(
+                query,
+                char_span=(
+                    previous_occurrence.char_span
+                ),
+                left_scope_start=(
+                    previous_left_scope_start
+                ),
+            )
+        )
+
+        if (
+            previous_cue_role
+            != ClauseRole.STACK_PREFERENCE
+        ):
+            return ClauseRole.UNKNOWN
+
+    # Punctuation outside an established reset is not part of the
+    # accepted nominal or stack-complement frame.
+    residual_left = TOKEN_PATTERN.sub(
+        "",
+        left_frame,
+    ).strip()
+
+    if residual_left:
+        return ClauseRole.UNKNOWN
+
+    right_tail = query[
+        segment_end:
+    ]
+
+    raw_tokens = list(
+        TOKEN_PATTERN.finditer(
+            right_tail
+        )
+    )
+
+    if not raw_tokens:
+        return ClauseRole.UNKNOWN
+
+    head_match = raw_tokens[0]
+
+    # The structural head must immediately follow the candidate
+    # segment apart from whitespace.
+    if right_tail[
+        :head_match.start()
+    ].strip():
+        return ClauseRole.UNKNOWN
+
+    if (
+        head_match.group(0).lower()
+        not in _TERSE_NOMINAL_REQUEST_HEADS
+    ):
+        return ClauseRole.UNKNOWN
+
+    absolute_head_end = (
+        segment_end
+        + head_match.end()
+    )
+
+    trailing_text = query[
+        absolute_head_end:
+    ].strip()
+
+    # Only a terminal project head is recognized. Terminal
+    # punctuation is harmless; further language makes the weak
+    # fallback abstain.
+    if (
+        trailing_text
+        and not re.fullmatch(
+            r"[,;.!?:]+",
+            trailing_text,
+        )
+    ):
+        return ClauseRole.UNKNOWN
+
+    return ClauseRole.GOAL
+
 def _structural_role_for_occurrence(
     query: str,
     *,
@@ -1353,6 +1583,7 @@ def _structural_role_for_occurrence(
         > non-GOAL cue scope
         > contextual ROLE morphology
         > generic GOAL cue
+        > terse nominal request
         > UNKNOWN
     """
     bounded_role = (
@@ -1422,6 +1653,17 @@ def _structural_role_for_occurrence(
 
     if cue_role == ClauseRole.GOAL:
         return ClauseRole.GOAL
+
+    terse_nominal_role = (
+        _terse_nominal_goal_for_occurrence(
+            query,
+            char_span=char_span,
+            segment_index=segment_index,
+        )
+    )
+
+    if terse_nominal_role != ClauseRole.UNKNOWN:
+        return terse_nominal_role
 
     return ClauseRole.UNKNOWN
 
