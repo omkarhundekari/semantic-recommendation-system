@@ -107,6 +107,75 @@ def test_typed_adapter_uses_canonical_unknown_fallback_in_source_order():
     )
 
 
+def test_typed_adapter_does_not_render_unresolved_enclosing_duplicate():
+    projection = _planning_semantics(
+        "AR VR education project"
+    )
+
+    # Canonical projection intentionally preserves both the unresolved
+    # enclosing phrase and its better-supported constituent concepts.
+    assert [
+        concept.surface_form
+        for concept in projection.presentation_order
+    ] == [
+        "AR",
+        "AR VR education",
+        "VR",
+        "education",
+    ]
+
+    ideas = [
+        {
+            "project_title": "Student Learning Path Recommendation System",
+            "idea_angle": "Build a recommendation workflow.",
+            "evidence_focus_statement": "Supported by evidence.",
+        }
+    ]
+
+    adapted = adapt_ideas_to_planning_semantics(
+        ideas=ideas,
+        planning_semantics=projection,
+        resolved_domain="education_tech",
+    )
+
+    assert (
+        adapted[0]["project_title"]
+        == "AR VR education Learning Explorer"
+    )
+
+    assert (
+        "AR, VR, education focus"
+        in adapted[0]["idea_angle"]
+    )
+
+
+def test_typed_adapter_preserves_unresolved_open_world_phrase_without_supported_alternatives():
+    ideas = [
+        {
+            "project_title": "Experimental System",
+            "idea_angle": "Explore the requested direction.",
+            "evidence_focus_statement": "Use available evidence.",
+        }
+    ]
+
+    adapted = adapt_ideas_to_planning_semantics(
+        ideas=ideas,
+        planning_semantics=_planning_semantics(
+            "Zorvex blenko project"
+        ),
+        resolved_domain=None,
+    )
+
+    assert adapted[0]["project_title"].startswith(
+        "Zorvex blenko "
+    )
+
+    assert (
+        "Zorvex blenko focus"
+        in adapted[0]["idea_angle"]
+    )
+
+
 def test_typed_adapter_does_not_promote_skill_held_as_requested_focus():
     ideas = [
         {

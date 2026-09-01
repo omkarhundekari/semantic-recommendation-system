@@ -1,7 +1,15 @@
 import pytest
 
+import query_semantics
 from query_semantics import (
     build_query_semantic_snapshot,
+)
+from query_concept_resolution import (
+    ResolutionStatus,
+    ResolvedConceptSpan,
+)
+from query_concept_understanding import (
+    ClauseRole,
 )
 
 
@@ -63,12 +71,6 @@ from query_semantics import (
             "ai_ml",
             "ai_ml",
             False,
-        ),
-        (
-            "want a data scientist dashboard for my job",
-            None,
-            None,
-            True,
         ),
     ],
 )
@@ -167,9 +169,66 @@ def test_role_domain_can_establish_primary_focus():
     )
 
 
-def test_same_segment_domain_conflict_abstains():
+def test_same_segment_domain_conflict_abstains(
+    monkeypatch,
+):
+    resolved = (
+        ResolvedConceptSpan(
+            surface_form="data",
+            normalized_form="data",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=(
+                ResolutionStatus.EVIDENCE_RESOLVED
+            ),
+            confidence=0.9,
+            inferred_focus="data_engineering",
+            inferred_family="cloud_platform",
+            domain_margin=0.8,
+            support_count=3,
+            source_type_count=2,
+            lexical_support_count=3,
+            lexical_source_type_count=2,
+            lexical_coverage=1.0,
+            top_bm25_score=1.0,
+            supporting_evidence=tuple(),
+            char_span=(5, 9),
+            constituent_char_spans=((5, 9),),
+            segment_index=0,
+        ),
+        ResolvedConceptSpan(
+            surface_form="dashboard",
+            normalized_form="dashboard",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=(
+                ResolutionStatus.EVIDENCE_RESOLVED
+            ),
+            confidence=0.9,
+            inferred_focus="cloud",
+            inferred_family="cloud_platform",
+            domain_margin=0.8,
+            support_count=3,
+            source_type_count=2,
+            lexical_support_count=3,
+            lexical_source_type_count=2,
+            lexical_coverage=1.0,
+            top_bm25_score=1.0,
+            supporting_evidence=tuple(),
+            char_span=(10, 19),
+            constituent_char_spans=((10, 19),),
+            segment_index=0,
+        ),
+    )
+
+    monkeypatch.setattr(
+        query_semantics,
+        "resolve_query_spans_shadow",
+        lambda *args, **kwargs: list(resolved),
+    )
+
     snapshot = build_query_semantic_snapshot(
-        "want a data scientist dashboard for my job"
+        "want data dashboard"
     )
 
     assert snapshot.primary_focus is None

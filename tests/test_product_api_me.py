@@ -538,13 +538,8 @@ def test_product_auth_browser_session_path_survives_bearer_runtime_unavailabilit
         == CURRENT_SQLITE_SCHEMA_VERSION
     )
 
-    now = datetime(
-        2026,
-        8,
-        17,
-        21,
-        0,
-        tzinfo=timezone.utc,
+    now = datetime.now(
+        timezone.utc
     )
 
     connection = (

@@ -4,6 +4,7 @@ import re
 from copy import deepcopy
 from typing import Any, Dict, List, Sequence
 
+from query_concept_resolution import ResolutionStatus
 from query_concept_understanding import ClauseRole
 from query_semantic_projections import (
     PlanningConcept,
@@ -53,8 +54,10 @@ def adapt_ideas_to_planning_semantics(
     UNKNOWN concepts are used only as a fallback when no stronger
     intentional concepts are available.
     """
-    concepts = _presentation_concepts_for_adapter(
-        planning_semantics
+    concepts = _renderable_presentation_concepts(
+        _presentation_concepts_for_adapter(
+            planning_semantics
+        )
     )
 
     anchors = [
@@ -106,6 +109,113 @@ def _presentation_concepts_for_adapter(
         for concept in planning_semantics.presentation_order
         if concept.clause_role == ClauseRole.UNKNOWN
     )
+
+
+def _renderable_presentation_concepts(
+    concepts: Sequence[PlanningConcept],
+) -> tuple[PlanningConcept, ...]:
+    """
+    Reduce redundant overlapping representations only for prose rendering.
+
+    Canonical semantics deliberately preserves unresolved enclosing
+    concepts alongside better-supported contained concepts. The adapter
+    must not concatenate those alternative representations as if they
+    were independent user requests.
+
+    An unresolved enclosing concept is omitted only when multiple
+    same-role, same-segment supported concepts already cover its
+    occurrence apart from separator-sized gaps.
+    """
+    return tuple(
+        concept
+        for concept in concepts
+        if not _redundant_unresolved_container(
+            concept,
+            concepts,
+        )
+    )
+
+
+def _redundant_unresolved_container(
+    candidate: PlanningConcept,
+    concepts: Sequence[PlanningConcept],
+) -> bool:
+    if (
+        candidate.resolution_status
+        != ResolutionStatus.UNRESOLVED
+        or candidate.char_span is None
+        or candidate.segment_index is None
+    ):
+        return False
+
+    start, end = candidate.char_span
+
+    contained = [
+        other
+        for other in concepts
+        if (
+            other is not candidate
+            and other.char_span is not None
+            and other.segment_index
+            == candidate.segment_index
+            and other.clause_role
+            == candidate.clause_role
+            and other.resolution_status
+            != ResolutionStatus.UNRESOLVED
+            and start
+            <= other.char_span[0]
+            and other.char_span[1]
+            <= end
+            and other.char_span
+            != candidate.char_span
+        )
+    ]
+
+    if len(contained) < 2:
+        return False
+
+    if not any(
+        other.char_span[0] == start
+        for other in contained
+    ):
+        return False
+
+    if not any(
+        other.char_span[1] == end
+        for other in contained
+    ):
+        return False
+
+    intervals = sorted(
+        other.char_span
+        for other in contained
+        if other.char_span is not None
+    )
+
+    covered = 0
+    current_start, current_end = intervals[0]
+
+    for interval_start, interval_end in intervals[1:]:
+        if interval_start <= current_end:
+            current_end = max(
+                current_end,
+                interval_end,
+            )
+            continue
+
+        covered += current_end - current_start
+        current_start, current_end = (
+            interval_start,
+            interval_end,
+        )
+
+    covered += current_end - current_start
+
+    uncovered = (end - start) - covered
+
+    # Contiguous concepts in the source naturally leave separator
+    # characters such as spaces between their occurrence spans.
+    return uncovered <= len(contained) - 1
 
 
 def adapt_ideas_to_query_anchors(
