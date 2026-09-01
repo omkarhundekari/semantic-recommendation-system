@@ -2027,8 +2027,15 @@ def _cue_scope_role_for_occurrence(
             query
         )
         if (
-            cue[0] >= left_scope_start
-            and cue[1] <= candidate_start
+            cue[1] <= candidate_start
+            and (
+                cue[0] >= left_scope_start
+                or (
+                    cue[0]
+                    < left_scope_start
+                    < cue[1]
+                )
+            )
         )
     ]
 

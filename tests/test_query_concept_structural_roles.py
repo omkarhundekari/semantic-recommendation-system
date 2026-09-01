@@ -1176,6 +1176,70 @@ def test_terse_project_fallback_accepts_clause_initial_nominal_frame(
     )
 
 
+@pytest.mark.parametrize(
+    "query, normalized",
+    [
+        (
+            "I am comfortable with Python",
+            "python",
+        ),
+        (
+            "I am familiar with React",
+            "react",
+        ),
+    ],
+)
+def test_multiword_role_cue_can_cross_segment_left_scope_inside_same_cue(
+    query,
+    normalized,
+):
+    rows = _production_role_rows(query)
+
+    matches = [
+        row
+        for row in rows
+        if row["normalized"] == normalized
+    ]
+
+    assert matches
+    assert all(
+        row["role"] == "skill_held"
+        for row in matches
+    )
+
+
+@pytest.mark.parametrize(
+    "query, normalized",
+    [
+        (
+            "I worked on Python for a React project",
+            "react",
+        ),
+        (
+            "I worked on a React project",
+            "react",
+        ),
+    ],
+)
+def test_cross_segment_cue_repair_does_not_reopen_stale_cue_scope(
+    query,
+    normalized,
+):
+    rows = _production_role_rows(query)
+
+    matches = [
+        row
+        for row in rows
+        if row["normalized"] == normalized
+    ]
+
+    assert matches
+    assert all(
+        row["role"] == "unknown"
+        for row in matches
+    )
+
+
 def test_looking_for_project_is_not_owned_by_terse_fallback():
     rows = _production_role_rows(
         "looking for a React project"
