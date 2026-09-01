@@ -1450,6 +1450,18 @@ def _terse_nominal_goal_for_occurrence(
         _matched_segment,
     ) = matched_bounds
 
+    cohesive_runs = _candidate_cohesive_runs(
+        query,
+        _matched_segment,
+    )
+
+    # This fallback is intentionally weaker than explicit role
+    # cues. Omitted raw material inside the candidate segment
+    # means the nominal-project reading is not structurally
+    # strong enough to assign GOAL.
+    if len(cohesive_runs) != 1:
+        return ClauseRole.UNKNOWN
+
     left_frame = query[
         left_scope_start:segment_start
     ]

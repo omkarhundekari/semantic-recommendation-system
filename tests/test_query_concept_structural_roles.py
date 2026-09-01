@@ -1103,6 +1103,97 @@ def test_candidate_cohesion_does_not_claim_articleless_syntax(
 
 
 # =========================================================
+# A.7T1c2b2 — COHESIVE TERSE PROJECT FALLBACK
+#
+# The weak terminal-project fallback may assign GOAL only when
+# its candidate segment is one raw-text-cohesive run.
+#
+# This is a precision guard, not a syntax parser. Article-less
+# verbal/nominal ambiguity remains intentionally unresolved here.
+# =========================================================
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "seeking a React project",
+        "looking at a React project",
+        "looking into a React project",
+        "looking through a React project",
+        "searching inside a React project",
+        "reviewing a React project",
+        "testing a React project",
+        "seeking information about a React project",
+        "seeking advice about a React project",
+        "seeking examples of a React project",
+    ],
+)
+def test_terse_project_fallback_rejects_split_candidate_runs(
+    query,
+):
+    rows = _production_role_rows(query)
+
+    assert rows
+    assert all(
+        row["role"] != "goal"
+        for row in rows
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "React project",
+        "a React project",
+        "an AI project",
+        "the DevOps dashboard project",
+        "DevOps observability dashboard project",
+        "MLOps experiment tracking project",
+        "FinTech fraud detection project",
+        "AR VR education project",
+        "monitoring dashboard project",
+        "testing framework project",
+        "Zorvex blenko project",
+    ],
+)
+def test_terse_project_fallback_preserves_cohesive_nominal_requests(
+    query,
+):
+    rows = _production_role_rows(query)
+
+    assert rows
+    assert all(
+        row["role"] == "goal"
+        for row in rows
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "seeking React project",
+        "reviewing React project",
+        "testing React project",
+        "looking into React project",
+        "seeking information about React project",
+    ],
+)
+def test_terse_project_cohesion_does_not_claim_articleless_syntax(
+    query,
+):
+    segments = qcr._candidate_segments(query)
+
+    assert len(segments) == 1
+
+    runs = qcr._candidate_cohesive_runs(
+        query,
+        segments[0],
+    )
+
+    assert len(runs) == 1
+
+
+# =========================================================
 # A.7T1a — TERSE NOMINAL PROJECT REQUEST
 #
 # A terminal structural "project" head may establish GOAL
