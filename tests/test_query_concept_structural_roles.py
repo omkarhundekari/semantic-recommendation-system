@@ -1240,10 +1240,25 @@ def test_cross_segment_cue_repair_does_not_reopen_stale_cue_scope(
     )
 
 
-def test_looking_for_project_is_not_owned_by_terse_fallback():
-    rows = _production_role_rows(
-        "looking for a React project"
-    )
+def test_looking_for_project_is_owned_by_explicit_goal_cue():
+    query = "looking for a React project"
+
+    cues = qcr._role_cue_occurrences(query)
+
+    request_cues = [
+        cue
+        for cue in cues
+        if cue[3] == "looking_for"
+    ]
+
+    assert len(request_cues) == 1
+
+    start, end, role, _ = request_cues[0]
+
+    assert query[start:end] == "looking for"
+    assert role == qcr.ClauseRole.GOAL
+
+    rows = _production_role_rows(query)
 
     react = [
         row
@@ -1253,9 +1268,202 @@ def test_looking_for_project_is_not_owned_by_terse_fallback():
 
     assert react
     assert all(
-        row["role"] == "unknown"
+        row["role"] == "goal"
         for row in react
     )
+
+
+@pytest.mark.parametrize(
+    "query, normalized",
+    [
+        (
+            "looking for a React project",
+            "react",
+        ),
+        (
+            "I am looking for a React project",
+            "react",
+        ),
+        (
+            "searching for a React project",
+            "react",
+        ),
+        (
+            "I am searching for a React project",
+            "react",
+        ),
+        (
+            "looking for a Zorvex project",
+            "zorvex",
+        ),
+        (
+            "searching for a Zorvex project",
+            "zorvex",
+        ),
+    ],
+)
+def test_explicit_request_cues_assign_goal_to_requested_concept(
+    query,
+    normalized,
+):
+    rows = _production_role_rows(query)
+
+    matches = [
+        row
+        for row in rows
+        if row["normalized"] == normalized
+    ]
+
+    assert matches
+    assert all(
+        row["role"] == "goal"
+        for row in matches
+    )
+
+
+@pytest.mark.parametrize(
+    "query, cue_name, expected_text",
+    [
+        (
+            "looking for a React project",
+            "looking_for",
+            "looking for",
+        ),
+        (
+            "I am looking for a React project",
+            "looking_for",
+            "looking for",
+        ),
+        (
+            "searching for a React project",
+            "searching_for",
+            "searching for",
+        ),
+        (
+            "I am searching for a React project",
+            "searching_for",
+            "searching for",
+        ),
+    ],
+)
+def test_explicit_request_cue_occurrence_includes_request_verb(
+    query,
+    cue_name,
+    expected_text,
+):
+    cues = qcr._role_cue_occurrences(query)
+
+    matches = [
+        cue
+        for cue in cues
+        if cue[3] == cue_name
+    ]
+
+    assert len(matches) == 1
+
+    start, end, role, _ = matches[0]
+
+    assert query[start:end].lower() == expected_text
+    assert role == qcr.ClauseRole.GOAL
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "looking at a React project",
+        "looking into a React project",
+        "looking through a React project",
+        "searching inside a React project",
+    ],
+)
+def test_non_request_look_search_forms_do_not_gain_explicit_goal_cue(
+    query,
+):
+    goal_cue_names = {
+        cue_name
+        for _, _, role, cue_name
+        in qcr._role_cue_occurrences(query)
+        if role == qcr.ClauseRole.GOAL
+    }
+
+    assert "looking_for" not in goal_cue_names
+    assert "searching_for" not in goal_cue_names
+
+
+def test_later_request_cue_owns_goal_after_earlier_held_skill():
+    rows = _production_role_rows(
+        "I know React but am looking for an AI project"
+    )
+
+    react = [
+        row
+        for row in rows
+        if row["normalized"] == "react"
+    ]
+
+    ai = [
+        row
+        for row in rows
+        if row["normalized"] == "ai"
+    ]
+
+    assert react
+    assert ai
+
+    assert all(
+        row["role"] == "skill_held"
+        for row in react
+    )
+
+    assert all(
+        row["role"] == "goal"
+        for row in ai
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        (
+            "I use Python and am looking for "
+            "a data engineering project"
+        ),
+        (
+            "I use Python and am searching for "
+            "a data engineering project"
+        ),
+    ],
+)
+def test_later_request_cue_owns_goal_after_earlier_stack_scope(
+    query,
+):
+    rows = _production_role_rows(query)
+
+    python_rows = [
+        row
+        for row in rows
+        if row["normalized"] == "python"
+    ]
+
+    data_engineering = [
+        row
+        for row in rows
+        if row["normalized"] == "data engineering"
+    ]
+
+    assert python_rows
+    assert data_engineering
+
+    assert all(
+        row["role"] == "stack_preference"
+        for row in python_rows
+    )
+
+    assert all(
+        row["role"] == "goal"
+        for row in data_engineering
+    )
+
 
 
 @pytest.mark.parametrize(
@@ -1298,10 +1506,6 @@ def test_stack_governed_project_complement_becomes_goal(
         ),
         (
             "I worked on Python for a React project",
-            "react",
-        ),
-        (
-            "looking for a React project",
             "react",
         ),
     ],

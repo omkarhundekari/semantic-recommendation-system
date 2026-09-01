@@ -1852,6 +1852,22 @@ _ROLE_CUE_PATTERNS = (
     # -----------------------------------------------------
     (
         re.compile(
+            r"\blooking\s+for\b",
+            re.IGNORECASE,
+        ),
+        ClauseRole.GOAL,
+        "looking_for",
+    ),
+    (
+        re.compile(
+            r"\bsearching\s+for\b",
+            re.IGNORECASE,
+        ),
+        ClauseRole.GOAL,
+        "searching_for",
+    ),
+    (
+        re.compile(
             r"\bwant\b",
             re.IGNORECASE,
         ),
