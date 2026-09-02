@@ -1,7 +1,6 @@
 from typing import Dict, List
 
 from evidence_intelligence import build_evidence_intelligence
-from research_query_anchors import extract_required_anchor_terms
 from roadmap_templates import get_domain_mvp_template
 
 DOMAIN_ALIASES = {
@@ -222,29 +221,13 @@ THEME_KEYWORDS = {
 }
 
 
-def select_evidence_topic_domain(
-    user_query: str,
-    fallback_domain: str,
-) -> str:
-    anchors = set(extract_required_anchor_terms(user_query))
-
-    if "retrieval augmented generation" in anchors:
-        return "rag_llm"
-
-    return fallback_domain
-
-
 def build_project_intelligence(
     evidence_items: List[Dict],
     user_query: str,
     detected_domain: str,
     max_ideas: int = 3
 ) -> Dict:
-    fallback_domain = normalize_domain(detected_domain)
-    domain = select_evidence_topic_domain(
-        user_query=user_query,
-        fallback_domain=fallback_domain,
-    )
+    domain = normalize_domain(detected_domain)
     combined_text = build_combined_text(evidence_items, user_query)
 
     evidence_profile = build_evidence_intelligence(
@@ -636,18 +619,6 @@ def build_fallback_blueprint(
         "evidence_category": evidence_item.get("category", domain),
         "detected_domain": domain
     }
-
-
-def infer_domain_from_query(query: str) -> str:
-    query = query.lower()
-
-    for domain in DOMAIN_PROFILES:
-        readable = domain.replace("_", " ")
-        if readable in query:
-            return domain
-
-    return "general"
-
 
 
 IDEA_MVP_TEMPLATES = {

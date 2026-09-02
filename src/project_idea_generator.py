@@ -6,8 +6,6 @@ from typing import (
     Optional,
 )
 
-from query_expander import get_query_metadata
-
 if TYPE_CHECKING:
     from query_semantics import QuerySemanticSnapshot
 from constraint_adapter import apply_constraints_to_idea
@@ -239,19 +237,8 @@ def generate_project_ideas(
     if not search_results:
         return []
 
-    query_metadata = get_query_metadata(user_query)
-
-    fallback_domain = query_metadata.get(
-        "detected_domain",
-        "general",
-    )
-
-    planning_domain = detected_domain or fallback_domain
-
-    detected_intent = query_metadata.get(
-        "detected_intent",
-        "general",
-    )
+    planning_domain = detected_domain or "general"
+    detected_intent = "general"
 
     intelligence = build_project_intelligence(
         evidence_items=search_results,

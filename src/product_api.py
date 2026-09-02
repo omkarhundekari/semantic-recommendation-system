@@ -29,6 +29,7 @@ from project_decision_trace import build_project_decision_trace
 from project_idea_generator import generate_project_ideas
 from query_expander import get_query_metadata
 from query_semantics import build_query_semantic_snapshot
+from domain_taxonomy import get_domain_family, get_family_focuses
 from query_semantic_projections import (
     build_planning_semantic_projection,
 )
@@ -2857,38 +2858,40 @@ def build_research_evidence_assessment(
 
 def resolve_planning_domain(
     *,
-    explicit_domain: Optional[str],
-    inferred_focus: Optional[str],
+    selected_direction: Optional[str],
+    canonical_focus: Optional[str],
+    domain_ambiguous: bool,
 ) -> Optional[str]:
-    explicit = (explicit_domain or "").strip()
-    inferred = (inferred_focus or "").strip()
+    selected = (selected_direction or "").strip()
+    canonical = (canonical_focus or "").strip()
 
-    if explicit and explicit != "general":
-        return explicit
+    if selected:
+        selected_family_focuses = get_family_focuses(selected)
 
-    if inferred and inferred != "general":
-        return inferred
+        if (
+            selected_family_focuses
+            and canonical
+            and get_domain_family(canonical) == selected
+        ):
+            return canonical
 
-    return explicit or inferred or None
+        return selected
 
+    if domain_ambiguous:
+        return None
+
+    if canonical and canonical != "general":
+        return canonical
+
+    return None
 
 
 def resolve_response_planning_domain(
     *,
     planning_domain: Optional[str],
-    generated_domain: Optional[str],
 ) -> Optional[str]:
     planned = (planning_domain or "").strip()
-    generated = (generated_domain or "").strip()
-
-    if (
-        planned in BROAD_PLANNING_DOMAINS
-        and generated
-        and generated not in BROAD_PLANNING_DOMAINS
-    ):
-        return generated
-
-    return planned or generated or None
+    return planned or None
 
 
 def build_roadmap(idea: Dict) -> List[RoadmapStage]:
@@ -4458,13 +4461,16 @@ def generate_project_intelligence(
 
     inference = evidence_payload["inference"]
     evidence_items = evidence_payload["merged_results"]
-    explicit_domain = correction_metadata.get("detected_domain")
-    planning_domain = resolve_planning_domain(
-        explicit_domain=explicit_domain,
-        inferred_focus=inference.get("inferred_focus"),
+    confirmed_direction = evidence_payload.get(
+        "selected_direction"
     )
-    has_specific_explicit_domain = bool(
-        explicit_domain and explicit_domain != "general"
+    planning_domain = resolve_planning_domain(
+        selected_direction=confirmed_direction,
+        canonical_focus=semantic_snapshot.primary_focus,
+        domain_ambiguous=semantic_snapshot.domain_ambiguous,
+    )
+    has_authoritative_planning_domain = (
+        planning_domain is not None
     )
     research_evidence_assessment = build_research_evidence_assessment(
         evidence_payload,
@@ -4517,7 +4523,7 @@ def generate_project_intelligence(
 
     if (
         inference.get("requires_clarification")
-        and not has_specific_explicit_domain
+        and not has_authoritative_planning_domain
     ):
         candidate_families = inference.get(
             "candidate_families",
@@ -4853,11 +4859,6 @@ def generate_project_intelligence(
         focus_confidence=inference.get("focus_confidence"),
         resolved_planning_domain=resolve_response_planning_domain(
             planning_domain=planning_domain,
-            generated_domain=(
-                ideas[0].get("detected_domain")
-                if ideas
-                else None
-            ),
         ),
         candidate_families=inference.get(
             "candidate_families",

@@ -394,3 +394,111 @@ def test_product_retrieval_hints_use_understanding_not_correction_metadata():
     assert "detected_domain" not in referenced_strings
     assert "understanding" in referenced_names
     assert "direction_hints" in referenced_strings
+
+
+def test_downstream_planning_layers_do_not_reparse_domain_from_raw_query():
+    targets = (
+        (
+            "src/source_router.py",
+            "retrieve_evidence",
+        ),
+        (
+            "src/project_idea_generator.py",
+            "generate_project_ideas",
+        ),
+        (
+            "src/project_intelligence.py",
+            "build_project_intelligence",
+        ),
+    )
+
+    forbidden_calls = {
+        "get_query_metadata",
+        "extract_required_anchor_terms",
+        "infer_domain_from_query",
+        "detect_domain",
+    }
+
+    violations = []
+
+    for relative_path, function_name in targets:
+        tree = _module_tree(relative_path)
+        function = _function_node(
+            tree,
+            function_name,
+        )
+
+        for forbidden_call in sorted(forbidden_calls):
+            if _calls_named(
+                function,
+                forbidden_call,
+            ):
+                violations.append(
+                    f"{relative_path}:{function_name}"
+                    f" -> {forbidden_call}"
+                )
+
+    assert not violations, (
+        "Downstream planning layers must consume the canonical "
+        "planning domain rather than re-derive semantic intent "
+        "from raw query text: "
+        + "; ".join(violations)
+    )
+
+
+def test_project_intelligence_contains_no_raw_query_domain_authority():
+    tree = _module_tree(
+        "src/project_intelligence.py"
+    )
+
+    function_names = {
+        node.name
+        for node in ast.walk(tree)
+        if isinstance(
+            node,
+            (ast.FunctionDef, ast.AsyncFunctionDef),
+        )
+    }
+
+    assert "infer_domain_from_query" not in function_names
+
+
+def test_planning_domain_authority_flag_depends_only_on_resolved_domain():
+    tree = _module_tree(
+        "src/product_api.py"
+    )
+
+    handler = _function_node(
+        tree,
+        "generate_project_intelligence",
+    )
+
+    assignments = [
+        node
+        for node in ast.walk(handler)
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name)
+                and target.id
+                == "has_authoritative_planning_domain"
+                for target in node.targets
+            )
+        )
+    ]
+
+    assert len(assignments) == 1
+
+    referenced_names = {
+        node.id
+        for node in ast.walk(assignments[0].value)
+        if isinstance(node, ast.Name)
+    }
+
+    assert referenced_names == {
+        "planning_domain",
+    }, (
+        "Planning-domain authority must come from the resolved "
+        "planning_domain result, not be reconstructed from "
+        "selected or canonical inputs."
+    )

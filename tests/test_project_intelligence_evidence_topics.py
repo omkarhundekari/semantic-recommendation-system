@@ -56,7 +56,7 @@ def test_rag_evidence_generates_rag_oriented_project_blueprints():
             "Build a retrieval augmented generation project for "
             "question answering"
         ),
-        detected_domain="ai_ml",
+        detected_domain="rag_llm",
         max_ideas=3,
     )
 
@@ -102,7 +102,7 @@ def test_project_idea_generator_preserves_rag_planning_domain():
         ),
         max_ideas=3,
         constraints={},
-        detected_domain="ai_ml",
+        detected_domain="rag_llm",
     )
 
     assert all(idea["detected_domain"] == "rag_llm" for idea in ideas)

@@ -117,7 +117,7 @@ def test_ready_api_response_exposes_resolved_rag_planning_domain():
     )
 
     assert response.status == "ready"
-    assert response.inferred_focus == "ai_ml"
+    assert response.detected_domain == "rag_llm"
     assert response.resolved_planning_domain == "rag_llm"
 
     assert len(response.directions) == 3
@@ -583,4 +583,62 @@ def test_explicit_devops_domain_does_not_require_github_corpus(
     assert payload["status"] == "ready"
     assert payload["detected_domain"] == "devops"
     assert payload["resolved_planning_domain"] == "devops"
+
+
+def test_resolve_planning_domain_has_one_authority_policy():
+    from product_api import resolve_planning_domain
+
+    assert (
+        resolve_planning_domain(
+            selected_direction=None,
+            canonical_focus="devops",
+            domain_ambiguous=False,
+        )
+        == "devops"
+    )
+
+    assert (
+        resolve_planning_domain(
+            selected_direction=None,
+            canonical_focus="devops",
+            domain_ambiguous=True,
+        )
+        is None
+    )
+
+    assert (
+        resolve_planning_domain(
+            selected_direction="ai_ml",
+            canonical_focus="rag_llm",
+            domain_ambiguous=True,
+        )
+        == "rag_llm"
+    )
+
+    assert (
+        resolve_planning_domain(
+            selected_direction="ai_ml",
+            canonical_focus="cybersecurity",
+            domain_ambiguous=False,
+        )
+        == "ai_ml"
+    )
+
+    assert (
+        resolve_planning_domain(
+            selected_direction=None,
+            canonical_focus="general",
+            domain_ambiguous=False,
+        )
+        is None
+    )
+
+    assert (
+        resolve_planning_domain(
+            selected_direction=None,
+            canonical_focus=None,
+            domain_ambiguous=False,
+        )
+        is None
+    )
 

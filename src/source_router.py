@@ -226,25 +226,15 @@ def retrieve_evidence(
         selected_direction,
     )
 
-    if confirmed_direction:
-        inference = {
-            **inference,
-            "inferred_domain_family": confirmed_direction,
-            "family_confidence": 1.0,
-            "inferred_focus": confirmed_direction,
-            "focus_confidence": 1.0,
-            "requires_clarification": False,
-            "selection_source": "user_confirmed",
-        }
-
-    inferred_focus = inference.get(
+    evidence_focus = inference.get(
         "inferred_focus",
         "general",
     )
+    retrieval_focus = confirmed_direction or evidence_focus
 
     focused_query = build_focused_query(
         original_query=user_query,
-        inferred_focus=inferred_focus,
+        inferred_focus=retrieval_focus,
     )
 
     focused_research = add_source_type(
@@ -261,7 +251,7 @@ def retrieve_evidence(
         search_project_corpus(
             focused_query,
             top_k=focused_top_k,
-            domain_filter=inferred_focus,
+            domain_filter=retrieval_focus,
         ),
         source_type="project_pattern",
         retrieval_phase="focused",
@@ -271,7 +261,7 @@ def retrieve_evidence(
         search_github_project_corpus(
             focused_query,
             top_k=focused_top_k,
-            domain_filter=inferred_focus,
+            domain_filter=retrieval_focus,
         ),
         source_type="github_repository",
         retrieval_phase="focused",
@@ -293,9 +283,8 @@ def retrieve_evidence(
         "focused_query": focused_query,
         "detected_intent": "unknown",
         "selected_route": "broad_then_focused",
-        "selected_direction": normalize_selected_direction(
-            selected_direction,
-        ),
+        "selected_direction": confirmed_direction,
+        "retrieval_focus": retrieval_focus,
         "inference": inference,
         "research_results": focused_research,
         "project_results": focused_projects,
