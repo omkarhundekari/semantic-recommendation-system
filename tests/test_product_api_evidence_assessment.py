@@ -642,3 +642,48 @@ def test_resolve_planning_domain_has_one_authority_policy():
         is None
     )
 
+
+
+
+def test_a7t2_planning_domain_accepts_canonical_family_only_authority():
+    from product_api import resolve_planning_domain
+
+    assert (
+        resolve_planning_domain(
+            selected_direction=None,
+            canonical_focus=None,
+            canonical_family="cloud_platform",
+            domain_ambiguous=False,
+        )
+        == "cloud_platform"
+    )
+
+    assert (
+        resolve_planning_domain(
+            selected_direction=None,
+            canonical_focus=None,
+            canonical_family="cloud_platform",
+            domain_ambiguous=True,
+        )
+        is None
+    )
+
+    assert (
+        resolve_planning_domain(
+            selected_direction=None,
+            canonical_focus="devops",
+            canonical_family="cloud_platform",
+            domain_ambiguous=False,
+        )
+        == "devops"
+    )
+
+    assert (
+        resolve_planning_domain(
+            selected_direction=None,
+            canonical_focus=None,
+            canonical_family="not_a_taxonomy_family",
+            domain_ambiguous=False,
+        )
+        is None
+    )

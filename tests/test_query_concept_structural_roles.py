@@ -2098,3 +2098,69 @@ def test_synthesized_seeking_cue_is_pre_role_only():
         "Synthesized cue construction must "
         "remain pre-role structural logic."
     )
+
+
+
+def test_a7t2_cross_family_focus_does_not_inherit_family_authority(
+    monkeypatch,
+):
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Cloud observability pattern",
+            category="cloud",
+            focus="cloud",
+            family="cloud_platform",
+            score=0.90,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="MLOps observability pattern",
+            category="mlops",
+            focus="mlops",
+            family="ai_ml",
+            score=0.60,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="AI observability research",
+            category="ai_ml",
+            focus="ai_ml",
+            family="ai_ml",
+            score=0.60,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: hits,
+    )
+
+    result = qcr.resolve_concept_span(
+        "observability",
+        query="observability project",
+        char_span=(0, 13),
+        constituent_char_spans=((0, 13),),
+        segment_index=0,
+        clause_role=ClauseRole.GOAL,
+    )
+
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.EVIDENCE_RESOLVED
+    )
+    assert result.inferred_family == "ai_ml"
+    assert result.inferred_focus is None

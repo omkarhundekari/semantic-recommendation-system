@@ -3,7 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from domain_taxonomy import get_domain_family
+from domain_taxonomy import (
+    get_domain_family,
+    get_family_focuses,
+)
 from query_concept_resolution import (
     ResolutionStatus,
     ResolvedConceptSpan,
@@ -318,81 +321,63 @@ def _canonical_focus(
     return focus
 
 
-def _component_has_domain_conflict(
-    component: Sequence[ResolvedConceptSpan],
-) -> bool:
-    """
-    Detect incompatible high-authority interpretations inside one
-    overlap-connected semantic region.
+def _canonical_family(
+    span: ResolvedConceptSpan,
+) -> Optional[str]:
+    focus = _canonical_focus(span)
 
-    Only EVIDENCE_RESOLVED readings participate in this hard
-    conflict check.
-
-    Example:
-
-        want a data scientist dashboard ...
-
-    may independently resolve:
-
-        data       -> data_engineering
-        dashboard  -> cloud
-
-    while no supported phrase establishes which interpretation is
-    actually intended.
-
-    In that situation we abstain instead of allowing confidence
-    alone to manufacture a domain.
-    """
-    reliable = [
-        span
-        for span in component
-        if (
-            span.resolution_status
-            == ResolutionStatus.EVIDENCE_RESOLVED
-            and _canonical_focus(span)
-            is not None
+    if focus is not None:
+        family = get_domain_family(
+            focus
         )
-    ]
 
-    focuses = {
-        _canonical_focus(span)
-        for span in reliable
-    }
+        if family == "general":
+            return None
 
-    focuses.discard(None)
+        return family
 
-    if len(focuses) <= 1:
-        return False
+    family = (
+        span.inferred_family or ""
+    ).strip()
 
-    # A resolved multi-token phrase may legitimately disambiguate
-    # its contained atomic readings.
-    resolved_phrases = [
-        span
-        for span in reliable
-        if span.ngram_size > 1
-    ]
+    if (
+        not family
+        or family == "general"
+        or not get_family_focuses(family)
+    ):
+        return None
 
-    for phrase in resolved_phrases:
-        contained = [
-            span
-            for span in reliable
-            if _contains(
-                phrase,
-                span,
-            )
-        ]
+    return family
 
-        contained_focuses = {
-            _canonical_focus(span)
-            for span in contained
-        }
 
-        contained_focuses.discard(None)
+def _domain_hypotheses_conflict(
+    left: ResolvedConceptSpan,
+    right: ResolvedConceptSpan,
+) -> bool:
+    left_focus = _canonical_focus(left)
+    right_focus = _canonical_focus(right)
 
-        if len(contained_focuses) >= 2:
-            return False
+    # Two focus-level hypotheses preserve the existing conservative
+    # semantics: different focuses remain different interpretations
+    # even when they belong to the same family.
+    if (
+        left_focus is not None
+        and right_focus is not None
+    ):
+        return left_focus != right_focus
 
-    return True
+    left_family = _canonical_family(left)
+    right_family = _canonical_family(right)
+
+    # If either hypothesis only earned family-level specificity,
+    # compare them at the finest semantic level they both share.
+    if (
+        left_family is not None
+        and right_family is not None
+    ):
+        return left_family != right_family
+
+    return False
 
 
 def _domain_candidates(
@@ -420,7 +405,7 @@ def _domain_candidates(
         if (
             span.clause_role
             in _DOMAIN_ROLE_PRIORITY
-            and _canonical_focus(span)
+            and _canonical_family(span)
             is not None
             and span.resolution_status
             in {
@@ -511,19 +496,46 @@ def _choose_primary_domain(
                     ResolutionStatus.EVIDENCE_RESOLVED,
                     ResolutionStatus.SUPPORTED_AMBIGUOUS,
                 }
-                and _canonical_focus(span)
+                and _canonical_family(span)
                 is not None
             )
         ]
 
-        focuses = {
-            _canonical_focus(span)
+        if not reliable:
+            continue
+
+        strongest_status_priority = max(
+            _STATUS_PRIORITY[
+                span.resolution_status
+            ]
             for span in reliable
-        }
+        )
 
-        focuses.discard(None)
+        conflict_candidates = [
+            span
+            for span in reliable
+            if (
+                _STATUS_PRIORITY[
+                    span.resolution_status
+                ]
+                == strongest_status_priority
+            )
+        ]
 
-        if len(focuses) <= 1:
+        has_conflict = any(
+            _domain_hypotheses_conflict(
+                left,
+                right,
+            )
+            for index, left in enumerate(
+                conflict_candidates
+            )
+            for right in conflict_candidates[
+                index + 1 :
+            ]
+        )
+
+        if not has_conflict:
             continue
 
         # A well-supported multi-token phrase is allowed to
@@ -537,7 +549,7 @@ def _choose_primary_domain(
         # ``engineering`` constituents.
         disambiguating_phrases = [
             span
-            for span in reliable
+            for span in conflict_candidates
             if (
                 span.ngram_size > 1
                 and span.resolution_status
@@ -550,7 +562,7 @@ def _choose_primary_domain(
         for phrase in disambiguating_phrases:
             contained = [
                 span
-                for span in reliable
+                for span in conflict_candidates
                 if (
                     span is phrase
                     or _contains(
@@ -560,18 +572,22 @@ def _choose_primary_domain(
                 )
             ]
 
-            contained_focuses = {
-                _canonical_focus(span)
-                for span in contained
-            }
-
-            contained_focuses.discard(
-                None
+            contained_conflict = any(
+                _domain_hypotheses_conflict(
+                    left,
+                    right,
+                )
+                for index, left in enumerate(
+                    contained
+                )
+                for right in contained[
+                    index + 1 :
+                ]
             )
 
             if (
                 len(contained) >= 2
-                and len(contained_focuses) >= 2
+                and contained_conflict
             ):
                 conflict_resolved = True
                 break
@@ -595,21 +611,13 @@ def _choose_primary_domain(
 
     winner = ranked[0]
     focus = _canonical_focus(winner)
+    family = _canonical_family(winner)
 
-    if focus is None:
+    if (
+        focus is None
+        and family is None
+    ):
         return None, None, False
-
-    # IMPORTANT:
-    #
-    # Resolver evidence may contain historical or source-specific
-    # family labels. The taxonomy module is the only authority for
-    # focus -> family.
-    family = get_domain_family(
-        focus
-    )
-
-    if family == "general":
-        family = None
 
     return focus, family, False
 

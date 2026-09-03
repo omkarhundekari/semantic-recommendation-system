@@ -2492,6 +2492,21 @@ def resolve_concept_span(
         focus_scores
     )
 
+    # Family competition grants domain authority for this span.
+    # A separately elected focus may only be exposed when it
+    # belongs to that same canonical family.
+    #
+    # If the elections disagree, preserve family-level support
+    # and abstain from unsupported specificity. Do not transfer
+    # that authority to another focus.
+    if (
+        best_focus is not None
+        and best_family is not None
+        and get_domain_family(best_focus)
+        != best_family
+    ):
+        best_focus = None
+
     source_types = {
         hit.source_type
         for hit in lexical_hits

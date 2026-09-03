@@ -404,3 +404,264 @@ def test_anchor_compression_preserves_supported_unknown_phrases_but_suppresses_u
         "react",
         "ai",
     }
+
+
+
+def test_a7t2_family_only_span_establishes_primary_family(
+    monkeypatch,
+):
+    import query_semantics
+    from query_concept_resolution import (
+        ResolutionStatus,
+        ResolvedConceptSpan,
+    )
+    from query_concept_understanding import ClauseRole
+
+    resolved = (
+        ResolvedConceptSpan(
+            surface_form="observability",
+            normalized_form="observability",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+            confidence=0.8,
+            inferred_focus=None,
+            inferred_family="ai_ml",
+            domain_margin=0.3,
+            support_count=3,
+            source_type_count=2,
+            lexical_support_count=3,
+            lexical_source_type_count=2,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(0, 13),
+            constituent_char_spans=((0, 13),),
+            segment_index=0,
+        ),
+    )
+
+    monkeypatch.setattr(
+        query_semantics,
+        "resolve_query_spans_shadow",
+        lambda *args, **kwargs: list(resolved),
+    )
+
+    snapshot = query_semantics.build_query_semantic_snapshot(
+        "observability project"
+    )
+
+    assert snapshot.primary_focus is None
+    assert snapshot.primary_family == "ai_ml"
+    assert snapshot.domain_ambiguous is False
+
+
+def test_a7t2_family_only_conflicts_with_other_family_focus(
+    monkeypatch,
+):
+    import query_semantics
+    from query_concept_resolution import (
+        ResolutionStatus,
+        ResolvedConceptSpan,
+    )
+    from query_concept_understanding import ClauseRole
+
+    resolved = (
+        ResolvedConceptSpan(
+            surface_form="observability",
+            normalized_form="observability",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+            confidence=0.9,
+            inferred_focus=None,
+            inferred_family="ai_ml",
+            domain_margin=0.4,
+            support_count=3,
+            source_type_count=2,
+            lexical_support_count=3,
+            lexical_source_type_count=2,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(0, 13),
+            constituent_char_spans=((0, 13),),
+            segment_index=0,
+        ),
+        ResolvedConceptSpan(
+            surface_form="dashboard",
+            normalized_form="dashboard",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+            confidence=0.8,
+            inferred_focus="cloud",
+            inferred_family="cloud_platform",
+            domain_margin=0.3,
+            support_count=3,
+            source_type_count=2,
+            lexical_support_count=3,
+            lexical_source_type_count=2,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(14, 23),
+            constituent_char_spans=((14, 23),),
+            segment_index=0,
+        ),
+    )
+
+    monkeypatch.setattr(
+        query_semantics,
+        "resolve_query_spans_shadow",
+        lambda *args, **kwargs: list(resolved),
+    )
+
+    snapshot = query_semantics.build_query_semantic_snapshot(
+        "observability dashboard project"
+    )
+
+    assert snapshot.primary_focus is None
+    assert snapshot.primary_family is None
+    assert snapshot.domain_ambiguous is True
+
+
+
+def test_a7t2_weaker_domain_hypothesis_cannot_veto_resolved_domain(
+    monkeypatch,
+):
+    import query_semantics
+    from query_concept_resolution import (
+        ResolutionStatus,
+        ResolvedConceptSpan,
+    )
+    from query_concept_understanding import ClauseRole
+
+    resolved = (
+        ResolvedConceptSpan(
+            surface_form="DevOps",
+            normalized_form="devops",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+            confidence=0.55,
+            inferred_focus="devops",
+            inferred_family="cloud_platform",
+            domain_margin=0.0,
+            support_count=5,
+            source_type_count=2,
+            lexical_support_count=5,
+            lexical_source_type_count=2,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(0, 6),
+            constituent_char_spans=((0, 6),),
+            segment_index=0,
+        ),
+        ResolvedConceptSpan(
+            surface_form="observability",
+            normalized_form="observability",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=ResolutionStatus.SUPPORTED_AMBIGUOUS,
+            confidence=0.76,
+            inferred_focus="backend",
+            inferred_family="software_engineering",
+            domain_margin=0.06,
+            support_count=11,
+            source_type_count=3,
+            lexical_support_count=11,
+            lexical_source_type_count=3,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(7, 20),
+            constituent_char_spans=((7, 20),),
+            segment_index=0,
+        ),
+    )
+
+    monkeypatch.setattr(
+        query_semantics,
+        "resolve_query_spans_shadow",
+        lambda *args, **kwargs: list(resolved),
+    )
+
+    snapshot = query_semantics.build_query_semantic_snapshot(
+        "DevOps observability project"
+    )
+
+    assert snapshot.primary_focus == "devops"
+    assert snapshot.primary_family == "cloud_platform"
+    assert snapshot.domain_ambiguous is False
+
+
+def test_a7t2_same_authority_tier_domain_conflict_still_abstains(
+    monkeypatch,
+):
+    import query_semantics
+    from query_concept_resolution import (
+        ResolutionStatus,
+        ResolvedConceptSpan,
+    )
+    from query_concept_understanding import ClauseRole
+
+    resolved = (
+        ResolvedConceptSpan(
+            surface_form="data engineering",
+            normalized_form="data engineering",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=2,
+            resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+            confidence=0.84,
+            inferred_focus="data_engineering",
+            inferred_family="cloud_platform",
+            domain_margin=0.97,
+            support_count=6,
+            source_type_count=2,
+            lexical_support_count=6,
+            lexical_source_type_count=2,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(0, 16),
+            constituent_char_spans=((0, 4), (5, 16)),
+            segment_index=0,
+        ),
+        ResolvedConceptSpan(
+            surface_form="pipeline",
+            normalized_form="pipeline",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+            confidence=0.89,
+            inferred_focus=None,
+            inferred_family="ai_ml",
+            domain_margin=0.56,
+            support_count=11,
+            source_type_count=3,
+            lexical_support_count=11,
+            lexical_source_type_count=3,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(17, 25),
+            constituent_char_spans=((17, 25),),
+            segment_index=0,
+        ),
+    )
+
+    monkeypatch.setattr(
+        query_semantics,
+        "resolve_query_spans_shadow",
+        lambda *args, **kwargs: list(resolved),
+    )
+
+    snapshot = query_semantics.build_query_semantic_snapshot(
+        "data engineering pipeline project"
+    )
+
+    assert snapshot.primary_focus is None
+    assert snapshot.primary_family is None
+    assert snapshot.domain_ambiguous is True

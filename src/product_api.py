@@ -2861,9 +2861,11 @@ def resolve_planning_domain(
     selected_direction: Optional[str],
     canonical_focus: Optional[str],
     domain_ambiguous: bool,
+    canonical_family: Optional[str] = None,
 ) -> Optional[str]:
     selected = (selected_direction or "").strip()
     canonical = (canonical_focus or "").strip()
+    family = (canonical_family or "").strip()
 
     if selected:
         selected_family_focuses = get_family_focuses(selected)
@@ -2882,6 +2884,13 @@ def resolve_planning_domain(
 
     if canonical and canonical != "general":
         return canonical
+
+    if (
+        family
+        and family != "general"
+        and get_family_focuses(family)
+    ):
+        return family
 
     return None
 
@@ -4467,6 +4476,7 @@ def generate_project_intelligence(
     planning_domain = resolve_planning_domain(
         selected_direction=confirmed_direction,
         canonical_focus=semantic_snapshot.primary_focus,
+        canonical_family=semantic_snapshot.primary_family,
         domain_ambiguous=semantic_snapshot.domain_ambiguous,
     )
     has_authoritative_planning_domain = (
