@@ -2158,9 +2158,1140 @@ def test_a7t2_cross_family_focus_does_not_inherit_family_authority(
         clause_role=ClauseRole.GOAL,
     )
 
+    # A.7E disproved the old source-diversity assumption:
+    # two records that disagree at focus level do not become
+    # authoritative merely because they share a taxonomy parent
+    # and originate from different source types. The winning
+    # family has only two distinct attributable records here,
+    # below the existing support floor of three.
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.SUPPORTED_WEAK
+    )
+    assert result.inferred_family == "ai_ml"
+    assert result.inferred_focus is None
+
+
+
+def test_a7e1_losing_family_evidence_cannot_grant_winner_authority(
+    monkeypatch,
+):
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    winner_hit = qcr.ConceptEvidenceHit(
+        source_type="project_pattern",
+        title="Cloud observability pattern",
+        category="cloud",
+        focus="cloud",
+        family="cloud_platform",
+        score=0.90,
+        lexical_match=True,
+        lexical_coverage=1.0,
+        bm25_score=None,
+    )
+
+    losing_hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="AI evidence A",
+            category="ai_ml",
+            focus="ai_ml",
+            family="ai_ml",
+            score=0.30,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=6.0,
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="github_repository",
+            title="AI evidence B",
+            category="ai_ml",
+            focus="ai_ml",
+            family="ai_ml",
+            score=0.20,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+        ),
+    ]
+
+    def resolve(hits):
+        monkeypatch.setattr(
+            qcr,
+            "_collect_span_evidence",
+            lambda *args, **kwargs: list(hits),
+        )
+
+        return qcr.resolve_concept_span(
+            "observability",
+            query="observability project",
+            clause_role=ClauseRole.GOAL,
+        )
+
+    winner_only = resolve([winner_hit])
+
+    winner_plus_losers = resolve(
+        [
+            winner_hit,
+            *losing_hits,
+        ]
+    )
+
+    assert winner_only.inferred_family == "cloud_platform"
+    assert (
+        winner_only.resolution_status
+        == qcr.ResolutionStatus.SUPPORTED_WEAK
+    )
+
+    assert (
+        winner_plus_losers.inferred_family
+        == "cloud_platform"
+    )
+
+    # Evidence attributable only to competing families must not
+    # manufacture classification authority for the winner.
+    assert (
+        winner_plus_losers.resolution_status
+        == winner_only.resolution_status
+    )
+
+
+
+
+def test_a7e3_full_rag_phrase_qualifies_rag_abbreviation_evidence():
+    """
+    Canonical abbreviation/expansion equivalence belongs to lexical
+    qualification.
+
+    It does not assign a domain. It only prevents evidence written
+    with the equivalent surface form from being discarded.
+    """
+    import query_concept_resolution as qcr
+
+    item = {
+        "title": "RAG Evaluation Dashboard",
+        "abstract": (
+            "Evaluate RAG systems with retrieval quality, faithfulness, "
+            "citation coverage, and answer-quality metrics."
+        ),
+        "category": "rag_llm",
+    }
+
+    assert qcr._lexical_match(
+        "retrieval augmented generation",
+        item,
+    )
+
+    assert (
+        qcr._lexical_coverage(
+            "retrieval augmented generation",
+            item,
+        )
+        == 1.0
+    )
+
+
+def test_a7e3_rag_abbreviation_qualifies_full_phrase_evidence():
+    """
+    Lexical equivalence is symmetric for evidence qualification.
+    """
+    import query_concept_resolution as qcr
+
+    item = {
+        "title": (
+            "Evaluation of Retrieval Augmented Generation "
+            "for Question Answering"
+        ),
+        "abstract": (
+            "Retrieval augmented generation combines retrieval with "
+            "generation for grounded question answering."
+        ),
+        "category": "cs.CL",
+    }
+
+    assert qcr._lexical_match(
+        "RAG",
+        item,
+    )
+
+    assert (
+        qcr._lexical_coverage(
+            "RAG",
+            item,
+        )
+        == 1.0
+    )
+
+
+def test_a7e3_lexical_equivalence_does_not_assign_domain_authority(
+    monkeypatch,
+):
+    """
+    Equivalent vocabulary can expose matching evidence but cannot
+    lower the absolute family-authority support floor.
+    """
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="RAG Evaluation Dashboard",
+            category="rag_llm",
+            focus="rag_llm",
+            family="ai_ml",
+            score=0.70,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:rag-eval",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="github_repository",
+            title="example/rag-tool",
+            category="rag_llm",
+            focus="rag_llm",
+            family="ai_ml",
+            score=0.65,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="github_repository:rag-tool",
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: list(hits),
+    )
+
+    result = qcr.resolve_concept_span(
+        "retrieval augmented generation",
+        query="retrieval augmented generation project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.SUPPORTED_WEAK
+    )
+
+
+def test_a7e3_rag_alias_and_full_phrase_share_one_canonical_focus(
+    monkeypatch,
+):
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="RAG Evaluation Dashboard",
+            category="rag_llm",
+            focus="rag_llm",
+            family="ai_ml",
+            score=0.60,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:rag-eval",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="github_repository",
+            title="example/rag-tool",
+            category="rag_llm",
+            focus="rag_llm",
+            family="ai_ml",
+            score=0.55,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="github_repository:rag-tool",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="RAG Research",
+            category="cs.CL",
+            focus="nlp",
+            family="ai_ml",
+            score=0.50,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=8.0,
+            evidence_id="research_paper:rag",
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: list(hits),
+    )
+
+    short = qcr.resolve_concept_span(
+        "RAG",
+        query="RAG project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    full = qcr.resolve_concept_span(
+        "retrieval augmented generation",
+        query="retrieval augmented generation project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    assert short.inferred_family == "ai_ml"
+    assert full.inferred_family == "ai_ml"
+
+    assert short.inferred_focus == "rag_llm"
+    assert full.inferred_focus == "rag_llm"
+
+
+
+def test_a7e3_focus_election_caps_repeated_source_contributions(
+    monkeypatch,
+):
+    """
+    Family and focus election must use the same provenance-aware
+    score aggregation.
+
+    Distinct records still count toward the absolute authority floor,
+    but repeated records from one source type must not receive
+    unbounded voting weight during focus competition.
+    """
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="RAG Pattern",
+            category="rag_llm",
+            focus="rag_llm",
+            family="ai_ml",
+            score=0.55,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:rag",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="github_repository",
+            title="example/rag",
+            category="rag_llm",
+            focus="rag_llm",
+            family="ai_ml",
+            score=0.54,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="github_repository:rag",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="Research A",
+            category="cs.CL",
+            focus="nlp",
+            family="ai_ml",
+            score=0.70,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=10.0,
+            evidence_id="research_paper:a",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="Research B",
+            category="cs.CL",
+            focus="nlp",
+            family="ai_ml",
+            score=0.69,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=9.0,
+            evidence_id="research_paper:b",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="Research C",
+            category="cs.CL",
+            focus="nlp",
+            family="ai_ml",
+            score=0.68,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=8.0,
+            evidence_id="research_paper:c",
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: list(hits),
+    )
+
+    result = qcr.resolve_concept_span(
+        "RAG",
+        query="RAG project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.EVIDENCE_RESOLVED
+    )
+    assert result.inferred_family == "ai_ml"
+
+    # Project + GitHub independently support rag_llm.
+    # Three records from the research corpus must not receive three
+    # separate voting units merely because focus scoring descended
+    # one taxonomy level.
+    assert result.inferred_focus == "rag_llm"
+
+
+
+
+def test_a7e5_conflicting_duplicate_identity_cannot_gain_domain_authority(
+    monkeypatch,
+):
+    """
+    One canonical evidence identity cannot acquire its semantic
+    classification from whichever duplicate representation has the
+    larger retrieval score.
+
+    Conflicting family/focus metadata for one identity is a data
+    integrity conflict. That identity may prove lexical existence,
+    but it must fail closed for domain authority.
+    """
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    stable_hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Stable DevOps A",
+            category="devops",
+            focus="devops",
+            family="cloud_platform",
+            score=0.70,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:stable-a",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Stable DevOps B",
+            category="devops",
+            focus="devops",
+            family="cloud_platform",
+            score=0.65,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:stable-b",
+        ),
+    ]
+
+    conflicting_identity = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Conflicting Record",
+            category="devops",
+            focus="devops",
+            family="cloud_platform",
+            score=0.40,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:conflict",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Conflicting Record",
+            category="ai_ml",
+            focus="ai_ml",
+            family="ai_ml",
+            score=0.80,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:conflict",
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: (
+            stable_hits
+            + conflicting_identity
+        ),
+    )
+
+    result = qcr.resolve_concept_span(
+        "DevOps",
+        query="DevOps project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    # Only two non-conflicting cloud records remain semantically
+    # trustworthy. The conflicted canonical identity must not become
+    # either a cloud vote or an AI vote merely because one duplicate
+    # has the higher retrieval score.
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.SUPPORTED_WEAK
+    )
+
+    assert result.inferred_family == "cloud_platform"
+    assert result.inferred_focus == "devops"
+
+
+def test_a7e5_conflicting_identity_is_score_invariant(
+    monkeypatch,
+):
+    """
+    Changing retrieval scores between conflicting representations of
+    one canonical identity must not change the semantic conclusion.
+    """
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    stable_hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Stable DevOps A",
+            category="devops",
+            focus="devops",
+            family="cloud_platform",
+            score=0.70,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:stable-a",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Stable DevOps B",
+            category="devops",
+            focus="devops",
+            family="cloud_platform",
+            score=0.65,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:stable-b",
+        ),
+    ]
+
+    def conflicting(
+        cloud_score,
+        ai_score,
+    ):
+        return [
+            qcr.ConceptEvidenceHit(
+                source_type="project_pattern",
+                title="Conflicting Record",
+                category="devops",
+                focus="devops",
+                family="cloud_platform",
+                score=cloud_score,
+                lexical_match=True,
+                lexical_coverage=1.0,
+                bm25_score=None,
+                evidence_id="project_pattern:conflict",
+            ),
+            qcr.ConceptEvidenceHit(
+                source_type="project_pattern",
+                title="Conflicting Record",
+                category="ai_ml",
+                focus="ai_ml",
+                family="ai_ml",
+                score=ai_score,
+                lexical_match=True,
+                lexical_coverage=1.0,
+                bm25_score=None,
+                evidence_id="project_pattern:conflict",
+            ),
+        ]
+
+    def resolve(extra):
+        monkeypatch.setattr(
+            qcr,
+            "_collect_span_evidence",
+            lambda *args, **kwargs: (
+                stable_hits
+                + extra
+            ),
+        )
+
+        return qcr.resolve_concept_span(
+            "DevOps",
+            query="DevOps project",
+            clause_role=ClauseRole.GOAL,
+        )
+
+    cloud_high = resolve(
+        conflicting(
+            cloud_score=0.90,
+            ai_score=0.20,
+        )
+    )
+
+    ai_high = resolve(
+        conflicting(
+            cloud_score=0.20,
+            ai_score=0.90,
+        )
+    )
+
+    assert (
+        cloud_high.resolution_status
+        == ai_high.resolution_status
+    )
+    assert (
+        cloud_high.inferred_family
+        == ai_high.inferred_family
+    )
+    assert (
+        cloud_high.inferred_focus
+        == ai_high.inferred_focus
+    )
+    assert (
+        cloud_high.confidence
+        == ai_high.confidence
+    )
+
+
+def test_a7e4_losing_family_records_cannot_inflate_confidence(
+    monkeypatch,
+):
+    """
+    Confidence support must be attributable to the elected family.
+
+    The two resolutions below have:
+      - identical winning-family evidence,
+      - the same elected family,
+      - the same strongest competing-family score,
+      - therefore the same family margin.
+
+    Adding another losing-family record/source must not increase
+    confidence through whole-pool hit count or source diversity.
+    """
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    winner_hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Cloud Winner A",
+            category="devops",
+            focus="devops",
+            family="cloud_platform",
+            score=0.80,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:winner-a",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Cloud Winner B",
+            category="devops",
+            focus="devops",
+            family="cloud_platform",
+            score=0.75,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:winner-b",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Cloud Winner C",
+            category="devops",
+            focus="devops",
+            family="cloud_platform",
+            score=0.70,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:winner-c",
+        ),
+    ]
+
+    strongest_loser = qcr.ConceptEvidenceHit(
+        source_type="research_paper",
+        title="AI Loser",
+        category="cs.LG",
+        focus="ai_ml",
+        family="ai_ml",
+        score=0.20,
+        lexical_match=True,
+        lexical_coverage=1.0,
+        bm25_score=4.0,
+        evidence_id="research_paper:loser",
+    )
+
+    additional_loser = qcr.ConceptEvidenceHit(
+        source_type="github_repository",
+        title="Frontend Loser",
+        category="frontend",
+        focus="frontend",
+        family="software_engineering",
+        score=0.10,
+        lexical_match=True,
+        lexical_coverage=1.0,
+        bm25_score=None,
+        evidence_id="github_repository:loser",
+    )
+
+    def resolve(hits):
+        monkeypatch.setattr(
+            qcr,
+            "_collect_span_evidence",
+            lambda *args, **kwargs: list(hits),
+        )
+
+        return qcr.resolve_concept_span(
+            "DevOps",
+            query="DevOps project",
+            clause_role=ClauseRole.GOAL,
+        )
+
+    baseline = resolve(
+        winner_hits
+        + [strongest_loser]
+    )
+
+    contaminated = resolve(
+        winner_hits
+        + [
+            strongest_loser,
+            additional_loser,
+        ]
+    )
+
+    assert (
+        baseline.resolution_status
+        == qcr.ResolutionStatus.EVIDENCE_RESOLVED
+    )
+    assert (
+        contaminated.resolution_status
+        == qcr.ResolutionStatus.EVIDENCE_RESOLVED
+    )
+
+    assert baseline.inferred_family == "cloud_platform"
+    assert contaminated.inferred_family == "cloud_platform"
+
+    baseline_scores = qcr._domain_scores(
+        winner_hits
+        + [strongest_loser]
+    )
+    contaminated_scores = qcr._domain_scores(
+        winner_hits
+        + [
+            strongest_loser,
+            additional_loser,
+        ]
+    )
+
+    baseline_family, baseline_margin = qcr._best_and_margin(
+        baseline_scores
+    )
+    contaminated_family, contaminated_margin = qcr._best_and_margin(
+        contaminated_scores
+    )
+
+    assert baseline_family == contaminated_family
+    assert baseline_family == "cloud_platform"
+
+    # software_engineering=0.10 cannot displace ai_ml=0.20
+    # as the strongest competitor, so competition is unchanged.
+    assert baseline_margin == contaminated_margin
+
+    # With winning support and competitive margin unchanged,
+    # losing evidence has no positive confidence contribution.
+    assert contaminated.confidence == baseline.confidence
+
+
+def test_a7e3_broad_ai_label_does_not_force_family_named_child_focus(
+    monkeypatch,
+):
+    """
+    A broad family expression must not manufacture child specificity
+    merely because the taxonomy contains a same-named focus.
+    """
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="General AI Pattern",
+            category="ai_ml",
+            focus="ai_ml",
+            family="ai_ml",
+            score=0.60,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:general-ai",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="github_repository",
+            title="MLOps Repository",
+            category="mlops",
+            focus="mlops",
+            family="ai_ml",
+            score=0.55,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="github_repository:mlops",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="NLP Research",
+            category="cs.CL",
+            focus="nlp",
+            family="ai_ml",
+            score=0.54,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=8.0,
+            evidence_id="research_paper:nlp",
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: list(hits),
+    )
+
+    result = qcr.resolve_concept_span(
+        "AI",
+        query="AI project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.EVIDENCE_RESOLVED
+    )
+    assert result.inferred_family == "ai_ml"
+
+    # "AI" is broad family-level language here. It must not force
+    # the same-named ai_ml child focus over competing child readings.
+    assert result.inferred_focus is None
+
+
+
+def _a7e_hit(
+    *,
+    source_type,
+    title,
+    focus,
+    family,
+    score,
+):
+    import query_concept_resolution as qcr
+
+    return qcr.ConceptEvidenceHit(
+        source_type=source_type,
+        title=title,
+        category=focus,
+        focus=focus,
+        family=family,
+        score=score,
+        lexical_match=True,
+        lexical_coverage=1.0,
+        bm25_score=None,
+    )
+
+
+def test_a7e2_distinct_same_source_records_can_establish_family_authority(
+    monkeypatch,
+):
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    hits = [
+        _a7e_hit(
+            source_type="project_pattern",
+            title="CI/CD Failure Intelligence Platform",
+            focus="devops",
+            family="cloud_platform",
+            score=0.55,
+        ),
+        _a7e_hit(
+            source_type="project_pattern",
+            title="Incident Postmortem Generator",
+            focus="devops",
+            family="cloud_platform",
+            score=0.54,
+        ),
+        _a7e_hit(
+            source_type="project_pattern",
+            title="Deployment Risk Scoring System",
+            focus="devops",
+            family="cloud_platform",
+            score=0.50,
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: list(hits),
+    )
+
+    result = qcr.resolve_concept_span(
+        "DevOps",
+        query="DevOps project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.EVIDENCE_RESOLVED
+    )
+    assert result.inferred_family == "cloud_platform"
+    assert result.inferred_focus == "devops"
+
+
+def test_a7e2_duplicate_records_do_not_satisfy_distinct_support_floor(
+    monkeypatch,
+):
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    duplicate = _a7e_hit(
+        source_type="project_pattern",
+        title="Same Project Pattern",
+        focus="devops",
+        family="cloud_platform",
+        score=0.90,
+    )
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: [
+            duplicate,
+            duplicate,
+            duplicate,
+        ],
+    )
+
+    result = qcr.resolve_concept_span(
+        "DevOps",
+        query="DevOps project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    # This is incidentally GREEN under the pre-A.7E2 implementation
+    # because all duplicates share one source type. After source-type
+    # diversity is removed from semantic authority, this contract
+    # specifically guards against raw duplicate-count inflation.
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.SUPPORTED_WEAK
+    )
+
+
+def test_a7e2_family_authority_can_survive_focus_ambiguity(
+    monkeypatch,
+):
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    hits = [
+        _a7e_hit(
+            source_type="project_pattern",
+            title="MLOps Pattern A",
+            focus="mlops",
+            family="ai_ml",
+            score=0.60,
+        ),
+        _a7e_hit(
+            source_type="research_paper",
+            title="AI Research B",
+            focus="ai_ml",
+            family="ai_ml",
+            score=0.60,
+        ),
+        _a7e_hit(
+            source_type="github_repository",
+            title="NLP Repository C",
+            focus="nlp",
+            family="ai_ml",
+            score=0.60,
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: list(hits),
+    )
+
+    result = qcr.resolve_concept_span(
+        "observability",
+        query="observability project",
+        clause_role=ClauseRole.GOAL,
+    )
+
     assert (
         result.resolution_status
         == qcr.ResolutionStatus.EVIDENCE_RESOLVED
     )
     assert result.inferred_family == "ai_ml"
     assert result.inferred_focus is None
+
+
+def test_a7e2_single_focus_support_is_coherent_even_with_zero_margin(
+    monkeypatch,
+):
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    hits = [
+        _a7e_hit(
+            source_type="project_pattern",
+            title="Data Pattern A",
+            focus="data_engineering",
+            family="cloud_platform",
+            score=0.70,
+        ),
+        _a7e_hit(
+            source_type="project_pattern",
+            title="Data Pattern B",
+            focus="data_engineering",
+            family="cloud_platform",
+            score=0.65,
+        ),
+        _a7e_hit(
+            source_type="project_pattern",
+            title="Data Pattern C",
+            focus="data_engineering",
+            family="cloud_platform",
+            score=0.60,
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: list(hits),
+    )
+
+    result = qcr.resolve_concept_span(
+        "data engineering",
+        query="data engineering project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    assert result.domain_margin == 0.0
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.EVIDENCE_RESOLVED
+    )
+    assert result.inferred_family == "cloud_platform"
+    assert result.inferred_focus == "data_engineering"
+
+
+
+def test_a7e5_resolved_focus_always_belongs_to_resolved_family_across_taxonomy(
+    monkeypatch,
+):
+    """
+    Any specific focus exposed by the resolver must belong to the
+    resolver's elected family.
+
+    Production evidence derives family from focus. This contract makes
+    that hierarchy explicit so the invariant cannot silently disappear
+    if evidence construction changes later.
+    """
+    import domain_taxonomy as taxonomy
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    for focus in sorted(
+        taxonomy.FOCUS_TO_FAMILY
+    ):
+        family = taxonomy.get_domain_family(
+            focus
+        )
+
+        if (
+            focus == "general"
+            or family == "general"
+        ):
+            continue
+
+        hits = [
+            qcr.ConceptEvidenceHit(
+                source_type="project_pattern",
+                title=(
+                    f"{focus} coherence record {index}"
+                ),
+                category=focus,
+                focus=focus,
+                family=family,
+                score=(
+                    0.80
+                    - (index * 0.05)
+                ),
+                lexical_match=True,
+                lexical_coverage=1.0,
+                bm25_score=None,
+                evidence_id=(
+                    f"project_pattern:"
+                    f"{focus}:coherence:{index}"
+                ),
+            )
+            for index in range(3)
+        ]
+
+        monkeypatch.setattr(
+            qcr,
+            "_collect_span_evidence",
+            lambda *args, _hits=hits, **kwargs: (
+                _hits
+            ),
+        )
+
+        result = qcr.resolve_concept_span(
+            focus.replace(
+                "_",
+                " ",
+            ),
+            query=(
+                f"Build a "
+                f"{focus.replace('_', ' ')} "
+                f"project"
+            ),
+            clause_role=ClauseRole.GOAL,
+        )
+
+        assert (
+            result.resolution_status
+            == qcr.ResolutionStatus.EVIDENCE_RESOLVED
+        )
+
+        assert result.inferred_focus == focus
+        assert result.inferred_family == family
+
+        assert (
+            result.inferred_focus is None
+            or taxonomy.get_domain_family(
+                result.inferred_focus
+            )
+            == result.inferred_family
+        )

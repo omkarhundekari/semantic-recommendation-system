@@ -1,11 +1,19 @@
 import re
 from typing import Any, List
 
+from lexical_equivalence import (
+    get_lexically_equivalent_forms,
+)
+
 
 ANCHOR_RULES = [
     (
         "retrieval augmented generation",
-        ["retrieval augmented generation", "rag"],
+        list(
+            get_lexically_equivalent_forms(
+                "retrieval augmented generation"
+            )
+        ),
     ),
     (
         "question answering",

@@ -13,6 +13,9 @@ from domain_taxonomy import (
 from github_corpus_search import (
     search_github_project_corpus,
 )
+from lexical_equivalence import (
+    get_lexically_equivalent_forms,
+)
 from project_corpus_search import (
     search_project_corpus,
 )
@@ -46,6 +49,12 @@ class ConceptEvidenceHit:
     lexical_match: bool
     lexical_coverage: float
     bm25_score: Optional[float]
+
+    # Stable record identity when the upstream source exposes one.
+    #
+    # Synthetic and legacy callers may omit this field; authority
+    # accounting then falls back to source type + normalized title.
+    evidence_id: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -302,7 +311,7 @@ def _token_occurs(
     )
 
 
-def _lexical_coverage(
+def _literal_lexical_coverage(
     surface_form: str,
     item: Dict,
 ) -> float:
@@ -320,6 +329,31 @@ def _lexical_coverage(
     )
 
     return matched / len(tokens)
+
+
+def _lexical_coverage(
+    surface_form: str,
+    item: Dict,
+) -> float:
+    """
+    Report the strongest literal coverage across equivalent forms.
+
+    Coverage therefore remains lexical rather than domain-derived.
+    """
+    equivalents = get_lexically_equivalent_forms(
+        surface_form
+    )
+
+    if not equivalents:
+        return 0.0
+
+    return max(
+        _literal_lexical_coverage(
+            equivalent,
+            item,
+        )
+        for equivalent in equivalents
+    )
 
 
 def _tokens_match_with_proximity(
@@ -381,15 +415,12 @@ def _tokens_match_with_proximity(
     return False
 
 
-def _lexical_match(
+def _literal_lexical_match(
     surface_form: str,
     item: Dict,
 ) -> bool:
     """
-    Single-token concepts require literal token occurrence.
-
-    Multi-token concepts require ordered local occurrence.
-    Document-wide token co-occurrence is not sufficient.
+    Match one literal surface form without semantic expansion.
     """
     tokens = _surface_tokens(surface_form)
 
@@ -413,6 +444,157 @@ def _lexical_match(
         text_tokens,
         max_gap=4,
     )
+
+
+def _lexical_match(
+    surface_form: str,
+    item: Dict,
+) -> bool:
+    """
+    Qualify evidence against strict lexical equivalents.
+
+    Equivalence expands surface matching only. It does not assign
+    a family, focus, score, status, or semantic authority.
+    """
+    return any(
+        _literal_lexical_match(
+            equivalent,
+            item,
+        )
+        for equivalent in get_lexically_equivalent_forms(
+            surface_form
+        )
+    )
+
+
+def _normalized_evidence_title(
+    title: str,
+) -> str:
+    return " ".join(
+        str(title or "").strip().lower().split()
+    )
+
+
+def _evidence_identity_from_item(
+    item: Dict,
+    *,
+    source_type: str,
+) -> str:
+    title = str(
+        item.get("title", "")
+        or item.get("name", "")
+        or ""
+    )
+
+    if source_type == "research_paper":
+        document_id = str(
+            item.get("document_id", "")
+            or ""
+        ).strip()
+
+        if document_id:
+            return (
+                f"research_paper:{document_id}"
+            )
+
+    if source_type == "github_repository":
+        url = str(
+            item.get("url", "")
+            or ""
+        ).strip().lower()
+
+        if url:
+            return (
+                f"github_repository:{url}"
+            )
+
+    # Project-pattern titles already act as source identifiers
+    # elsewhere in the corpus. This fallback also supplies stable
+    # identity for direct/synthetic ConceptEvidenceHit callers.
+    return (
+        f"{source_type}:"
+        f"{_normalized_evidence_title(title)}"
+    )
+
+
+def _evidence_identity(
+    hit: ConceptEvidenceHit,
+) -> str:
+    if hit.evidence_id:
+        return hit.evidence_id
+
+    return (
+        f"{hit.source_type}:"
+        f"{_normalized_evidence_title(hit.title)}"
+    )
+
+
+def _deduplicate_evidence_hits(
+    hits: Sequence[ConceptEvidenceHit],
+) -> List[ConceptEvidenceHit]:
+    by_identity: Dict[
+        str,
+        ConceptEvidenceHit,
+    ] = {}
+
+    conflicted_identities: set[str] = set()
+    order: List[str] = []
+
+    for hit in hits:
+        identity = _evidence_identity(hit)
+
+        if identity in conflicted_identities:
+            continue
+
+        previous = by_identity.get(
+            identity
+        )
+
+        if previous is None:
+            order.append(identity)
+            by_identity[identity] = hit
+            continue
+
+        semantic_identity = (
+            hit.family,
+            hit.focus,
+        )
+        previous_semantic_identity = (
+            previous.family,
+            previous.focus,
+        )
+
+        if (
+            semantic_identity
+            != previous_semantic_identity
+        ):
+            # One canonical evidence record cannot vote for
+            # contradictory semantic classifications.
+            #
+            # Retrieval score is not semantic authority. Once two
+            # representations of one identity disagree on family or
+            # focus, fail closed by removing that identity from
+            # classification support entirely.
+            conflicted_identities.add(
+                identity
+            )
+            by_identity.pop(
+                identity,
+                None,
+            )
+            continue
+
+        # Repeated retrieval of one semantically consistent record
+        # contributes once. Preserve the strongest retrieval
+        # representation without increasing support multiplicity.
+        if hit.score > previous.score:
+            by_identity[identity] = hit
+
+    return [
+        by_identity[identity]
+        for identity in order
+        if identity in by_identity
+    ]
 
 
 def _evidence_hit(
@@ -454,6 +636,10 @@ def _evidence_hit(
         ),
         bm25_score=_bm25_from_item(
             item,
+        ),
+        evidence_id=_evidence_identity_from_item(
+            item,
+            source_type=source_type,
         ),
     )
 
@@ -528,45 +714,65 @@ def _lexically_supported_hits(
     ]
 
 
-def _domain_scores(
+def _source_capped_scores(
     hits: Sequence[ConceptEvidenceHit],
+    *,
+    label_attribute: str,
 ) -> Dict[str, float]:
-    by_family: Dict[str, Dict[str, float]] = {}
+    """
+    Aggregate competing semantic labels with one vote ceiling per
+    source type.
+
+    Distinct records remain available to absolute authority/support
+    accounting. This function controls only candidate election, so
+    repeated retrieval from one provenance class cannot gain
+    unbounded voting weight.
+    """
+    by_label: Dict[str, Dict[str, float]] = {}
 
     for hit in hits:
-        family_bucket = by_family.setdefault(
-            hit.family,
+        label = getattr(
+            hit,
+            label_attribute,
+        )
+
+        label_bucket = by_label.setdefault(
+            label,
             {},
         )
 
-        previous = family_bucket.get(
+        previous = label_bucket.get(
             hit.source_type,
             0.0,
         )
 
-        family_bucket[hit.source_type] = max(
+        label_bucket[hit.source_type] = max(
             previous,
             max(hit.score, 0.0001),
         )
 
     return {
-        family: sum(source_scores.values())
-        for family, source_scores in by_family.items()
+        label: sum(source_scores.values())
+        for label, source_scores in by_label.items()
     }
+
+
+def _domain_scores(
+    hits: Sequence[ConceptEvidenceHit],
+) -> Dict[str, float]:
+    return _source_capped_scores(
+        hits,
+        label_attribute="family",
+    )
 
 
 def _focus_scores(
     hits: Sequence[ConceptEvidenceHit],
 ) -> Dict[str, float]:
-    scores: Dict[str, float] = {}
-
-    for hit in hits:
-        scores[hit.focus] = (
-            scores.get(hit.focus, 0.0)
-            + max(hit.score, 0.0001)
-        )
-
-    return scores
+    return _source_capped_scores(
+        hits,
+        label_attribute="focus",
+    )
 
 
 def _best_and_margin(
@@ -2363,7 +2569,6 @@ def resolve_concept_span(
     top_k: int = 6,
     ambiguity_margin_floor: float = 0.20,
     resolved_min_lexical_hits: int = 3,
-    resolved_min_source_types: int = 2,
     char_span: Optional[tuple[int, int]] = None,
     constituent_char_spans: tuple[
         tuple[int, int],
@@ -2378,8 +2583,10 @@ def resolve_concept_span(
     )
 
     lexical_hits = (
-        _lexically_supported_hits(
-            all_hits
+        _deduplicate_evidence_hits(
+            _lexically_supported_hits(
+                all_hits
+            )
         )
     )
 
@@ -2397,11 +2604,6 @@ def resolve_concept_span(
     lexical_source_types = {
         hit.source_type
         for hit in lexical_hits
-    }
-
-    domain_source_types = {
-        hit.source_type
-        for hit in domain_hits
     }
 
     top_bm25_values = [
@@ -2478,50 +2680,16 @@ def resolve_concept_span(
         domain_hits
     )
 
-    focus_scores = _focus_scores(
-        domain_hits
-    )
-
     best_family, family_margin = (
         _best_and_margin(
             family_scores
         )
     )
 
-    best_focus, _ = _best_and_margin(
-        focus_scores
-    )
-
-    # Family competition grants domain authority for this span.
-    # A separately elected focus may only be exposed when it
-    # belongs to that same canonical family.
-    #
-    # If the elections disagree, preserve family-level support
-    # and abstain from unsupported specificity. Do not transfer
-    # that authority to another focus.
-    if (
-        best_focus is not None
-        and best_family is not None
-        and get_domain_family(best_focus)
-        != best_family
-    ):
-        best_focus = None
-
     source_types = {
         hit.source_type
         for hit in lexical_hits
     }
-
-    # Confidence describes the inferred domain classification,
-    # not merely whether the surface concept exists.
-    #
-    # Literal-but-unclassified evidence contributes to existence
-    # support, but must not inflate confidence in a domain it
-    # cannot classify.
-    confidence = _confidence(
-        hits=domain_hits,
-        margin=family_margin,
-    )
 
     # Existence authority and domain-classification authority
     # are intentionally different.
@@ -2529,12 +2697,60 @@ def resolve_concept_span(
     # Literal but taxonomy-unclassified evidence may prove that
     # a concept exists, but it must not strengthen a particular
     # inferred domain.
-    has_resolution_authority = (
-        len(domain_hits)
-        >= resolved_min_lexical_hits
-        and len(domain_source_types)
-        >= resolved_min_source_types
+    #
+    # Classification authority must also be attributable to the
+    # elected family itself. Evidence supporting competing
+    # families may participate in family competition, but must
+    # not manufacture authority for the winner.
+    winning_family_hits = [
+        hit
+        for hit in domain_hits
+        if hit.family == best_family
+    ]
+
+    # Confidence describes the elected domain classification.
+    # Its positive support contribution must therefore come only
+    # from evidence attributable to that elected family.
+    #
+    # Competing-family evidence is already represented through
+    # family_margin and must not additionally inflate confidence
+    # through record count or source-type diversity.
+    confidence = _confidence(
+        hits=winning_family_hits,
+        margin=family_margin,
     )
+
+    # Source diversity is provenance information, not semantic
+    # corroboration. Family authority is earned from enough
+    # distinct evidence records attributable to the elected family.
+    has_resolution_authority = (
+        len(winning_family_hits)
+        >= resolved_min_lexical_hits
+    )
+
+    # Focus specificity is earned separately and hierarchically:
+    # only evidence belonging to the elected family may compete.
+    winning_focus_scores = _focus_scores(
+        winning_family_hits
+    )
+
+    best_focus, focus_margin = (
+        _best_and_margin(
+            winning_focus_scores
+        )
+    )
+
+    focus_is_coherent = (
+        len(winning_focus_scores) == 1
+        or (
+            len(winning_focus_scores) > 1
+            and focus_margin
+            >= ambiguity_margin_floor
+        )
+    )
+
+    if not focus_is_coherent:
+        best_focus = None
 
     if not has_resolution_authority:
         status = ResolutionStatus.SUPPORTED_WEAK
