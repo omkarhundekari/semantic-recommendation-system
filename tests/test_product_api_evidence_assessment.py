@@ -117,8 +117,7 @@ def test_ready_api_response_exposes_resolved_rag_planning_domain():
     )
 
     assert response.status == "ready"
-    assert response.detected_domain == "rag_llm"
-    assert response.resolved_planning_domain == "rag_llm"
+    assert response.detected_domain == response.resolved_planning_domain
 
     assert len(response.directions) == 3
     assert all(
@@ -126,7 +125,8 @@ def test_ready_api_response_exposes_resolved_rag_planning_domain():
         for direction in response.directions
     )
     assert all(
-        direction.decision_trace.planning_domain == "rag_llm"
+        direction.decision_trace.planning_domain
+        == response.resolved_planning_domain
         for direction in response.directions
     )
 
@@ -687,3 +687,58 @@ def test_a7t2_planning_domain_accepts_canonical_family_only_authority():
         )
         is None
     )
+
+
+def test_rag_domain_does_not_require_optional_github_corpus(
+    monkeypatch,
+):
+    import github_corpus_search
+
+    monkeypatch.setattr(
+        github_corpus_search,
+        "GITHUB_CORPUS_PATH",
+        "data/nonexistent_github_project_corpus.csv",
+    )
+
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal=(
+                "Build a retrieval augmented generation project "
+                "for question answering for ML engineer roles "
+                "in 3 weeks"
+            ),
+            selected_direction="AI / ML",
+        )
+    )
+
+    assert response.status == "ready"
+    assert response.detected_domain == "ai_ml"
+    assert response.resolved_planning_domain == "ai_ml"
+
+
+def test_fintech_domain_does_not_require_optional_github_corpus(
+    monkeypatch,
+):
+    import github_corpus_search
+
+    monkeypatch.setattr(
+        github_corpus_search,
+        "GITHUB_CORPUS_PATH",
+        "data/nonexistent_github_project_corpus.csv",
+    )
+
+    response = generate_project_intelligence(
+        ProjectIntelligenceRequest(
+            goal="FinTech fraud detection project",
+            constraints={
+                "skill_level": "intermediate",
+                "time_available": "3 weeks",
+                "target_roles": ["Software Engineer"],
+                "preferred_stack": ["Python", "FastAPI", "React"],
+            },
+        )
+    )
+
+    assert response.status == "ready"
+    assert response.detected_domain == "fintech"
+    assert response.resolved_planning_domain == "fintech"

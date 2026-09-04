@@ -2992,6 +2992,178 @@ def test_a7e3_broad_ai_label_does_not_force_family_named_child_focus(
 
 
 
+
+def test_focus_authority_does_not_increase_when_competing_record_is_removed(
+    monkeypatch,
+):
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    def hit(
+        *,
+        evidence_id,
+        focus,
+        score,
+    ):
+        return qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title=evidence_id,
+            category=focus,
+            focus=focus,
+            family="ai_ml",
+            score=score,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id=evidence_id,
+        )
+
+    winner = [
+        hit(
+            evidence_id=f"a-{index}",
+            focus="rag_llm",
+            score=score,
+        )
+        for index, score in enumerate(
+            (0.90, 0.80, 0.70),
+            start=1,
+        )
+    ]
+
+    competitor = [
+        hit(
+            evidence_id=f"b-{index}",
+            focus="healthcare_ai",
+            score=score,
+        )
+        for index, score in enumerate(
+            (0.85, 0.75, 0.65),
+            start=1,
+        )
+    ]
+
+    populations = (
+        winner + competitor,
+        winner + competitor[:2],
+    )
+
+    results = []
+
+    for evidence in populations:
+        monkeypatch.setattr(
+            qcr,
+            "_collect_span_evidence",
+            lambda *args, evidence=evidence, **kwargs: list(evidence),
+        )
+
+        results.append(
+            qcr.resolve_concept_span(
+                "grounded assistant",
+                query="grounded assistant project",
+                clause_role=ClauseRole.GOAL,
+            )
+        )
+
+    full, reduced = results
+
+    assert full.inferred_family == "ai_ml"
+    assert reduced.inferred_family == "ai_ml"
+
+    # Removing a non-max competing record leaves source-capped
+    # election scores unchanged. It must therefore not turn
+    # abstention into more specific focus authority.
+    assert full.inferred_focus is None
+    assert reduced.inferred_focus is None
+
+
+def test_research_subject_category_does_not_override_specific_project_focus(
+    monkeypatch,
+):
+    import query_concept_resolution as qcr
+    from query_concept_understanding import ClauseRole
+
+    hits = [
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Retrieval Grounded Assistant",
+            category="rag_llm",
+            focus="rag_llm",
+            family="ai_ml",
+            score=0.52,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:rag-a",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Grounded Generation Evaluator",
+            category="rag_llm",
+            focus="rag_llm",
+            family="ai_ml",
+            score=0.48,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:rag-b",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="project_pattern",
+            title="Retrieval Pipeline Inspector",
+            category="rag_llm",
+            focus="rag_llm",
+            family="ai_ml",
+            score=0.44,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="project_pattern:rag-c",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="Retrieval Grounded Language Study",
+            category="cs.CL",
+            focus="nlp",
+            family="ai_ml",
+            score=0.70,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="research_paper:subject-a",
+        ),
+        qcr.ConceptEvidenceHit(
+            source_type="research_paper",
+            title="Information Retrieval Study",
+            category="cs.IR",
+            focus="recommendation_systems",
+            family="ai_ml",
+            score=0.68,
+            lexical_match=True,
+            lexical_coverage=1.0,
+            bm25_score=None,
+            evidence_id="research_paper:subject-b",
+        ),
+    ]
+
+    monkeypatch.setattr(
+        qcr,
+        "_collect_span_evidence",
+        lambda *args, **kwargs: list(hits),
+    )
+
+    result = qcr.resolve_concept_span(
+        "retrieval augmented generation",
+        query="retrieval augmented generation project",
+        clause_role=ClauseRole.GOAL,
+    )
+
+    assert (
+        result.resolution_status
+        == qcr.ResolutionStatus.EVIDENCE_RESOLVED
+    )
+    assert result.inferred_family == "ai_ml"
+    assert result.inferred_focus == "rag_llm"
+
 def _a7e_hit(
     *,
     source_type,

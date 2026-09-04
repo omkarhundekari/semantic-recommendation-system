@@ -28,13 +28,6 @@ from query_concept_understanding import (
             False,
         ),
         (
-            "I want a RAG app using Qdrant "
-            "and want to learn Kubernetes",
-            "rag_llm",
-            "ai_ml",
-            False,
-        ),
-        (
             "targeting data engineering roles using Python",
             "data_engineering",
             "cloud_platform",
@@ -117,6 +110,27 @@ def test_weak_evidence_cannot_establish_primary_domain(
 
     assert snapshot.primary_focus is None
     assert snapshot.primary_family is None
+    assert snapshot.domain_ambiguous is False
+
+
+def test_rag_query_keeps_family_authority_without_optional_github_corpus(
+    monkeypatch,
+):
+    import github_corpus_search
+
+    monkeypatch.setattr(
+        github_corpus_search,
+        "GITHUB_CORPUS_PATH",
+        "data/nonexistent_github_project_corpus.csv",
+    )
+
+    snapshot = build_query_semantic_snapshot(
+        "I want a RAG app using Qdrant "
+        "and want to learn Kubernetes"
+    )
+
+    assert snapshot.primary_focus is None
+    assert snapshot.primary_family == "ai_ml"
     assert snapshot.domain_ambiguous is False
 
 
@@ -456,6 +470,69 @@ def test_a7t2_family_only_span_establishes_primary_family(
     assert snapshot.domain_ambiguous is False
 
 
+def test_family_root_projection_requires_direct_root_evidence(
+    monkeypatch,
+):
+    import query_semantics
+    from query_concept_resolution import (
+        ConceptEvidenceHit,
+        ResolutionStatus,
+        ResolvedConceptSpan,
+    )
+    from query_concept_understanding import ClauseRole
+
+    root_evidence = ConceptEvidenceHit(
+        source_type="project_pattern",
+        title="General AI Pattern",
+        category="ai_ml",
+        focus="ai_ml",
+        family="ai_ml",
+        score=0.60,
+        lexical_match=True,
+        lexical_coverage=1.0,
+        bm25_score=None,
+        evidence_id="project_pattern:general-ai",
+    )
+
+    resolved = (
+        ResolvedConceptSpan(
+            surface_form="AI",
+            normalized_form="ai",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+            confidence=0.8,
+            inferred_focus=None,
+            inferred_family="ai_ml",
+            domain_margin=0.3,
+            support_count=3,
+            source_type_count=1,
+            lexical_support_count=3,
+            lexical_source_type_count=1,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=(root_evidence,),
+            char_span=(0, 2),
+            constituent_char_spans=((0, 2),),
+            segment_index=0,
+        ),
+    )
+
+    monkeypatch.setattr(
+        query_semantics,
+        "resolve_query_spans_shadow",
+        lambda *args, **kwargs: list(resolved),
+    )
+
+    snapshot = query_semantics.build_query_semantic_snapshot(
+        "AI project"
+    )
+
+    assert snapshot.primary_focus == "ai_ml"
+    assert snapshot.primary_family == "ai_ml"
+    assert snapshot.domain_ambiguous is False
+
+
 def test_a7t2_family_only_conflicts_with_other_family_focus(
     monkeypatch,
 ):
@@ -596,6 +673,159 @@ def test_a7t2_weaker_domain_hypothesis_cannot_veto_resolved_domain(
     assert snapshot.primary_family == "cloud_platform"
     assert snapshot.domain_ambiguous is False
 
+
+
+def test_contextual_domain_support_can_disambiguate_generic_atomic_conflict(
+    monkeypatch,
+):
+    import query_semantics
+    from query_concept_resolution import (
+        ResolutionStatus,
+        ResolvedConceptSpan,
+    )
+    from query_concept_understanding import ClauseRole
+
+    resolved = (
+        ResolvedConceptSpan(
+            surface_form="FinTech",
+            normalized_form="fintech",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+            confidence=0.38,
+            inferred_focus="fintech",
+            inferred_family="fintech",
+            domain_margin=0.33,
+            support_count=5,
+            source_type_count=1,
+            lexical_support_count=5,
+            lexical_source_type_count=1,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(0, 7),
+            constituent_char_spans=((0, 7),),
+            segment_index=0,
+        ),
+        ResolvedConceptSpan(
+            surface_form="detection",
+            normalized_form="detection",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=1,
+            resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+            confidence=0.75,
+            inferred_focus="computer_vision",
+            inferred_family="ai_ml",
+            domain_margin=0.59,
+            support_count=11,
+            source_type_count=2,
+            lexical_support_count=11,
+            lexical_source_type_count=2,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(14, 23),
+            constituent_char_spans=((14, 23),),
+            segment_index=0,
+        ),
+        ResolvedConceptSpan(
+            surface_form="fraud detection",
+            normalized_form="fraud detection",
+            clause_role=ClauseRole.GOAL,
+            ngram_size=2,
+            resolution_status=ResolutionStatus.SUPPORTED_WEAK,
+            confidence=0.20,
+            inferred_focus="fintech",
+            inferred_family="fintech",
+            domain_margin=0.0,
+            support_count=1,
+            source_type_count=1,
+            lexical_support_count=1,
+            lexical_source_type_count=1,
+            lexical_coverage=1.0,
+            top_bm25_score=None,
+            supporting_evidence=tuple(),
+            char_span=(8, 23),
+            constituent_char_spans=((8, 13), (14, 23)),
+            segment_index=0,
+        ),
+    )
+
+    monkeypatch.setattr(
+        query_semantics,
+        "resolve_query_spans_shadow",
+        lambda *args, **kwargs: list(resolved),
+    )
+
+    snapshot = query_semantics.build_query_semantic_snapshot(
+        "FinTech fraud detection project"
+    )
+
+    assert snapshot.primary_focus == "fintech"
+    assert snapshot.primary_family == "fintech"
+    assert snapshot.domain_ambiguous is False
+
+
+def test_contextual_domain_support_does_not_erase_atom_without_corroborating_peer(
+    monkeypatch,
+):
+    import query_semantics as qs
+    from query_concept_resolution import (
+        ResolvedConceptSpan,
+        ResolutionStatus,
+    )
+    from query_concept_understanding import ClauseRole
+
+    atom = ResolvedConceptSpan(
+        surface_form="detection",
+        normalized_form="detection",
+        clause_role=ClauseRole.GOAL,
+        ngram_size=1,
+        resolution_status=ResolutionStatus.EVIDENCE_RESOLVED,
+        confidence=0.8,
+        inferred_focus="computer_vision",
+        inferred_family="ai_ml",
+        domain_margin=0.4,
+        support_count=3,
+        source_type_count=1,
+        lexical_support_count=3,
+        lexical_source_type_count=1,
+        lexical_coverage=1.0,
+        top_bm25_score=None,
+        supporting_evidence=tuple(),
+        char_span=(6, 15),
+        constituent_char_spans=tuple(),
+        segment_index=0,
+    )
+
+    context = ResolvedConceptSpan(
+        surface_form="fraud detection",
+        normalized_form="fraud detection",
+        clause_role=ClauseRole.GOAL,
+        ngram_size=2,
+        resolution_status=ResolutionStatus.SUPPORTED_WEAK,
+        confidence=0.4,
+        inferred_focus="fintech",
+        inferred_family="fintech",
+        domain_margin=0.0,
+        support_count=2,
+        source_type_count=1,
+        lexical_support_count=2,
+        lexical_source_type_count=1,
+        lexical_coverage=1.0,
+        top_bm25_score=None,
+        supporting_evidence=tuple(),
+        char_span=(0, 15),
+        constituent_char_spans=tuple(),
+        segment_index=0,
+    )
+
+    qualified = qs._contextually_qualified_domain_candidates(
+        [atom],
+        [atom, context],
+    )
+
+    assert qualified == [atom]
 
 def test_a7t2_same_authority_tier_domain_conflict_still_abstains(
     monkeypatch,

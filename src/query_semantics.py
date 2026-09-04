@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from domain_taxonomy import (
+    normalize_value,
     get_domain_family,
     get_family_focuses,
 )
@@ -350,6 +351,22 @@ def _canonical_family(
     return family
 
 
+def _has_direct_family_root_support(
+    span: ResolvedConceptSpan,
+) -> bool:
+    family = _canonical_family(span)
+
+    if family is None:
+        return False
+
+    return any(
+        normalize_value(hit.category) == family
+        and normalize_value(hit.focus) == family
+        and normalize_value(hit.family) == family
+        for hit in span.supporting_evidence
+    )
+
+
 def _domain_hypotheses_conflict(
     left: ResolvedConceptSpan,
     right: ResolvedConceptSpan,
@@ -416,6 +433,76 @@ def _domain_candidates(
     ]
 
 
+def _contextually_qualified_domain_candidates(
+    authoritative: Sequence[ResolvedConceptSpan],
+    selected: Sequence[ResolvedConceptSpan],
+) -> List[ResolvedConceptSpan]:
+    """
+    Constrain isolated atomic readings with supported local context.
+
+    Context does not gain primary-domain authority here. It only
+    disqualifies an atomic interpretation when a larger same-role
+    span contains that atom, conflicts with it, and agrees with a
+    separate authoritative hypothesis in the same segment.
+    """
+    qualified = []
+
+    for candidate in authoritative:
+        contradicted = False
+
+        if candidate.ngram_size == 1:
+            for context in selected:
+                if (
+                    context is candidate
+                    or context.ngram_size <= 1
+                    or context.segment_index
+                    != candidate.segment_index
+                    or context.clause_role
+                    != candidate.clause_role
+                    or context.resolution_status
+                    == ResolutionStatus.UNRESOLVED
+                    or _canonical_family(context)
+                    is None
+                    or not _contains(
+                        context,
+                        candidate,
+                    )
+                    or not _domain_hypotheses_conflict(
+                        context,
+                        candidate,
+                    )
+                ):
+                    continue
+
+                corroborated = any(
+                    peer is not candidate
+                    and peer.segment_index
+                    == candidate.segment_index
+                    and peer.clause_role
+                    == candidate.clause_role
+                    and _canonical_family(peer)
+                    is not None
+                    and _domain_hypotheses_conflict(
+                        peer,
+                        candidate,
+                    )
+                    and not _domain_hypotheses_conflict(
+                        context,
+                        peer,
+                    )
+                    for peer in authoritative
+                )
+
+                if corroborated:
+                    contradicted = True
+                    break
+
+        if not contradicted:
+            qualified.append(candidate)
+
+    return qualified
+
+
 def _choose_primary_domain(
     selected: Sequence[ResolvedConceptSpan],
 ) -> Tuple[
@@ -451,6 +538,11 @@ def _choose_primary_domain(
             == strongest_role_priority
         )
     ]
+
+    authoritative = _contextually_qualified_domain_candidates(
+        authoritative,
+        selected,
+    )
 
     # -----------------------------------------------------
     # QUERY-LEVEL DOMAIN CONFLICT POLICY
@@ -618,6 +710,15 @@ def _choose_primary_domain(
         and family is None
     ):
         return None, None, False
+
+    # Family-level authority remains family-only unless the winning
+    # span carries direct evidence for the canonical family root.
+    if (
+        focus is None
+        and family is not None
+        and _has_direct_family_root_support(winner)
+    ):
+        focus = family
 
     return focus, family, False
 

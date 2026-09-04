@@ -766,11 +766,43 @@ def _domain_scores(
     )
 
 
+def _focus_authority_hits(
+    hits: Sequence[ConceptEvidenceHit],
+) -> List[ConceptEvidenceHit]:
+    """
+    Keep only evidence that explicitly asserts its canonical focus.
+
+    A category translated through a broader upstream taxonomy may
+    still support family classification, but that translation does
+    not automatically become focus-level authority.
+    """
+    qualified = []
+
+    for hit in hits:
+        category = (
+            str(hit.category or "")
+            .strip()
+            .lower()
+            .replace("-", "_")
+        )
+        focus = (
+            str(hit.focus or "")
+            .strip()
+            .lower()
+            .replace("-", "_")
+        )
+
+        if category == focus:
+            qualified.append(hit)
+
+    return qualified
+
+
 def _focus_scores(
     hits: Sequence[ConceptEvidenceHit],
 ) -> Dict[str, float]:
     return _source_capped_scores(
-        hits,
+        _focus_authority_hits(hits),
         label_attribute="focus",
     )
 
@@ -2730,8 +2762,17 @@ def resolve_concept_span(
 
     # Focus specificity is earned separately and hierarchically:
     # only evidence belonging to the elected family may compete.
-    winning_focus_scores = _focus_scores(
+    focus_authority_hits = _focus_authority_hits(
         winning_family_hits
+    )
+
+    # All focus-capable hypotheses remain in candidate election.
+    # Focus coherence is distinct from family-level resolution
+    # authority: weak evidence may carry a coherent focus, while
+    # competing focus hypotheses must still satisfy the ambiguity
+    # margin before specificity is reported.
+    winning_focus_scores = _focus_scores(
+        focus_authority_hits
     )
 
     best_focus, focus_margin = (
