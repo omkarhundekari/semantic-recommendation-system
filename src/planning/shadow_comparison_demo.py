@@ -10,6 +10,7 @@ from planning.candidate_models import (
     CandidateDirection,
     CandidateGenerationRequest,
 )
+from planning.candidate_set_gate import assess_candidate_set
 from planning.candidate_prompt import (
     CANDIDATE_GENERATION_PROMPT_VERSION,
     build_candidate_generation_payload,
@@ -22,13 +23,6 @@ from planning.cross_encoder_goal_relevance import (
 )
 from planning.evidence_support import (
     CandidateEvidenceSupportScorer,
-)
-from planning.candidate_validator import validate_candidate
-from planning.promotion_eligibility import (
-    assess_promotion_eligibility,
-)
-from planning.candidate_feasibility_prescreen import (
-    prescreen_candidate_feasibility,
 )
 from planning.candidate_source_relevance import (
     assess_candidate_set_source_relevance,
@@ -499,37 +493,17 @@ def build_promotion_eligibility_shadow(
     diversity_trace = _candidate_diversity_trace_from_dict(
         semantic_candidate_diversity
     )
-    assessments = []
-
-    for candidate in candidates:
-        validation = validate_candidate(candidate, brief)
-        evidence_assessment = evidence_support_scorer.assess_candidate(
-            candidate=candidate,
-            brief=brief,
-        )
-        grounding = assess_grounding_adequacy(
-            candidate=candidate,
-            brief=brief,
-            assessment=evidence_assessment,
-        )
-
-        feasibility_prescreen = prescreen_candidate_feasibility(
-            candidate=candidate,
-            brief=brief,
-            request=generation_request,
-            detected_domain=detected_domain,
-        )
-
-        assessments.append(
-            assess_promotion_eligibility(
-                candidate=candidate,
-                validation=validation,
-                grounding=grounding,
-                quality_warnings=quality_warnings,
-                semantic_candidate_diversity=diversity_trace,
-                feasibility_prescreen=feasibility_prescreen,
-            ).to_dict()
-        )
+    gate = assess_candidate_set(
+        candidates=candidates,
+        brief=brief,
+        request=generation_request,
+        detected_domain=detected_domain,
+        evidence_support_scorer=evidence_support_scorer,
+        semantic_diversity_scorer=None,
+        semantic_candidate_diversity=diversity_trace,
+        quality_warnings=quality_warnings,
+    )
+    assessments = gate.promotion_eligibility
 
     status_counts = {
         "eligible_count": sum(
