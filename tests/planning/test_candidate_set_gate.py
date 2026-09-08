@@ -305,6 +305,9 @@ def test_blocks_candidate_set_with_hard_promotion_failure(monkeypatch):
             blocking_reasons=[
                 "Candidate does not cite directly retained evidence."
             ],
+            blocking_reason_codes=[
+                "missing_direct_evidence"
+            ],
             review_reasons=[],
             signals=dict(assessment.signals),
         )
@@ -549,3 +552,90 @@ def test_assesses_candidates_without_claiming_set_ready_when_diversity_missing()
     assert result.semantic_candidate_diversity is None
     assert result.signals["semantic_diversity_assessed"] is False
     assert result.signals["eligible_candidate_count"] == 3
+
+
+def test_duplicate_with_independent_hard_blocker_stays_blocked(
+    monkeypatch,
+):
+    candidates = [
+        make_candidate(
+            "RAG Evaluation Dashboard",
+            ["Compare RAG runs.", "Inspect quality regressions."],
+        ),
+        make_candidate(
+            "RAG Quality Console",
+            ["Inspect RAG quality.", "Compare model runs."],
+        ),
+        make_candidate(
+            "Citation Inspector",
+            ["Inspect citations.", "Show unsupported claims."],
+        ),
+    ]
+    brief = EvidenceBrief(
+        query="Build a data pipeline quality project.",
+        sources=[
+            EvidenceSource(
+                source_id="paper-1",
+                source_type="research_paper",
+                title="Data Quality Research",
+                excerpt="Data reliability needs observability.",
+                support_scope="direct",
+            )
+        ],
+    )
+    request = CandidateGenerationRequest(
+        user_goal="Build a data pipeline quality project.",
+        skill_level="intermediate",
+        time_available="3 weeks",
+        target_roles=["Data Engineer"],
+        preferred_stack=["Python", "FastAPI"],
+    )
+    encoder = DuplicateEncoder()
+
+    import planning.candidate_set_gate as gate
+
+    original = gate.assess_promotion_eligibility
+
+    def with_independent_blocker(*args, **kwargs):
+        assessment = original(*args, **kwargs)
+
+        if kwargs["candidate"].title != "RAG Evaluation Dashboard":
+            return assessment
+
+        return type(assessment)(
+            candidate_title=assessment.candidate_title,
+            status="ineligible",
+            eligible_for_product_promotion=False,
+            blocking_reasons=[
+                *assessment.blocking_reasons,
+                "Independent hard blocker.",
+            ],
+            blocking_reason_codes=[
+                *assessment.blocking_reason_codes,
+                "independent_hard_blocker",
+            ],
+            review_reasons=assessment.review_reasons,
+            signals=dict(assessment.signals),
+        )
+
+    monkeypatch.setattr(
+        gate,
+        "assess_promotion_eligibility",
+        with_independent_blocker,
+    )
+
+    result = assess_candidate_set(
+        candidates=candidates,
+        brief=brief,
+        request=request,
+        detected_domain=None,
+        evidence_support_scorer=CandidateEvidenceSupportScorer(
+            encoder
+        ),
+        semantic_diversity_scorer=SemanticCandidateDiversityScorer(
+            encoder
+        ),
+    )
+
+    assert result.signals["semantic_diversity_passed"] is False
+    assert result.status == "blocked"

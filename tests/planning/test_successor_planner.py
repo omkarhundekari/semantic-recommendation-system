@@ -405,6 +405,9 @@ def test_hard_gate_failure_blocks_and_withholds_candidates(
             blocking_reasons=[
                 "Candidate does not cite directly retained evidence."
             ],
+            blocking_reason_codes=[
+                "missing_direct_evidence"
+            ],
             review_reasons=[],
             signals=dict(assessment.signals),
         )

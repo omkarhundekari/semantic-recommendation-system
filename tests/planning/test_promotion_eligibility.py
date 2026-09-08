@@ -162,6 +162,9 @@ def test_blocks_candidate_in_flagged_semantic_duplicate_pair():
     assert assessment.blocking_reasons == [
         "Candidate is part of a semantically duplicate direction pair."
     ]
+    assert assessment.blocking_reason_codes == [
+        "semantic_duplicate"
+    ]
 
 
 def test_blocks_invalid_candidate_before_promotion():

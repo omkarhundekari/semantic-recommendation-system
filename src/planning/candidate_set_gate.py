@@ -130,14 +130,11 @@ def assess_candidate_set(
         for item in promotion
     )
 
-    duplicate_reason = (
-        "Candidate is part of a semantically duplicate direction pair."
-    )
     hard_blockers = [
-        reason
+        code
         for item in promotion
-        for reason in item["blocking_reasons"]
-        if reason != duplicate_reason
+        for code in item["blocking_reason_codes"]
+        if code != "semantic_duplicate"
     ]
     needs_review = any(
         item["status"] == "needs_review"

@@ -27,6 +27,7 @@ class PromotionEligibilityAssessment:
     status: str
     eligible_for_product_promotion: bool
     blocking_reasons: List[str] = field(default_factory=list)
+    blocking_reason_codes: List[str] = field(default_factory=list)
     review_reasons: List[str] = field(default_factory=list)
     signals: Dict[str, Any] = field(default_factory=dict)
 
@@ -108,17 +109,20 @@ def assess_promotion_eligibility(
     grounding concerns remain review signals until more calibration data exists.
     """
     blocking_reasons = []
+    blocking_reason_codes = []
     review_reasons = []
 
     if not validation.is_valid:
         blocking_reasons.append(
             "Candidate failed planner validation."
         )
+        blocking_reason_codes.append("planner_validation_failed")
 
     if grounding.adequacy_class == GroundingAdequacy.INVALID_CITATIONS:
         blocking_reasons.append(
             "Candidate includes evidence IDs outside the curated brief."
         )
+        blocking_reason_codes.append("invalid_evidence_ids")
     elif (
         grounding.adequacy_class
         != GroundingAdequacy.CITED_WITH_DIRECT_SCOPE
@@ -126,6 +130,7 @@ def assess_promotion_eligibility(
         blocking_reasons.append(
             "Candidate does not cite directly retained evidence."
         )
+        blocking_reason_codes.append("missing_direct_evidence")
 
     if _has_flagged_duplicate_pair(
         candidate.title,
@@ -134,12 +139,14 @@ def assess_promotion_eligibility(
         blocking_reasons.append(
             "Candidate is part of a semantically duplicate direction pair."
         )
+        blocking_reason_codes.append("semantic_duplicate")
 
     if feasibility_prescreen is not None:
         if feasibility_prescreen.status == "blocked_by_constraints":
             blocking_reasons.extend(
                 feasibility_prescreen.blocking_reasons
             )
+            blocking_reason_codes.append("feasibility_blocked")
         elif feasibility_prescreen.status == "needs_review":
             review_reasons.extend(
                 feasibility_prescreen.review_reasons
@@ -187,6 +194,7 @@ def assess_promotion_eligibility(
         status=status,
         eligible_for_product_promotion=(status == "eligible"),
         blocking_reasons=blocking_reasons,
+        blocking_reason_codes=blocking_reason_codes,
         review_reasons=review_reasons,
         signals={
             "validation_is_valid": validation.is_valid,
