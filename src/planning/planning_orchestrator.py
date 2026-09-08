@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from planning.candidate_generation_service import (
     CandidateGenerationOutcome,
@@ -60,14 +60,14 @@ def plan_candidates(
     request: CandidateGenerationRequest,
     provider: CandidateGenerationProvider,
     max_candidates: int = 3,
+    generation: Optional[CandidateGenerationOutcome] = None,
 ) -> PlanningOutcome:
-    generation: CandidateGenerationOutcome = (
-        generate_validated_candidates(
+    if generation is None:
+        generation = generate_validated_candidates(
             brief=brief,
             request=request,
             provider=provider,
         )
-    )
 
     validation_errors = []
     validation_warnings = []
